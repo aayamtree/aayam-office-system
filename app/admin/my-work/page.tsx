@@ -565,12 +565,18 @@ function MarketingWork({ userId }: { userId: string }) {
       try {
         const { data } = await supabase
           .from('leads')
-          .select('id, company_name, contact_name, follow_up_date, status')
+          .select('id, company, name, next_follow_up, status')
           .eq('assigned_to', userId)
           .not('status', 'in', '("converted","lost","closed")')
-          .order('follow_up_date', { ascending: true, nullsFirst: false })
+          .order('next_follow_up', { ascending: true, nullsFirst: false })
           .limit(30);
-        setLeads((data || []) as any[]);
+        setLeads((data || []).map((l: any) => ({
+          id: l.id,
+          company_name: l.company || l.name || 'Unknown',
+          contact_name: l.name || null,
+          follow_up_date: l.next_follow_up ? String(l.next_follow_up).slice(0, 10) : null,
+          status: l.status,
+        })) as any[]);
       } catch {
         // silent
       } finally {

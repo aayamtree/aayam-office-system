@@ -806,7 +806,7 @@ export function useLeads() {
     : undefined;  // Admin sees all
 
   const { data, loading, error, refetch } = useSupabaseQuery<Lead>('leads', {
-    select: 'id, lead_number, name, company, email, phone, source, status, product_interest, expected_value, lead_type, billing_preference, lost_reason, requirement, next_follow_up, notes, assigned_to, created_at, updated_at, next_followup_date, is_converted',
+    select: 'id, lead_number, name, company, email, phone, source, status, expected_value, lead_type, billing_preference, lost_reason, requirement, next_follow_up, notes, assigned_to, created_by, created_at, updated_at, converted_to_client_id',
     filter,
     orderBy: { column: 'created_at', ascending: false },
     limit: 100  // Reduced from 200 for better performance
@@ -3227,7 +3227,7 @@ export function useActivityFeed(limit: number = 20) {
           const userIds = Array.from(new Set(data.map(a => a.user_id).filter(Boolean)));
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('id, name, username, role')
+            .select('id, full_name, username, role')
             .in('id', userIds);
 
           const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);

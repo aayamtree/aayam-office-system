@@ -181,7 +181,7 @@ export default function CommandPalette() {
                     .or(`name.ilike.${dbQ},company.ilike.${dbQ},phone.ilike.${dbQ}`).limit(5),
                 supabase.from('leads').select('id, lead_number, name, company, status')
                     .or(`lead_number.ilike.${dbQ},name.ilike.${dbQ},company.ilike.${dbQ}`).limit(5),
-                supabase.from('invoices').select('id, invoice_number, total_amount, status')
+                supabase.from('invoices').select('id, invoice_number, total_amount, payment_status')
                     .or(`invoice_number.ilike.${dbQ}`).limit(5),
                 supabase.from('quotations').select('id, quote_number, total_amount, status')
                     .or(`quote_number.ilike.${dbQ}`).limit(5),
@@ -213,7 +213,7 @@ export default function CommandPalette() {
             if (invoicesRes.data) invoicesRes.data.forEach(inv => dbResults.push({
                 id: inv.id, type: 'invoice',
                 title: inv.invoice_number,
-                subtitle: `₹${(inv.total_amount || 0).toLocaleString('en-IN')} · ${inv.status || 'draft'}`,
+                subtitle: `₹${(inv.total_amount || 0).toLocaleString('en-IN')} · ${inv.payment_status || 'draft'}`,
                 href: `/admin/finance/invoices?highlight=${inv.id}`,
             }));
 

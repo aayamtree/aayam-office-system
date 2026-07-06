@@ -188,7 +188,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         const [followUpsRes, leadsRes] = await Promise.all([
             supabase
                 .from('follow_ups')
-                .select('id, notes, follow_up_date, completed, lead:leads(name, company)')
+                .select('id, notes, follow_up_date, status, lead:leads(name, company)')
                 .lte('follow_up_date', today)
                 .order('follow_up_date', { ascending: true })
                 .limit(15),
@@ -203,8 +203,8 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
         const followUps = (followUpsRes.data || []) as any[];
         const leads = leadsRes.data || [];
 
-        const todayFollowUps = followUps.filter(f => f.follow_up_date === today && !f.completed);
-        const overdueFollowUps = followUps.filter(f => f.follow_up_date < today && !f.completed);
+        const todayFollowUps = followUps.filter(f => f.follow_up_date === today && f.status !== 'completed');
+        const overdueFollowUps = followUps.filter(f => f.follow_up_date < today && f.status !== 'completed');
         const newLeads = leads.filter(l => l.created_at >= sevenDaysAgo);
 
         setStats([
@@ -430,9 +430,9 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                 .limit(30),
             supabase
                 .from('follow_ups')
-                .select('id, notes, follow_up_date, completed, lead:leads(name, company)')
+                .select('id, notes, follow_up_date, status, lead:leads(name, company)')
                 .lte('follow_up_date', today)
-                .eq('completed', false)
+                .neq('status', 'completed')
                 .order('follow_up_date', { ascending: true })
                 .limit(10),
         ]);
