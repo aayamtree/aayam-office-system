@@ -278,9 +278,14 @@ export default function FinanceClient({ data }: Props) {
                             <h3 className="text-sm font-semibold">Income &amp; Expense</h3>
                             <p className="text-xs text-muted-foreground">This Fiscal Year{pnl.fyLabel ? ` · ${pnl.fyLabel}` : ''}</p>
                         </div>
-                        <Link href="/admin/finance/reports" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                            Reports <ArrowUpRight className="h-3 w-3" />
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <Link href="/admin/finance/review" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">
+                                Review <ArrowUpRight className="h-3 w-3" />
+                            </Link>
+                            <Link href="/admin/finance/reports" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                                Reports <ArrowUpRight className="h-3 w-3" />
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Totals */}

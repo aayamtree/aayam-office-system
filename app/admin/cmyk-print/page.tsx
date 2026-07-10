@@ -138,6 +138,7 @@ export default function CMYKPrintPage() {
     { href: '/admin/cmyk-print/paper-purchases', icon: ShoppingBag, title: 'Purchases', extra: null },
     { href: '/admin/cmyk-print/expenses', icon: Receipt, title: 'Expenses', extra: null },
     { href: '/admin/cmyk-print/job-log', icon: BookOpen, title: 'Job Log', extra: null },
+    { href: '/admin/cmyk-print/review', icon: TrendingUp, title: 'Financial Review', extra: null },
   ];
 
   return (
