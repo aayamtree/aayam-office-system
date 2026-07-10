@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-type Tab = 'pnl' | 'ar' | 'ap';
+type Tab = 'pnl' | 'bs' | 'gst' | 'ar' | 'ap';
 
 interface LedgerRow { account_type: string; name: string; debit: number; credit: number; }
 interface AgingRow { id: string; party: string; ref: string; date: string | null; due: string | null; amount: number; }
+interface BSAccount { code: string; name: string; account_type: 'asset' | 'liability' | 'equity'; balance: number; }
+interface BSData { asOf: string; earnings: number; accounts: BSAccount[]; }
+interface GstRow { month: string; label: string; outputTaxable: number; outputGst: number; inputTaxable: number; inputGst: number; }
 
 export default function AccountingReportsPage() {
   const [tab, setTab] = useState<Tab>('pnl');
@@ -25,6 +28,8 @@ export default function AccountingReportsPage() {
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [arRows, setArRows] = useState<AgingRow[]>([]);
   const [apRows, setApRows] = useState<AgingRow[]>([]);
+  const [bs, setBs] = useState<BSData | null>(null);
+  const [gstRows, setGstRows] = useState<GstRow[]>([]);
 
   const fmt = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
@@ -76,6 +81,63 @@ export default function AccountingReportsPage() {
           amount: Math.max(0, Number(b.total_amount || 0) - Number(b.amount_paid || 0)),
         }))
         .filter((r: AgingRow) => r.amount > 0.5));
+
+      // ── Balance Sheet as of dateTo (ledger + opening balances) ──
+      const { data: bsData } = await supabase.rpc('fn_balance_sheet', { p_as_of: dateTo });
+      setBs(bsData || null);
+
+      // ── GST Summary: output (sales) vs input (purchases), by month ──
+      const gstMap: Record<string, GstRow> = {};
+      const monthKey = (dateStr: string) => dateStr.slice(0, 7); // YYYY-MM
+      const monthOf = (dateStr: string): GstRow => {
+        const key = monthKey(dateStr);
+        if (!gstMap[key]) {
+          const d = new Date(key + '-01T00:00:00');
+          gstMap[key] = {
+            month: key,
+            label: d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+            outputTaxable: 0, outputGst: 0, inputTaxable: 0, inputGst: 0,
+          };
+        }
+        return gstMap[key];
+      };
+
+      const [posRes, invRes, billRes, paperRes] = await Promise.all([
+        supabase.from('pos_sales').select('created_at, subtotal, discount_amount, gst_amount')
+          .gte('created_at', dateFrom).lte('created_at', dateTo + 'T23:59:59'),
+        supabase.from('invoices').select('invoice_date, subtotal, total_tax')
+          .gte('invoice_date', dateFrom).lte('invoice_date', dateTo),
+        supabase.from('purchase_bills').select('bill_date, subtotal, gst_amount')
+          .gte('bill_date', dateFrom).lte('bill_date', dateTo),
+        supabase.from('cmyk_paper_purchases').select('purchase_date, total_amount, gst_amount')
+          .gte('purchase_date', dateFrom).lte('purchase_date', dateTo),
+      ]);
+
+      (posRes.data || []).forEach((s: any) => {
+        if (!s.created_at) return;
+        const m = monthOf(s.created_at.slice(0, 10));
+        m.outputTaxable += Number(s.subtotal || 0) - Number(s.discount_amount || 0);
+        m.outputGst += Number(s.gst_amount || 0);
+      });
+      (invRes.data || []).forEach((i: any) => {
+        if (!i.invoice_date) return;
+        const m = monthOf(i.invoice_date);
+        m.outputTaxable += Number(i.subtotal || 0);
+        m.outputGst += Number(i.total_tax || 0);
+      });
+      (billRes.data || []).forEach((b: any) => {
+        if (!b.bill_date) return;
+        const m = monthOf(b.bill_date);
+        m.inputTaxable += Number(b.subtotal || 0);
+        m.inputGst += Number(b.gst_amount || 0);
+      });
+      (paperRes.data || []).forEach((p: any) => {
+        if (!p.purchase_date) return;
+        const m = monthOf(p.purchase_date);
+        m.inputTaxable += Number(p.total_amount || 0);
+        m.inputGst += Number(p.gst_amount || 0);
+      });
+      setGstRows(Object.values(gstMap).sort((a, b) => b.month.localeCompare(a.month)));
     } finally {
       setLoading(false);
     }
@@ -117,13 +179,15 @@ export default function AccountingReportsPage() {
         <Link href="/admin/finance" className="p-2 hover:bg-gray-100 rounded-md"><ArrowLeft className="w-5 h-5" /></Link>
         <div>
           <h1 className="text-lg md:text-page-title text-gray-900">Accounting Reports</h1>
-          <p className="text-xs md:text-sm text-gray-500">Accrual P&amp;L and receivables / payables, from the ledger</p>
+          <p className="text-xs md:text-sm text-gray-500">P&amp;L, Balance Sheet, GST summary and receivables / payables — from the ledger</p>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto">
           <TabBtn id="pnl" label="Profit & Loss" />
+          <TabBtn id="bs" label="Balance Sheet" />
+          <TabBtn id="gst" label="GST Summary" />
           <TabBtn id="ar" label="AR Aging" />
           <TabBtn id="ap" label="AP Aging" />
         </div>
@@ -173,6 +237,10 @@ export default function AccountingReportsPage() {
             </div>
           </div>
         </div>
+      ) : tab === 'bs' ? (
+        <BalanceSheetView bs={bs} fmt={fmt} asOf={dateTo} />
+      ) : tab === 'gst' ? (
+        <GstView rows={gstRows} fmt={fmt} />
       ) : (
         <AgingView
           rows={tab === 'ar' ? arRows : apRows}
@@ -184,6 +252,133 @@ export default function AccountingReportsPage() {
           refLabel={tab === 'ar' ? 'Invoice' : 'Bill'}
         />
       )}
+    </div>
+  );
+}
+
+function BalanceSheetView({ bs, fmt, asOf }: { bs: BSData | null; fmt: (n: number) => string; asOf: string }) {
+  if (!bs) return <div className="p-12 text-center text-gray-400 bg-white rounded-md border border-gray-100">Could not load balance sheet.</div>;
+
+  const assets = bs.accounts.filter(a => a.account_type === 'asset');
+  const liabilities = bs.accounts.filter(a => a.account_type === 'liability');
+  const equity = bs.accounts.filter(a => a.account_type === 'equity');
+  const totalAssets = assets.reduce((s, a) => s + a.balance, 0);
+  const totalLiab = liabilities.reduce((s, a) => s + a.balance, 0);
+  const totalEquity = equity.reduce((s, a) => s + a.balance, 0) + bs.earnings;
+  const diff = totalAssets - (totalLiab + totalEquity);
+
+  const Section = ({ title, rows, total }: { title: string; rows: BSAccount[]; total?: ReactNode }) => (
+    <>
+      <div className="px-5 py-3 bg-gray-50 font-semibold text-gray-700 text-sm">{title}</div>
+      {rows.length === 0 && !total ? <p className="px-5 py-3 text-sm text-gray-400">None</p> :
+        rows.map(a => (
+          <div key={a.code} className="flex justify-between px-5 py-2.5 border-t border-gray-50 text-sm">
+            <span className="text-gray-700">{a.name} <span className="text-gray-400 text-xs">({a.code})</span></span>
+            <span className={`font-medium ${a.balance < 0 ? 'text-red-600' : ''}`}>{fmt(a.balance)}</span>
+          </div>
+        ))}
+      {total}
+    </>
+  );
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">As of {new Date(asOf + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · from opening balances + posted ledger</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
+          <Section title="Assets" rows={assets} total={
+            <div className="flex justify-between px-5 py-3 border-t-2 border-gray-200 font-bold text-gray-900">
+              <span>Total Assets</span><span>{fmt(totalAssets)}</span>
+            </div>
+          } />
+        </div>
+        <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
+          <Section title="Liabilities" rows={liabilities} total={
+            <div className="flex justify-between px-5 py-2.5 border-t border-gray-100 font-semibold text-gray-800 text-sm">
+              <span>Total Liabilities</span><span>{fmt(totalLiab)}</span>
+            </div>
+          } />
+          <Section title="Equity" rows={equity} total={
+            <>
+              <div className="flex justify-between px-5 py-2.5 border-t border-gray-50 text-sm">
+                <span className="text-gray-700">Current Earnings (income − expenses to date)</span>
+                <span className={`font-medium ${bs.earnings < 0 ? 'text-red-600' : ''}`}>{fmt(bs.earnings)}</span>
+              </div>
+              <div className="flex justify-between px-5 py-3 border-t-2 border-gray-200 font-bold text-gray-900">
+                <span>Total Liabilities + Equity</span><span>{fmt(totalLiab + totalEquity)}</span>
+              </div>
+            </>
+          } />
+        </div>
+      </div>
+      {Math.abs(diff) > 1 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md px-4 py-3 text-sm text-amber-800">
+          Assets and Liabilities + Equity differ by {fmt(diff)}. This usually means opening balances haven&apos;t been
+          entered for bank/cash accounts, or some old transactions were never posted to the ledger. The report is still
+          correct for everything recorded in the ledger.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GstView({ rows, fmt }: { rows: GstRow[]; fmt: (n: number) => string }) {
+  const t = rows.reduce((acc, r) => ({
+    outputTaxable: acc.outputTaxable + r.outputTaxable,
+    outputGst: acc.outputGst + r.outputGst,
+    inputTaxable: acc.inputTaxable + r.inputTaxable,
+    inputGst: acc.inputGst + r.inputGst,
+  }), { outputTaxable: 0, outputGst: 0, inputTaxable: 0, inputGst: 0 });
+  const netPayable = t.outputGst - t.inputGst;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-gray-100 rounded-md p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Output GST (on sales)</p>
+          <p className="text-xl font-bold text-gray-900 mt-1">{fmt(t.outputGst)}</p>
+          <p className="text-xs text-gray-400">on taxable value {fmt(t.outputTaxable)}</p>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-md p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Input GST (on purchases)</p>
+          <p className="text-xl font-bold text-gray-900 mt-1">{fmt(t.inputGst)}</p>
+          <p className="text-xs text-gray-400">on purchase value {fmt(t.inputTaxable)}</p>
+        </div>
+        <div className={`${netPayable >= 0 ? 'bg-gray-900' : 'bg-green-700'} rounded-md p-4`}>
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/80">{netPayable >= 0 ? 'Net GST Payable' : 'Net GST Credit'}</p>
+          <p className="text-xl font-bold text-white mt-1">{fmt(Math.abs(netPayable))}</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-md border border-gray-100 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-4 py-3 text-label text-gray-500 uppercase">Month</th>
+              <th className="text-right px-4 py-3 text-label text-gray-500 uppercase">Sales Taxable</th>
+              <th className="text-right px-4 py-3 text-label text-gray-500 uppercase">Output GST</th>
+              <th className="text-right px-4 py-3 text-label text-gray-500 uppercase">Purchase Value</th>
+              <th className="text-right px-4 py-3 text-label text-gray-500 uppercase">Input GST</th>
+              <th className="text-right px-4 py-3 text-label text-gray-500 uppercase">Net Payable</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.length === 0 ? (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No GST activity in this period.</td></tr>
+            ) : rows.map(r => (
+              <tr key={r.month} className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-900">{r.label}</td>
+                <td className="px-4 py-3 text-right">{fmt(r.outputTaxable)}</td>
+                <td className="px-4 py-3 text-right font-medium">{fmt(r.outputGst)}</td>
+                <td className="px-4 py-3 text-right">{fmt(r.inputTaxable)}</td>
+                <td className="px-4 py-3 text-right font-medium">{fmt(r.inputGst)}</td>
+                <td className={`px-4 py-3 text-right font-semibold ${r.outputGst - r.inputGst >= 0 ? 'text-gray-900' : 'text-green-700'}`}>{fmt(r.outputGst - r.inputGst)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400">For reference only — your CA firm files the actual GST returns. Output GST comes from POS bills + invoices; input GST from purchase bills + paper purchases.</p>
     </div>
   );
 }
