@@ -28,14 +28,20 @@ interface CartItem {
   qty: number;
   kind?: 'product' | 'charge' | 'item';
   details?: string;             // design / matter description (what is being printed)
-  sides?: 'one' | 'two' | null; // print one side or front+back
+  sides?: 'one' | 'two' | null; // print one side or two side
+  prints?: string;              // manual print-count override for 2 Side (blank = auto qty × 2)
   paperStockId?: string;        // paper used for THIS item (spec + stock deduction; billed via the item rate)
   sheetsUsed?: string;          // sheets of that paper consumed by this item
 }
 
-// 2 Side printing doubles the print count: qty copies × 2 passes. Rate is per print.
+// 2 Side print count: auto-suggests qty × 2 but the operator can type any number
+// (2-side pricing is not always exactly double). Rate is per print, also editable.
 // (Bill-level discount lives below Subtotal — no per-line discount.)
-const printCount = (i: CartItem) => i.qty * (i.sides === 'two' ? 2 : 1);
+const printCount = (i: CartItem) => {
+  if (i.sides !== 'two') return i.qty;
+  const manual = parseInt(i.prints || '') || 0;
+  return manual > 0 ? manual : i.qty * 2;
+};
 const lineTotal = (i: CartItem) => Math.max(0, printCount(i) * i.price);
 
 // Quick-add services for a print shop (besides catalog products)
@@ -126,12 +132,13 @@ export default function RetailPOSPage() {
   };
 
   // Generic per-line editor (name / details / qty / rate / paper)
-  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'details' | 'paperStockId' | 'sheetsUsed', value: string | number) => {
+  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'details' | 'paperStockId' | 'sheetsUsed' | 'prints', value: string | number) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
-  // 1 Side / 2 Side — tap the selected one again to clear (not every line is a print)
+  // 1 Side / 2 Side — tap the selected one again to clear (not every line is a print).
+  // Switching sides resets any manual print-count override back to auto.
   const setLineSides = (id: string, side: 'one' | 'two') => {
-    setCart(prev => prev.map(item => item.id === id ? { ...item, sides: item.sides === side ? null : side } : item));
+    setCart(prev => prev.map(item => item.id === id ? { ...item, sides: item.sides === side ? null : side, prints: '' } : item));
   };
 
   const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
@@ -556,7 +563,15 @@ export default function RetailPOSPage() {
                         onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
                         className="w-20 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       {item.sides === 'two' && (
-                        <span className="text-amber-600 font-medium">2 Side → {printCount(item)} prints ({item.qty} × 2)</span>
+                        <>
+                          <span className="text-gray-400">→</span>
+                          <input type="number" min="1" value={item.prints || ''}
+                            placeholder={String(item.qty * 2)}
+                            onChange={e => updateLine(item.id, 'prints', e.target.value)}
+                            title="Total prints — auto qty × 2, type your own number if pricing differs"
+                            className="w-16 px-1.5 py-1 border border-amber-300 bg-amber-50 rounded text-right focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                          <span className="text-amber-600 font-medium">prints{!(parseInt(item.prints || '') > 0) ? ' (auto ×2)' : ''}</span>
+                        </>
                       )}
                     </div>
 
