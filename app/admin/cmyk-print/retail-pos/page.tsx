@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Plus, Trash2, ShoppingCart,
   Printer, Banknote, Smartphone, X, Search, Settings,
-  Edit, Loader2, Download, Package, Clock, ChevronDown, Tag
+  Edit, Loader2, Download, Package, Clock, Tag, FileText, Copy
 } from 'lucide-react';
 import type { ReceiptData } from '@/components/receipt/ReceiptPDF';
 // Lazy PDF: @react-pdf/renderer (~500KB) loads only when printing/downloading a receipt
@@ -29,12 +29,22 @@ interface CartItem {
   discount?: number; // per-line discount value
   discountType?: 'flat' | 'pct'; // ₹ off or % off this line
   kind?: 'product' | 'charge' | 'item';
+  details?: string;             // design / matter description (what is being printed)
+  sides?: 'one' | 'two' | null; // print one side or two side (front-back)
 }
 
 // Per-line discount amount (₹ or %) and resulting line total
 const lineDiscountAmount = (i: CartItem) =>
   i.discountType === 'pct' ? (i.qty * i.price) * (i.discount || 0) / 100 : (i.discount || 0);
 const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - lineDiscountAmount(i));
+
+// Item name as it appears on the receipt: name + sides + matter details
+const receiptItemName = (i: CartItem) => {
+  let n = i.name || 'Item';
+  if (i.sides) n += i.sides === 'two' ? ' (Two Side)' : ' (One Side)';
+  if (i.details) n += ` — ${i.details}`;
+  return n;
+};
 
 // Quick-add services for a print shop (besides catalog products)
 const CHARGE_PRESETS = ['Print', 'Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
@@ -111,30 +121,30 @@ export default function RetailPOSPage() {
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, discountType: 'flat', kind: 'product' }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, discountType: 'flat', kind: 'product', details: '', sides: null }]);
     }
   };
 
   // Quick-add a named service line (Print, Die Cut, Delivery, …) — rate entered in the cart
   const addCharge = (name: string) => {
-    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'charge' }]);
+    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'charge', details: '', sides: null }]);
   };
 
   // Add a blank, fully editable item/service line
   const addCustomItem = () => {
-    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'item' }]);
+    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'item', details: '', sides: null }]);
   };
 
-  // Generic per-line editor (name / qty / rate / per-line discount)
-  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount', value: string | number) => {
+  // Generic per-line editor (name / details / qty / rate / per-line discount)
+  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount' | 'details', value: string | number) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const toggleLineDiscountType = (id: string) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, discountType: item.discountType === 'pct' ? 'flat' : 'pct' } : item));
   };
-
-  const updateQty = (id: string, delta: number) => {
-    setCart(cart.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item));
+  // One Side / Two Side — tap the selected one again to clear (not every line is a print)
+  const setLineSides = (id: string, side: 'one' | 'two') => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, sides: item.sides === side ? null : side } : item));
   };
 
   const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
@@ -263,6 +273,8 @@ export default function RetailPOSPage() {
           quantity: p.sheets,
           price: p.rate,
           total: p.amount,
+          details: null,
+          print_sides: null,
         }));
       const saleItems = [
         ...cart.map(item => ({
@@ -271,6 +283,8 @@ export default function RetailPOSPage() {
           quantity: item.qty,
           price: item.price,
           total: lineTotal(item),
+          details: item.details?.trim() || null,
+          print_sides: item.sides || null,
         })),
         ...paperItems,
       ];
@@ -299,7 +313,7 @@ export default function RetailPOSPage() {
       customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || undefined,
       customerPhone: customerPhone || undefined,
       items: [
-        ...cart.map(item => ({ name: item.name || 'Item', qty: item.qty, price: item.price, total: lineTotal(item) })),
+        ...cart.map(item => ({ name: receiptItemName(item), qty: item.qty, price: item.price, total: lineTotal(item) })),
         ...paperList.filter(p => p.amount > 0).map(p => ({ name: `Paper: ${p.paper_name || 'paper'}${p.size ? ` (${p.size})` : ''}`, qty: p.sheets, price: p.rate, total: p.amount })),
       ],
       subtotal,
@@ -353,10 +367,12 @@ export default function RetailPOSPage() {
 
   const formatCurrency = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
 
+  const inputCls = 'px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400';
+
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col">
+    <div className="lg:h-[calc(100vh-80px)] flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 border-b flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/admin/cmyk-print" className="p-2 hover:bg-gray-100 rounded-md">
             <ArrowLeft className="w-5 h-5" />
@@ -373,63 +389,50 @@ export default function RetailPOSPage() {
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* Products Section */}
-        <div className="flex-1 flex flex-col p-4 overflow-hidden">
-          <div className="relative mb-4">
+      {/* Main Content — 3 panels: catalog | bill builder | summary */}
+      <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
+
+        {/* ── LEFT: Product catalog ─────────────────────────────── */}
+        <div className="order-3 lg:order-1 w-full lg:w-[280px] xl:w-[320px] shrink-0 border-t lg:border-t-0 lg:border-r flex flex-col p-4 lg:overflow-y-auto">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Products</p>
+          <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input type="text" placeholder="Search products..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
           </div>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             <button onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               All
             </button>
             {categories?.map(cat => (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${selectedCategory === cat.id ? 'bg-gray-900 text-white' : `${cat.color} hover:opacity-80`}`}>
                 {cat.name}
               </button>
             ))}
           </div>
 
-          {/* Quick add — print charge, services & extra items (no catalog product needed) */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs font-medium text-gray-500 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Quick add:</span>
-            {CHARGE_PRESETS.map(name => (
-              <button key={name} onClick={() => addCharge(name)}
-                className="px-2.5 py-1 rounded-md border border-dashed border-amber-300 text-amber-700 bg-amber-50 text-xs font-medium hover:bg-amber-100 transition-colors">
-                + {name}
-              </button>
-            ))}
-            <button onClick={addCustomItem}
-              className="px-2.5 py-1 rounded-md border border-dashed border-gray-300 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors">
-              + Item / service
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-[120px]">
             {productsLoading ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <Loader2 className="animate-spin mr-2" /> Loading products...
+              <div className="flex items-center justify-center h-full text-gray-500 text-sm py-8">
+                <Loader2 className="animate-spin mr-2 w-4 h-4" /> Loading products...
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center text-gray-400 text-sm py-8 border border-dashed rounded-md">
                 <p>No products found.</p>
-                <button onClick={() => setShowSettingsModal(true)} className="mt-2 text-primary font-medium">Add Products</button>
+                <button onClick={() => setShowSettingsModal(true)} className="mt-1 text-primary font-medium">Add Products</button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {filteredProducts.map(product => (
                   <button key={product.id} onClick={() => addToCart(product)}
-                    className="p-3 bg-white border rounded-md hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
+                    className="p-2.5 bg-white border rounded-md hover:border-primary/30 transition-all text-left flex flex-col justify-between h-full">
                     <div>
                       <p className="font-medium text-gray-900 text-sm line-clamp-2">{product.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{product.category?.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{product.category?.name}</p>
                     </div>
-                    <p className="text-primary font-bold mt-2">{formatCurrency(product.price)}</p>
+                    <p className="text-primary font-bold mt-1.5 text-sm">{formatCurrency(product.price)}</p>
                   </button>
                 ))}
               </div>
@@ -437,85 +440,157 @@ export default function RetailPOSPage() {
           </div>
         </div>
 
-        {/* Cart Section */}
-        <div className="w-full lg:w-[420px] shrink-0 border-t lg:border-t-0 lg:border-l bg-gray-50 flex flex-col lg:overflow-y-auto">
-          <div className="p-4 border-b bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-primary" />
-                <span className="font-semibold">Cart ({cart.length})</span>
+        {/* ── CENTER: Bill builder ──────────────────────────────── */}
+        <div className="order-1 lg:order-2 flex-1 min-w-0 bg-gray-50 lg:overflow-y-auto">
+          <div className="p-4 lg:p-6 max-w-3xl mx-auto space-y-4">
+
+            {/* Customer */}
+            <div className="bg-white border rounded-md p-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Customer</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* CMYK print client — links this bill to a client for the monthly statement */}
+                <div className="sm:col-span-2">
+                  <select value={cmykClientId}
+                    onChange={(e) => {
+                      setCmykClientId(e.target.value);
+                      const c = cmykClients?.find(x => x.id === e.target.value);
+                      if (c) {
+                        // Auto-fill the (still visible, still editable) name & phone boxes from the saved client
+                        setCustomerName(c.company || c.name || '');
+                        setCustomerPhone(c.phone || '');
+                      } else {
+                        // Back to Walk-in — clear the auto-filled fields
+                        setCustomerName('');
+                        setCustomerPhone('');
+                      }
+                    }}
+                    className={`w-full ${inputCls} bg-white`}>
+                    <option value="">Walk-in (no CMYK client)</option>
+                    {(cmykClients || []).filter(c => c.is_active !== false).map(c => (
+                      <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-gray-400 mt-1">Pick a CMYK client to add this bill to their monthly print report.</p>
+                </div>
+                <input type="text" placeholder="Customer Name" value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)} className={inputCls} />
+                <input type="tel" placeholder="Phone" value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="Artwork link / note" value={artworkLink}
+                  onChange={(e) => setArtworkLink(e.target.value)} className={inputCls} />
+                {/* Order type: walk-in vs later pickup */}
+                <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-md">
+                  {[
+                    { id: 'walkin', label: 'Instant Walk-in' },
+                    { id: 'pickup', label: 'Later Pickup' },
+                  ].map(ot => (
+                    <button key={ot.id} type="button" onClick={() => setOrderType(ot.id as 'walkin' | 'pickup')}
+                      className={`py-1.5 rounded-md text-sm font-medium transition-colors ${orderType === ot.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                      {ot.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {cart.length > 0 && (
-                <button onClick={clearCart} className="text-red-600 text-sm hover:underline">Clear</button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="text" placeholder="Customer Name" value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
-              <input type="tel" placeholder="Phone" value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
             </div>
 
-            {/* CMYK print client — links this bill to a client for the monthly statement */}
-            <div className="mt-2">
-              <select value={cmykClientId}
-                onChange={(e) => {
-                  setCmykClientId(e.target.value);
-                  const c = cmykClients?.find(x => x.id === e.target.value);
-                  if (c) {
-                    // Auto-fill the (still visible, still editable) name & phone boxes from the saved client
-                    setCustomerName(c.company || c.name || '');
-                    setCustomerPhone(c.phone || '');
-                  } else {
-                    // Back to Walk-in — clear the auto-filled fields
-                    setCustomerName('');
-                    setCustomerPhone('');
-                  }
-                }}
-                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
-                <option value="">Walk-in (no CMYK client)</option>
-                {(cmykClients || []).filter(c => c.is_active !== false).map(c => (
-                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
+            {/* Items — every line is fully editable (details + sides + qty × rate − discount) */}
+            <div className="bg-white border rounded-md p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Items</p>
+                {cart.length > 0 && <span className="text-xs text-gray-400">{cart.length} line{cart.length > 1 ? 's' : ''}</span>}
+              </div>
+
+              {/* Quick add — print charge, services & extra items (no catalog product needed) */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-xs font-medium text-gray-500 flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Quick add:</span>
+                {CHARGE_PRESETS.map(name => (
+                  <button key={name} onClick={() => addCharge(name)}
+                    className="px-2.5 py-1 rounded-md border border-dashed border-amber-300 text-amber-700 bg-amber-50 text-xs font-medium hover:bg-amber-100 transition-colors">
+                    + {name}
+                  </button>
                 ))}
-              </select>
-              <p className="text-[11px] text-gray-400 mt-1">Pick a CMYK client to add this bill to their monthly print report.</p>
-            </div>
+              </div>
 
-            {/* Artwork link / note */}
-            <div className="mt-2">
-              <input type="text" placeholder="Artwork link / note" value={artworkLink}
-                onChange={(e) => setArtworkLink(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
-            </div>
+              <div className="space-y-2">
+                {cart.length === 0 && (
+                  <div className="text-center py-8 text-gray-400 text-sm border border-dashed rounded-md">
+                    Tap a product, use Quick add, or “Add item / service” to start a bill
+                  </div>
+                )}
+                {cart.map(item => (
+                  <div key={item.id} className="bg-gray-50/60 p-3 rounded-md border space-y-2">
+                    {/* Name + line total + delete */}
+                    <div className="flex items-center gap-2">
+                      {item.kind !== 'product' && <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                      {item.kind === 'product' ? (
+                        <span className="font-medium text-sm flex-1 truncate">{item.name}</span>
+                      ) : (
+                        <input type="text" value={item.name} placeholder="Item / service name"
+                          onChange={e => updateLine(item.id, 'name', e.target.value)}
+                          className="font-medium text-sm flex-1 min-w-0 bg-transparent border-b border-dashed border-gray-300 focus:outline-none focus:border-gray-500" />
+                      )}
+                      <span className="font-bold text-primary text-sm shrink-0">{formatCurrency(lineTotal(item))}</span>
+                      <button onClick={() => removeFromCart(item.id)} className="text-red-500 shrink-0"><Trash2 className="w-4 h-4" /></button>
+                    </div>
 
-            {/* Order type: walk-in vs later pickup */}
-            <div className="mt-2 grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-md">
-              {[
-                { id: 'walkin', label: 'Instant Walk-in' },
-                { id: 'pickup', label: 'Later Pickup' },
-              ].map(ot => (
-                <button key={ot.id} type="button" onClick={() => setOrderType(ot.id as 'walkin' | 'pickup')}
-                  className={`py-1.5 rounded-md text-sm font-medium transition-colors ${orderType === ot.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                  {ot.label}
+                    {/* Item details — what design / matter is being printed */}
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <input type="text" value={item.details || ''}
+                        placeholder="Item details — design / matter (e.g. Wedding card, Bill book, Shop flyer)"
+                        onChange={e => updateLine(item.id, 'details', e.target.value)}
+                        className="flex-1 min-w-0 px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white" />
+                    </div>
+
+                    {/* Sides + Qty × Rate − Discount */}
+                    <div className="flex items-center gap-1.5 text-xs flex-wrap">
+                      <div className="flex rounded-md border overflow-hidden shrink-0" title="Print sides">
+                        {([['one', '1 Side'], ['two', '2 Side']] as const).map(([val, label]) => (
+                          <button key={val} type="button" onClick={() => setLineSides(item.id, val)}
+                            className={`px-2 py-1 font-medium transition-colors flex items-center gap-1 ${item.sides === val ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
+                            {val === 'two' && <Copy className="w-3 h-3" />}{label}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-gray-400 ml-1">Qty</span>
+                      <input type="number" min="1" value={item.qty}
+                        onChange={e => updateLine(item.id, 'qty', parseInt(e.target.value) || 1)}
+                        className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                      <span className="text-gray-400">× ₹</span>
+                      <input type="number" min="0" value={item.price || ''} placeholder="rate"
+                        onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
+                        className="w-20 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                      <button type="button" onClick={() => toggleLineDiscountType(item.id)}
+                        title="Toggle ₹ / % discount"
+                        className="text-gray-400 hover:text-gray-700 w-6 text-center border rounded py-1">
+                        −{item.discountType === 'pct' ? '%' : '₹'}
+                      </button>
+                      <input type="number" min="0" value={item.discount || ''} placeholder="disc"
+                        onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
+                        className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={addCustomItem}
+                  className="w-full py-2 border border-dashed border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1">
+                  <Plus className="w-4 h-4" /> Add item / service
                 </button>
-              ))}
+              </div>
             </div>
 
             {/* Paper used — multiple papers/sizes; ₹/sheet bills the customer, stock tracks cost */}
-            <div className="mt-3">
-              <p className="text-xs font-medium text-gray-500 mb-1">Paper (sheets × ₹/sheet → adds to bill)</p>
+            <div className="bg-white border rounded-md p-4">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Paper <span className="normal-case font-normal text-gray-400">(sheets × ₹/sheet → adds to bill)</span></p>
               <div className="space-y-2">
                 {paperRows.map((row, i) => {
                   const p = paperStock.find(x => x.id === row.paperStockId);
                   const over = !!(p && row.sheets && parseInt(row.sheets) > p.quantity);
                   const lineAmt = (parseInt(row.sheets) || 0) * (parseFloat(row.rate) || 0);
                   return (
-                    <div key={i}>
-                      <div className="flex gap-2">
+                    <div key={i} className="rounded-md border bg-gray-50/60 p-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
                         <select value={row.paperStockId} onChange={e => updatePaperRow(i, 'paperStockId', e.target.value)}
-                          className="flex-1 min-w-0 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
+                          className="flex-1 min-w-[180px] px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
                           <option value="">Select paper / size…</option>
                           {paperStock.map(ps => (
                             <option key={ps.id} value={ps.id}>
@@ -523,27 +598,25 @@ export default function RetailPOSPage() {
                             </option>
                           ))}
                         </select>
+                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
+                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
+                          disabled={!row.paperStockId}
+                          className="w-24 px-3 py-2 border rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                        <span className="text-gray-500 text-sm">× ₹</span>
+                        <input type="number" placeholder="/sheet" value={row.rate} min="0"
+                          onChange={e => updatePaperRow(i, 'rate', e.target.value)}
+                          disabled={!row.paperStockId}
+                          className="w-24 px-3 py-2 border rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                        <span className="ml-auto font-semibold text-primary text-sm">{formatCurrency(lineAmt)}</span>
                         {paperRows.length > 1 && (
                           <button type="button" onClick={() => removePaperRow(i)}
-                            className="px-2 text-gray-400 hover:text-red-500 shrink-0" title="Remove">
+                            className="px-1 text-gray-400 hover:text-red-500 shrink-0" title="Remove">
                             <X className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm mt-2 flex-wrap">
-                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
-                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
-                          disabled={!row.paperStockId}
-                          className="w-24 px-3 py-2 border rounded-md text-base text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
-                        <span className="text-gray-500">× ₹</span>
-                        <input type="number" placeholder="/sheet" value={row.rate} min="0"
-                          onChange={e => updatePaperRow(i, 'rate', e.target.value)}
-                          disabled={!row.paperStockId}
-                          className="w-24 px-3 py-2 border rounded-md text-base text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
-                        <span className="ml-auto font-semibold text-primary">{formatCurrency(lineAmt)}</span>
-                      </div>
                       {over && (
-                        <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                        <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
                           <Package className="w-3 h-3" /> Only {p?.quantity} sheets of {p?.name} in stock!
                         </p>
                       )}
@@ -557,58 +630,48 @@ export default function RetailPOSPage() {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Cart Items — every line is fully editable (qty × rate − discount) */}
-          <div className="flex-1 p-4 space-y-2 min-h-[100px]">
-            {cart.length === 0 && (
-              <div className="text-center py-6 text-gray-400 text-sm">
-                Tap a product, or use “Add item / service” to start a bill
-              </div>
+        {/* ── RIGHT: Bill summary ───────────────────────────────── */}
+        <div className="order-2 lg:order-3 w-full lg:w-[300px] xl:w-[340px] shrink-0 border-t lg:border-t-0 lg:border-l bg-white flex flex-col">
+          <div className="p-4 border-b flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Bill ({cart.length + paperList.filter(p => p.amount > 0).length})</span>
+            </div>
+            {(cart.length > 0 || paperList.length > 0 || customerName) && (
+              <button onClick={clearCart} className="text-red-600 text-sm hover:underline">Clear</button>
             )}
-            {cart.map(item => (
-              <div key={item.id} className="bg-white p-3 rounded-md border space-y-2">
-                {/* Name */}
-                <div className="flex items-center gap-1.5">
-                  {item.kind !== 'product' && <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                  {item.kind === 'product' ? (
-                    <span className="font-medium text-sm flex-1 truncate">{item.name}</span>
-                  ) : (
-                    <input type="text" value={item.name} placeholder="Item / service name"
-                      onChange={e => updateLine(item.id, 'name', e.target.value)}
-                      className="font-medium text-sm flex-1 min-w-0 border-b border-dashed border-gray-300 focus:outline-none focus:border-gray-500" />
-                  )}
-                  <button onClick={() => removeFromCart(item.id)} className="text-red-500 shrink-0"><Trash2 className="w-4 h-4" /></button>
-                </div>
-                {/* Qty × Rate − Discount = amount */}
-                <div className="flex items-center gap-1.5 text-xs flex-wrap">
-                  <span className="text-gray-400">Qty</span>
-                  <input type="number" min="1" value={item.qty}
-                    onChange={e => updateLine(item.id, 'qty', parseInt(e.target.value) || 1)}
-                    className="w-12 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                  <span className="text-gray-400">× ₹</span>
-                  <input type="number" min="0" value={item.price || ''} placeholder="rate"
-                    onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
-                    className="w-16 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                  <button type="button" onClick={() => toggleLineDiscountType(item.id)}
-                    title="Toggle ₹ / % discount"
-                    className="text-gray-400 hover:text-gray-700 w-6 text-center border rounded py-1">
-                    −{item.discountType === 'pct' ? '%' : '₹'}
-                  </button>
-                  <input type="number" min="0" value={item.discount || ''} placeholder="disc"
-                    onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
-                    className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                  <span className="ml-auto font-bold text-primary text-sm">{formatCurrency(lineTotal(item))}</span>
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={addCustomItem}
-              className="w-full mt-1 py-2 border border-dashed border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1">
-              <Plus className="w-4 h-4" /> Add item / service
-            </button>
+          </div>
+
+          {/* Line summary */}
+          <div className="flex-1 p-4 space-y-1.5 lg:overflow-y-auto text-sm">
+            {cart.length === 0 && paperList.filter(p => p.amount > 0).length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">No items yet</p>
+            ) : (
+              <>
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">
+                      {item.name || 'Item'}
+                      {item.sides && <span className="text-gray-400"> · {item.sides === 'two' ? '2-side' : '1-side'}</span>}
+                      {item.qty > 1 && <span className="text-gray-400"> × {item.qty}</span>}
+                    </span>
+                    <span className="font-medium shrink-0">{formatCurrency(lineTotal(item))}</span>
+                  </div>
+                ))}
+                {paperList.filter(p => p.amount > 0).map((p, i) => (
+                  <div key={i} className="flex justify-between gap-2">
+                    <span className="text-gray-600 truncate">Paper: {p.paper_name}{p.sheets > 1 ? ` × ${p.sheets}` : ''}</span>
+                    <span className="font-medium shrink-0">{formatCurrency(p.amount)}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* Totals & Payment */}
-          <div className="p-4 border-t bg-white mt-auto">
+          <div className="p-4 border-t mt-auto">
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between items-center text-sm">

@@ -55,7 +55,8 @@ function ReportInner() {
   const itemsSummary = (s: any) => {
     const items = s.items || [];
     if (items.length === 0) return s.notes || '—';
-    const first = items[0]?.product_name || 'Item';
+    const it0 = items[0];
+    const first = `${it0?.product_name || 'Item'}${it0?.details ? ` – ${it0.details}` : ''}`;
     return items.length > 1 ? `${first} +${items.length - 1} more` : first;
   };
 

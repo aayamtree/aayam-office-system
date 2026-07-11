@@ -773,6 +773,8 @@ export interface POSSaleItem {
   quantity: number;
   price: number;
   total: number;
+  details?: string | null;             // design / matter description (what was printed)
+  print_sides?: 'one' | 'two' | null;  // one side or two side print
 }
 
 // Quotation Line Item
