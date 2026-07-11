@@ -24,10 +24,8 @@ import { useConfirm } from '@/components/ConfirmModal';
 interface CartItem {
   id: string;
   name: string;
-  price: number;     // unit rate
+  price: number;     // rate per print
   qty: number;
-  discount?: number; // per-line discount value
-  discountType?: 'flat' | 'pct'; // ₹ off or % off this line
   kind?: 'product' | 'charge' | 'item';
   details?: string;             // design / matter description (what is being printed)
   sides?: 'one' | 'two' | null; // print one side or front+back
@@ -35,10 +33,10 @@ interface CartItem {
   sheetsUsed?: string;          // sheets of that paper consumed by this item
 }
 
-// Per-line discount amount (₹ or %) and resulting line total
-const lineDiscountAmount = (i: CartItem) =>
-  i.discountType === 'pct' ? (i.qty * i.price) * (i.discount || 0) / 100 : (i.discount || 0);
-const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - lineDiscountAmount(i));
+// 2 Side printing doubles the print count: qty copies × 2 passes. Rate is per print.
+// (Bill-level discount lives below Subtotal — no per-line discount.)
+const printCount = (i: CartItem) => i.qty * (i.sides === 'two' ? 2 : 1);
+const lineTotal = (i: CartItem) => Math.max(0, printCount(i) * i.price);
 
 // Quick-add services for a print shop (besides catalog products)
 const CHARGE_PRESETS = ['Print', 'Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
@@ -113,28 +111,25 @@ export default function RetailPOSPage() {
     if (existing) {
       setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, discount: 0, discountType: 'flat', kind: 'product', details: '', sides: null }]);
+      setCart([...cart, { id: product.id, name: product.name, price: product.price, qty: 1, kind: 'product', details: '', sides: null }]);
     }
   };
 
   // Quick-add a named service line (Print, Die Cut, Delivery, …) — rate entered in the cart
   const addCharge = (name: string) => {
-    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'charge', details: '', sides: null }]);
+    setCart(prev => [...prev, { id: newId('charge'), name, price: 0, qty: 1, kind: 'charge', details: '', sides: null }]);
   };
 
   // Add a blank, fully editable item/service line
   const addCustomItem = () => {
-    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'item', details: '', sides: null }]);
+    setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, kind: 'item', details: '', sides: null }]);
   };
 
-  // Generic per-line editor (name / details / qty / rate / per-line discount / paper)
-  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount' | 'details' | 'paperStockId' | 'sheetsUsed', value: string | number) => {
+  // Generic per-line editor (name / details / qty / rate / paper)
+  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'details' | 'paperStockId' | 'sheetsUsed', value: string | number) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
-  const toggleLineDiscountType = (id: string) => {
-    setCart(prev => prev.map(item => item.id === id ? { ...item, discountType: item.discountType === 'pct' ? 'flat' : 'pct' } : item));
-  };
-  // One Side / Two Side — tap the selected one again to clear (not every line is a print)
+  // 1 Side / 2 Side — tap the selected one again to clear (not every line is a print)
   const setLineSides = (id: string, side: 'one' | 'two') => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, sides: item.sides === side ? null : side } : item));
   };
@@ -269,7 +264,7 @@ export default function RetailPOSPage() {
         return {
           product_id: item.kind === 'product' ? item.id : null,
           product_name: item.name || 'Item',
-          quantity: item.qty,
+          quantity: printCount(item), // 2 Side → double prints, so qty × price = total stays true
           price: item.price,
           total: lineTotal(item),
           details: item.details?.trim() || null,
@@ -295,7 +290,7 @@ export default function RetailPOSPage() {
   // One full line per item on the receipt: name (sides) — matter · paper (size) × sheets
   const receiptItemName = (i: CartItem) => {
     let n = i.name || 'Item';
-    if (isPrintLine(i) && i.sides) n += i.sides === 'two' ? ' (Front+Back)' : ' (1 Side)';
+    if (isPrintLine(i) && i.sides) n += i.sides === 'two' ? ' (2 Side)' : ' (1 Side)';
     if (i.details?.trim()) n += ` — ${i.details.trim()}`;
     const { p, sheets } = itemPaper(i);
     if (p) n += ` · ${p.name}${p.size ? ` (${p.size})` : ''}${sheets > 0 ? ` × ${sheets} sh` : ''}`;
@@ -313,7 +308,7 @@ export default function RetailPOSPage() {
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || undefined,
       customerPhone: customerPhone || undefined,
-      items: cart.map(item => ({ name: receiptItemName(item), qty: item.qty, price: item.price, total: lineTotal(item) })),
+      items: cart.map(item => ({ name: receiptItemName(item), qty: printCount(item), price: item.price, total: lineTotal(item) })),
       subtotal,
       discountPercent: discount,
       discountAmount,
@@ -491,7 +486,7 @@ export default function RetailPOSPage() {
               </div>
             </div>
 
-            {/* Items — every line is fully editable (details + sides + qty × rate − discount) */}
+            {/* Items — every line is fully editable (details + sides + qty × rate + paper) */}
             <div className="bg-white border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Items</p>
@@ -540,11 +535,11 @@ export default function RetailPOSPage() {
                         className="flex-1 min-w-0 px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white" />
                     </div>
 
-                    {/* Sides (print lines only) + Qty × Rate − Discount */}
+                    {/* Sides (print lines only) + Qty × Rate; 2 Side doubles the print count */}
                     <div className="flex items-center gap-1.5 text-xs flex-wrap">
                       {isPrintLine(item) && (
                         <div className="flex rounded-md border overflow-hidden shrink-0" title="Print sides">
-                          {([['one', '1 Side'], ['two', 'Front+Back']] as const).map(([val, label]) => (
+                          {([['one', '1 Side'], ['two', '2 Side']] as const).map(([val, label]) => (
                             <button key={val} type="button" onClick={() => setLineSides(item.id, val)}
                               className={`px-2 py-1 font-medium transition-colors flex items-center gap-1 ${item.sides === val ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
                               {val === 'two' && <Copy className="w-3 h-3" />}{label}
@@ -557,17 +552,12 @@ export default function RetailPOSPage() {
                         onChange={e => updateLine(item.id, 'qty', parseInt(e.target.value) || 1)}
                         className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
                       <span className="text-gray-400">× ₹</span>
-                      <input type="number" min="0" value={item.price || ''} placeholder="rate"
+                      <input type="number" min="0" value={item.price || ''} placeholder="rate/print"
                         onChange={e => updateLine(item.id, 'price', parseFloat(e.target.value) || 0)}
                         className="w-20 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                      <button type="button" onClick={() => toggleLineDiscountType(item.id)}
-                        title="Toggle ₹ / % discount"
-                        className="text-gray-400 hover:text-gray-700 w-6 text-center border rounded py-1">
-                        −{item.discountType === 'pct' ? '%' : '₹'}
-                      </button>
-                      <input type="number" min="0" value={item.discount || ''} placeholder="disc"
-                        onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
-                        className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                      {item.sides === 'two' && (
+                        <span className="text-amber-600 font-medium">2 Side → {printCount(item)} prints ({item.qty} × 2)</span>
+                      )}
                     </div>
 
                     {/* Paper for THIS item (print lines only) — spec + stock; billed via the item rate above */}
@@ -638,8 +628,8 @@ export default function RetailPOSPage() {
                     <div className="flex justify-between gap-2">
                       <span className="text-gray-700 truncate">
                         {item.name || 'Item'}
-                        {isPrintLine(item) && item.sides && <span className="text-gray-400"> · {item.sides === 'two' ? 'Front+Back' : '1-side'}</span>}
-                        {item.qty > 1 && <span className="text-gray-400"> × {item.qty}</span>}
+                        {isPrintLine(item) && item.sides && <span className="text-gray-400"> · {item.sides === 'two' ? '2-side' : '1-side'}</span>}
+                        {printCount(item) > 1 && <span className="text-gray-400"> × {printCount(item)}{item.sides === 'two' ? ' prints' : ''}</span>}
                       </span>
                       <span className="font-medium shrink-0">{formatCurrency(lineTotal(item))}</span>
                     </div>

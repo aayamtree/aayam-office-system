@@ -44,7 +44,7 @@ export default function POSSalesListPage() {
       customerPhone: s.customer_phone || undefined,
       items: (s.items || []).map((it: any) => ({
         // Rebuild the printed item label: name + sides + design/matter details + paper
-        name: `${it.product_name || 'Item'}${it.print_sides ? (it.print_sides === 'two' ? ' (Front+Back)' : ' (1 Side)') : ''}${it.details ? ` — ${it.details}` : ''}${it.paper_name ? ` · ${it.paper_name}${it.sheets ? ` × ${it.sheets} sh` : ''}` : ''}`,
+        name: `${it.product_name || 'Item'}${it.print_sides ? (it.print_sides === 'two' ? ' (2 Side)' : ' (1 Side)') : ''}${it.details ? ` — ${it.details}` : ''}${it.paper_name ? ` · ${it.paper_name}${it.sheets ? ` × ${it.sheets} sh` : ''}` : ''}`,
         qty: it.quantity,
         price: it.price,
         total: it.total,
