@@ -30,7 +30,9 @@ interface CartItem {
   discountType?: 'flat' | 'pct'; // ₹ off or % off this line
   kind?: 'product' | 'charge' | 'item';
   details?: string;             // design / matter description (what is being printed)
-  sides?: 'one' | 'two' | null; // print one side or two side (front-back)
+  sides?: 'one' | 'two' | null; // print one side or front+back
+  paperStockId?: string;        // paper used for THIS item (spec + stock deduction; billed via the item rate)
+  sheetsUsed?: string;          // sheets of that paper consumed by this item
 }
 
 // Per-line discount amount (₹ or %) and resulting line total
@@ -38,16 +40,12 @@ const lineDiscountAmount = (i: CartItem) =>
   i.discountType === 'pct' ? (i.qty * i.price) * (i.discount || 0) / 100 : (i.discount || 0);
 const lineTotal = (i: CartItem) => Math.max(0, i.qty * i.price - lineDiscountAmount(i));
 
-// Item name as it appears on the receipt: name + sides + matter details
-const receiptItemName = (i: CartItem) => {
-  let n = i.name || 'Item';
-  if (i.sides) n += i.sides === 'two' ? ' (Two Side)' : ' (One Side)';
-  if (i.details) n += ` — ${i.details}`;
-  return n;
-};
-
 // Quick-add services for a print shop (besides catalog products)
 const CHARGE_PRESETS = ['Print', 'Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
+// Pure services — no printing happens on these lines, so no sides toggle and no paper
+const NON_PRINT_SERVICES = ['Die Cut', 'Handling', 'Delivery', 'Lamination', 'Design', 'Binding'];
+// Print-type line = anything except a pure-service charge (products & custom items are print jobs)
+const isPrintLine = (i: CartItem) => !(i.kind === 'charge' && NON_PRINT_SERVICES.includes(i.name));
 
 const categoryColors = [
   'bg-muted text-foreground',
@@ -92,12 +90,6 @@ export default function RetailPOSPage() {
   const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
   const [artworkLink, setArtworkLink] = useState('');
 
-  // Paper rows (multiple papers/sizes per bill) & Credit fields
-  const [paperRows, setPaperRows] = useState<{ paperStockId: string; sheets: string; rate: string }[]>([{ paperStockId: '', sheets: '', rate: '' }]);
-  const updatePaperRow = (i: number, field: 'paperStockId' | 'sheets' | 'rate', val: string) =>
-    setPaperRows(rows => rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
-  const addPaperRow = () => setPaperRows(rows => [...rows, { paperStockId: '', sheets: '', rate: '' }]);
-  const removePaperRow = (i: number) => setPaperRows(rows => rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows);
   const [notes, setNotes] = useState('');
 
   // Settings Modal State
@@ -135,8 +127,8 @@ export default function RetailPOSPage() {
     setCart(prev => [...prev, { id: newId('item'), name: '', price: 0, qty: 1, discount: 0, discountType: 'flat', kind: 'item', details: '', sides: null }]);
   };
 
-  // Generic per-line editor (name / details / qty / rate / per-line discount)
-  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount' | 'details', value: string | number) => {
+  // Generic per-line editor (name / details / qty / rate / per-line discount / paper)
+  const updateLine = (id: string, field: 'name' | 'qty' | 'price' | 'discount' | 'details' | 'paperStockId' | 'sheetsUsed', value: string | number) => {
     setCart(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
   const toggleLineDiscountType = (id: string) => {
@@ -149,19 +141,27 @@ export default function RetailPOSPage() {
 
   const removeFromCart = (id: string) => setCart(cart.filter(item => item.id !== id));
 
-  // Paper rows → billable + stock list. The ₹/sheet rate feeds the bill subtotal;
-  // cost (from stock) is kept for profit tracking only.
-  const paperList = paperRows
-    .filter(r => r.paperStockId && r.sheets && parseInt(r.sheets) > 0)
-    .map(r => {
-      const p = paperStock.find(x => x.id === r.paperStockId);
-      const sheets = parseInt(r.sheets) || 0;
-      const rate = parseFloat(r.rate) || 0;
-      return { paper_stock_id: r.paperStockId, paper_name: p?.name, size: p?.size, sheets, rate, amount: sheets * rate, cost: (p?.cost_per_unit || 0) * sheets };
+  // Paper is attached PER ITEM (spec + stock). It is NOT billed separately — the item's
+  // single rate covers everything. Aggregate per paper for the stock-deduction trigger
+  // (sale.papers → deduct_paper_stock / restore_paper_stock) and cost tracking.
+  const itemPaper = (i: CartItem) => {
+    const p = i.paperStockId ? paperStock.find(x => x.id === i.paperStockId) : undefined;
+    const sheets = parseInt(i.sheetsUsed || '0') || 0;
+    return { p, sheets };
+  };
+  const paperList = (() => {
+    const agg: Record<string, { paper_stock_id: string; paper_name?: string; size?: string; sheets: number; rate: number; amount: number; cost: number }> = {};
+    cart.forEach(i => {
+      const { p, sheets } = itemPaper(i);
+      if (!i.paperStockId || sheets <= 0) return;
+      const e = agg[i.paperStockId] || (agg[i.paperStockId] = { paper_stock_id: i.paperStockId, paper_name: p?.name, size: p?.size, sheets: 0, rate: 0, amount: 0, cost: 0 });
+      e.sheets += sheets;
+      e.cost += (p?.cost_per_unit || 0) * sheets;
     });
-  const paperSubtotal = paperList.reduce((sum, p) => sum + p.amount, 0);
+    return Object.values(agg);
+  })();
 
-  const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0) + paperSubtotal;
+  const subtotal = cart.reduce((sum, item) => sum + lineTotal(item), 0);
   const discountAmount = (subtotal * discount) / 100;
   const taxableAmount = subtotal - discountAmount;
   // This CMYK counter does not raise GST bills — the estimate total is just subtotal − discount.
@@ -226,7 +226,6 @@ export default function RetailPOSPage() {
     setArtworkLink('');
     setAmountReceived('');
     setPaymentMethod('cash');
-    setPaperRows([{ paperStockId: '', sheets: '', rate: '' }]);
     setNotes('');
     setShowPaymentModal(false);
   };
@@ -265,29 +264,21 @@ export default function RetailPOSPage() {
         sold_by: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
       };
 
-      const paperItems = paperList
-        .filter(p => p.amount > 0)
-        .map(p => ({
-          product_id: null,
-          product_name: `Paper: ${p.paper_name || 'paper'}${p.size ? ` (${p.size})` : ''}`,
-          quantity: p.sheets,
-          price: p.rate,
-          total: p.amount,
-          details: null,
-          print_sides: null,
-        }));
-      const saleItems = [
-        ...cart.map(item => ({
+      const saleItems = cart.map(item => {
+        const { p, sheets } = itemPaper(item);
+        return {
           product_id: item.kind === 'product' ? item.id : null,
           product_name: item.name || 'Item',
           quantity: item.qty,
           price: item.price,
           total: lineTotal(item),
           details: item.details?.trim() || null,
-          print_sides: item.sides || null,
-        })),
-        ...paperItems,
-      ];
+          print_sides: isPrintLine(item) ? item.sides || null : null,
+          paper_stock_id: item.paperStockId || null,
+          paper_name: p ? `${p.name}${p.size ? ` (${p.size})` : ''}` : null,
+          sheets: sheets > 0 ? sheets : null,
+        };
+      });
 
       const result = await createPOSSale(saleData as any, saleItems);
       if (result.error) {
@@ -301,6 +292,16 @@ export default function RetailPOSPage() {
     }
   };
 
+  // One full line per item on the receipt: name (sides) — matter · paper (size) × sheets
+  const receiptItemName = (i: CartItem) => {
+    let n = i.name || 'Item';
+    if (isPrintLine(i) && i.sides) n += i.sides === 'two' ? ' (Front+Back)' : ' (1 Side)';
+    if (i.details?.trim()) n += ` — ${i.details.trim()}`;
+    const { p, sheets } = itemPaper(i);
+    if (p) n += ` · ${p.name}${p.size ? ` (${p.size})` : ''}${sheets > 0 ? ` × ${sheets} sh` : ''}`;
+    return n;
+  };
+
   const buildReceiptData = (saleNumber: string): ReceiptData => {
     const now = new Date();
     return {
@@ -312,10 +313,7 @@ export default function RetailPOSPage() {
       time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       customerName: customerName || cmykClients?.find(c => c.id === cmykClientId)?.company || cmykClients?.find(c => c.id === cmykClientId)?.name || undefined,
       customerPhone: customerPhone || undefined,
-      items: [
-        ...cart.map(item => ({ name: receiptItemName(item), qty: item.qty, price: item.price, total: lineTotal(item) })),
-        ...paperList.filter(p => p.amount > 0).map(p => ({ name: `Paper: ${p.paper_name || 'paper'}${p.size ? ` (${p.size})` : ''}`, qty: p.sheets, price: p.rate, total: p.amount })),
-      ],
+      items: cart.map(item => ({ name: receiptItemName(item), qty: item.qty, price: item.price, total: lineTotal(item) })),
       subtotal,
       discountPercent: discount,
       discountAmount,
@@ -542,16 +540,18 @@ export default function RetailPOSPage() {
                         className="flex-1 min-w-0 px-2 py-1.5 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white" />
                     </div>
 
-                    {/* Sides + Qty × Rate − Discount */}
+                    {/* Sides (print lines only) + Qty × Rate − Discount */}
                     <div className="flex items-center gap-1.5 text-xs flex-wrap">
-                      <div className="flex rounded-md border overflow-hidden shrink-0" title="Print sides">
-                        {([['one', '1 Side'], ['two', '2 Side']] as const).map(([val, label]) => (
-                          <button key={val} type="button" onClick={() => setLineSides(item.id, val)}
-                            className={`px-2 py-1 font-medium transition-colors flex items-center gap-1 ${item.sides === val ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
-                            {val === 'two' && <Copy className="w-3 h-3" />}{label}
-                          </button>
-                        ))}
-                      </div>
+                      {isPrintLine(item) && (
+                        <div className="flex rounded-md border overflow-hidden shrink-0" title="Print sides">
+                          {([['one', '1 Side'], ['two', 'Front+Back']] as const).map(([val, label]) => (
+                            <button key={val} type="button" onClick={() => setLineSides(item.id, val)}
+                              className={`px-2 py-1 font-medium transition-colors flex items-center gap-1 ${item.sides === val ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
+                              {val === 'two' && <Copy className="w-3 h-3" />}{label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <span className="text-gray-400 ml-1">Qty</span>
                       <input type="number" min="1" value={item.qty}
                         onChange={e => updateLine(item.id, 'qty', parseInt(e.target.value) || 1)}
@@ -569,6 +569,39 @@ export default function RetailPOSPage() {
                         onChange={e => updateLine(item.id, 'discount', parseFloat(e.target.value) || 0)}
                         className="w-14 px-1.5 py-1 border rounded text-right focus:outline-none focus:ring-2 focus:ring-gray-400" />
                     </div>
+
+                    {/* Paper for THIS item (print lines only) — spec + stock; billed via the item rate above */}
+                    {isPrintLine(item) && (() => {
+                      const { p, sheets } = itemPaper(item);
+                      const over = !!(p && sheets > p.quantity);
+                      return (
+                        <div>
+                          <div className="flex items-center gap-2 text-xs flex-wrap">
+                            <Package className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <select value={item.paperStockId || ''}
+                              onChange={e => updateLine(item.id, 'paperStockId', e.target.value)}
+                              className="flex-1 min-w-[160px] px-2 py-1.5 border rounded text-xs focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
+                              <option value="">Paper for this item (optional)…</option>
+                              {paperStock.map(ps => (
+                                <option key={ps.id} value={ps.id}>
+                                  {ps.name}{ps.size ? ` (${ps.size})` : ''} — {ps.quantity} left
+                                </option>
+                              ))}
+                            </select>
+                            <input type="number" min="0" placeholder="Sheets" value={item.sheetsUsed || ''}
+                              onChange={e => updateLine(item.id, 'sheetsUsed', e.target.value)}
+                              disabled={!item.paperStockId}
+                              className="w-20 px-2 py-1.5 border rounded text-xs text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
+                            <span className="text-gray-400">sheets</span>
+                          </div>
+                          {over && (
+                            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                              <Package className="w-3 h-3" /> Only {p?.quantity} sheets of {p?.name} in stock!
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
                 <button type="button" onClick={addCustomItem}
@@ -578,57 +611,6 @@ export default function RetailPOSPage() {
               </div>
             </div>
 
-            {/* Paper used — multiple papers/sizes; ₹/sheet bills the customer, stock tracks cost */}
-            <div className="bg-white border rounded-md p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Paper <span className="normal-case font-normal text-gray-400">(sheets × ₹/sheet → adds to bill)</span></p>
-              <div className="space-y-2">
-                {paperRows.map((row, i) => {
-                  const p = paperStock.find(x => x.id === row.paperStockId);
-                  const over = !!(p && row.sheets && parseInt(row.sheets) > p.quantity);
-                  const lineAmt = (parseInt(row.sheets) || 0) * (parseFloat(row.rate) || 0);
-                  return (
-                    <div key={i} className="rounded-md border bg-gray-50/60 p-2.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select value={row.paperStockId} onChange={e => updatePaperRow(i, 'paperStockId', e.target.value)}
-                          className="flex-1 min-w-[180px] px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white">
-                          <option value="">Select paper / size…</option>
-                          {paperStock.map(ps => (
-                            <option key={ps.id} value={ps.id}>
-                              {ps.name}{ps.size ? ` (${ps.size})` : ''} — {ps.quantity} left
-                            </option>
-                          ))}
-                        </select>
-                        <input type="number" placeholder="Sheets" value={row.sheets} min="0"
-                          onChange={e => updatePaperRow(i, 'sheets', e.target.value)}
-                          disabled={!row.paperStockId}
-                          className="w-24 px-3 py-2 border rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
-                        <span className="text-gray-500 text-sm">× ₹</span>
-                        <input type="number" placeholder="/sheet" value={row.rate} min="0"
-                          onChange={e => updatePaperRow(i, 'rate', e.target.value)}
-                          disabled={!row.paperStockId}
-                          className="w-24 px-3 py-2 border rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
-                        <span className="ml-auto font-semibold text-primary text-sm">{formatCurrency(lineAmt)}</span>
-                        {paperRows.length > 1 && (
-                          <button type="button" onClick={() => removePaperRow(i)}
-                            className="px-1 text-gray-400 hover:text-red-500 shrink-0" title="Remove">
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                      {over && (
-                        <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-                          <Package className="w-3 h-3" /> Only {p?.quantity} sheets of {p?.name} in stock!
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <button type="button" onClick={addPaperRow}
-                className="mt-2 text-xs text-primary font-medium hover:underline flex items-center gap-1">
-                <Plus className="w-3 h-3" /> Add another paper
-              </button>
-            </div>
           </div>
         </div>
 
@@ -637,36 +619,38 @@ export default function RetailPOSPage() {
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-primary" />
-              <span className="font-semibold">Bill ({cart.length + paperList.filter(p => p.amount > 0).length})</span>
+              <span className="font-semibold">Bill ({cart.length})</span>
             </div>
-            {(cart.length > 0 || paperList.length > 0 || customerName) && (
+            {(cart.length > 0 || customerName) && (
               <button onClick={clearCart} className="text-red-600 text-sm hover:underline">Clear</button>
             )}
           </div>
 
-          {/* Line summary */}
-          <div className="flex-1 p-4 space-y-1.5 lg:overflow-y-auto text-sm">
-            {cart.length === 0 && paperList.filter(p => p.amount > 0).length === 0 ? (
+          {/* Line summary — one full line per item: name · sides · qty, paper below */}
+          <div className="flex-1 p-4 space-y-2 lg:overflow-y-auto text-sm">
+            {cart.length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-6">No items yet</p>
             ) : (
-              <>
-                {cart.map(item => (
-                  <div key={item.id} className="flex justify-between gap-2">
-                    <span className="text-gray-600 truncate">
-                      {item.name || 'Item'}
-                      {item.sides && <span className="text-gray-400"> · {item.sides === 'two' ? '2-side' : '1-side'}</span>}
-                      {item.qty > 1 && <span className="text-gray-400"> × {item.qty}</span>}
-                    </span>
-                    <span className="font-medium shrink-0">{formatCurrency(lineTotal(item))}</span>
+              cart.map(item => {
+                const { p, sheets } = itemPaper(item);
+                return (
+                  <div key={item.id}>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-gray-700 truncate">
+                        {item.name || 'Item'}
+                        {isPrintLine(item) && item.sides && <span className="text-gray-400"> · {item.sides === 'two' ? 'Front+Back' : '1-side'}</span>}
+                        {item.qty > 1 && <span className="text-gray-400"> × {item.qty}</span>}
+                      </span>
+                      <span className="font-medium shrink-0">{formatCurrency(lineTotal(item))}</span>
+                    </div>
+                    {(item.details?.trim() || p) && (
+                      <p className="text-[11px] text-gray-400 truncate">
+                        {item.details?.trim()}{item.details?.trim() && p ? ' · ' : ''}{p ? `${p.name}${p.size ? ` (${p.size})` : ''}${sheets > 0 ? ` × ${sheets} sh` : ''}` : ''}
+                      </p>
+                    )}
                   </div>
-                ))}
-                {paperList.filter(p => p.amount > 0).map((p, i) => (
-                  <div key={i} className="flex justify-between gap-2">
-                    <span className="text-gray-600 truncate">Paper: {p.paper_name}{p.sheets > 1 ? ` × ${p.sheets}` : ''}</span>
-                    <span className="font-medium shrink-0">{formatCurrency(p.amount)}</span>
-                  </div>
-                ))}
-              </>
+                );
+              })
             )}
           </div>
 

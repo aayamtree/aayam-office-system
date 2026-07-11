@@ -774,7 +774,10 @@ export interface POSSaleItem {
   price: number;
   total: number;
   details?: string | null;             // design / matter description (what was printed)
-  print_sides?: 'one' | 'two' | null;  // one side or two side print
+  print_sides?: 'one' | 'two' | null;  // one side or front+back print
+  paper_stock_id?: string | null;      // paper used for this item (stock deducted via sale.papers)
+  paper_name?: string | null;          // denormalized label e.g. "Art Paper 100gsm (12x18)"
+  sheets?: number | null;              // sheets of that paper consumed by this item
 }
 
 // Quotation Line Item

@@ -43,8 +43,8 @@ export default function POSSalesListPage() {
       customerName: s.customer_name || s.cmyk_client?.company || s.cmyk_client?.name || undefined,
       customerPhone: s.customer_phone || undefined,
       items: (s.items || []).map((it: any) => ({
-        // Rebuild the printed item label: name + sides + design/matter details
-        name: `${it.product_name || 'Item'}${it.print_sides ? (it.print_sides === 'two' ? ' (Two Side)' : ' (One Side)') : ''}${it.details ? ` — ${it.details}` : ''}`,
+        // Rebuild the printed item label: name + sides + design/matter details + paper
+        name: `${it.product_name || 'Item'}${it.print_sides ? (it.print_sides === 'two' ? ' (Front+Back)' : ' (1 Side)') : ''}${it.details ? ` — ${it.details}` : ''}${it.paper_name ? ` · ${it.paper_name}${it.sheets ? ` × ${it.sheets} sh` : ''}` : ''}`,
         qty: it.quantity,
         price: it.price,
         total: it.total,
