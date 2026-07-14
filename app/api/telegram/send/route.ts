@@ -12,8 +12,9 @@ import { createClient } from '@supabase/supabase-js';
  *  - target chat IDs are looked up server-side
  *
  * Body: {
- *   mode: 'direct' | 'broadcast' | 'mention' | 'share',
+ *   mode: 'direct' | 'broadcast' | 'mention' | 'share' | 'group',
  *   targetProfileIds?: string[],  // required for direct/mention/share
+ *   department?: string,          // required for group mode (design/print/dispatch/admin/cmyk)
  *   text?: string,
  *   url?: string,       // deep link → "Open in app" button (share mode)
  *   photoUrl?: string,  // sends as photo with caption
@@ -82,6 +83,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only app links can be shared' }, { status: 400 });
     }
     const fullUrl = url?.startsWith('/') ? `${APP_URL}${url}` : url;
+
+    // 2b. GROUP MODE — send to a department's Telegram group (not personal DMs)
+    if (mode === 'group') {
+      const department: string = body.department || '';
+      if (!['design', 'print', 'dispatch', 'admin', 'cmyk'].includes(department)) {
+        return NextResponse.json({ error: 'Invalid department' }, { status: 400 });
+      }
+      const { data: groups } = await service
+        .from('telegram_groups')
+        .select('chat_id')
+        .eq('department', department)
+        .eq('is_active', true);
+      if (!groups?.length) {
+        return NextResponse.json({ sent: 0, error: 'No Telegram group mapped to this department' });
+      }
+
+      const gRole = sender.role ? sender.role.charAt(0).toUpperCase() + sender.role.slice(1) : '';
+      const gName = esc(sender.full_name || 'Team member');
+      const gMsg = `💬 <b>${gName}</b> <i>(${gRole})</i>:\n${esc(text)}`;
+      const gMarkup = fullUrl
+        ? { inline_keyboard: [[{ text: '🚀 Open in app', url: fullUrl }]] }
+        : undefined;
+
+      const gResults = await Promise.all(
+        groups.map((g) => {
+          if (photoUrl) {
+            return tgSend('sendPhoto', {
+              chat_id: g.chat_id,
+              photo: photoUrl,
+              caption: gMsg,
+              parse_mode: 'HTML',
+              ...(gMarkup ? { reply_markup: gMarkup } : {}),
+            });
+          }
+          if (fileUrl) {
+            return tgSend('sendMessage', {
+              chat_id: g.chat_id,
+              text: `📎 <b>${gName}</b>: <a href="${fileUrl}">${esc(fileName || 'file')}</a>`,
+              parse_mode: 'HTML',
+              ...(gMarkup ? { reply_markup: gMarkup } : {}),
+            });
+          }
+          return tgSend('sendMessage', {
+            chat_id: g.chat_id,
+            text: gMsg,
+            parse_mode: 'HTML',
+            ...(gMarkup ? { reply_markup: gMarkup } : {}),
+          });
+        })
+      );
+      const gSent = gResults.filter((r) => r?.ok).length;
+      return NextResponse.json({ sent: gSent, total: groups.length });
+    }
 
     // 3. Resolve targets
     let targetQuery = service

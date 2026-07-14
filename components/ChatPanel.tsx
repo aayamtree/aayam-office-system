@@ -21,6 +21,37 @@ interface TeamMember {
   telegram_chat_id?: string;
 }
 
+interface ChatRoom {
+  id: string;
+  name: string; // 'general' | department key
+  type: string; // 'group' | 'department'
+  label: string;
+}
+
+// Department rooms are bridged two-way with the Telegram groups.
+const DEPT_LABELS: Record<string, string> = {
+  design: '🎨 Design',
+  print: '🖨️ Print',
+  dispatch: '📦 Dispatch',
+  admin: '👑 Admin',
+  cmyk: '🖨️ CMYK',
+};
+
+// Which department rooms each role can see (everyone sees General)
+function visibleDepartments(role: string | undefined): string[] {
+  switch (role) {
+    case 'admin': return ['design', 'print', 'dispatch', 'admin', 'cmyk'];
+    case 'manager': return ['design', 'print', 'dispatch'];
+    case 'finance': return ['admin'];
+    case 'designer': return ['design'];
+    case 'operator':
+    case 'production': return ['print'];
+    case 'cmyk': return ['print', 'cmyk'];
+    case 'dispatch': return ['dispatch'];
+    default: return [];
+  }
+}
+
 // SECURITY FIX 2026-07-06: the bot token was hardcoded here and shipped to
 // every browser. All Telegram sends now go through /api/telegram/send
 // (server-side token, verified caller).
@@ -133,6 +164,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [channelId, setChannelId] = useState<string | null>(null);
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [mentionMatches, setMentionMatches] = useState<TeamMember[]>([]);
@@ -142,6 +174,9 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const realtimeRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const activeRoom = rooms.find((r) => r.id === channelId) || null;
+  const isDeptRoom = activeRoom?.type === 'department';
 
   // ── init ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -166,7 +201,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     }
   }, [input, team]);
 
-  // ── load channel + team ────────────────────────────────────────────────
+  // ── load rooms + team ──────────────────────────────────────────────────
   const loadEverything = async () => {
     // Team members
     const { data: members } = await supabase
@@ -187,17 +222,39 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
     if (!ch) {
       const { data: newCh } = await supabase
         .from('chat_channels')
-        .insert({ name: 'General', type: 'group', created_by: profile?.id })
+        .insert({ name: 'General', type: 'group' })
         .select('id')
         .single();
       ch = newCh;
     }
-
     if (!ch) return;
-    const cid = ch.id;
-    setChannelId(cid);
 
-    // Messages
+    // Department rooms (bridged with Telegram groups) — filtered by role
+    const allowed = visibleDepartments(profile?.role);
+    const { data: deptChannels } = await supabase
+      .from('chat_channels')
+      .select('id, name, type')
+      .eq('type', 'department');
+
+    const roomList: ChatRoom[] = [
+      { id: ch.id, name: 'general', type: 'group', label: '💬 General' },
+      ...(deptChannels || [])
+        .filter((d) => allowed.includes(d.name))
+        .sort((a, b) => allowed.indexOf(a.name) - allowed.indexOf(b.name))
+        .map((d) => ({ id: d.id, name: d.name, type: d.type, label: DEPT_LABELS[d.name] || d.name })),
+    ];
+    setRooms(roomList);
+
+    // Keep the current room if still valid, else open General
+    const current = roomList.find((r) => r.id === channelId);
+    openRoom(current ? current.id : ch.id);
+  };
+
+  // ── open a room: load messages + subscribe realtime ────────────────────
+  const openRoom = async (cid: string) => {
+    setChannelId(cid);
+    setMessages([]);
+
     const { data: msgs } = await supabase
       .from('chat_messages')
       .select('id, sender_id, content, created_at, sender:profiles!chat_messages_sender_id_fkey(full_name, role)')
@@ -206,7 +263,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       .limit(100);
     if (msgs) setMessages(msgs as unknown as Message[]);
 
-    // Realtime
+    realtimeRef.current?.unsubscribe();
     realtimeRef.current = supabase
       .channel(`team-chat-${cid}`)
       .on(
@@ -228,7 +285,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
       .subscribe();
   };
 
-  // ── Telegram relay ─────────────────────────────────────────────────────
+  // ── Telegram relay (General room → personal DMs) ───────────────────────
   // If specificTargets provided → only relay to them. Otherwise → relay to all.
   const relayText = async (text: string, specificTargets?: TeamMember[]) => {
     if (specificTargets) {
@@ -242,10 +299,13 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
 
   const relayFile = async (file: File, publicUrl: string) => {
     const isImage = file.type.startsWith('image/');
+    const base = isDeptRoom && activeRoom
+      ? { mode: 'group', department: activeRoom.name }
+      : { mode: 'broadcast' };
     await telegramSend(
       isImage
-        ? { mode: 'broadcast', photoUrl: publicUrl, text: '📷' }
-        : { mode: 'broadcast', fileUrl: publicUrl, fileName: file.name }
+        ? { ...base, photoUrl: publicUrl, text: '📷' }
+        : { ...base, fileUrl: publicUrl, fileName: file.name }
     );
   };
 
@@ -280,15 +340,16 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
         prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]
       );
 
-      // Relay: if message has @mentions, only send to those people on Telegram
-      // Otherwise broadcast to everyone
       try {
-        if (mentionedNames.length > 0) {
+        if (isDeptRoom && activeRoom) {
+          // Department room → its Telegram group
+          await telegramSend({ mode: 'group', department: activeRoom.name, text: content });
+        } else if (mentionedNames.length > 0) {
+          // General: @mentions → only those people's DMs
           const mentionedMembers = team.filter(
             (t) => t.telegram_chat_id &&
               mentionedNames.some((n) => (t.full_name || '').toLowerCase().startsWith(n))
           );
-          // If we matched specific people, relay only to them; otherwise fall back to all
           await relayText(content, mentionedMembers.length > 0 ? mentionedMembers : undefined);
         } else {
           await relayText(content);
@@ -378,7 +439,9 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>Aayam Team</div>
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>{team.length + 1} members · General</div>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>
+              {activeRoom?.label || 'General'}{isDeptRoom ? ' · synced with Telegram group' : ` · ${team.length + 1} members`}
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -388,20 +451,48 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
           </button>
         </div>
 
+        {/* ── Room tabs ── */}
+        {rooms.length > 1 && (
+          <div style={{ background: '#17212b', display: 'flex', gap: 6, padding: '8px 12px', overflowX: 'auto', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+            {rooms.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => { if (r.id !== channelId) openRoom(r.id); }}
+                style={{
+                  background: r.id === channelId ? '#2b5278' : 'rgba(255,255,255,0.06)',
+                  color: r.id === channelId ? '#fff' : 'rgba(255,255,255,0.65)',
+                  border: 'none',
+                  borderRadius: 14,
+                  padding: '5px 12px',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* ── Messages ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 40, padding: '0 20px' }}>
-              {profile?.role === 'admin'
-                ? 'No messages yet. Say hi! 👋'
-                : 'No messages for you yet.\nYou\'ll see messages when someone tags you with @YourName.'}
+              {isDeptRoom
+                ? 'No messages yet in this room.\nMessages here go to the Telegram group too. 👋'
+                : profile?.role === 'admin'
+                  ? 'No messages yet. Say hi! 👋'
+                  : 'No messages for you yet.\nYou\'ll see messages when someone tags you with @YourName.'}
             </div>
           )}
           {messages.map((msg, i) => {
             const isMe = msg.sender_id === profile?.id;
             const prev = messages[i - 1];
             const showSender = !isMe && msg.sender_id !== prev?.sender_id;
-            const senderName = msg.sender?.full_name || msg.sender_id?.slice(0, 6) || '?';
+            const senderName = msg.sender?.full_name || msg.sender_id?.slice(0, 6) || 'Telegram';
 
             return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8, marginTop: showSender && !isMe ? 10 : 2 }}>
@@ -486,7 +577,7 @@ export default function ChatPanel({ open, onClose }: { open: boolean; onClose: (
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message… type @ to mention someone"
+            placeholder={isDeptRoom ? `Message ${activeRoom?.label || 'room'} (goes to Telegram group)…` : 'Message… type @ to mention someone'}
             rows={1}
             style={{
               flex: 1,

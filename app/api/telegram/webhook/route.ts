@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       const title = message.chat.title || 'Unnamed group';
       const { data: existing } = await supabaseAdmin
         .from('telegram_groups')
-        .select('id')
+        .select('id, department')
         .eq('chat_id', groupChatId)
         .maybeSingle();
       await supabaseAdmin
@@ -94,6 +94,37 @@ export async function POST(req: NextRequest) {
           groupChatId,
           `✅ <b>Aayam bot connected to "${title}"</b>\n\nAdmin: assign this group to a department in the app → Settings → Telegram Groups. Job updates for that department will then arrive here automatically. 🚀`
         );
+      }
+
+      // ── TWO-WAY BRIDGE: mirror group text into the app's department room ──
+      // (Requires bot privacy mode OFF, otherwise only /commands arrive here.)
+      const groupText: string = message.text || '';
+      if (existing?.department && groupText && !groupText.startsWith('/')) {
+        const { data: channel } = await supabaseAdmin
+          .from('chat_channels')
+          .select('id')
+          .eq('type', 'department')
+          .eq('name', existing.department)
+          .maybeSingle();
+        if (channel) {
+          // Match the Telegram sender to a staff profile (private chat id == user id)
+          const fromId = message.from?.id ? String(message.from.id) : null;
+          let senderProfileId: string | null = null;
+          if (fromId) {
+            const { data: senderProfile } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .eq('telegram_chat_id', fromId)
+              .maybeSingle();
+            senderProfileId = senderProfile?.id || null;
+          }
+          const senderLabel = message.from?.first_name || 'Telegram user';
+          await supabaseAdmin.from('chat_messages').insert({
+            channel_id: channel.id,
+            sender_id: senderProfileId,
+            content: senderProfileId ? `📱 ${groupText}` : `📱 ${senderLabel}: ${groupText}`,
+          });
+        }
       }
       return NextResponse.json({ ok: true });
     }
