@@ -45,6 +45,11 @@ export async function GET(request: Request) {
             .select('id')
             .limit(1);
 
+        // Also keep the Telegram webhook lambda warm so incoming group
+        // messages don't pay a cold-start delay (best-effort, GET is a no-op)
+        fetch('https://aayam-office-system.vercel.app/api/telegram/webhook', { method: 'GET' })
+            .catch(() => { /* warm-up only */ });
+
         const responseTime = Date.now() - start;
 
         if (error) {
