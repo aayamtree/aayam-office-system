@@ -38,6 +38,10 @@
         {
             "path": "/api/cron/backup",
             "schedule": "30 20 * * 6"
+        },
+        {
+            "path": "/api/cron/telegram-digest",
+            "schedule": "30 3 * * 1-6"
         }
     ]
 }

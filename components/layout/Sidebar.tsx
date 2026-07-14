@@ -260,6 +260,7 @@ const menuItems: MenuItem[] = [
       { name: 'General', href: '/admin/settings' },
       { name: 'Company Info', href: '/admin/settings/company' },
       { name: 'Notifications', href: '/admin/settings/notifications' },
+      { name: 'Telegram Groups', href: '/admin/settings/telegram-groups' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
       { name: 'Google Drive', href: '/admin/settings/drive' },

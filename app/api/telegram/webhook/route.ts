@@ -30,8 +30,55 @@ export async function POST(req: NextRequest) {
     );
 
     const body = await req.json();
+
+    // ── GROUP REGISTRATION ──
+    // Bot added to / removed from a group → keep telegram_groups in sync.
+    const memberUpdate = body?.my_chat_member;
+    if (memberUpdate?.chat && ['group', 'supergroup'].includes(memberUpdate.chat.type)) {
+      const status = memberUpdate.new_chat_member?.status;
+      const groupChatId = String(memberUpdate.chat.id);
+      const title = memberUpdate.chat.title || 'Unnamed group';
+      if (status === 'member' || status === 'administrator') {
+        await supabaseAdmin
+          .from('telegram_groups')
+          .upsert(
+            { chat_id: groupChatId, title, is_active: true, updated_at: new Date().toISOString() },
+            { onConflict: 'chat_id' }
+          );
+        await sendMessage(
+          groupChatId,
+          `✅ <b>Aayam bot added to "${title}"</b>\n\nAdmin: assign this group to a department in the app → Settings → Telegram Groups. After that, job updates for that department will arrive here automatically. 🚀`
+        );
+      } else if (status === 'left' || status === 'kicked') {
+        await supabaseAdmin
+          .from('telegram_groups')
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .eq('chat_id', groupChatId);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     const message = body?.message;
     if (!message) return NextResponse.json({ ok: true });
+
+    // Group upgraded to supergroup → Telegram changes the chat id; follow it.
+    if (message.migrate_to_chat_id && message.chat?.id) {
+      await supabaseAdmin
+        .from('telegram_groups')
+        .update({ chat_id: String(message.migrate_to_chat_id), updated_at: new Date().toISOString() })
+        .eq('chat_id', String(message.chat.id));
+      return NextResponse.json({ ok: true });
+    }
+
+    // Messages inside groups: keep the group title fresh, but NEVER run the
+    // 1:1 staff relay / welcome logic there (no spam in group rooms).
+    if (message.chat && message.chat.type !== 'private') {
+      await supabaseAdmin
+        .from('telegram_groups')
+        .update({ title: message.chat.title || null, updated_at: new Date().toISOString() })
+        .eq('chat_id', String(message.chat.id));
+      return NextResponse.json({ ok: true });
+    }
 
     const chatId = message.chat?.id;
     const text: string = message.text || '';
