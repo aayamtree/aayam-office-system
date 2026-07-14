@@ -63,9 +63,8 @@ export async function POST(req: NextRequest) {
       .eq('department', department)
       .eq('is_active', true)
       .eq('alerts_enabled', true);
-    if (!groups?.length) return NextResponse.json({ skipped: 'no group mapped' });
 
-    // 4. Compose + send
+    // 4. Compose
     const client = Array.isArray(job.clients) ? job.clients[0] : job.clients;
     const clientName = client?.company || client?.name || '—';
     const emoji = STAGE_EMOJI[stage] || '🔔';
@@ -74,17 +73,40 @@ export async function POST(req: NextRequest) {
       `${escapeHtml(job.project_name || '')}\n` +
       `👤 ${escapeHtml(clientName)}${job.quantity ? ` · Qty ${job.quantity}` : ''}`;
 
+    // 5. Send to Telegram group(s), if any are mapped
     const results = await Promise.all(
-      groups.map((g) => sendToChat(g.chat_id, msg, `/admin/jobs/${job.id}`))
+      (groups || []).map((g) => sendToChat(g.chat_id, msg, `/admin/jobs/${job.id}`))
     );
     const sent = results.filter(Boolean).length;
 
-    // 5. Log for dedupe/audit (only if at least one send succeeded)
-    if (sent > 0) {
+    // 6. Mirror the alert into the app's department chat room (for PC staff)
+    let mirrored = false;
+    const { data: channel } = await service
+      .from('chat_channels')
+      .select('id')
+      .eq('type', 'department')
+      .eq('name', department)
+      .maybeSingle();
+    if (channel) {
+      const plain =
+        `${emoji} ${job.job_number || 'Job'} → ${getStageName(stage)}\n` +
+        `${job.project_name || ''}\n` +
+        `👤 ${clientName}${job.quantity ? ` · Qty ${job.quantity}` : ''}\n` +
+        `https://aayam-office-system.vercel.app/admin/jobs/${job.id}`;
+      const { error: mirrorErr } = await service.from('chat_messages').insert({
+        channel_id: channel.id,
+        sender_id: null,
+        content: plain,
+      });
+      mirrored = !mirrorErr;
+    }
+
+    // 7. Log for dedupe/audit (if the alert went anywhere)
+    if (sent > 0 || mirrored) {
       await service.from('telegram_stage_alerts').insert({ job_id: jobId, stage });
     }
 
-    return NextResponse.json({ sent });
+    return NextResponse.json({ sent, mirrored });
   } catch (err) {
     console.error('notify-stage error:', err);
     return NextResponse.json({ ok: false }, { status: 200 });
