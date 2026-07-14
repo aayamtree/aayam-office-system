@@ -70,13 +70,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Messages inside groups: keep the group title fresh, but NEVER run the
-    // 1:1 staff relay / welcome logic there (no spam in group rooms).
-    if (message.chat && message.chat.type !== 'private') {
+    // Messages inside groups: register/refresh the group (UPSERT — this is
+    // also the fallback registration path, since older webhook registrations
+    // didn't include my_chat_member updates). NEVER run the 1:1 staff relay /
+    // welcome logic in groups (no spam in group rooms).
+    if (message.chat && ['group', 'supergroup'].includes(message.chat.type)) {
+      const groupChatId = String(message.chat.id);
+      const title = message.chat.title || 'Unnamed group';
+      const { data: existing } = await supabaseAdmin
+        .from('telegram_groups')
+        .select('id')
+        .eq('chat_id', groupChatId)
+        .maybeSingle();
       await supabaseAdmin
         .from('telegram_groups')
-        .update({ title: message.chat.title || null, updated_at: new Date().toISOString() })
-        .eq('chat_id', String(message.chat.id));
+        .upsert(
+          { chat_id: groupChatId, title, is_active: true, updated_at: new Date().toISOString() },
+          { onConflict: 'chat_id' }
+        );
+      // First time we see this group → confirm so the admin knows it worked
+      if (!existing) {
+        await sendMessage(
+          groupChatId,
+          `✅ <b>Aayam bot connected to "${title}"</b>\n\nAdmin: assign this group to a department in the app → Settings → Telegram Groups. Job updates for that department will then arrive here automatically. 🚀`
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+    if (message.chat && message.chat.type !== 'private') {
       return NextResponse.json({ ok: true });
     }
 
