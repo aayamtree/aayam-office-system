@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Plus, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Check, AlertCircle, Pencil, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Fallback list only used if the expense_categories table can't be loaded
@@ -21,8 +21,9 @@ const FALLBACK_CATEGORIES = [
 export default function QuickExpensePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
+    const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [editingExpense, setEditingExpense] = useState<any>(null);
     const [vendors, setVendors] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
     const [cashAccounts, setCashAccounts] = useState<any[]>([]);
@@ -99,11 +100,77 @@ export default function QuickExpensePage() {
         setRecentExpenses(data || []);
     };
 
+    // Notes are stored as "Category: X\n<description>" — parse them back for editing
+    const parseNotes = (notes: string | null) => {
+        if (!notes) return { category: '', description: '' };
+        const m = notes.match(/^Category:\s*(.*)$/m);
+        if (m) {
+            return { category: m[1].trim(), description: notes.split('\n').slice(1).join('\n') };
+        }
+        return { category: '', description: notes };
+    };
+
+    const resetForm = () => {
+        setFormData({
+            category: '',
+            amount: '',
+            description: '',
+            payment_mode: 'cash',
+            vendor_id: '',
+            reference_number: '',
+            payment_date: new Date().toISOString().split('T')[0],
+            account_id: cashAccounts[0]?.id || ''
+        });
+    };
+
+    const startEdit = (expense: any) => {
+        const { category, description } = parseNotes(expense.notes);
+        // The reference field falls back to "Category - description" when left
+        // blank at entry time — treat that fallback as empty.
+        const fallbackRef = `${category} - ${description}`;
+        const ref = expense.reference_number && expense.reference_number !== fallbackRef
+            ? expense.reference_number : '';
+        setFormData({
+            category,
+            amount: String(expense.amount ?? ''),
+            description,
+            payment_mode: expense.payment_mode || (expense.cash_account_id ? 'cash' : 'bank_transfer'),
+            vendor_id: expense.vendor_id || '',
+            reference_number: ref,
+            payment_date: expense.payment_date,
+            account_id: expense.cash_account_id || expense.bank_account_id || ''
+        });
+        setEditingExpense(expense);
+        setError('');
+        setSuccess('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingExpense(null);
+        resetForm();
+    };
+
+    const handleDelete = async (expense: any) => {
+        if (!confirm(`Delete this expense of ₹${expense.amount?.toLocaleString('en-IN')}?\nThe account balance and ledger entry will be reversed.`)) return;
+        setError('');
+        const { error: delError } = await supabase.rpc('fn_delete_expense', { p_payment_id: expense.id });
+        if (delError) {
+            setError(delError.message || 'Failed to delete expense');
+            return;
+        }
+        if (editingExpense?.id === expense.id) cancelEdit();
+        setSuccess('Expense deleted and balances reversed.');
+        setTimeout(() => setSuccess(''), 3000);
+        loadRecentExpenses();
+        router.refresh();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        setSuccess(false);
+        setSuccess('');
 
         try {
             // Validation
@@ -124,8 +191,7 @@ export default function QuickExpensePage() {
             const catMatch = categories.find((c) => c.name === formData.category);
             const categoryId = catMatch && /^[0-9a-f-]{36}$/i.test(catMatch.id) ? catMatch.id : null;
 
-            // Call the ledger-posting RPC: records the payment AND posts the double entry
-            const { data, error: rpcError } = await supabase.rpc('fn_record_expense', {
+            const rpcParams = {
                 p_category_id: categoryId,
                 p_vendor_id: vendorId,
                 p_amount: parseFloat(formData.amount),
@@ -135,30 +201,27 @@ export default function QuickExpensePage() {
                 p_cash_account_id: formData.payment_mode === 'cash' ? formData.account_id : null,
                 p_reference: formData.reference_number || `${formData.category} - ${formData.description}`,
                 p_notes: `Category: ${formData.category}\n${formData.description}`
-            });
+            };
+
+            // Record new OR update existing: both RPCs post/rebuild the double
+            // entry and keep account balances in sync.
+            const { error: rpcError } = editingExpense
+                ? await supabase.rpc('fn_update_expense', { p_payment_id: editingExpense.id, ...rpcParams })
+                : await supabase.rpc('fn_record_expense', rpcParams);
 
             if (rpcError) throw rpcError;
 
-            setSuccess(true);
+            setSuccess(editingExpense ? 'Expense updated successfully!' : 'Expense recorded successfully!');
+            setEditingExpense(null);
             loadRecentExpenses();
             // Push the new expense onto any cached server views (Finance Overview, etc.)
             // so the figures update immediately instead of staying stale.
             router.refresh();
 
-            // Reset form
-            setFormData({
-                category: '',
-                amount: '',
-                description: '',
-                payment_mode: 'cash',
-                vendor_id: '',
-                reference_number: '',
-                payment_date: new Date().toISOString().split('T')[0],
-                account_id: cashAccounts[0]?.id || ''
-            });
+            resetForm();
 
             // Clear success message after 3 seconds
-            setTimeout(() => setSuccess(false), 3000);
+            setTimeout(() => setSuccess(''), 3000);
 
         } catch (err: any) {
             setError(err.message || 'Failed to record expense');
@@ -199,12 +262,32 @@ export default function QuickExpensePage() {
                 {/* Main Form */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-md border p-4 md:p-4">
-                        <h2 className="text-section mb-4">Add New Expense</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-section">
+                                {editingExpense ? `Edit Expense${editingExpense.payment_number ? ` — ${editingExpense.payment_number}` : ''}` : 'Add New Expense'}
+                            </h2>
+                            {editingExpense && (
+                                <button
+                                    type="button"
+                                    onClick={cancelEdit}
+                                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 border rounded-md px-2 py-1 hover:bg-gray-50"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    Cancel edit
+                                </button>
+                            )}
+                        </div>
+
+                        {editingExpense && (
+                            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+                                Editing a recorded expense — the account balance and ledger entry will be adjusted automatically.
+                            </div>
+                        )}
 
                         {success && (
                             <div className="mb-4 p-3 md:p-4 bg-white border border-green-200 rounded-md flex items-center gap-2 text-sm md:text-base text-green-800">
                                 <Check className="w-4 h-4 md:w-4.5 md:h-4.5 flex-shrink-0" />
-                                <span>Expense recorded successfully!</span>
+                                <span>{success}</span>
                             </div>
                         )}
 
@@ -364,6 +447,11 @@ export default function QuickExpensePage() {
                                 >
                                     {loading ? (
                                         <>Processing...</>
+                                    ) : editingExpense ? (
+                                        <>
+                                            <Check className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                                            Update Expense
+                                        </>
                                     ) : (
                                         <>
                                             <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
@@ -373,7 +461,7 @@ export default function QuickExpensePage() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => router.back()}
+                                    onClick={() => editingExpense ? cancelEdit() : router.back()}
                                     className="px-4 py-2 border rounded-md hover:bg-gray-50 text-sm font-medium"
                                 >
                                     Cancel
@@ -392,7 +480,12 @@ export default function QuickExpensePage() {
                                 <p className="text-sm text-gray-400 text-center py-4">No recent expenses</p>
                             ) : (
                                 recentExpenses.map((expense) => (
-                                    <div key={expense.id} className="p-3 bg-gray-50 rounded-md">
+                                    <div
+                                        key={expense.id}
+                                        className={`p-3 rounded-md ${editingExpense?.id === expense.id
+                                            ? 'bg-amber-50 border border-amber-300'
+                                            : 'bg-gray-50'}`}
+                                    >
                                         <div className="flex justify-between items-start mb-1">
                                             <p className="font-medium text-sm truncate flex-1 mr-2">
                                                 {expense.vendors?.name || 'Expense'}
@@ -402,9 +495,29 @@ export default function QuickExpensePage() {
                                             </p>
                                         </div>
                                         <p className="text-xs text-gray-500">{expense.payment_mode}</p>
-                                        <p className="text-xs text-gray-400">
-                                            {new Date(expense.payment_date).toLocaleDateString('en-IN')}
-                                        </p>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <p className="text-xs text-gray-400">
+                                                {new Date(expense.payment_date).toLocaleDateString('en-IN')}
+                                            </p>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEdit(expense)}
+                                                    title="Edit expense"
+                                                    className="p-1.5 rounded hover:bg-white text-gray-400 hover:text-gray-700"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDelete(expense)}
+                                                    title="Delete expense"
+                                                    className="p-1.5 rounded hover:bg-white text-gray-400 hover:text-red-600"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))
                             )}
