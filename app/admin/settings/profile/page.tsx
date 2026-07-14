@@ -200,20 +200,39 @@ export default function ProfileSettingsPage() {
                                 </button>
                             </div>
                         ) : (
-                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md space-y-2">
-                                <p className="text-sm text-blue-700">Tap the button below on your phone to link your Telegram and receive notifications.</p>
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md space-y-3">
+                                <p className="text-sm text-blue-700 font-medium">
+                                    📱 Easiest way: scan this QR code with your phone camera — it opens Telegram with your personal link code. Then press <b>Start</b>.
+                                </p>
                                 {telegramLink && (
-                                    <a
-                                        href={telegramLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
-                                    >
-                                        <ExternalLink className="w-4 h-4" />
-                                        Link Telegram
-                                    </a>
+                                    <div className="flex items-start gap-4 flex-wrap">
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(telegramLink)}`}
+                                            alt="Scan with your phone to link Telegram"
+                                            width={160}
+                                            height={160}
+                                            className="rounded-md border border-blue-200 bg-white p-1 flex-shrink-0"
+                                        />
+                                        <div className="space-y-2 min-w-[200px] flex-1">
+                                            <p className="text-xs text-blue-600">
+                                                Or, if Telegram is installed on this device, use the button:
+                                            </p>
+                                            <a
+                                                href={telegramLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                Link Telegram
+                                            </a>
+                                            <p className="text-xs text-blue-500">
+                                                The button only works where the Telegram app is installed — on office PCs use the QR instead.
+                                            </p>
+                                        </div>
+                                    </div>
                                 )}
-                                <p className="text-xs text-blue-500">After tapping, press Start in Telegram. Then come back and refresh this page.</p>
+                                <p className="text-xs text-blue-500">After pressing Start in Telegram, come back and refresh this page.</p>
                             </div>
                         )}
                     </div>
