@@ -777,39 +777,36 @@ export default function VendorPurchasesPage() {
                 <input type="number" value={payForm.amount || ''} onChange={(e) => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })}
                   className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Payment Date</label>
-                  <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Mode</label>
-                  <select value={payForm.mode} onChange={(e) => setPayForm({ ...payForm, mode: e.target.value })}
-                    className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="upi">UPI</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Payment Date</label>
+                <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
               </div>
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Pay From</label>
-                <div className="flex gap-2 mt-1 mb-2">
-                  <button type="button" onClick={() => { const f = (bankAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'bank', accountId: f ? f.id : '' }); }}
-                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'bank' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Bank</button>
-                  <button type="button" onClick={() => { const f = (cashAccounts || [])[0]; setPayForm({ ...payForm, accountKind: 'cash', accountId: f ? f.id : '' }); }}
-                    className={`flex-1 py-1.5 text-sm rounded-md border ${payForm.accountKind === 'cash' ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600'}`}>Cash</button>
-                </div>
-                <select value={payForm.accountId} onChange={(e) => setPayForm({ ...payForm, accountId: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <select value={payForm.accountId} onChange={(e) => {
+                    const id = e.target.value;
+                    const isCash = (cashAccounts || []).some((a: any) => a.id === id);
+                    setPayForm({ ...payForm, accountId: id, accountKind: isCash ? 'cash' : 'bank', mode: isCash ? 'cash' : 'bank_transfer' });
+                  }}
+                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                   <option value="">Select account…</option>
-                  {((payForm.accountKind === 'bank' ? bankAccounts : cashAccounts) || []).map((a: any) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                  {(cashAccounts || []).length > 0 && (
+                    <optgroup label="Cash">
+                      {cashAccounts.map((a: any) => (
+                        <option key={a.id} value={a.id}>{a.name} (₹{(a.current_balance || 0).toLocaleString('en-IN')})</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {(bankAccounts || []).length > 0 && (
+                    <optgroup label="Bank">
+                      {bankAccounts.map((a: any) => (
+                        <option key={a.id} value={a.id}>{a.name} (₹{(a.current_balance || 0).toLocaleString('en-IN')})</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
+                <p className="text-xs text-gray-400 mt-1">Payment mode is set automatically from the account.</p>
               </div>
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Reference (optional)</label>

@@ -411,6 +411,7 @@ export interface PaymentReceived extends BaseEntity {
   payment_date: string;
 
   bank_account_id?: string;
+  cash_account_id?: string;
   reference_number?: string;
 
   notes?: string;

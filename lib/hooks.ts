@@ -2467,10 +2467,12 @@ export function usePaymentsReceived() {
       p_payment_mode: payment.payment_mode,
       p_payment_date: payment.payment_date,
       p_bank_account_id: payment.bank_account_id ?? null,
+      p_cash_account_id: payment.cash_account_id ?? null,
       p_reference: payment.reference_number ?? null,
       p_notes: payment.notes ?? null,
       p_invoice_id: payment.invoice_id ?? null,
       p_attachment_url: payment.attachment_url ?? null,
+      p_job_id: (payment as any).job_id ?? null,
     });
 
     if (!rpcError) {
@@ -2489,6 +2491,7 @@ export function usePaymentsReceived() {
         payment_mode: payment.payment_mode,
         payment_date: payment.payment_date,
         bank_account_id: payment.bank_account_id ?? null,
+        cash_account_id: payment.cash_account_id ?? null,
         reference_number: payment.reference_number ?? null,
         notes: payment.notes ?? null,
         invoice_id: payment.invoice_id ?? null,

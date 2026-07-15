@@ -12,7 +12,8 @@ import {
   Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload
 } from 'lucide-react';
 import {
-  useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible
+  useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible,
+  useBankAccounts, useCashAccounts
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { exportToCSV, JOB_COLUMNS } from '@/lib/csv-export';
@@ -160,6 +161,8 @@ export default function JobsPage() {
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();
   const { createPaymentReceived } = usePaymentsReceived();
+  const { bankAccounts } = useBankAccounts();
+  const { cashAccounts } = useCashAccounts();
 
   const loading = jobsLoading; // Main loading state
   const confirm = useConfirm();
@@ -272,6 +275,7 @@ export default function JobsPage() {
   const [expandedStages, setExpandedStages] = useState<string[]>(stages.map(s => s.id));
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
+  const [paymentAccountId, setPaymentAccountId] = useState('');
   const [saving, setSaving] = useState(false);
   const [sendToPrinterData, setSendToPrinterData] = useState({ vendor_id: '', machine_id: '', notes: '' });
   const [sendingToPrinter, setSendingToPrinter] = useState(false);
@@ -510,21 +514,39 @@ export default function JobsPage() {
   const handleAddPayment = (job: Job) => {
     setSelectedJob(job);
     setPaymentAmount(0);
+    setPaymentAccountId('');
+    setPaymentMode('cash');
     setShowPaymentModal(true);
+  };
+
+  // Single "Pay To" dropdown: pick the cash/bank account the money actually
+  // landed in; payment mode is derived automatically so the ledger stays in sync.
+  const handlePaymentAccountChange = (id: string) => {
+    const isCash = cashAccounts.some((a: any) => a.id === id);
+    setPaymentAccountId(id);
+    setPaymentMode(isCash ? 'cash' : 'bank_transfer');
   };
 
   const submitPayment = async () => {
     if (!selectedJob || paymentAmount <= 0) return;
+    if (!paymentAccountId) {
+      toast.error('Please select which account received the payment');
+      return;
+    }
 
     try {
-      // 1. Record detailed payment history
+      const isCash = cashAccounts.some((a: any) => a.id === paymentAccountId);
+      // 1. Record detailed payment history — also posts to the cash/bank
+      // ledger (balance update + transaction row) via record_payment_received.
       await createPaymentReceived({
         job_id: selectedJob.id,
         client_id: selectedJob.client_id,
         amount: paymentAmount,
         payment_mode: paymentMode,
-        payment_date: new Date().toISOString().split('T')[0] // today
-      });
+        payment_date: new Date().toISOString().split('T')[0], // today
+        cash_account_id: isCash ? paymentAccountId : undefined,
+        bank_account_id: isCash ? undefined : paymentAccountId,
+      } as any);
 
       // 2. Update job aggregate — atomic DB-side increment (prevents race condition on double-click / concurrent payments)
       await supabase.rpc('increment_job_amount_received', {
@@ -546,6 +568,7 @@ export default function JobsPage() {
       setShowPaymentModal(false);
       setSelectedJob(null);
       setPaymentMode('cash');
+      setPaymentAccountId('');
     } catch (error: any) {
       toast.error('Error adding payment: ' + (error.message || 'Please try again.'));
     }
@@ -1028,29 +1051,47 @@ export default function JobsPage() {
               <div className="p-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Amount Received</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      autoFocus
-                      value={paymentAmount || ''}
-                      onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                      className="flex-1 px-4 py-3 text-section border rounded-md focus:ring-2 focus:ring-green-500"
-                    />
-                    <select
-                      value={paymentMode}
-                      onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                      className="w-1/3 px-3 py-3 border rounded-md bg-white focus:ring-2 focus:ring-gray-400"
-                    >
-                      <option value="cash">Cash</option>
-                      <option value="upi">UPI / GPay</option>
-                      <option value="bank_transfer">Bank Transfer</option>
-                      <option value="cheque">Cheque</option>
-                      <option value="card">Card</option>
-                    </select>
-                  </div>
+                  <input
+                    type="number"
+                    autoFocus
+                    value={paymentAmount || ''}
+                    onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                    className="w-full px-4 py-3 text-section border rounded-md focus:ring-2 focus:ring-green-500"
+                  />
                   <p className="text-sm text-gray-500 mt-1">
                     Total: {formatCurrency(selectedJob?.total_amount || 0)} |
                     Pending: {formatCurrency((selectedJob?.total_amount || 0) - (selectedJob?.amount_received || 0))}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Received Into</label>
+                  <select
+                    value={paymentAccountId}
+                    onChange={(e) => handlePaymentAccountChange(e.target.value)}
+                    className="w-full px-3 py-3 border rounded-md bg-white focus:ring-2 focus:ring-gray-400"
+                  >
+                    <option value="">Select account...</option>
+                    {cashAccounts.length > 0 && (
+                      <optgroup label="Cash">
+                        {cashAccounts.map((acc: any) => (
+                          <option key={acc.id} value={acc.id}>
+                            {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {bankAccounts.length > 0 && (
+                      <optgroup label="Bank">
+                        {bankAccounts.map((acc: any) => (
+                          <option key={acc.id} value={acc.id}>
+                            {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Pick the cash or bank account the money landed in — the payment method is set automatically.
                   </p>
                 </div>
                 <div className="flex gap-3">
