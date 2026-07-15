@@ -314,7 +314,8 @@ export default function QuotationsPage() {
       newItems[index] = {
         ...existing,
         description: cat.name,
-        item_notes: cat.description || existing.item_notes,
+        item_specs: cat.description || '',   // saved item's standard details (size, process...)
+        // item_notes untouched — that line is for THIS quote's particular details
         rate,
         gst_rate: Number(cat.gst_rate) || existing.gst_rate,
         amount: (existing.quantity || 1) * rate,
@@ -599,6 +600,7 @@ export default function QuotationsPage() {
     clientGstin: (q.client as any)?.gstin || '',
     items: q.items?.map(i => ({
       description: i.description,
+      item_specs: i.item_specs || '',
       item_notes: i.item_notes || '',
       quantity: i.quantity,
       rate: i.rate,
@@ -1147,14 +1149,28 @@ export default function QuotationsPage() {
                           onSelect={(cat) => fillItemFromCatalog(index, cat)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
-                        {/* Sub-description — prints under the item name (Zoho style) */}
-                        <input
-                          type="text"
-                          placeholder="Description (shows under item name on PDF)"
-                          value={item.item_notes || ''}
-                          onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
-                          className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
-                        />
+                        {/* Line 2: saved item details (auto-filled from catalog, editable) */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">Item Details</span>
+                          <input
+                            type="text"
+                            placeholder="From saved item — size, process..."
+                            value={item.item_specs || ''}
+                            onChange={(e) => updateItem(index, 'item_specs', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-600 bg-white"
+                          />
+                        </div>
+                        {/* Line 3: particular details for THIS quote */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">This Job</span>
+                          <input
+                            type="text"
+                            placeholder='Particular details — e.g. "Medhini Royal 500 ml label"'
+                            value={item.item_notes || ''}
+                            onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
+                          />
+                        </div>
                         {/* Per-item category — routes THIS item to its own production channel (mix jobs) */}
                         <select
                           value={item.product_category || ''}

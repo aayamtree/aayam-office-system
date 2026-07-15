@@ -271,7 +271,8 @@ const formatCurrency = (amount: number) => {
 // Invoice Data Interface
 export interface InvoiceItem {
   description: string;
-  notes?: string; // sub-description printed under the item name (Zoho style)
+  specs?: string; // saved item's standard details (size, process...) — line 2
+  notes?: string; // particular details for this invoice (e.g. product/label name) — line 3
   hsn?: string;
   quantity: number;
   rate: number;
@@ -423,8 +424,11 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
             <Text style={styles.colSno}>{index + 1}</Text>
             <View style={styles.colDesc}>
               <Text>{item.description}</Text>
+              {item.specs ? (
+                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.specs}</Text>
+              ) : null}
               {item.notes ? (
-                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.notes}</Text>
+                <Text style={{ fontSize: 8, color: '#374151', marginTop: 2 }}>{item.notes}</Text>
               ) : null}
             </View>
             <Text style={styles.colHsn}>{item.hsn || '-'}</Text>

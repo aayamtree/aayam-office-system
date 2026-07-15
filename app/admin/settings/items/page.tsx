@@ -164,12 +164,12 @@ export default function SavedItemsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Item Details</label>
                 <input
                   type="text" value={form.description}
                   onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                  placeholder="Shows below the item name on quote / invoice"
+                  placeholder="Size, process... — prints under the item name (e.g. 56×23×10, Metallic UV)"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3 sm:col-span-2">

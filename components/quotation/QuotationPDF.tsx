@@ -190,7 +190,8 @@ const formatCurrency = (amount: number) => {
 
 export interface QuotationItem {
     description: string;
-    item_notes?: string; // sub-description printed under the item name (Zoho style)
+    item_specs?: string; // saved item's standard details (size, process...) — line 2
+    item_notes?: string; // particular details for this quote — line 3
     quantity: number;
     rate: number;
     amount: number;
@@ -296,8 +297,11 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
                         <Text style={styles.colSno}>{index + 1}</Text>
                         <View style={styles.colDesc}>
                             <Text>{item.description}</Text>
+                            {item.item_specs ? (
+                                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.item_specs}</Text>
+                            ) : null}
                             {item.item_notes ? (
-                                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.item_notes}</Text>
+                                <Text style={{ fontSize: 8, color: '#374151', marginTop: 2 }}>{item.item_notes}</Text>
                             ) : null}
                         </View>
                         <Text style={styles.colQty}>{item.quantity}</Text>

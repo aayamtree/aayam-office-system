@@ -57,7 +57,7 @@ export default function InvoicesPage() {
         const qty = Number(x.sel.quantity) || 0;
         const rate = Number(x.it.rate) || 0;
         const gst_rate = Number(x.it.gst_rate) || 18;
-        return { description: x.it.description || '', item_notes: x.it.item_notes || '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
+        return { description: x.it.description || '', item_specs: x.it.item_specs || '', item_notes: x.it.item_notes || '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
       });
     if (chosen.length === 0) { toast.error('Tick at least one item to invoice'); return; }
 
@@ -217,7 +217,7 @@ export default function InvoicesPage() {
     invoiceNumber: '',
     invoiceDate: '',
     dueDate: '',
-    items: [{ description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as InvoiceItem[],
+    items: [{ description: '', item_specs: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 }] as InvoiceItem[],
     subtotal: 0,
     gstRate: 18,
     supplyType: 'inter_state' as 'inter_state' | 'intra_state', // inter = IGST, intra = CGST+SGST
@@ -349,6 +349,7 @@ export default function InvoicesPage() {
       deliveryPincode: (invoice as any).shipping_pincode || '',
       items: items.map(item => ({
         description: item.description,
+        specs: item.item_specs || '',
         notes: item.item_notes || '',
         hsn: item.hsn_code || '4911',
         quantity: item.quantity,
@@ -512,7 +513,8 @@ export default function InvoicesPage() {
       newItems[index] = {
         ...existing,
         description: cat.name,
-        item_notes: cat.description || existing.item_notes,
+        item_specs: cat.description || '',   // saved item's standard details (size, process...)
+        // item_notes untouched — that line is for THIS invoice's particular details
         hsn_code: cat.hsn_code || existing.hsn_code,
         rate,
         gst_rate: Number(cat.gst_rate) || existing.gst_rate,
@@ -527,7 +529,7 @@ export default function InvoicesPage() {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate, job_id: null } as InvoiceItem]
+      items: [...prev.items, { description: '', item_specs: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: prev.gstRate, job_id: null } as InvoiceItem]
     }));
   };
 
@@ -553,7 +555,7 @@ export default function InvoicesPage() {
       invoiceNumber: '', // Will be auto-generated
       invoiceDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      items: [{ description: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
+      items: [{ description: '', item_specs: '', item_notes: '', hsn_code: '', quantity: 1, rate: 0, amount: 0, gst_rate: 18 } as InvoiceItem],
       subtotal: 0,
       gstRate: 18,
       supplyType: 'inter_state' as const,
@@ -1318,14 +1320,28 @@ export default function InvoicesPage() {
                             )}
                           </div>
                         </div>
-                        {/* Row 2: Sub-description (optional) */}
-                        <input
-                          type="text"
-                          placeholder="Description (shows under item name on PDF — e.g. 4 Design x 3200 pcs, colour, size...)"
-                          value={item.item_notes || ''}
-                          onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
-                        />
+                        {/* Row 2: saved item details (auto-filled from catalog, editable) */}
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">Item Details</span>
+                          <input
+                            type="text"
+                            placeholder="From saved item — size, process... (prints under item name)"
+                            value={item.item_specs || ''}
+                            onChange={(e) => updateItem(index, 'item_specs', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-600 bg-white"
+                          />
+                        </div>
+                        {/* Row 3: particular details for THIS invoice */}
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">This Job</span>
+                          <input
+                            type="text"
+                            placeholder='Particular details — e.g. "Medhini Royal 500 ml label", design, matter...'
+                            value={item.item_notes || ''}
+                            onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>

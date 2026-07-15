@@ -387,7 +387,8 @@ export interface InvoiceItem {
   id: string;
   invoice_id: string;
   description: string;
-  item_notes?: string;   // sub-description (second line under item name)
+  item_specs?: string;   // standard details from the saved catalog item (size, process...)
+  item_notes?: string;   // particular details typed for THIS invoice (e.g. "Medhini Royal 500 ml label")
   hsn_code?: string;
   quantity: number;
   rate: number;
@@ -635,7 +636,8 @@ export interface QuotationItem {
   id: string;
   quotation_id: string;
   description: string;
-  item_notes?: string; // Zoho-style sub-description shown under the item name
+  item_specs?: string; // standard details from the saved catalog item (size, process...)
+  item_notes?: string; // particular details typed for THIS quote (e.g. "Medhini Royal 500 ml label")
   quantity: number;
   rate: number;
   amount: number;

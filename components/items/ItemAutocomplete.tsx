@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, X } from 'lucide-react';
 
 export interface CatalogItem {
   id: string;
@@ -151,7 +151,11 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
       />
 
       {(open || showAddForm) && (
-        <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-72 overflow-y-auto">
+        <div
+          className={`absolute z-40 left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-y-auto ${
+            showAddForm ? 'w-[480px] max-w-[92vw] max-h-[480px]' : 'right-0 max-h-72'
+          }`}
+        >
           {!showAddForm && (
             <>
               {shown.map((item, i) => (
@@ -184,45 +188,85 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
           )}
 
           {showAddForm && (
-            <div className="p-3 space-y-2" onMouseDown={(e) => e.stopPropagation()}>
-              <div className="text-xs font-semibold text-gray-600 uppercase">New Saved Item</div>
-              <input
-                type="text" placeholder="Item name *" value={addForm.name}
-                onChange={(e) => setAddForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm" autoFocus
-              />
-              <input
-                type="text" placeholder="Description (shows below name)" value={addForm.description}
-                onChange={(e) => setAddForm(f => ({ ...f, description: e.target.value }))}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm"
-              />
-              <div className="grid grid-cols-3 gap-2">
-                <input
-                  type="number" placeholder="Rate" min="0" step="any" value={addForm.rate}
-                  onChange={(e) => setAddForm(f => ({ ...f, rate: e.target.value }))}
-                  className="px-2 py-1.5 border border-gray-200 rounded text-sm"
-                />
-                <input
-                  type="text" placeholder="HSN/SAC" value={addForm.hsn_code}
-                  onChange={(e) => setAddForm(f => ({ ...f, hsn_code: e.target.value }))}
-                  className="px-2 py-1.5 border border-gray-200 rounded text-sm"
-                />
-                <input
-                  type="number" placeholder="GST %" min="0" step="any" value={addForm.gst_rate}
-                  onChange={(e) => setAddForm(f => ({ ...f, gst_rate: e.target.value }))}
-                  className="px-2 py-1.5 border border-gray-200 rounded text-sm"
-                />
+            <div onMouseDown={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/80 rounded-t-lg">
+                <div>
+                  <div className="text-sm font-bold text-gray-900">Add New Saved Item</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Saved to your item list — reusable on every quote &amp; invoice</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md"
+                  title="Close"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <div className="flex gap-2 pt-1">
+
+              {/* Fields */}
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                    Item Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text" placeholder="e.g. Metallic Box - 50ml" value={addForm.name}
+                    onChange={(e) => setAddForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                    Item Details <span className="font-normal text-gray-400">(size, process — prints under the name)</span>
+                  </label>
+                  <input
+                    type="text" placeholder="e.g. 56×23×10, Metallic UV-Drioff, Roll Form" value={addForm.description}
+                    onChange={(e) => setAddForm(f => ({ ...f, description: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Rate (Rs.)</label>
+                    <input
+                      type="number" placeholder="0.00" min="0" step="any" value={addForm.rate}
+                      onChange={(e) => setAddForm(f => ({ ...f, rate: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">HSN/SAC</label>
+                    <input
+                      type="text" placeholder="e.g. 48211020" value={addForm.hsn_code}
+                      onChange={(e) => setAddForm(f => ({ ...f, hsn_code: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">GST %</label>
+                    <input
+                      type="number" placeholder="18" min="0" step="any" value={addForm.gst_rate}
+                      onChange={(e) => setAddForm(f => ({ ...f, gst_rate: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2.5 px-5 py-3.5 border-t border-gray-100 bg-gray-50/80 rounded-b-lg">
                 <button
                   type="button" onClick={handleSaveNew} disabled={saving || !addForm.name.trim()}
-                  className="px-3 py-1.5 bg-gray-900 text-white rounded text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
+                  className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {saving && <Loader2 size={12} className="animate-spin" />} Save & Use
+                  {saving && <Loader2 size={14} className="animate-spin" />} Save &amp; Use Item
                 </button>
                 <button
                   type="button" onClick={() => setShowAddForm(false)}
-                  className="px-3 py-1.5 border border-gray-200 rounded text-sm text-gray-600"
+                  className="px-4 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100"
                 >
                   Cancel
                 </button>
