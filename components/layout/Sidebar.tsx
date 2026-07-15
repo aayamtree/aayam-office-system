@@ -181,11 +181,17 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance', 'cmyk'],
     submenu: [
       { name: 'Station Overview', href: '/admin/cmyk-print' },
-      { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
       { name: 'Retail POS', href: '/admin/cmyk-print/retail-pos' },
       { name: 'POS Sales', href: '/admin/cmyk-print/sales' },
       { name: 'Clients', href: '/admin/cmyk-print/clients' },
       { name: 'Monthly Report', href: '/admin/cmyk-print/client-report' },
+      { name: '💳 CMYK Accounts', href: '/admin/cmyk-print/accounts' },
+      { name: 'Expenses', href: '/admin/cmyk-print/expenses' },
+      { name: 'Paper Stock', href: '/admin/cmyk-print/paper-stock' },
+      { name: 'Paper Purchases', href: '/admin/cmyk-print/paper-purchases' },
+      { name: 'Cost Calculator', href: '/admin/cmyk-print/cost-calculator' },
+      { name: 'Job Log', href: '/admin/cmyk-print/job-log' },
+      { name: 'Financial Review', href: '/admin/cmyk-print/review' },
     ]
   },
   {
