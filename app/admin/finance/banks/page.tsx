@@ -13,7 +13,7 @@ import { useBankAccounts } from '@/lib/hooks';
 import { BankAccount } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 
-const accountTypes = ['Current', 'Savings', 'OD', 'CC'];
+const accountTypes = ['Current', 'Savings', 'OD', 'CC', 'UPI'];
 
 export default function BankAccountsPage() {
   const {

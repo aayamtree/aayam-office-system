@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Banknote, Smartphone, Plus, Trash2 } from 'lucide-react';
-import { useCMYKClients, usePOSSales, useCMYKClientPayments } from '@/lib/hooks';
+import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Plus, Trash2, Settings } from 'lucide-react';
+import { useCMYKClients, usePOSSales, useCMYKClientPayments, useBankAccounts, useCashAccounts } from '@/lib/hooks';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import type { StatementData, StatementRow } from '@/components/receipt/StatementPDF';
 // Lazy PDF: @react-pdf/renderer (~500KB) loads only when generating a statement
@@ -21,6 +21,8 @@ function ReportInner() {
   const { cmykClients, loading: clientsLoading } = useCMYKClients();
   const { sales, loading: salesLoading } = usePOSSales();
   const { payments, createPayment, deletePayment } = useCMYKClientPayments();
+  const { bankAccounts } = useBankAccounts();
+  const { cashAccounts } = useCashAccounts();
   const { settings } = useCompanySettings();
 
   const now = new Date();
@@ -28,10 +30,34 @@ function ReportInner() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11
 
+  // Unified account list for the money-received picker: cash + bank/UPI accounts.
+  // Value is encoded "cash:<id>" or "bank:<id>" so we know which column to save.
+  const accountOptions = useMemo(() => {
+    const cash = (cashAccounts || [])
+      .filter((a: any) => a.is_active !== false)
+      .map((a: any) => ({ value: `cash:${a.id}`, label: a.name || 'Cash', kind: 'cash' as const, id: a.id }));
+    const bank = (bankAccounts || [])
+      .filter((a: any) => a.is_active !== false)
+      .map((a: any) => ({ value: `bank:${a.id}`, label: a.name || 'Account', kind: 'bank' as const, id: a.id }));
+    return [...cash, ...bank];
+  }, [cashAccounts, bankAccounts]);
+
+  // Map an account id -> display name, for showing on past payments.
+  const accountName = (p: any) => {
+    if (p.cash_account_id) return (cashAccounts || []).find((a: any) => a.id === p.cash_account_id)?.name;
+    if (p.bank_account_id) return (bankAccounts || []).find((a: any) => a.id === p.bank_account_id)?.name;
+    return null;
+  };
+
   // Record-payment form
-  const [payMethod, setPayMethod] = useState<'cash' | 'upi'>('cash');
+  const [payAccount, setPayAccount] = useState(''); // encoded "cash:id" / "bank:id"
   const [payAmount, setPayAmount] = useState('');
   const [savingPay, setSavingPay] = useState(false);
+
+  // Default the picker to the first available account once accounts load.
+  useEffect(() => {
+    if (!payAccount && accountOptions.length > 0) setPayAccount(accountOptions[0].value);
+  }, [accountOptions, payAccount]);
 
   // Pre-select client from ?client= query param
   useEffect(() => {
@@ -104,12 +130,21 @@ function ReportInner() {
     const amt = parseFloat(payAmount);
     if (!clientId) { toast.error('Select a client first'); return; }
     if (!Number.isFinite(amt) || amt <= 0) { toast.error('Enter a valid amount'); return; }
+    if (!payAccount) { toast.error('Select which account received the money'); return; }
+    const [kind, id] = payAccount.split(':');
+    const opt = accountOptions.find(o => o.value === payAccount);
     setSavingPay(true);
-    const { error } = await createPayment({ cmyk_client_id: clientId, amount: amt, method: payMethod });
+    const { error } = await createPayment({
+      cmyk_client_id: clientId,
+      amount: amt,
+      method: kind === 'cash' ? 'cash' : 'upi',
+      cash_account_id: kind === 'cash' ? id : null,
+      bank_account_id: kind === 'bank' ? id : null,
+    });
     setSavingPay(false);
     if (error) { toast.error(error); return; }
     setPayAmount('');
-    toast.success(`Recorded ${fmt(amt)} (${payMethod.toUpperCase()})`);
+    toast.success(`Recorded ${fmt(amt)} → ${opt?.label || ''}`);
   };
 
   const handleDeletePayment = async (id: string) => {
@@ -232,18 +267,22 @@ function ReportInner() {
         <div className="bg-white border rounded-md p-4">
           <div className="flex flex-col sm:flex-row sm:items-end gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Payment method</label>
-              <div className="flex bg-gray-100 p-1 rounded-md">
-                {([
-                  { id: 'cash', label: 'Cash', icon: Banknote },
-                  { id: 'upi', label: 'UPI', icon: Smartphone },
-                ] as const).map(m => (
-                  <button key={m.id} type="button" onClick={() => setPayMethod(m.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${payMethod === m.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                    <m.icon className="w-4 h-4" /> {m.label}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-gray-500">Received in account</label>
+                <Link href="/admin/finance/accounts" className="text-[11px] text-gray-400 hover:text-gray-700 inline-flex items-center gap-1">
+                  <Settings className="w-3 h-3" /> Manage
+                </Link>
               </div>
+              {accountOptions.length === 0 ? (
+                <p className="text-sm text-amber-600 py-2">
+                  No accounts set up. <Link href="/admin/finance/accounts" className="underline">Add one</Link>.
+                </p>
+              ) : (
+                <select value={payAccount} onChange={e => setPayAccount(e.target.value)}
+                  className="px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 min-w-[180px]">
+                  {accountOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Amount received (₹)</label>
@@ -265,7 +304,7 @@ function ReportInner() {
                 <div key={p.id} className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">
                     {new Date(p.paid_on + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600 uppercase">{p.method}</span>
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">{accountName(p) || (p.method || '').toUpperCase()}</span>
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="font-semibold text-green-700">{fmt(Number(p.amount))}</span>

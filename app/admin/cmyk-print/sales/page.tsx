@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download, Eye, X } from 'lucide-react';
 import { usePOSSales } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -29,6 +29,8 @@ export default function POSSalesListPage() {
   const [query, setQuery] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // Bill selected for the on-screen detail popup (null = closed)
+  const [viewSale, setViewSale] = useState<any | null>(null);
 
   // Rebuild the ESTIMATE PDF for a past bill from its stored line items.
   const buildEstimate = (s: any): ReceiptData => {
@@ -218,7 +220,11 @@ export default function POSSalesListPage() {
                   {filtered.map((s: any) => {
                     const d = new Date(s.created_at);
                     return (
-                      <tr key={s.id} className="border-b hover:bg-muted/40 transition-colors">
+                      <tr
+                        key={s.id}
+                        onClick={() => setViewSale(s)}
+                        className="border-b hover:bg-muted/40 transition-colors cursor-pointer"
+                      >
                         <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">
                           {d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                           <span className="text-xs ml-1">
@@ -236,8 +242,16 @@ export default function POSSalesListPage() {
                         <td className="px-3 py-2.5">{s.customer_name || s.cmyk_client?.name || 'Walk-in'}</td>
                         <td className="px-3 py-2.5 text-center text-muted-foreground">{s.items?.length ?? '—'}</td>
                         <td className="px-3 py-2.5 text-right font-semibold">{fmt(s.total_amount)}</td>
-                        <td className="px-3 py-2.5 text-right">
+                        <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setViewSale(s)}
+                              title="View bill details"
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            >
+                              <Eye size={15} />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleDownload(s)}
@@ -273,6 +287,150 @@ export default function POSSalesListPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bill detail popup — read-only, no download needed */}
+      {viewSale && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:items-center"
+          onClick={() => setViewSale(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg bg-background shadow-xl my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b px-5 py-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-foreground">{viewSale.sale_number}</h2>
+                  {viewSale.order_type === 'pickup' && (
+                    <Badge variant="outline" className="text-[10px] px-1.5">Pickup</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(viewSale.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {' · '}
+                  {new Date(viewSale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewSale(null)}
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Customer */}
+            <div className="px-5 py-3 border-b text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Customer</span>
+                <span className="font-medium text-foreground">
+                  {viewSale.customer_name || viewSale.cmyk_client?.company || viewSale.cmyk_client?.name || 'Walk-in'}
+                </span>
+              </div>
+              {viewSale.customer_phone && (
+                <div className="flex justify-between mt-1">
+                  <span className="text-muted-foreground">Phone</span>
+                  <span className="text-foreground">{viewSale.customer_phone}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Line items */}
+            <div className="px-5 py-3 border-b">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-1 font-medium">Item</th>
+                    <th className="py-1 font-medium text-center">Qty</th>
+                    <th className="py-1 font-medium text-right">Rate</th>
+                    <th className="py-1 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewSale.items || []).map((it: any, i: number) => (
+                    <tr key={i} className="border-t align-top">
+                      <td className="py-1.5 pr-2">
+                        <div className="font-medium text-foreground">
+                          {it.product_name || 'Item'}
+                          {it.print_sides ? (it.print_sides === 'two' ? ' (2 Side)' : ' (1 Side)') : ''}
+                        </div>
+                        {it.details && (
+                          <div className="text-xs text-muted-foreground">{it.details}</div>
+                        )}
+                        {it.paper_name && (
+                          <div className="text-xs text-muted-foreground">
+                            {it.paper_name}{it.sheets ? ` × ${it.sheets} sh` : ''}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-1.5 text-center whitespace-nowrap">{it.quantity}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap">{fmt(it.price)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap font-medium">{fmt(it.total)}</td>
+                    </tr>
+                  ))}
+                  {(!viewSale.items || viewSale.items.length === 0) && (
+                    <tr><td colSpan={4} className="py-3 text-center text-muted-foreground text-xs">No line items stored for this bill.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Totals */}
+            <div className="px-5 py-3 text-sm space-y-1">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span>{fmt(viewSale.subtotal || 0)}</span>
+              </div>
+              {(viewSale.discount_amount > 0 || viewSale.discount_percent > 0) && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Discount{viewSale.discount_percent ? ` (${viewSale.discount_percent}%)` : ''}</span>
+                  <span>− {fmt(viewSale.discount_amount || 0)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold text-foreground pt-1 border-t">
+                <span>Grand Total</span>
+                <span>{fmt(viewSale.total_amount || 0)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground pt-1">
+                <span>Payment</span>
+                <span className="capitalize">{viewSale.payment_mode || 'cash'}</span>
+              </div>
+              {viewSale.sold_by && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Billed by</span>
+                  <span>{viewSale.sold_by}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="flex items-center justify-end gap-2 border-t px-5 py-3">
+              <button
+                type="button"
+                onClick={() => handleDownload(viewSale)}
+                disabled={downloadingId === viewSale.id}
+                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                {downloadingId === viewSale.id
+                  ? <Loader2 size={15} className="animate-spin" />
+                  : <Download size={15} />}
+                Download PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewSale(null)}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

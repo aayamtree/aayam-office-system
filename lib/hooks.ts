@@ -284,6 +284,8 @@ export function useCMYKClientPayments() {
     cmyk_client_id: string;
     amount: number;
     method: 'cash' | 'upi';
+    cash_account_id?: string | null;
+    bank_account_id?: string | null;
     paid_on?: string;
     notes?: string;
   }) => {
