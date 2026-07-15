@@ -15,7 +15,7 @@ const printReceipt = async (d: ReceiptData) =>
 const downloadReceipt = async (d: ReceiptData) =>
   (await import('@/components/receipt/ReceiptPDF')).downloadReceipt(d);
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
-import { usePOSSales, usePOSProducts, usePaperStock, useCMYKClients, useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { usePOSSales, usePOSProducts, usePaperStock, useCMYKClients, useCMYKAccounts } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { POSProduct } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -72,8 +72,7 @@ export default function RetailPOSPage() {
   const { createPOSSale } = usePOSSales();
   const { stock: paperStock } = usePaperStock();
   const { cmykClients } = useCMYKClients();
-  const { bankAccounts } = useBankAccounts();
-  const { cashAccounts } = useCashAccounts();
+  const { cmykAccounts } = useCMYKAccounts();
   const {
     categories, products, loading: productsLoading,
     createCategory, updateCategory, deleteCategory,
@@ -98,16 +97,12 @@ export default function RetailPOSPage() {
   const [orderType, setOrderType] = useState<'walkin' | 'pickup'>('walkin');
   const [artworkLink, setArtworkLink] = useState('');
 
-  // Cash + bank/UPI accounts for the "received in" picker.
-  const accountOptions = useMemo(() => {
-    const cash = (cashAccounts || [])
+  // CMYK's own accounts (separate from master banking) for the "received in" picker.
+  const accountOptions = useMemo(() =>
+    (cmykAccounts || [])
       .filter((a: any) => a.is_active !== false)
-      .map((a: any) => ({ value: `cash:${a.id}`, label: a.name || 'Cash', kind: 'cash' as const, id: a.id }));
-    const bank = (bankAccounts || [])
-      .filter((a: any) => a.is_active !== false)
-      .map((a: any) => ({ value: `bank:${a.id}`, label: a.name || 'Account', kind: 'bank' as const, id: a.id }));
-    return [...cash, ...bank];
-  }, [cashAccounts, bankAccounts]);
+      .map((a: any) => ({ value: a.id, label: a.name, type: a.type as 'cash' | 'upi' | 'bank' })),
+  [cmykAccounts]);
 
   useEffect(() => {
     if (!payAccount && accountOptions.length > 0) setPayAccount(accountOptions[0].value);
@@ -258,8 +253,8 @@ export default function RetailPOSPage() {
     try {
       // Only what was actually collected now is recorded as received (0 = pending payment).
       const paidAmount = receivedAmt > 0 ? receivedAmt : 0;
-      // Which account the money landed in; derive legacy payment_mode from its kind.
-      const [payKind, payId] = (payAccount || '').split(':');
+      // Which CMYK account the money landed in; derive legacy payment_mode from its type.
+      const payAcct = accountOptions.find(o => o.value === payAccount);
       const saleData = {
         customer_name: customerName || undefined,
         customer_phone: customerPhone || undefined,
@@ -275,9 +270,8 @@ export default function RetailPOSPage() {
         pickup_status: orderType === 'pickup' ? 'pending' : undefined,
         artwork_link: artworkLink || undefined,
         total_amount: grandTotal,
-        payment_mode: payKind === 'cash' ? 'cash' : payKind === 'bank' ? 'upi' : paymentMethod,
-        cash_account_id: payKind === 'cash' ? payId : undefined,
-        bank_account_id: payKind === 'bank' ? payId : undefined,
+        payment_mode: payAcct ? (payAcct.type === 'cash' ? 'cash' : 'upi') : paymentMethod,
+        cmyk_account_id: payAccount || undefined,
         amount_received: paidAmount,
         change_amount: changeAmount > 0 ? changeAmount : 0,
         payment_status: getPaymentStatus(),
@@ -722,20 +716,20 @@ export default function RetailPOSPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium">Received in account</p>
-                  <Link href="/admin/finance/accounts" className="text-[11px] text-gray-400 hover:text-gray-700 inline-flex items-center gap-1">
+                  <Link href="/admin/cmyk-print/accounts" className="text-[11px] text-gray-400 hover:text-gray-700 inline-flex items-center gap-1">
                     <Settings className="w-3 h-3" /> Manage
                   </Link>
                 </div>
                 {accountOptions.length === 0 ? (
                   <p className="text-sm text-amber-600">
-                    No accounts set up. <Link href="/admin/finance/accounts" className="underline">Add one</Link>.
+                    No CMYK accounts yet. <Link href="/admin/cmyk-print/accounts" className="underline">Add one</Link>.
                   </p>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {accountOptions.map(o => (
                       <button key={o.value} type="button" onClick={() => setPayAccount(o.value)}
                         className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all text-center ${payAccount === o.value ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                        {o.kind === 'cash' ? <Banknote className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
+                        {o.type === 'cash' ? <Banknote className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
                         <span className="text-xs leading-tight">{o.label}</span>
                       </button>
                     ))}

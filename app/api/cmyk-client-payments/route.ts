@@ -46,19 +46,16 @@ export async function POST(request: NextRequest) {
   if (!Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: 'Enter a valid amount greater than 0' }, { status: 400 });
   }
-  // The account the money landed in. Exactly one of cash/bank id may be set.
-  // Legacy `method` (cash/upi) is derived so old displays & statements keep working:
-  // a cash account -> 'cash', a bank/UPI account -> 'upi'.
-  const cashAccountId = body.cash_account_id || null;
-  const bankAccountId = body.bank_account_id || null;
-  const method = cashAccountId ? 'cash' : bankAccountId ? 'upi' : (body.method === 'upi' ? 'upi' : 'cash');
+  // The CMYK account (separate from master banking) that received the money.
+  // Legacy `method` (cash/upi) is still stored for old displays/statements.
+  const cmykAccountId = body.cmyk_account_id || null;
+  const method = body.method === 'upi' ? 'upi' : 'cash';
 
   const payload: Record<string, any> = {
     cmyk_client_id: body.cmyk_client_id,
     amount,
     method,
-    cash_account_id: cashAccountId,
-    bank_account_id: bankAccountId,
+    cmyk_account_id: cmykAccountId,
     created_by: user.id,
   };
   if (body.paid_on) payload.paid_on = body.paid_on;

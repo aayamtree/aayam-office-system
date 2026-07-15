@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Printer, ShoppingCart, Package, Clock, Calculator, Receipt, X, Loader2, BookOpen, ShoppingBag, PauseCircle, PlayCircle, TrendingUp, Users, FileText, Wallet, BarChart3 } from 'lucide-react';
+import { Printer, ShoppingCart, Package, Clock, Calculator, Receipt, X, Loader2, BookOpen, ShoppingBag, PauseCircle, PlayCircle, TrendingUp, Users, FileText, Wallet } from 'lucide-react';
 import { useJobs, usePaperStock, usePOSSales, useCMYKJobLogs, useVendors, useCMYKExpenses } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import DriveConnectionStatus from '@/components/drive/DriveConnectionStatus';
@@ -139,8 +139,7 @@ export default function CMYKPrintPage() {
     { href: '/admin/cmyk-print/expenses', icon: Receipt, title: 'Expenses', extra: null },
     { href: '/admin/cmyk-print/job-log', icon: BookOpen, title: 'Job Log', extra: null },
     { href: '/admin/cmyk-print/review', icon: TrendingUp, title: 'Financial Review', extra: null },
-    { href: '/admin/finance/accounts', icon: Wallet, title: 'Accounts', extra: null },
-    { href: '/admin/finance/review', icon: BarChart3, title: 'P&L (Month/Qtr/Yr)', extra: null },
+    { href: '/admin/cmyk-print/accounts', icon: Wallet, title: 'CMYK Accounts', extra: null },
   ];
 
   return (

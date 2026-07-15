@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Plus, Trash2, Settings } from 'lucide-react';
-import { useCMYKClients, usePOSSales, useCMYKClientPayments, useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { useCMYKClients, usePOSSales, useCMYKClientPayments, useCMYKAccounts } from '@/lib/hooks';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import type { StatementData, StatementRow } from '@/components/receipt/StatementPDF';
 // Lazy PDF: @react-pdf/renderer (~500KB) loads only when generating a statement
@@ -21,8 +21,7 @@ function ReportInner() {
   const { cmykClients, loading: clientsLoading } = useCMYKClients();
   const { sales, loading: salesLoading } = usePOSSales();
   const { payments, createPayment, deletePayment } = useCMYKClientPayments();
-  const { bankAccounts } = useBankAccounts();
-  const { cashAccounts } = useCashAccounts();
+  const { cmykAccounts } = useCMYKAccounts();
   const { settings } = useCompanySettings();
 
   const now = new Date();
@@ -30,27 +29,21 @@ function ReportInner() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11
 
-  // Unified account list for the money-received picker: cash + bank/UPI accounts.
-  // Value is encoded "cash:<id>" or "bank:<id>" so we know which column to save.
-  const accountOptions = useMemo(() => {
-    const cash = (cashAccounts || [])
+  // CMYK's own accounts (separate from master banking) for the money-received picker.
+  const accountOptions = useMemo(() =>
+    (cmykAccounts || [])
       .filter((a: any) => a.is_active !== false)
-      .map((a: any) => ({ value: `cash:${a.id}`, label: a.name || 'Cash', kind: 'cash' as const, id: a.id }));
-    const bank = (bankAccounts || [])
-      .filter((a: any) => a.is_active !== false)
-      .map((a: any) => ({ value: `bank:${a.id}`, label: a.name || 'Account', kind: 'bank' as const, id: a.id }));
-    return [...cash, ...bank];
-  }, [cashAccounts, bankAccounts]);
+      .map((a: any) => ({ value: a.id, label: a.name, type: a.type as 'cash' | 'upi' | 'bank' })),
+  [cmykAccounts]);
 
-  // Map an account id -> display name, for showing on past payments.
+  // Map a CMYK account id -> display name, for showing on past payments.
   const accountName = (p: any) => {
-    if (p.cash_account_id) return (cashAccounts || []).find((a: any) => a.id === p.cash_account_id)?.name;
-    if (p.bank_account_id) return (bankAccounts || []).find((a: any) => a.id === p.bank_account_id)?.name;
+    if (p.cmyk_account_id) return (cmykAccounts || []).find((a: any) => a.id === p.cmyk_account_id)?.name;
     return null;
   };
 
   // Record-payment form
-  const [payAccount, setPayAccount] = useState(''); // encoded "cash:id" / "bank:id"
+  const [payAccount, setPayAccount] = useState(''); // cmyk_account id
   const [payAmount, setPayAmount] = useState('');
   const [savingPay, setSavingPay] = useState(false);
 
@@ -131,15 +124,13 @@ function ReportInner() {
     if (!clientId) { toast.error('Select a client first'); return; }
     if (!Number.isFinite(amt) || amt <= 0) { toast.error('Enter a valid amount'); return; }
     if (!payAccount) { toast.error('Select which account received the money'); return; }
-    const [kind, id] = payAccount.split(':');
     const opt = accountOptions.find(o => o.value === payAccount);
     setSavingPay(true);
     const { error } = await createPayment({
       cmyk_client_id: clientId,
       amount: amt,
-      method: kind === 'cash' ? 'cash' : 'upi',
-      cash_account_id: kind === 'cash' ? id : null,
-      bank_account_id: kind === 'bank' ? id : null,
+      method: opt?.type === 'cash' ? 'cash' : 'upi',
+      cmyk_account_id: payAccount,
     });
     setSavingPay(false);
     if (error) { toast.error(error); return; }
@@ -269,13 +260,13 @@ function ReportInner() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-medium text-gray-500">Received in account</label>
-                <Link href="/admin/finance/accounts" className="text-[11px] text-gray-400 hover:text-gray-700 inline-flex items-center gap-1">
+                <Link href="/admin/cmyk-print/accounts" className="text-[11px] text-gray-400 hover:text-gray-700 inline-flex items-center gap-1">
                   <Settings className="w-3 h-3" /> Manage
                 </Link>
               </div>
               {accountOptions.length === 0 ? (
                 <p className="text-sm text-amber-600 py-2">
-                  No accounts set up. <Link href="/admin/finance/accounts" className="underline">Add one</Link>.
+                  No CMYK accounts yet. <Link href="/admin/cmyk-print/accounts" className="underline">Add one</Link>.
                 </p>
               ) : (
                 <select value={payAccount} onChange={e => setPayAccount(e.target.value)}

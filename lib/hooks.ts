@@ -284,8 +284,7 @@ export function useCMYKClientPayments() {
     cmyk_client_id: string;
     amount: number;
     method: 'cash' | 'upi';
-    cash_account_id?: string | null;
-    bank_account_id?: string | null;
+    cmyk_account_id?: string | null;
     paid_on?: string;
     notes?: string;
   }) => {
@@ -1041,6 +1040,38 @@ export function useCashAccounts() {
     createCashAccount,
     updateCashAccount
   };
+}
+
+// =============================================
+// CMYK ACCOUNTS HOOK — CMYK's own cash / UPI / bank accounts,
+// kept separate from the master company banking (cash_accounts/bank_accounts).
+// =============================================
+export function useCMYKAccounts() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('cmyk_accounts', {
+    orderBy: { column: 'sort_order', ascending: true },
+  });
+
+  const createAccount = async (account: { name: string; type: 'cash' | 'upi' | 'bank'; opening_balance?: number; notes?: string; sort_order?: number }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data: row, error } = await supabase.from('cmyk_accounts').insert([account]).select().single();
+    if (!error) refetch();
+    return { data: row, error: error?.message };
+  };
+
+  const updateAccount = async (id: string, updates: any) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { data: row, error } = await supabase.from('cmyk_accounts').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (!error) refetch();
+    return { data: row, error: error?.message };
+  };
+
+  const deleteAccount = async (id: string) => {
+    const { error } = await supabase.from('cmyk_accounts').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { cmykAccounts: data, loading, error, refetch, createAccount, updateAccount, deleteAccount };
 }
 
 // =============================================
