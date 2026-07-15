@@ -313,7 +313,8 @@ export default function QuotationsPage() {
       const rate = Number(cat.rate) || 0;
       newItems[index] = {
         ...existing,
-        description: cat.description ? `${cat.name} — ${cat.description}` : cat.name,
+        description: cat.name,
+        item_notes: cat.description || existing.item_notes,
         rate,
         gst_rate: Number(cat.gst_rate) || existing.gst_rate,
         amount: (existing.quantity || 1) * rate,
@@ -598,6 +599,7 @@ export default function QuotationsPage() {
     clientGstin: (q.client as any)?.gstin || '',
     items: q.items?.map(i => ({
       description: i.description,
+      item_notes: i.item_notes || '',
       quantity: i.quantity,
       rate: i.rate,
       amount: i.amount
@@ -1139,11 +1141,19 @@ export default function QuotationsPage() {
                     <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-md border border-gray-200">
                       <div className="col-span-12 sm:col-span-5">
                         <ItemAutocomplete
-                          placeholder="Description (type to search saved items)"
+                          placeholder="Item name (type to search saved items)"
                           value={item.description}
                           onChange={(text) => updateItem(index, 'description', text)}
                           onSelect={(cat) => fillItemFromCatalog(index, cat)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                        />
+                        {/* Sub-description — prints under the item name (Zoho style) */}
+                        <input
+                          type="text"
+                          placeholder="Description (shows under item name on PDF)"
+                          value={item.item_notes || ''}
+                          onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
+                          className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
                         />
                         {/* Per-item category — routes THIS item to its own production channel (mix jobs) */}
                         <select

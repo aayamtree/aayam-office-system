@@ -271,6 +271,7 @@ const formatCurrency = (amount: number) => {
 // Invoice Data Interface
 export interface InvoiceItem {
   description: string;
+  notes?: string; // sub-description printed under the item name (Zoho style)
   hsn?: string;
   quantity: number;
   rate: number;
@@ -409,7 +410,7 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
         {/* Table Header */}
         <View style={styles.tableHeader}>
           <Text style={styles.colSno}>#</Text>
-          <Text style={styles.colDesc}>Description</Text>
+          <Text style={styles.colDesc}>Item & Description</Text>
           <Text style={styles.colHsn}>HSN/SAC</Text>
           <Text style={styles.colQty}>Qty</Text>
           <Text style={styles.colRate}>Rate</Text>
@@ -420,7 +421,12 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
         {data.items.map((item, index) => (
           <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
             <Text style={styles.colSno}>{index + 1}</Text>
-            <Text style={styles.colDesc}>{item.description}</Text>
+            <View style={styles.colDesc}>
+              <Text>{item.description}</Text>
+              {item.notes ? (
+                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.notes}</Text>
+              ) : null}
+            </View>
             <Text style={styles.colHsn}>{item.hsn || '-'}</Text>
             <Text style={styles.colQty}>{item.quantity}</Text>
             <Text style={styles.colRate}>{formatCurrency(item.rate)}</Text>

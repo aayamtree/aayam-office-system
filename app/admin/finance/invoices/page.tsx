@@ -57,7 +57,7 @@ export default function InvoicesPage() {
         const qty = Number(x.sel.quantity) || 0;
         const rate = Number(x.it.rate) || 0;
         const gst_rate = Number(x.it.gst_rate) || 18;
-        return { description: x.it.description || '', item_notes: '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
+        return { description: x.it.description || '', item_notes: x.it.item_notes || '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
       });
     if (chosen.length === 0) { toast.error('Tick at least one item to invoice'); return; }
 
@@ -349,6 +349,7 @@ export default function InvoicesPage() {
       deliveryPincode: (invoice as any).shipping_pincode || '',
       items: items.map(item => ({
         description: item.description,
+        notes: item.item_notes || '',
         hsn: item.hsn_code || '4911',
         quantity: item.quantity,
         rate: item.rate,
@@ -1320,10 +1321,10 @@ export default function InvoicesPage() {
                         {/* Row 2: Sub-description (optional) */}
                         <input
                           type="text"
-                          placeholder="Sub-description (e.g. 4 Design x 3200 pcs, colour, size...)"
+                          placeholder="Description (shows under item name on PDF — e.g. 4 Design x 3200 pcs, colour, size...)"
                           value={item.item_notes || ''}
                           onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
-                          className="w-full px-3 py-1.5 border border-dashed border-gray-300 rounded-md text-xs text-gray-500 bg-white"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
                         />
                       </div>
                     ))}

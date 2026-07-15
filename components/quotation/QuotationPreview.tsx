@@ -14,7 +14,7 @@ function buildPrintHTML(d: QuotationData): string {
     const rows = (d.items || []).map((it, i) => `
         <tr>
           <td style="padding:8px 10px;border-bottom:1px solid #eee;">${i + 1}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #eee;">${it.description ?? ''}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eee;">${it.description ?? ''}${(it as any).item_notes ? `<div style="font-size:11px;color:#6B7280;margin-top:2px;">${(it as any).item_notes}</div>` : ''}</td>
           <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;">${it.quantity ?? ''}</td>
           <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;">${inr(it.rate)}</td>
           <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;">${inr(it.amount)}</td>
@@ -138,7 +138,12 @@ export default function QuotationPreview({ data, onClose }: { data: QuotationDat
                             {data.items?.map((it, i) => (
                                 <tr key={i} className="border-b border-gray-200">
                                     <td className="px-3 py-2 text-black">{i + 1}</td>
-                                    <td className="px-3 py-2 text-black">{it.description}</td>
+                                    <td className="px-3 py-2 text-black">
+                                        {it.description}
+                                        {(it as any).item_notes ? (
+                                            <div className="text-xs text-gray-500 mt-0.5">{(it as any).item_notes}</div>
+                                        ) : null}
+                                    </td>
                                     <td className="px-3 py-2 text-center text-black">{it.quantity}</td>
                                     <td className="px-3 py-2 text-right text-black">{inr(it.rate)}</td>
                                     <td className="px-3 py-2 text-right font-medium text-black">{inr(it.amount)}</td>

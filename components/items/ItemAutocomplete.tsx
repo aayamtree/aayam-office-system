@@ -139,6 +139,12 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
         value={value}
         onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlight(0); }}
         onFocus={() => setOpen(true)}
+        onBlur={() => {
+          // Close when focus moves elsewhere (e.g. to the description/qty field),
+          // so the dropdown never blocks the inputs below it. In-dropdown clicks
+          // preventDefault on mousedown, so they don't trigger this blur.
+          if (!showAddForm) setOpen(false);
+        }}
         onKeyDown={handleKeyDown}
         className={className || 'w-full px-3 py-2 border border-gray-200 rounded-md text-sm'}
         autoComplete="off"

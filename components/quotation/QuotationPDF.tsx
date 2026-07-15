@@ -190,6 +190,7 @@ const formatCurrency = (amount: number) => {
 
 export interface QuotationItem {
     description: string;
+    item_notes?: string; // sub-description printed under the item name (Zoho style)
     quantity: number;
     rate: number;
     amount: number;
@@ -285,7 +286,7 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
             <View style={styles.table}>
                 <View style={styles.tableHeader}>
                     <Text style={styles.colSno}>#</Text>
-                    <Text style={styles.colDesc}>Description</Text>
+                    <Text style={styles.colDesc}>Item & Description</Text>
                     <Text style={styles.colQty}>Qty</Text>
                     <Text style={styles.colRate}>Rate</Text>
                     <Text style={styles.colAmount}>Amount</Text>
@@ -293,7 +294,12 @@ export const QuotationPDF = ({ data }: { data: QuotationData }) => (
                 {data.items.map((item, index) => (
                     <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
                         <Text style={styles.colSno}>{index + 1}</Text>
-                        <Text style={styles.colDesc}>{item.description}</Text>
+                        <View style={styles.colDesc}>
+                            <Text>{item.description}</Text>
+                            {item.item_notes ? (
+                                <Text style={{ fontSize: 8, color: '#6B7280', marginTop: 2 }}>{item.item_notes}</Text>
+                            ) : null}
+                        </View>
                         <Text style={styles.colQty}>{item.quantity}</Text>
                         <Text style={styles.colRate}>{formatCurrency(item.rate)}</Text>
                         <Text style={styles.colAmount}>{formatCurrency(item.amount)}</Text>

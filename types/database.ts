@@ -635,6 +635,7 @@ export interface QuotationItem {
   id: string;
   quotation_id: string;
   description: string;
+  item_notes?: string; // Zoho-style sub-description shown under the item name
   quantity: number;
   rate: number;
   amount: number;
