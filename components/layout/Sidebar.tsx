@@ -259,6 +259,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { name: 'General', href: '/admin/settings' },
       { name: 'Company Info', href: '/admin/settings/company' },
+      { name: 'Saved Items', href: '/admin/settings/items' },
       { name: 'Notifications', href: '/admin/settings/notifications' },
       { name: 'Telegram Groups', href: '/admin/settings/telegram-groups' },
       { name: 'Preferences', href: '/admin/settings/preferences' },

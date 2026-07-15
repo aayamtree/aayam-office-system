@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import ItemAutocomplete, { CatalogItem } from '@/components/items/ItemAutocomplete';
 import { supabase } from '@/lib/supabase';
 
 export default function QuotationsPage() {
@@ -301,6 +302,25 @@ export default function QuotationsPage() {
         totalTax: tax,
         totalAmount: sub + tax
       };
+    });
+  };
+
+  // Fill a row from a saved catalog item (Zoho-style dropdown pick)
+  const fillItemFromCatalog = (index: number, cat: CatalogItem) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      const existing = newItems[index];
+      const rate = Number(cat.rate) || 0;
+      newItems[index] = {
+        ...existing,
+        description: cat.description ? `${cat.name} — ${cat.description}` : cat.name,
+        rate,
+        gst_rate: Number(cat.gst_rate) || existing.gst_rate,
+        amount: (existing.quantity || 1) * rate,
+      };
+      const sub = newItems.reduce((sum, item) => sum + item.amount, 0);
+      const tax = Math.round(sub * (prev.gstRate / 100));
+      return { ...prev, items: newItems, subtotal: sub, totalTax: tax, totalAmount: sub + tax };
     });
   };
 
@@ -1118,11 +1138,11 @@ export default function QuotationsPage() {
                   {formData.items.map((item, index) => (
                     <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-md border border-gray-200">
                       <div className="col-span-12 sm:col-span-5">
-                        <input
-                          type="text"
-                          placeholder="Description"
+                        <ItemAutocomplete
+                          placeholder="Description (type to search saved items)"
                           value={item.description}
-                          onChange={(e) => updateItem(index, 'description', e.target.value)}
+                          onChange={(text) => updateItem(index, 'description', text)}
+                          onSelect={(cat) => fillItemFromCatalog(index, cat)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
                         {/* Per-item category — routes THIS item to its own production channel (mix jobs) */}

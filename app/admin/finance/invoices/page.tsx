@@ -21,6 +21,7 @@ import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
 import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts, useQuotations } from '@/lib/hooks';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import ItemAutocomplete, { CatalogItem } from '@/components/items/ItemAutocomplete';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
@@ -494,6 +495,28 @@ export default function InvoicesPage() {
           } as InvoiceItem;
         }
       }
+      const sub = newItems.reduce((sum, it) => sum + it.amount, 0);
+      const tax = Math.round(sub * (prev.gstRate / 100));
+      return { ...prev, items: newItems, subtotal: sub, totalTax: tax, totalAmount: sub + tax };
+    });
+  };
+
+  // Fill a row from a saved catalog item (Zoho-style dropdown pick):
+  // name → item name, description → sub-description line, plus rate/HSN/GST.
+  const fillItemFromCatalog = (index: number, cat: CatalogItem) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      const existing = newItems[index];
+      const rate = Number(cat.rate) || 0;
+      newItems[index] = {
+        ...existing,
+        description: cat.name,
+        item_notes: cat.description || existing.item_notes,
+        hsn_code: cat.hsn_code || existing.hsn_code,
+        rate,
+        gst_rate: Number(cat.gst_rate) || existing.gst_rate,
+        amount: (existing.quantity || 1) * rate,
+      } as InvoiceItem;
       const sub = newItems.reduce((sum, it) => sum + it.amount, 0);
       const tax = Math.round(sub * (prev.gstRate / 100));
       return { ...prev, items: newItems, subtotal: sub, totalTax: tax, totalAmount: sub + tax };
@@ -1247,11 +1270,11 @@ export default function InvoicesPage() {
                         {/* Row 1: Description + HSN + Qty + Rate + Amount */}
                         <div className="grid grid-cols-12 gap-2 items-center">
                           <div className="col-span-12 sm:col-span-4">
-                            <input
-                              type="text"
-                              placeholder="Item name *"
+                            <ItemAutocomplete
+                              placeholder="Item name * (type to search saved items)"
                               value={item.description}
-                              onChange={(e) => updateItem(index, 'description', e.target.value)}
+                              onChange={(text) => updateItem(index, 'description', text)}
+                              onSelect={(cat) => fillItemFromCatalog(index, cat)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm font-medium"
                             />
                           </div>
