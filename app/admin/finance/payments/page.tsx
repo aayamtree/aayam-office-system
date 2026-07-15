@@ -14,6 +14,7 @@ export default function PaymentsPageNew() {
     const [submitting, setSubmitting] = useState(false);
     const [paymentType, setPaymentType] = useState<'received' | 'paid'>('received');
     const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [accountId, setAccountId] = useState('');
     const [clients, setClients] = useState<any[]>([]);
     const [vendors, setVendors] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -118,6 +119,14 @@ export default function PaymentsPageNew() {
         fetchParties();
     }, []);
 
+    // Single "Pay From" dropdown: pick an account directly; payment mode is
+    // derived automatically (cash account -> cash, bank account -> bank_transfer).
+    const handleAccountChange = (id: string) => {
+        const isCash = cashAccounts.some((a) => a.id === id);
+        setAccountId(id);
+        setPaymentMethod(isCash ? 'cash' : 'bank_transfer');
+    };
+
     // Filtered payments
     const filteredPayments = sourceFilter === 'all'
         ? payments
@@ -135,10 +144,11 @@ export default function PaymentsPageNew() {
         const formData = new FormData(e.currentTarget);
         const type = formData.get('type') as string;
         const amount = parseFloat(formData.get('amount') as string);
-        const payMode = formData.get('payment_mode') as string;
-        const accountId = formData.get('account_id') as string;
+        const payMode = paymentMethod;
 
         try {
+            if (!accountId) throw new Error('Please select an account to pay from');
+
             if (type === 'received') {
                 const clientId = formData.get('client_id') as string;
                 const { error } = await supabase.rpc('record_payment_received', {
@@ -191,6 +201,8 @@ export default function PaymentsPageNew() {
 
             await fetchPayments();
             setShowModal(false);
+            setAccountId('');
+            setPaymentMethod('cash');
             toast.success('Payment recorded successfully!');
         } catch (err: any) {
             toast.error(String('Error: ' + err.message));
@@ -360,7 +372,7 @@ export default function PaymentsPageNew() {
                     <div className="bg-white rounded-md w-full max-w-md p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-page-title">Record Payment</h2>
-                            <button onClick={() => setShowModal(false)}>
+                            <button onClick={() => { setShowModal(false); setAccountId(''); setPaymentMethod('cash'); }}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -415,47 +427,39 @@ export default function PaymentsPageNew() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block mb-2 font-medium">Payment Method</label>
-                                <select
-                                    name="payment_mode"
-                                    className="w-full border rounded p-2"
-                                    value={paymentMethod}
-                                    onChange={(e) => setPaymentMethod(e.target.value)}
-                                >
-                                    <option value="cash">Cash</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="upi">UPI</option>
-                                    <option value="cheque">Cheque</option>
-                                </select>
-                            </div>
-
-                            {/* Account Selection */}
+                            {/* Pay From / Pay To — single dropdown listing every account (cash + bank) */}
                             <div>
                                 <label className="block mb-2 font-medium">
-                                    {paymentMethod === 'cash' ? 'Cash Account' : 'Bank Account'}
+                                    {paymentType === 'received' ? 'Deposit To' : 'Pay From'}
                                 </label>
-                                {paymentMethod === 'cash' ? (
-                                    <select name="account_id" required className="w-full border rounded p-2">
-                                        <option value="">Select cash account...</option>
-                                        {cashAccounts.map((acc: any) => (
-                                            <option key={acc.id} value={acc.id}>
-                                                {acc.name} - ₹{acc.current_balance?.toLocaleString()}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <select name="account_id" required className="w-full border rounded p-2">
-                                        <option value="">Select bank account...</option>
-                                        {bankAccounts.map((acc: any) => (
-                                            <option key={acc.id} value={acc.id}>
-                                                {acc.name} ({acc.account_number}) - ₹{acc.current_balance?.toLocaleString()}
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
+                                <select
+                                    value={accountId}
+                                    onChange={(e) => handleAccountChange(e.target.value)}
+                                    required
+                                    className="w-full border rounded p-2"
+                                >
+                                    <option value="">Select account...</option>
+                                    {cashAccounts.length > 0 && (
+                                        <optgroup label="Cash">
+                                            {cashAccounts.map((acc: any) => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    )}
+                                    {bankAccounts.length > 0 && (
+                                        <optgroup label="Bank">
+                                            {bankAccounts.map((acc: any) => (
+                                                <option key={acc.id} value={acc.id}>
+                                                    {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    )}
+                                </select>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Current balance shown
+                                    Pick the cash or bank account — the payment method is set automatically.
                                 </p>
                             </div>
 
@@ -485,7 +489,7 @@ export default function PaymentsPageNew() {
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={() => { setShowModal(false); setAccountId(''); setPaymentMethod('cash'); }}
                                     className="flex-1 border rounded p-2"
                                 >
                                     Cancel
