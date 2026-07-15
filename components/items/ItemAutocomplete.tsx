@@ -59,16 +59,22 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
 
   useEffect(() => { loadCatalog().then(setItems); }, []);
 
-  // Close on outside click
+  // Close on outside click.
+  // Capture phase + isConnected guard: React re-renders the dropdown content
+  // synchronously mid-click (e.g. "+ Add New Item" swaps list → form), which
+  // detaches the clicked node — a bubble-phase contains() check would then
+  // wrongly treat it as an outside click and close everything.
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (!target.isConnected) return;
+      if (wrapRef.current && !wrapRef.current.contains(target)) {
         setOpen(false);
         setShowAddForm(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('mousedown', handler, true);
+    return () => document.removeEventListener('mousedown', handler, true);
   }, []);
 
   const query = value.trim().toLowerCase();
@@ -88,6 +94,7 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
   const openAddForm = () => {
     setAddForm({ name: value.trim(), description: '', rate: '', hsn_code: '', gst_rate: '18' });
     setShowAddForm(true);
+    setOpen(true);
   };
 
   const handleSaveNew = async () => {
@@ -137,8 +144,8 @@ export default function ItemAutocomplete({ value, onChange, onSelect, placeholde
         autoComplete="off"
       />
 
-      {open && (
-        <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-72 overflow-y-auto">
+      {(open || showAddForm) && (
+        <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-72 overflow-y-auto">
           {!showAddForm && (
             <>
               {shown.map((item, i) => (
