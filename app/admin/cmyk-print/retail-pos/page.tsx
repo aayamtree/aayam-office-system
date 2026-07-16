@@ -162,7 +162,10 @@ export default function RetailPOSPage() {
   // (sale.papers → deduct_paper_stock / restore_paper_stock) and cost tracking.
   const itemPaper = (i: CartItem) => {
     const p = i.paperStockId ? paperStock.find(x => x.id === i.paperStockId) : undefined;
-    const sheets = parseInt(i.sheetsUsed || '0') || 0;
+    // Sheets consumed defaults to the billed quantity (1 sheet per piece). The
+    // operator only overrides for multi-up jobs (several pieces per sheet).
+    const raw = (i.sheetsUsed ?? '').toString().trim();
+    const sheets = raw === '' ? (i.qty || 0) : (parseInt(raw) || 0);
     return { p, sheets };
   };
   const paperList = (() => {
@@ -610,11 +613,12 @@ export default function RetailPOSPage() {
                                 </option>
                               ))}
                             </select>
-                            <input type="number" min="0" placeholder="Sheets" value={item.sheetsUsed || ''}
+                            <input type="number" min="0" placeholder={`${item.qty || 0}`} value={item.sheetsUsed || ''}
                               onChange={e => updateLine(item.id, 'sheetsUsed', e.target.value)}
                               disabled={!item.paperStockId}
+                              title="Sheets to deduct from stock. Blank = same as Qty. Only change it if one sheet makes several pieces."
                               className="w-20 px-2 py-1.5 border rounded text-xs text-right focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50" />
-                            <span className="text-gray-400">sheets</span>
+                            <span className="text-gray-400 whitespace-nowrap">sheets · auto = qty</span>
                           </div>
                           {over && (
                             <p className="text-xs text-destructive mt-1 flex items-center gap-1">
