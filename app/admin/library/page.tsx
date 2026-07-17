@@ -15,6 +15,7 @@ import {
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { PACKAGING_TYPES, Product, formatSize, clientLabel } from '@/lib/product-library';
 import ImportSheetModal from '@/components/library/ImportSheetModal';
+import LibraryTabs from '@/components/library/LibraryTabs';
 
 interface ClientOption { id: string; name: string; company: string | null }
 
@@ -192,6 +193,8 @@ export default function ProductLibraryPage() {
           </button>
         </div>
       </div>
+
+      <LibraryTabs />
 
       {/* Filters */}
       <div className="bg-white border rounded-md p-3 space-y-3">
