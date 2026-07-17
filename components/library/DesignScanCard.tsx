@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import {
-  ScanLine, Loader2, ChevronDown, ChevronUp, Sparkles,
+  ScanLine, Loader2, ChevronDown, ChevronUp, Sparkles, Upload,
 } from 'lucide-react';
 
 interface Props {
@@ -17,6 +17,7 @@ interface Props {
   latestVersionId: string | null;
   hasFile: boolean;
   onScanned: () => void;
+  onRequestUpload?: () => void;
 }
 
 function Field({ label, value }: { label: string; value: any }) {
@@ -30,7 +31,7 @@ function Field({ label, value }: { label: string; value: any }) {
   );
 }
 
-export default function DesignScanCard({ productId, scanData, latestVersionId, hasFile, onScanned }: Props) {
+export default function DesignScanCard({ productId, scanData, latestVersionId, hasFile, onScanned, onRequestUpload }: Props) {
   const [scanning, setScanning] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
 
@@ -76,10 +77,20 @@ export default function DesignScanCard({ productId, scanData, latestVersionId, h
       </div>
 
       {!scanData ? (
-        <div className="p-6 text-center text-sm text-gray-400">
-          {hasFile
-            ? 'Not scanned yet — click "Scan design" to read everything written on the design file.'
-            : 'Upload a design version first, then scan it.'}
+        <div className="p-6 text-center text-sm text-gray-400 space-y-3">
+          <div>
+            {hasFile
+              ? 'Not scanned yet — click "Scan design" to read everything written on the design file.'
+              : 'No design file yet. Upload the final design to scan its contents.'}
+          </div>
+          {!hasFile && onRequestUpload && (
+            <button
+              onClick={onRequestUpload}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Upload className="w-4 h-4" /> Upload Design File
+            </button>
+          )}
         </div>
       ) : (
         <div className="p-4 space-y-3">

@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
               <Pencil className="w-4 h-4" /> Edit
             </button>
             <button onClick={() => setShowVersion(true)} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md">
-              <Plus className="w-4 h-4" /> New Version
+              <Upload className="w-4 h-4" /> Upload Design
             </button>
           </div>
         </div>
@@ -293,6 +293,7 @@ export default function ProductDetailPage() {
         latestVersionId={versions.find((v) => v.file_url)?.id || null}
         hasFile={versions.some((v) => !!v.file_url)}
         onScanned={fetchAll}
+        onRequestUpload={() => setShowVersion(true)}
       />
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -302,7 +303,12 @@ export default function ProductDetailPage() {
             <FileText className="w-4 h-4 text-gray-400" /> Design Versions ({versions.length})
           </div>
           {versions.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-400">No design files yet — add the first version.</div>
+            <div className="p-6 text-center text-sm text-gray-400">
+              No design files yet.
+              <button onClick={() => setShowVersion(true)} className="ml-2 text-indigo-600 hover:underline inline-flex items-center gap-1">
+                <Upload className="w-3.5 h-3.5" /> Upload the first design
+              </button>
+            </div>
           ) : (
             <ul className="divide-y">
               {versions.map((v) => (

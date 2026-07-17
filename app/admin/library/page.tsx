@@ -10,8 +10,9 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import {
   Plus, Search, X, Loader2, Package, Tag, ShoppingBag,
-  Box as BoxIcon, FileImage, Printer, ExternalLink,
+  Box as BoxIcon, FileImage, Printer, ExternalLink, Upload,
 } from 'lucide-react';
+import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { PACKAGING_TYPES, Product, formatSize, clientLabel } from '@/lib/product-library';
 
 interface ClientOption { id: string; name: string; company: string | null }
@@ -31,6 +32,8 @@ const CATEGORY_COLOR: Record<string, string> = {
   Other: 'bg-gray-100 text-gray-700',
 };
 
+const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
+
 const emptyForm = {
   client_id: '', brand_name: '', name: '', category: 'Box',
   size_w: '', size_h: '', size_d: '', size_unit: 'mm', size_text: '', notes: '',
@@ -48,6 +51,7 @@ export default function ProductLibraryPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [addFile, setAddFile] = useState<File | null>(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -108,9 +112,48 @@ export default function ProductLibraryPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save');
-      toast.success('Product added to library');
+
+      // Upload the design file (if chosen) → Drive → version → auto-scan
+      if (addFile && json.product?.id) {
+        try {
+          toast.success('Product added — uploading design…');
+          const tokenRes = await fetch('/api/drive/token');
+          const tokenJson = await tokenRes.json();
+          if (!tokenRes.ok || !tokenJson.accessToken) throw new Error(tokenJson.error || 'Drive not available');
+          const root = await findOrCreateFolder(tokenJson.accessToken, 'Product Library', SHARED_DRIVE_ID);
+          if (!root.folderId) throw new Error(root.error || 'Drive folder failed');
+          const sub = await findOrCreateFolder(tokenJson.accessToken, json.product.name.slice(0, 80), root.folderId);
+          const up = await uploadToDrive(tokenJson.accessToken, addFile, sub.folderId || root.folderId, `v1 - ${addFile.name}`, { uploadedTo: 'product_library', resourceId: json.product.id });
+          if (!up.success) throw new Error(up.error || 'Upload failed');
+          const vRes = await fetch(`/api/products/${json.product.id}/versions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file_url: up.webViewLink,
+              file_name: addFile.name,
+              thumbnail_url: up.fileId ? getDrivePreviewUrl(up.fileId) : null,
+            }),
+          });
+          const vJson = await vRes.json();
+          if (!vRes.ok) throw new Error(vJson.error || 'Version save failed');
+          if (addFile.size <= 18 * 1024 * 1024) {
+            const fd = new FormData();
+            fd.append('file', addFile);
+            if (vJson.version?.id) fd.append('version_id', vJson.version.id);
+            fetch(`/api/products/${json.product.id}/scan`, { method: 'POST', body: fd })
+              .then((r) => { if (r.ok) { toast.success('Design scanned automatically'); fetchAll(); } })
+              .catch(() => {});
+          }
+          toast.success('Design uploaded ✓');
+        } catch (e: any) {
+          toast.error(`Product saved, but design upload failed: ${e.message}`);
+        }
+      } else {
+        toast.success('Product added to library');
+      }
       setShowForm(false);
       setForm(emptyForm);
+      setAddFile(null);
       fetchAll();
     } catch (e: any) {
       toast.error(e.message);
@@ -313,6 +356,15 @@ export default function ProductLibraryPage() {
                   placeholder="Or freeform size, e.g. 'A4 folded to A5'"
                   className="w-full border rounded-md px-3 py-2 text-sm mt-2"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Design file (PDF/image)</label>
+                <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-4 py-4 text-sm text-gray-500 cursor-pointer hover:border-indigo-300 hover:text-indigo-600">
+                  <Upload className="w-4 h-4" />
+                  {addFile ? addFile.name : 'Choose final design file…'}
+                  <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
+                </label>
+                <p className="text-[11px] text-gray-400 mt-1">Uploaded to Drive and scanned automatically (brand, product, size, full text).</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
