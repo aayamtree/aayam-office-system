@@ -25,6 +25,7 @@ const DriveDisconnectBanner = dynamic(() => import('@/components/drive/DriveDisc
 const FloatingDock = dynamic(() => import('@/components/shared/FloatingDock'), { ssr: false });
 const ChatPanel = dynamic(() => import('@/components/ChatPanel'), { ssr: false });
 const GlobalShareMenu = dynamic(() => import('@/components/shared/GlobalShareMenu'), { ssr: false });
+const SaveToLibraryPrompt = dynamic(() => import('@/components/library/SaveToLibraryPrompt'), { ssr: false });
 const ServiceWorkerRegistration = dynamic(() => import('@/components/ServiceWorkerRegistration').then(m => ({ default: m.ServiceWorkerRegistration })), { ssr: false });
 
 export default function AdminLayout({
@@ -130,6 +131,7 @@ export default function AdminLayout({
 
           {/* Right-click anywhere → Share on Telegram / Copy link */}
           <GlobalShareMenu />
+          <SaveToLibraryPrompt />
 
         </div>
        </RealtimeProvider>

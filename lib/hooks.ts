@@ -572,7 +572,7 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
     // Get current job
     const { data: job } = await supabase
       .from('jobs')
-      .select('current_stage, job_number, revision_count')
+      .select('current_stage, job_number, revision_count, project_name, client_id, brand_name, product_category, product_id, library_status, clients(name, company)')
       .eq('id', id)
       .single();
 
@@ -592,6 +592,30 @@ export function useJobs(options?: UseSupabaseQueryOptions) {
       .eq('id', id);
 
     if (updateError) return { error: updateError.message };
+
+    // ── Product Library bridge ─────────────────────────────────────────────
+    // Design finalized (entering Print File Ready) and job not yet linked or
+    // skipped → ask (softly) whether to save this design to the library.
+    // SaveToLibraryPrompt (mounted in the admin layout) listens for this event.
+    if (
+      typeof window !== 'undefined' &&
+      newStage === 'print_file_ready' &&
+      !(job as any)?.product_id &&
+      !(job as any)?.library_status
+    ) {
+      const jc: any = (job as any)?.clients;
+      window.dispatchEvent(new CustomEvent('aayam:design-finalized', {
+        detail: {
+          job_id: id,
+          job_number: (job as any)?.job_number || null,
+          project_name: (job as any)?.project_name || null,
+          client_id: (job as any)?.client_id || null,
+          client_name: jc ? (jc.company || jc.name || null) : null,
+          brand_name: (job as any)?.brand_name || null,
+          product_category: (job as any)?.product_category || null,
+        },
+      }));
+    }
 
     // Log stage change
     await supabase.from('job_stage_history').insert([{
