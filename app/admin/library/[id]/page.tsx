@@ -18,6 +18,7 @@ import {
   PACKAGING_TYPES, Product, ProductVersion, ProductActivityRow,
   formatSize, clientLabel, readPdfSizeMm, checkSize,
 } from '@/lib/product-library';
+import DesignScanCard from '@/components/library/DesignScanCard';
 
 const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
 
@@ -203,6 +204,18 @@ export default function ProductDetailPage() {
       if (!res.ok) throw new Error(json.error || 'Failed to save version');
 
       toast.success(`Version v${json.version?.version_no ?? nextV} saved`);
+
+      // Auto-scan the design contents in the background (uses the same file)
+      if (vFile.size <= 18 * 1024 * 1024) {
+        const fd = new FormData();
+        fd.append('file', vFile);
+        if (json.version?.id) fd.append('version_id', json.version.id);
+        fetch(`/api/products/${product.id}/scan`, { method: 'POST', body: fd })
+          .then(async (r) => {
+            if (r.ok) { toast.success('Design contents scanned automatically'); fetchAll(); }
+          })
+          .catch(() => {});
+      }
       setShowVersion(false);
       setVFile(null);
       setVForm({ size_w: '', size_h: '', size_d: '', size_unit: 'mm', notes: '' });
@@ -273,6 +286,14 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <DesignScanCard
+        productId={product.id}
+        scanData={(product as any).scan_data || null}
+        latestVersionId={versions.find((v) => v.file_url)?.id || null}
+        hasFile={versions.some((v) => !!v.file_url)}
+        onScanned={fetchAll}
+      />
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* Versions */}

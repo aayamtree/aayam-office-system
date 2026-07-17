@@ -79,7 +79,7 @@ export default function ProductLibraryPage() {
       if (!q) return true;
       const hay = [
         p.name, p.brand_name, p.category, p.size_text, formatSize(p),
-        clientLabel(p.clients),
+        clientLabel(p.clients), (p as any).scan_text,
       ].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
