@@ -225,8 +225,8 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
                   <span className="truncate">{r.name}</span>
                   {r.ok ? (
                     <span className="text-xs flex items-center gap-2 shrink-0">
-                      <span className={r.brand_check === 'mismatch' ? 'text-red-600' : 'text-emerald-600'}>brand: {r.brand_check?.replace(/_/g, ' ')}</span>
-                      <span className={r.product_check === 'mismatch' ? 'text-red-600' : 'text-emerald-600'}>product: {r.product_check?.replace(/_/g, ' ')}</span>
+                      <span className={r.brand_check === 'mismatch' ? 'text-red-600' : r.brand_check === 'review' ? 'text-amber-600' : 'text-emerald-600'}>brand: {(r.brand_check || '').replace(/_/g, ' ')}</span>
+                      <span className={r.product_check === 'mismatch' ? 'text-red-600' : r.product_check === 'review' ? 'text-amber-600' : 'text-emerald-600'}>product: {(r.product_check || '').replace(/_/g, ' ')}</span>
                     </span>
                   ) : (
                     <span className="text-xs text-red-600 shrink-0">{r.error}</span>

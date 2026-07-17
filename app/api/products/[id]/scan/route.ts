@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
+import { runMasterChecks } from '@/lib/product-masters-server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -87,63 +88,6 @@ function flattenScan(scan: any): string {
   return parts.join(' ').slice(0, 20000);
 }
 
-/** Normalize a value for comparison (case/space/punctuation-insensitive). */
-function norm(v: any): string {
-  if (v == null) return '';
-  if (Array.isArray(v)) return v.map(norm).sort().join('|');
-  return String(v).toLowerCase().replace(/[^a-z0-9ऀ-ॿ઀-૿]+/g, '');
-}
-
-/** Phones compare by digits only. */
-function normPhone(v: any): string {
-  if (v == null) return '';
-  const arr = Array.isArray(v) ? v : [v];
-  return arr.map((p) => String(p).replace(/\D/g, '')).filter(Boolean).sort().join('|');
-}
-
-const BRAND_FIELDS = ['manufactured_by', 'marketed_by', 'address', 'email', 'website', 'fssai_no', 'other_regn_nos'] as const;
-const PRODUCT_FIELDS = ['category', 'ingredients_or_composition', 'usage_instructions', 'warnings'] as const;
-
-interface Mismatch { field: string; master: any; found: any }
-
-function compareFields(master: any, scan: any, fields: readonly string[], withPhone: boolean): Mismatch[] {
-  const mismatches: Mismatch[] = [];
-  for (const f of fields) {
-    const m = master?.[f];
-    const s = scan?.[f];
-    if (m == null || s == null) continue; // only compare when both sides have data
-    if (norm(m) !== norm(s)) mismatches.push({ field: f, master: m, found: s });
-  }
-  if (withPhone && master?.phone != null && scan?.phone != null && normPhone(master.phone) !== normPhone(scan.phone)) {
-    mismatches.push({ field: 'phone', master: master.phone, found: scan.phone });
-  }
-  return mismatches;
-}
-
-function brandMasterFromScan(scan: any) {
-  return {
-    brand_name: scan.brand_name ?? null,
-    manufactured_by: scan.manufactured_by ?? null,
-    marketed_by: scan.marketed_by ?? null,
-    address: scan.address ?? null,
-    phone: scan.phone ?? null,
-    email: scan.email ?? null,
-    website: scan.website ?? null,
-    fssai_no: scan.fssai_no ?? null,
-    other_regn_nos: scan.other_regn_nos ?? null,
-  };
-}
-
-function productMasterFromScan(scan: any) {
-  return {
-    product_name: scan.product_name ?? null,
-    category: scan.category ?? null,
-    ingredients_or_composition: scan.ingredients_or_composition ?? null,
-    usage_instructions: scan.usage_instructions ?? null,
-    warnings: scan.warnings ?? null,
-    key_claims: scan.key_claims ?? null,
-  };
-}
 
 // ─── main handler ────────────────────────────────────────────────────────────
 
@@ -243,87 +187,12 @@ export async function POST(
     .eq('id', productId)
     .single();
 
-  // ── BRAND MASTER check ──────────────────────────────────────────────────
-  let brandCheck: any = { status: 'no_brand_on_design' };
-  let resolvedBrandId: string | null = product?.brand_id || null;
-  if (scan?.brand_name) {
-    let brand: any = null;
-    if (product?.brand_id) {
-      const { data } = await supabase.from('brands').select('id, name, master_data').eq('id', product.brand_id).single();
-      brand = data;
-    }
-    if (!brand) {
-      const { data } = await supabase.from('brands').select('id, name, master_data').ilike('name', scan.brand_name.trim()).limit(1);
-      brand = data?.[0] || null;
-    }
-    if (!brand) {
-      const { data: created } = await supabase
-        .from('brands')
-        .insert({ name: scan.brand_name.trim(), client_id: product?.client_id || null, master_data: brandMasterFromScan(scan), master_text: flattenScan(brandMasterFromScan(scan)), master_updated_at: new Date().toISOString() })
-        .select('id, name')
-        .single();
-      resolvedBrandId = created?.id || null;
-      brandCheck = { status: 'new_master_created', brand_id: resolvedBrandId, brand_name: scan.brand_name.trim() };
-    } else if (!brand.master_data) {
-      await supabase
-        .from('brands')
-        .update({ master_data: brandMasterFromScan(scan), master_text: flattenScan(brandMasterFromScan(scan)), master_updated_at: new Date().toISOString() })
-        .eq('id', brand.id);
-      resolvedBrandId = brand.id;
-      brandCheck = { status: 'master_filled', brand_id: brand.id, brand_name: brand.name };
-    } else {
-      const mismatches = compareFields(brand.master_data, scan, BRAND_FIELDS, true);
-      resolvedBrandId = brand.id;
-      brandCheck = {
-        status: mismatches.length === 0 ? 'match' : 'mismatch',
-        brand_id: brand.id,
-        brand_name: brand.name,
-        mismatches,
-      };
-    }
-  }
-
-  // ── PRODUCT MASTER check (generic product, shared across brands) ────────
-  let productCheck: any = { status: 'no_product_on_design' };
-  let resolvedMasterId: string | null = product?.product_master_id || null;
-  if (scan?.product_name) {
-    let master: any = null;
-    if (product?.product_master_id) {
-      const { data } = await supabase.from('product_masters').select('id, name, master_data').eq('id', product.product_master_id).single();
-      master = data;
-    }
-    if (!master) {
-      const { data } = await supabase.from('product_masters').select('id, name, master_data').ilike('name', scan.product_name.trim()).limit(1);
-      master = data?.[0] || null;
-    }
-    if (!master) {
-      const { data: created } = await supabase
-        .from('product_masters')
-        .insert({ name: scan.product_name.trim(), category: scan.category || null, master_data: productMasterFromScan(scan), master_text: flattenScan(productMasterFromScan(scan)), created_by: user.id })
-        .select('id, name')
-        .single();
-      resolvedMasterId = created?.id || null;
-      productCheck = { status: 'new_master_created', master_id: resolvedMasterId, master_name: scan.product_name.trim() };
-    } else if (!master.master_data) {
-      await supabase
-        .from('product_masters')
-        .update({ master_data: productMasterFromScan(scan), master_text: flattenScan(productMasterFromScan(scan)), updated_at: new Date().toISOString() })
-        .eq('id', master.id);
-      resolvedMasterId = master.id;
-      productCheck = { status: 'master_filled', master_id: master.id, master_name: master.name };
-    } else {
-      const mismatches = compareFields(master.master_data, scan, PRODUCT_FIELDS, false);
-      resolvedMasterId = master.id;
-      productCheck = {
-        status: mismatches.length === 0 ? 'match' : 'mismatch',
-        master_id: master.id,
-        master_name: master.name,
-        mismatches,
-      };
-    }
-  }
-
-  const checkResults = { brand: brandCheck, product: productCheck, checked_at: new Date().toISOString() };
+  // ── BRAND + PRODUCT master cross-checks (shared logic) ──────────────────
+  const { checkResults, resolvedBrandId, resolvedMasterId } = await runMasterChecks(
+    supabase,
+    { productId, clientId: product?.client_id || null, brandId: product?.brand_id || null, productMasterId: product?.product_master_id || null },
+    scan
+  );
 
   // ── store everything ────────────────────────────────────────────────────
   const scannedAt = new Date().toISOString();
@@ -342,14 +211,14 @@ export async function POST(
     .eq('id', productId);
 
   const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
-  const brandNote = brandCheck.status === 'mismatch' ? ` ⚠ brand mismatch (${brandCheck.mismatches.length} fields)` : '';
-  const prodNote = productCheck.status === 'mismatch' ? ` ⚠ product mismatch (${productCheck.mismatches.length} fields)` : '';
+  const brandNote = checkResults.brand.status === 'mismatch' ? ` ⚠ brand mismatch (${checkResults.brand.mismatches.length} fields)` : '';
+  const prodNote = checkResults.product.status === 'mismatch' ? ` ⚠ product mismatch (${checkResults.product.mismatches.length} fields)` : '';
   await supabase.from('product_activity').insert({
     product_id: productId,
     version_id: versionId,
     event_type: 'scanned',
     detail: `Design scanned: ${[scan?.brand_name, scan?.product_name, scan?.net_qty].filter(Boolean).join(' · ') || 'contents extracted'}${brandNote}${prodNote}`,
-    meta: { brand_check: brandCheck.status, product_check: productCheck.status },
+    meta: { brand_check: checkResults.brand.status, product_check: checkResults.product.status },
     actor_id: user.id,
     actor_name: profile?.full_name || null,
   });

@@ -29,23 +29,55 @@ function normPhone(v: any): string {
   return arr.map((p) => String(p).replace(/\D/g, '')).filter(Boolean).sort().join('|');
 }
 
-const BRAND_FIELDS = ['manufactured_by', 'marketed_by', 'address', 'email', 'website', 'fssai_no', 'other_regn_nos'] as const;
-const PRODUCT_FIELDS = ['category', 'ingredients_or_composition', 'usage_instructions', 'warnings'] as const;
+// HARD identity fields — short, structured, must be EXACT. A difference here
+// is a real error worth stopping the press for (wrong contact, wrong licence).
+// SOFT fields are long prose — the AI never transcribes them identically, so we
+// only note them when they are DRASTICALLY different (fuzzy), and never as a
+// red "mismatch". Registration/licence numbers live on the PRODUCT side
+// (they are product-specific, e.g. each pesticide has its own CIR reg no),
+// NOT on the brand — that was the cause of false brand mismatches.
+const BRAND_HARD = ['email', 'website'] as const;      // + phone handled separately
+const BRAND_SOFT = ['address', 'manufactured_by', 'marketed_by'] as const;
+const PRODUCT_HARD = ['fssai_no', 'other_regn_nos', 'barcode'] as const;
+const PRODUCT_SOFT = ['ingredients_or_composition'] as const;
 
-interface Mismatch { field: string; master: any; found: any }
+interface Mismatch { field: string; master: any; found: any; level?: 'hard' | 'soft' }
 
-function compareFields(master: any, scan: any, fields: readonly string[], withPhone: boolean): Mismatch[] {
+/** Word-token Jaccard similarity 0..1 for prose. */
+function similarity(a: any, b: any): number {
+  const toks = (v: any) => new Set(norm(Array.isArray(v) ? v.join(' ') : v).match(/[a-z0-9ऀ-ॿ઀-૿]+/g) || (String(v).toLowerCase().match(/\S+/g) || []));
+  const A = toks(a), B = toks(b);
+  if (A.size === 0 && B.size === 0) return 1;
+  let inter = 0;
+  A.forEach((t) => { if (B.has(t)) inter++; });
+  const uni = A.size + B.size - inter;
+  return uni === 0 ? 1 : inter / uni;
+}
+
+function compareMaster(master: any, scan: any, hard: readonly string[], soft: readonly string[], withPhone: boolean): Mismatch[] {
   const out: Mismatch[] = [];
-  for (const f of fields) {
-    const m = master?.[f];
-    const s = scan?.[f];
-    if (m == null || s == null) continue;
-    if (norm(m) !== norm(s)) out.push({ field: f, master: m, found: s });
+  for (const f of hard) {
+    const m = master?.[f]; const sVal = scan?.[f];
+    if (m == null || sVal == null) continue;
+    if (norm(m) !== norm(sVal)) out.push({ field: f, master: m, found: sVal, level: 'hard' });
   }
   if (withPhone && master?.phone != null && scan?.phone != null && normPhone(master.phone) !== normPhone(scan.phone)) {
-    out.push({ field: 'phone', master: master.phone, found: scan.phone });
+    out.push({ field: 'phone', master: master.phone, found: scan.phone, level: 'hard' });
+  }
+  // Soft prose: flag only when very different (similarity < 0.55)
+  for (const f of soft) {
+    const m = master?.[f]; const sVal = scan?.[f];
+    if (m == null || sVal == null) continue;
+    if (similarity(m, sVal) < 0.55) out.push({ field: f, master: m, found: sVal, level: 'soft' });
   }
   return out;
+}
+
+/** Map a list of field diffs to an overall status. */
+function statusFromMismatches(mm: Mismatch[]): 'match' | 'review' | 'mismatch' {
+  if (mm.some((m) => m.level === 'hard')) return 'mismatch';
+  if (mm.length > 0) return 'review';
+  return 'match';
 }
 
 function brandMasterFromScan(scan: any) {
@@ -62,6 +94,8 @@ function productMasterFromScan(scan: any) {
     ingredients_or_composition: scan.ingredients_or_composition ?? null,
     usage_instructions: scan.usage_instructions ?? null, warnings: scan.warnings ?? null,
     key_claims: scan.key_claims ?? null,
+    fssai_no: scan.fssai_no ?? null, other_regn_nos: scan.other_regn_nos ?? null,
+    barcode: scan.barcode ?? null,
   };
 }
 
@@ -97,9 +131,9 @@ export async function runMasterChecks(supabase: SB, product: MasterCheckInput, s
       resolvedBrandId = brand.id;
       brandCheck = { status: 'master_filled', brand_id: brand.id, brand_name: brand.name };
     } else {
-      const mismatches = compareFields(brand.master_data, scan, BRAND_FIELDS, true);
+      const mismatches = compareMaster(brand.master_data, scan, BRAND_HARD, BRAND_SOFT, true);
       resolvedBrandId = brand.id;
-      brandCheck = { status: mismatches.length === 0 ? 'match' : 'mismatch', brand_id: brand.id, brand_name: brand.name, mismatches };
+      brandCheck = { status: statusFromMismatches(mismatches), brand_id: brand.id, brand_name: brand.name, mismatches };
     }
   }
 
@@ -127,9 +161,9 @@ export async function runMasterChecks(supabase: SB, product: MasterCheckInput, s
       resolvedMasterId = master.id;
       productCheck = { status: 'master_filled', master_id: master.id, master_name: master.name };
     } else {
-      const mismatches = compareFields(master.master_data, scan, PRODUCT_FIELDS, false);
+      const mismatches = compareMaster(master.master_data, scan, PRODUCT_HARD, PRODUCT_SOFT, false);
       resolvedMasterId = master.id;
-      productCheck = { status: mismatches.length === 0 ? 'match' : 'mismatch', master_id: master.id, master_name: master.name, mismatches };
+      productCheck = { status: statusFromMismatches(mismatches), master_id: master.id, master_name: master.name, mismatches };
     }
   }
 

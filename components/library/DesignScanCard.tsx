@@ -104,15 +104,19 @@ function MasterCheck({ type, check, productId, onUpdated }: { type: 'brand' | 'p
       </div>
     );
   }
-  // mismatch
+  const isReview = check.status === 'review';
+  // mismatch (red) or review (amber)
+  const c = isReview
+    ? { border: 'border-amber-200', bg: 'bg-amber-50', text: 'text-amber-800', head: 'text-amber-600', btn: 'border-amber-300 text-amber-700 hover:bg-amber-100' }
+    : { border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-800', head: 'text-red-500', btn: 'border-red-300 text-red-700 hover:bg-red-100' };
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 space-y-2">
+    <div className={`rounded-md border ${c.border} ${c.bg} px-3 py-2 text-xs ${c.text} space-y-2`}>
       <div className="flex items-center gap-2 font-semibold">
-        <AlertTriangle className="w-4 h-4 shrink-0" /> {title}: MISMATCH with “{name}” — check before printing!
+        <AlertTriangle className="w-4 h-4 shrink-0" /> {title}: {isReview ? `please review “${name}” — some wording differs` : `MISMATCH with “${name}” — check before printing!`}
       </div>
       <table className="w-full text-[11px]">
         <thead>
-          <tr className="text-red-500">
+          <tr className={c.head}>
             <th className="text-left font-medium pr-2">Field</th>
             <th className="text-left font-medium pr-2">Master says</th>
             <th className="text-left font-medium">On this design</th>
@@ -131,7 +135,7 @@ function MasterCheck({ type, check, productId, onUpdated }: { type: 'brand' | 'p
       <button
         onClick={applyUpdate}
         disabled={updating}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border border-red-300 text-red-700 hover:bg-red-100 text-[11px] font-medium"
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white border text-[11px] font-medium ${c.btn}`}
       >
         {updating && <Loader2 className="w-3 h-3 animate-spin" />}
         Design is correct — update master with these details
