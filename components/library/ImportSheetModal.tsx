@@ -47,12 +47,16 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       const sub = await findOrCreateFolder(tokenJson.accessToken, 'Job Sheets', root.folderId);
       const up = await uploadToDrive(tokenJson.accessToken, file, sub.folderId || root.folderId, file.name, { uploadedTo: 'product_library_sheet' });
       if (!up.success) throw new Error(up.error || 'Upload failed');
-      setSheetMeta({ file_url: up.webViewLink, file_name: file.name, thumbnail_url: up.fileId ? getDrivePreviewUrl(up.fileId) : undefined });
+      const meta = { file_url: up.webViewLink, file_name: file.name, thumbnail_url: up.fileId ? getDrivePreviewUrl(up.fileId) : undefined };
+      setSheetMeta(meta);
 
-      // 2. Detect the unique jobs (send the file bytes directly — faster than re-download)
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/products/scan-sheet', { method: 'POST', body: fd });
+      // 2. Detect unique jobs — server reads the file from Drive (avoids the
+      //    serverless request-body size limit on big sheets).
+      const res = await fetch('/api/products/scan-sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_url: meta.file_url, file_name: meta.file_name }),
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Detection failed');
       const found = json.jobs || [];

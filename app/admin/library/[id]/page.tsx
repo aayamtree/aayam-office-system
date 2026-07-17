@@ -201,12 +201,14 @@ export default function ProductDetailPage() {
 
       toast.success(`Version v${json.version?.version_no ?? nextV} saved`);
 
-      // Auto-scan the design contents in the background (uses the same file)
-      if (vFile.size <= 18 * 1024 * 1024) {
-        const fd = new FormData();
-        fd.append('file', vFile);
-        if (json.version?.id) fd.append('version_id', json.version.id);
-        fetch(`/api/products/${product.id}/scan`, { method: 'POST', body: fd })
+      // Auto-scan the design contents in the background (server reads the
+      // freshly-uploaded file from Drive — avoids the serverless body limit).
+      if (json.version?.id) {
+        fetch(`/api/products/${product.id}/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ version_id: json.version.id }),
+        })
           .then(async (r) => {
             if (r.ok) { toast.success('Design contents scanned automatically'); fetchAll(); }
           })

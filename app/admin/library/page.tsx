@@ -138,11 +138,12 @@ export default function ProductLibraryPage() {
           });
           const vJson = await vRes.json();
           if (!vRes.ok) throw new Error(vJson.error || 'Version save failed');
-          if (addFile.size <= 18 * 1024 * 1024) {
-            const fd = new FormData();
-            fd.append('file', addFile);
-            if (vJson.version?.id) fd.append('version_id', vJson.version.id);
-            fetch(`/api/products/${json.product.id}/scan`, { method: 'POST', body: fd })
+          if (vJson.version?.id) {
+            fetch(`/api/products/${json.product.id}/scan`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ version_id: vJson.version.id }),
+            })
               .then((r) => { if (r.ok) { toast.success('Design scanned automatically'); fetchAll(); } })
               .catch(() => {});
           }
