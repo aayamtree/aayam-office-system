@@ -272,6 +272,18 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.notes && <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{product.notes}</p>}
+              {(() => {
+                const sheetVersion = versions.find((v) => v.file_url && /job sheet|One job on|\.pdf/i.test((v.notes || '') + ' ' + (v.file_name || '')));
+                const sheetFromNotes = (product.notes || '').startsWith('Imported from');
+                const v = (sheetFromNotes ? versions.find((x) => x.file_url) : null) || (sheetFromNotes ? sheetVersion : null);
+                if (!v?.file_url) return null;
+                return (
+                  <a href={v.file_url} target="_blank" rel="noopener noreferrer"
+                     className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md">
+                    <FileText className="w-3.5 h-3.5" /> Open full job sheet (complete file)
+                  </a>
+                );
+              })()}
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -321,8 +333,8 @@ export default function ProductDetailPage() {
                       {v.job_number && <span className="text-xs text-gray-500">Job {v.job_number}</span>}
                     </div>
                     {v.file_url && (
-                      <a href={v.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline shrink-0">
-                        Open <ExternalLink className="w-3 h-3" />
+                      <a href={v.file_url} target="_blank" rel="noopener noreferrer" title={v.file_name || 'Open file'} className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline shrink-0">
+                        Open file <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
