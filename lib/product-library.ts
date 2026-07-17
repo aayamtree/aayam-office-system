@@ -22,6 +22,10 @@ export interface Product {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  scan_data?: any;
+  scan_text?: string | null;
+  check_results?: any;
+  product_master_id?: string | null;
   clients?: { name: string; company: string | null } | null;
 }
 
@@ -55,7 +59,8 @@ export interface ProductActivityRow {
   created_at: string;
 }
 
-/** Human-readable size: "100 × 150 × 40 mm" (or size_text fallback). */
+/** Human-readable size (L × W × H): "240 × 87 × 40 mm" (or size_text fallback).
+ *  Column mapping: size_w = Length, size_h = Width, size_d = Height. */
 export function formatSize(p: { size_w?: number | null; size_h?: number | null; size_d?: number | null; size_unit?: string | null; size_text?: string | null }): string {
   if (p.size_w && p.size_h) {
     const dims = [p.size_w, p.size_h, ...(p.size_d ? [p.size_d] : [])].join(' × ');
@@ -112,25 +117,53 @@ export function toMm(value: number, unit: string | null): number {
 }
 
 /**
- * Compare entered size vs actual PDF size (tolerance 2 mm, orientation-agnostic).
- * Returns 'pass' | 'fail' with a note; 'skipped' when no comparison possible.
+ * Compare entered product size (L × W) vs the PDF page size.
+ * SMART about real print files:
+ * - Boxes/cartons: the PDF is a flat dieline spread — never compared against
+ *   L×W×H (that comparison is meaningless), reported as info only.
+ * - Master print sheets (file much larger than the product, multiple designs
+ *   per sheet): reported as sheet size, not flagged as mismatch.
+ * - Labels/pouches/stickers at 1:1: compared with 2 mm tolerance,
+ *   orientation-agnostic.
  */
 export function checkSize(
-  enteredW: number | null, enteredH: number | null, unit: string | null,
-  pdf: { w: number; h: number; box: string } | null
+  enteredL: number | null, enteredW: number | null, unit: string | null,
+  pdf: { w: number; h: number; box: string } | null,
+  category?: string | null
 ): { status: 'pass' | 'fail' | 'skipped'; note: string } {
   if (!pdf) return { status: 'skipped', note: 'Could not read size from file' };
-  if (!enteredW || !enteredH) return { status: 'skipped', note: `File is ${pdf.w} × ${pdf.h} mm (${pdf.box}); no entered size to compare` };
+
+  const cat = (category || '').toLowerCase();
+  if (cat === 'box' || cat === 'carton') {
+    return {
+      status: 'skipped',
+      note: `Print file is ${pdf.w} × ${pdf.h} mm (flat dieline/sheet). Box size L×W×H is not compared with the flat sheet — verify the dieline manually.`,
+    };
+  }
+
+  if (!enteredL || !enteredW) return { status: 'skipped', note: `File is ${pdf.w} × ${pdf.h} mm (${pdf.box}); no entered size to compare` };
+  const el = toMm(enteredL, unit);
   const ew = toMm(enteredW, unit);
-  const eh = toMm(enteredH, unit);
+
+  // Master print sheet: file dramatically larger than the product on both axes
+  const sheetLike =
+    (pdf.w > el * 2.2 && pdf.h > ew * 2.2) ||
+    (pdf.w > ew * 2.2 && pdf.h > el * 2.2);
+  if (sheetLike) {
+    return {
+      status: 'skipped',
+      note: `Master print sheet detected (${pdf.w} × ${pdf.h} mm — multiple designs per sheet). Single-design size not compared.`,
+    };
+  }
+
   const tol = 2;
-  const direct = Math.abs(ew - pdf.w) <= tol && Math.abs(eh - pdf.h) <= tol;
-  const rotated = Math.abs(ew - pdf.h) <= tol && Math.abs(eh - pdf.w) <= tol;
+  const direct = Math.abs(el - pdf.w) <= tol && Math.abs(ew - pdf.h) <= tol;
+  const rotated = Math.abs(el - pdf.h) <= tol && Math.abs(ew - pdf.w) <= tol;
   if (direct || rotated) {
     return { status: 'pass', note: `File ${pdf.box} ${pdf.w} × ${pdf.h} mm matches entered size` };
   }
   return {
     status: 'fail',
-    note: `MISMATCH: entered ${Math.round(ew * 10) / 10} × ${Math.round(eh * 10) / 10} mm but file ${pdf.box} is ${pdf.w} × ${pdf.h} mm`,
+    note: `MISMATCH: entered ${Math.round(el * 10) / 10} × ${Math.round(ew * 10) / 10} mm but file ${pdf.box} is ${pdf.w} × ${pdf.h} mm`,
   };
 }

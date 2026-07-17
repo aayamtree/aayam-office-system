@@ -133,26 +133,22 @@ export default function ProductDetailPage() {
   };
 
   // When a file is chosen, immediately read its real PDF size and compare
+  // (category-aware: box dielines & master print sheets are info, not mismatch)
   const onVersionFile = async (file: File | null) => {
     setVFile(file);
     setVCheck(null);
     if (!file) return;
     const pdfSize = await readPdfSizeMm(file);
-    const enteredW = vForm.size_w ? parseFloat(vForm.size_w) : (product?.size_w ?? null);
-    const enteredH = vForm.size_h ? parseFloat(vForm.size_h) : (product?.size_h ?? null);
-    const result = checkSize(enteredW, enteredH, vForm.size_unit, pdfSize);
-    setVCheck(result);
-    if (pdfSize && !vForm.size_w && !vForm.size_h && !product?.size_w) {
-      // Nothing entered anywhere — offer the detected size
-      setVForm((f) => ({ ...f, size_w: String(pdfSize.w), size_h: String(pdfSize.h), size_unit: 'mm' }));
-    }
+    const enteredL = vForm.size_w ? parseFloat(vForm.size_w) : (product?.size_w ?? null);
+    const enteredW = vForm.size_h ? parseFloat(vForm.size_h) : (product?.size_h ?? null);
+    setVCheck(checkSize(enteredL, enteredW, vForm.size_unit, pdfSize, product?.category));
   };
 
   // Re-run the check when entered sizes change and a file is selected
-  const rerunCheck = async (w: string, h: string, unit: string) => {
+  const rerunCheck = async (l: string, w: string, unit: string) => {
     if (!vFile) return;
     const pdfSize = await readPdfSizeMm(vFile);
-    setVCheck(checkSize(w ? parseFloat(w) : null, h ? parseFloat(h) : null, unit, pdfSize));
+    setVCheck(checkSize(l ? parseFloat(l) : null, w ? parseFloat(w) : null, unit, pdfSize, product?.category));
   };
 
   const handleVersionSave = async () => {
@@ -290,6 +286,7 @@ export default function ProductDetailPage() {
       <DesignScanCard
         productId={product.id}
         scanData={(product as any).scan_data || null}
+        checkResults={(product as any).check_results || null}
         latestVersionId={versions.find((v) => v.file_url)?.id || null}
         hasFile={versions.some((v) => !!v.file_url)}
         onScanned={fetchAll}
@@ -397,13 +394,13 @@ export default function ProductDetailPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size (L × W × H)</label>
                 <div className="flex gap-2 items-center">
-                  <input value={editForm.size_w} onChange={(e) => setEditForm({ ...editForm, size_w: e.target.value })} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={editForm.size_w} onChange={(e) => setEditForm({ ...editForm, size_w: e.target.value })} placeholder="L" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <span className="text-gray-400">×</span>
-                  <input value={editForm.size_h} onChange={(e) => setEditForm({ ...editForm, size_h: e.target.value })} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={editForm.size_h} onChange={(e) => setEditForm({ ...editForm, size_h: e.target.value })} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <span className="text-gray-400">×</span>
-                  <input value={editForm.size_d} onChange={(e) => setEditForm({ ...editForm, size_d: e.target.value })} placeholder="D" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={editForm.size_d} onChange={(e) => setEditForm({ ...editForm, size_d: e.target.value })} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <select value={editForm.size_unit} onChange={(e) => setEditForm({ ...editForm, size_unit: e.target.value })} className="border rounded-md px-2 py-2 text-sm">
                     <option value="mm">mm</option><option value="cm">cm</option><option value="in">in</option>
                   </select>
@@ -444,13 +441,13 @@ export default function ProductDetailPage() {
                 <p className="text-[11px] text-gray-400 mt-1">For PDF files the packaging size is verified automatically against the entered size.</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size for this version</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size for this version (L × W × H)</label>
                 <div className="flex gap-2 items-center">
-                  <input value={vForm.size_w} onChange={(e) => { setVForm({ ...vForm, size_w: e.target.value }); rerunCheck(e.target.value, vForm.size_h, vForm.size_unit); }} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={vForm.size_w} onChange={(e) => { setVForm({ ...vForm, size_w: e.target.value }); rerunCheck(e.target.value, vForm.size_h, vForm.size_unit); }} placeholder="L" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <span className="text-gray-400">×</span>
-                  <input value={vForm.size_h} onChange={(e) => { setVForm({ ...vForm, size_h: e.target.value }); rerunCheck(vForm.size_w, e.target.value, vForm.size_unit); }} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={vForm.size_h} onChange={(e) => { setVForm({ ...vForm, size_h: e.target.value }); rerunCheck(vForm.size_w, e.target.value, vForm.size_unit); }} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <span className="text-gray-400">×</span>
-                  <input value={vForm.size_d} onChange={(e) => setVForm({ ...vForm, size_d: e.target.value })} placeholder="D" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                  <input value={vForm.size_d} onChange={(e) => setVForm({ ...vForm, size_d: e.target.value })} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                   <select value={vForm.size_unit} onChange={(e) => { setVForm({ ...vForm, size_unit: e.target.value }); rerunCheck(vForm.size_w, vForm.size_h, e.target.value); }} className="border rounded-md px-2 py-2 text-sm">
                     <option value="mm">mm</option><option value="cm">cm</option><option value="in">in</option>
                   </select>

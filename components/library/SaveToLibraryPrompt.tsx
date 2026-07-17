@@ -248,13 +248,13 @@ export default function SaveToLibraryPrompt() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Packaging size (L × W × H)</label>
               <div className="flex gap-2 items-center">
-                <input value={form.size_w} onChange={(e) => setForm({ ...form, size_w: e.target.value })} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                <input value={form.size_w} onChange={(e) => setForm({ ...form, size_w: e.target.value })} placeholder="L" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                 <span className="text-gray-400">×</span>
-                <input value={form.size_h} onChange={(e) => setForm({ ...form, size_h: e.target.value })} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                <input value={form.size_h} onChange={(e) => setForm({ ...form, size_h: e.target.value })} placeholder="W" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                 <span className="text-gray-400">×</span>
-                <input value={form.size_d} onChange={(e) => setForm({ ...form, size_d: e.target.value })} placeholder="D" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
+                <input value={form.size_d} onChange={(e) => setForm({ ...form, size_d: e.target.value })} placeholder="H" type="number" className="w-20 border rounded-md px-2 py-2 text-sm" />
                 <select value={form.size_unit} onChange={(e) => setForm({ ...form, size_unit: e.target.value })} className="border rounded-md px-2 py-2 text-sm">
                   <option value="mm">mm</option><option value="cm">cm</option><option value="in">in</option>
                 </select>

@@ -1,11 +1,13 @@
-// API Route: /api/products/[id]/scan — AI design scan.
-// Reads the design file with Claude vision and stores a structured
-// document (brand, product, net qty, MRP, full text transcript…) on the
-// version + product, so designs can be matched product-wise / brand-wise.
+// API Route: /api/products/[id]/scan — AI design scan + master cross-check.
 //
-// Accepts multipart form-data: file (preferred, at upload time) + version_id.
-// Or JSON { version_id } — then the file is downloaded from Drive via the
-// service account.
+// 1. Claude vision reads the design file → structured scan document
+// 2. BRAND MASTER: the scanned brand details are matched against the brands
+//    table (master_data). New brand → master auto-created. Empty master →
+//    auto-filled. Existing master → field-by-field check, mismatches reported.
+// 3. PRODUCT MASTER: same for generic product details (product_masters table,
+//    shared across brands — e.g. PACLOBUTRAZOL 23% SC).
+// Results stored on version + product (check_results) and shown in the UI,
+// with an "update master" action when the design carries new correct details.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
@@ -18,7 +20,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_BYTES = 18 * 1024 * 1024; // Claude request limit headroom (base64 inflates ~1.33x)
+const MAX_BYTES = 18 * 1024 * 1024;
 
 async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   const auth = createServerClient(
@@ -51,7 +53,8 @@ key_claims (array of marketing claims, e.g. "100% natural"),
 dimensions_text (any size/dimension printed on the design),
 full_text (COMPLETE transcript of ALL text on the design, preserving original languages — do not truncate)`;
 
-/** Normalize a mime type — handles image/jpg, missing types, octet-stream. */
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
 function normalizeMediaType(type: string | null, fileName: string | null): string {
   let t = (type || '').toLowerCase().trim();
   if (t === 'image/jpg') t = 'image/jpeg';
@@ -66,14 +69,12 @@ function normalizeMediaType(type: string | null, fileName: string | null): strin
   return t || 'application/pdf';
 }
 
-/** Extract a Drive file id from a webViewLink / share URL. */
 function driveFileId(url: string | null): string | null {
   if (!url) return null;
   const m = url.match(/\/d\/([\w-]{20,})/) || url.match(/[?&]id=([\w-]{20,})/);
   return m ? m[1] : null;
 }
 
-/** Flatten scan JSON into one searchable text blob. */
 function flattenScan(scan: any): string {
   const parts: string[] = [];
   const push = (v: any) => {
@@ -85,6 +86,66 @@ function flattenScan(scan: any): string {
   push(scan);
   return parts.join(' ').slice(0, 20000);
 }
+
+/** Normalize a value for comparison (case/space/punctuation-insensitive). */
+function norm(v: any): string {
+  if (v == null) return '';
+  if (Array.isArray(v)) return v.map(norm).sort().join('|');
+  return String(v).toLowerCase().replace(/[^a-z0-9ऀ-ॿ઀-૿]+/g, '');
+}
+
+/** Phones compare by digits only. */
+function normPhone(v: any): string {
+  if (v == null) return '';
+  const arr = Array.isArray(v) ? v : [v];
+  return arr.map((p) => String(p).replace(/\D/g, '')).filter(Boolean).sort().join('|');
+}
+
+const BRAND_FIELDS = ['manufactured_by', 'marketed_by', 'address', 'email', 'website', 'fssai_no', 'other_regn_nos'] as const;
+const PRODUCT_FIELDS = ['category', 'ingredients_or_composition', 'usage_instructions', 'warnings'] as const;
+
+interface Mismatch { field: string; master: any; found: any }
+
+function compareFields(master: any, scan: any, fields: readonly string[], withPhone: boolean): Mismatch[] {
+  const mismatches: Mismatch[] = [];
+  for (const f of fields) {
+    const m = master?.[f];
+    const s = scan?.[f];
+    if (m == null || s == null) continue; // only compare when both sides have data
+    if (norm(m) !== norm(s)) mismatches.push({ field: f, master: m, found: s });
+  }
+  if (withPhone && master?.phone != null && scan?.phone != null && normPhone(master.phone) !== normPhone(scan.phone)) {
+    mismatches.push({ field: 'phone', master: master.phone, found: scan.phone });
+  }
+  return mismatches;
+}
+
+function brandMasterFromScan(scan: any) {
+  return {
+    brand_name: scan.brand_name ?? null,
+    manufactured_by: scan.manufactured_by ?? null,
+    marketed_by: scan.marketed_by ?? null,
+    address: scan.address ?? null,
+    phone: scan.phone ?? null,
+    email: scan.email ?? null,
+    website: scan.website ?? null,
+    fssai_no: scan.fssai_no ?? null,
+    other_regn_nos: scan.other_regn_nos ?? null,
+  };
+}
+
+function productMasterFromScan(scan: any) {
+  return {
+    product_name: scan.product_name ?? null,
+    category: scan.category ?? null,
+    ingredients_or_composition: scan.ingredients_or_composition ?? null,
+    usage_instructions: scan.usage_instructions ?? null,
+    warnings: scan.warnings ?? null,
+    key_claims: scan.key_claims ?? null,
+  };
+}
+
+// ─── main handler ────────────────────────────────────────────────────────────
 
 export async function POST(
   request: NextRequest,
@@ -98,7 +159,7 @@ export async function POST(
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
   }
 
-  // ── Get the file bytes (multipart upload OR Drive download) ─────────────
+  // ── file bytes (multipart or Drive) ─────────────────────────────────────
   let fileBuffer: ArrayBuffer | null = null;
   let mediaType = 'application/pdf';
   let versionId: string | null = null;
@@ -118,7 +179,6 @@ export async function POST(
     versionId = body.version_id || null;
   }
 
-  // Fallback: download the version's file from Drive
   if (!fileBuffer) {
     if (!versionId) return NextResponse.json({ error: 'file or version_id is required' }, { status: 400 });
     const { data: version } = await supabase
@@ -156,7 +216,7 @@ export async function POST(
     return NextResponse.json({ error: `Cannot scan ${mediaType} files — scanning works for PDF and image files. (AI/CDR files: export a PDF.)` }, { status: 415 });
   }
 
-  // ── Ask Claude to read the design ───────────────────────────────────────
+  // ── Claude reads the design ─────────────────────────────────────────────
   const fileBase64 = Buffer.from(fileBuffer).toString('base64');
   const contentBlock = mediaType === 'application/pdf'
     ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
@@ -177,25 +237,122 @@ export async function POST(
     return NextResponse.json({ error: `Scan failed: ${e.message}` }, { status: 500 });
   }
 
-  // ── Store the scan document ─────────────────────────────────────────────
+  const { data: product } = await supabase
+    .from('products')
+    .select('id, client_id, brand_id, product_master_id')
+    .eq('id', productId)
+    .single();
+
+  // ── BRAND MASTER check ──────────────────────────────────────────────────
+  let brandCheck: any = { status: 'no_brand_on_design' };
+  let resolvedBrandId: string | null = product?.brand_id || null;
+  if (scan?.brand_name) {
+    let brand: any = null;
+    if (product?.brand_id) {
+      const { data } = await supabase.from('brands').select('id, name, master_data').eq('id', product.brand_id).single();
+      brand = data;
+    }
+    if (!brand) {
+      const { data } = await supabase.from('brands').select('id, name, master_data').ilike('name', scan.brand_name.trim()).limit(1);
+      brand = data?.[0] || null;
+    }
+    if (!brand) {
+      const { data: created } = await supabase
+        .from('brands')
+        .insert({ name: scan.brand_name.trim(), client_id: product?.client_id || null, master_data: brandMasterFromScan(scan), master_text: flattenScan(brandMasterFromScan(scan)), master_updated_at: new Date().toISOString() })
+        .select('id, name')
+        .single();
+      resolvedBrandId = created?.id || null;
+      brandCheck = { status: 'new_master_created', brand_id: resolvedBrandId, brand_name: scan.brand_name.trim() };
+    } else if (!brand.master_data) {
+      await supabase
+        .from('brands')
+        .update({ master_data: brandMasterFromScan(scan), master_text: flattenScan(brandMasterFromScan(scan)), master_updated_at: new Date().toISOString() })
+        .eq('id', brand.id);
+      resolvedBrandId = brand.id;
+      brandCheck = { status: 'master_filled', brand_id: brand.id, brand_name: brand.name };
+    } else {
+      const mismatches = compareFields(brand.master_data, scan, BRAND_FIELDS, true);
+      resolvedBrandId = brand.id;
+      brandCheck = {
+        status: mismatches.length === 0 ? 'match' : 'mismatch',
+        brand_id: brand.id,
+        brand_name: brand.name,
+        mismatches,
+      };
+    }
+  }
+
+  // ── PRODUCT MASTER check (generic product, shared across brands) ────────
+  let productCheck: any = { status: 'no_product_on_design' };
+  let resolvedMasterId: string | null = product?.product_master_id || null;
+  if (scan?.product_name) {
+    let master: any = null;
+    if (product?.product_master_id) {
+      const { data } = await supabase.from('product_masters').select('id, name, master_data').eq('id', product.product_master_id).single();
+      master = data;
+    }
+    if (!master) {
+      const { data } = await supabase.from('product_masters').select('id, name, master_data').ilike('name', scan.product_name.trim()).limit(1);
+      master = data?.[0] || null;
+    }
+    if (!master) {
+      const { data: created } = await supabase
+        .from('product_masters')
+        .insert({ name: scan.product_name.trim(), category: scan.category || null, master_data: productMasterFromScan(scan), master_text: flattenScan(productMasterFromScan(scan)), created_by: user.id })
+        .select('id, name')
+        .single();
+      resolvedMasterId = created?.id || null;
+      productCheck = { status: 'new_master_created', master_id: resolvedMasterId, master_name: scan.product_name.trim() };
+    } else if (!master.master_data) {
+      await supabase
+        .from('product_masters')
+        .update({ master_data: productMasterFromScan(scan), master_text: flattenScan(productMasterFromScan(scan)), updated_at: new Date().toISOString() })
+        .eq('id', master.id);
+      resolvedMasterId = master.id;
+      productCheck = { status: 'master_filled', master_id: master.id, master_name: master.name };
+    } else {
+      const mismatches = compareFields(master.master_data, scan, PRODUCT_FIELDS, false);
+      resolvedMasterId = master.id;
+      productCheck = {
+        status: mismatches.length === 0 ? 'match' : 'mismatch',
+        master_id: master.id,
+        master_name: master.name,
+        mismatches,
+      };
+    }
+  }
+
+  const checkResults = { brand: brandCheck, product: productCheck, checked_at: new Date().toISOString() };
+
+  // ── store everything ────────────────────────────────────────────────────
   const scannedAt = new Date().toISOString();
   if (versionId) {
-    await supabase.from('product_versions').update({ scan_data: scan, scanned_at: scannedAt }).eq('id', versionId);
+    await supabase.from('product_versions').update({ scan_data: scan, scanned_at: scannedAt, check_results: checkResults }).eq('id', versionId);
   }
   await supabase
     .from('products')
-    .update({ scan_data: scan, scan_text: flattenScan(scan) })
+    .update({
+      scan_data: scan,
+      scan_text: flattenScan(scan),
+      check_results: checkResults,
+      ...(resolvedBrandId && !product?.brand_id ? { brand_id: resolvedBrandId, brand_name: scan.brand_name?.trim() || null } : {}),
+      ...(resolvedMasterId && !product?.product_master_id ? { product_master_id: resolvedMasterId } : {}),
+    })
     .eq('id', productId);
 
   const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+  const brandNote = brandCheck.status === 'mismatch' ? ` ⚠ brand mismatch (${brandCheck.mismatches.length} fields)` : '';
+  const prodNote = productCheck.status === 'mismatch' ? ` ⚠ product mismatch (${productCheck.mismatches.length} fields)` : '';
   await supabase.from('product_activity').insert({
     product_id: productId,
     version_id: versionId,
     event_type: 'scanned',
-    detail: `Design scanned: ${[scan?.brand_name, scan?.product_name, scan?.net_qty].filter(Boolean).join(' · ') || 'contents extracted'}`,
+    detail: `Design scanned: ${[scan?.brand_name, scan?.product_name, scan?.net_qty].filter(Boolean).join(' · ') || 'contents extracted'}${brandNote}${prodNote}`,
+    meta: { brand_check: brandCheck.status, product_check: productCheck.status },
     actor_id: user.id,
     actor_name: profile?.full_name || null,
   });
 
-  return NextResponse.json({ ok: true, scan });
+  return NextResponse.json({ ok: true, scan, check_results: checkResults });
 }
