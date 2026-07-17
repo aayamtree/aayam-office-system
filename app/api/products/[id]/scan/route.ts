@@ -51,6 +51,21 @@ key_claims (array of marketing claims, e.g. "100% natural"),
 dimensions_text (any size/dimension printed on the design),
 full_text (COMPLETE transcript of ALL text on the design, preserving original languages — do not truncate)`;
 
+/** Normalize a mime type — handles image/jpg, missing types, octet-stream. */
+function normalizeMediaType(type: string | null, fileName: string | null): string {
+  let t = (type || '').toLowerCase().trim();
+  if (t === 'image/jpg') t = 'image/jpeg';
+  if (!t || t === 'application/octet-stream' || t === 'binary/octet-stream') {
+    const ext = (fileName || '').toLowerCase().split('.').pop() || '';
+    const byExt: Record<string, string> = {
+      pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', jfif: 'image/jpeg',
+      png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+    };
+    t = byExt[ext] || t;
+  }
+  return t || 'application/pdf';
+}
+
 /** Extract a Drive file id from a webViewLink / share URL. */
 function driveFileId(url: string | null): string | null {
   if (!url) return null;
@@ -96,7 +111,7 @@ export async function POST(
     if (file) {
       if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File too large to scan (max 18 MB). Upload a smaller PDF/JPG preview.' }, { status: 413 });
       fileBuffer = await file.arrayBuffer();
-      mediaType = file.type || 'application/pdf';
+      mediaType = normalizeMediaType(file.type, file.name);
     }
   } else {
     const body = await request.json().catch(() => ({}));
@@ -126,7 +141,7 @@ export async function POST(
     if (meta.size && parseInt(meta.size) > MAX_BYTES) {
       return NextResponse.json({ error: 'File too large to scan (max 18 MB). Re-upload a smaller PDF/JPG preview version.' }, { status: 413 });
     }
-    mediaType = meta.mimeType || 'application/pdf';
+    mediaType = normalizeMediaType(meta.mimeType, version?.file_name || null);
 
     const dlRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,

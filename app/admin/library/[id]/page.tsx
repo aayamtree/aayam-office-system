@@ -439,7 +439,7 @@ export default function ProductDetailPage() {
                 <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-4 py-6 text-sm text-gray-500 cursor-pointer hover:border-indigo-300 hover:text-indigo-600">
                   <Upload className="w-4 h-4" />
                   {vFile ? vFile.name : 'Choose file…'}
-                  <input type="file" className="hidden" accept=".pdf,.ai,.png,.jpg,.jpeg,.tif,.tiff" onChange={(e) => onVersionFile(e.target.files?.[0] || null)} />
+                  <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.jfif,.webp,.gif,.tif,.tiff,.ai" onChange={(e) => onVersionFile(e.target.files?.[0] || null)} />
                 </label>
                 <p className="text-[11px] text-gray-400 mt-1">For PDF files the packaging size is verified automatically against the entered size.</p>
               </div>

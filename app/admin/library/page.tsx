@@ -362,7 +362,7 @@ export default function ProductLibraryPage() {
                 <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-4 py-4 text-sm text-gray-500 cursor-pointer hover:border-indigo-300 hover:text-indigo-600">
                   <Upload className="w-4 h-4" />
                   {addFile ? addFile.name : 'Choose final design file…'}
-                  <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
+                  <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.jfif,.webp,.gif,.tif,.tiff,.ai" onChange={(e) => setAddFile(e.target.files?.[0] || null)} />
                 </label>
                 <p className="text-[11px] text-gray-400 mt-1">Uploaded to Drive and scanned automatically (brand, product, size, full text).</p>
               </div>
