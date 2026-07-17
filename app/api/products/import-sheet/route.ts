@@ -57,12 +57,14 @@ export async function POST(request: NextRequest) {
       const category = cleanCategory(job.category);
 
       // Create the product
+      const jobThumb = job.thumbnail_url || sheet?.thumbnail_url || null;
       const { data: product, error: pErr } = await supabase.from('products')
         .insert({
           name,
           category,
           client_id: sheet?.client_id || null,
           brand_name: job.brand_name || null,
+          thumbnail_url: jobThumb,
           notes: `Imported from ${sheetLabel}${job.copies_on_sheet ? ` (${job.copies_on_sheet} up on sheet)` : ''}`,
           created_by: user.id,
         })
@@ -82,10 +84,10 @@ export async function POST(request: NextRequest) {
             product_id: product.id,
             file_url: sheet.file_url,
             file_name: sheet.file_name || sheetLabel,
-            thumbnail_url: sheet.thumbnail_url || null,
+            thumbnail_url: jobThumb,
             designer_id: user.id,
             status: 'approved',
-            scan_data: job,
+            scan_data: (() => { const { __local_preview, ...rest } = job; return rest; })(),
             scanned_at: new Date().toISOString(),
             size_check_status: 'skipped',
             size_check_note: 'Part of a multi-job print sheet',
@@ -105,9 +107,10 @@ export async function POST(request: NextRequest) {
         job
       );
 
+      const { __local_preview: _lp, ...jobClean } = job;
       await supabase.from('products').update({
-        scan_data: job,
-        scan_text: flattenScan(job),
+        scan_data: jobClean,
+        scan_text: flattenScan(jobClean),
         check_results: checkResults,
         ...(resolvedBrandId ? { brand_id: resolvedBrandId, brand_name: job.brand_name || null } : {}),
         ...(resolvedMasterId ? { product_master_id: resolvedMasterId } : {}),

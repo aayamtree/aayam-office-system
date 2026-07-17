@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
+import { SheetRenderer } from '@/lib/pdf-crop';
 import {
   X, Loader2, Upload, ScanLine, CheckCircle2, Package, Layers,
 } from 'lucide-react';
@@ -21,7 +22,7 @@ interface Props {
   onImported: () => void;
 }
 
-type Stage = 'pick' | 'detecting' | 'review' | 'saving' | 'done';
+type Stage = 'pick' | 'detecting' | 'cropping' | 'review' | 'saving' | 'done';
 
 export default function ImportSheetModal({ clients, onClose, onImported }: Props) {
   const [stage, setStage] = useState<Stage>('pick');
@@ -59,8 +60,31 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Detection failed');
-      const found = json.jobs || [];
+      let found = json.jobs || [];
       if (found.length === 0) { toast.error('No jobs detected on this sheet'); setStage('pick'); return; }
+
+      // 3. Crop each job's region from the sheet → its own image thumbnail
+      setStage('cropping');
+      try {
+        const renderer = new SheetRenderer(file);
+        await renderer.init();
+        for (let i = 0; i < found.length; i++) {
+          const j = found[i];
+          if (!j.bbox) continue;
+          const cropFile = await renderer.crop(j.bbox, j.product_name || j.brand_name || `job_${i + 1}`);
+          if (!cropFile) continue;
+          // preview immediately (local), then upload to Drive for permanent thumbnail
+          j.__local_preview = URL.createObjectURL(cropFile);
+          try {
+            const cropUp = await uploadToDrive(tokenJson.accessToken, cropFile, sub.folderId || root.folderId, cropFile.name, { uploadedTo: 'product_library_crop' });
+            if (cropUp.success && cropUp.fileId) j.thumbnail_url = getDrivePreviewUrl(cropUp.fileId);
+          } catch { /* keep local preview only */ }
+        }
+      } catch (err) {
+        // cropping is best-effort; fall back to sheet thumbnail
+        console.warn('crop failed', err);
+      }
+
       setJobs(found);
       const sel: Record<number, boolean> = {};
       found.forEach((_: any, i: number) => (sel[i] = true));
@@ -136,6 +160,14 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
           </div>
         )}
 
+        {/* CROPPING */}
+        {stage === 'cropping' && (
+          <div className="p-10 text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+            <p className="text-sm text-gray-500">Cutting each job out of the sheet into its own image…</p>
+          </div>
+        )}
+
         {/* REVIEW */}
         {stage === 'review' && (
           <div className="p-5 space-y-3">
@@ -144,6 +176,14 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
               {jobs.map((j, i) => (
                 <div key={i} className={`border rounded-md p-3 flex gap-3 ${selected[i] ? 'border-indigo-200 bg-indigo-50/40' : 'opacity-60'}`}>
                   <input type="checkbox" checked={!!selected[i]} onChange={(e) => setSelected({ ...selected, [i]: e.target.checked })} className="mt-1" />
+                  <div className="w-16 h-16 rounded border bg-gray-50 overflow-hidden shrink-0 flex items-center justify-center">
+                    {(j.__local_preview || j.thumbnail_url) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={j.__local_preview || j.thumbnail_url} alt={j.product_name || 'job'} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[9px] text-gray-300 text-center px-1">no crop</span>
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <input value={j.product_name || ''} onChange={(e) => setJobName(i, e.target.value)} className="w-full font-medium text-sm border rounded px-2 py-1 mb-1" placeholder="Product name" />
                     <div className="text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
