@@ -80,6 +80,19 @@ function statusFromMismatches(mm: Mismatch[]): 'match' | 'review' | 'mismatch' {
   return 'match';
 }
 
+const isEmpty = (v: any) => v == null || v === '' || (Array.isArray(v) && v.length === 0);
+
+/** Fill any blank master fields from the scan-derived object. Returns the
+ *  merged object and whether anything was added (masters improve over time). */
+function mergeFill(master: any, derived: any): { merged: any; changed: boolean } {
+  const merged = { ...(master || {}) };
+  let changed = false;
+  for (const [k, v] of Object.entries(derived)) {
+    if (isEmpty(merged[k]) && !isEmpty(v)) { merged[k] = v; changed = true; }
+  }
+  return { merged, changed };
+}
+
 function brandMasterFromScan(scan: any) {
   return {
     brand_name: scan.brand_name ?? null, manufactured_by: scan.manufactured_by ?? null,
@@ -132,8 +145,10 @@ export async function runMasterChecks(supabase: SB, product: MasterCheckInput, s
       brandCheck = { status: 'master_filled', brand_id: brand.id, brand_name: brand.name };
     } else {
       const mismatches = compareMaster(brand.master_data, scan, BRAND_HARD, BRAND_SOFT, true);
+      const { merged, changed } = mergeFill(brand.master_data, brandMasterFromScan(scan));
+      if (changed) await supabase.from('brands').update({ master_data: merged, master_text: flattenScan(merged), master_updated_at: new Date().toISOString() }).eq('id', brand.id);
       resolvedBrandId = brand.id;
-      brandCheck = { status: statusFromMismatches(mismatches), brand_id: brand.id, brand_name: brand.name, mismatches };
+      brandCheck = { status: statusFromMismatches(mismatches), brand_id: brand.id, brand_name: brand.name, mismatches, enriched: changed };
     }
   }
 
@@ -162,8 +177,10 @@ export async function runMasterChecks(supabase: SB, product: MasterCheckInput, s
       productCheck = { status: 'master_filled', master_id: master.id, master_name: master.name };
     } else {
       const mismatches = compareMaster(master.master_data, scan, PRODUCT_HARD, PRODUCT_SOFT, false);
+      const { merged, changed } = mergeFill(master.master_data, productMasterFromScan(scan));
+      if (changed) await supabase.from('product_masters').update({ master_data: merged, master_text: flattenScan(merged), updated_at: new Date().toISOString() }).eq('id', master.id);
       resolvedMasterId = master.id;
-      productCheck = { status: statusFromMismatches(mismatches), master_id: master.id, master_name: master.name, mismatches };
+      productCheck = { status: statusFromMismatches(mismatches), master_id: master.id, master_name: master.name, mismatches, enriched: changed };
     }
   }
 

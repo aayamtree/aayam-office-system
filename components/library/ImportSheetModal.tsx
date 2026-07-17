@@ -4,7 +4,7 @@
 // every unique job on it, review the list, and save each as its own product
 // (with brand + product master cross-check). One sheet → many products.
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { SheetRenderer } from '@/lib/pdf-crop';
@@ -22,7 +22,7 @@ interface Props {
   onImported: () => void;
 }
 
-type Stage = 'pick' | 'detecting' | 'cropping' | 'review' | 'saving' | 'done';
+type Stage = 'pick' | 'detecting' | 'cropping' | 'review' | 'saving' | 'reading' | 'done';
 
 export default function ImportSheetModal({ clients, onClose, onImported }: Props) {
   const [stage, setStage] = useState<Stage>('pick');
@@ -33,7 +33,8 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
   const [sheetMeta, setSheetMeta] = useState<{ file_url?: string; file_name?: string; thumbnail_url?: string }>({});
   const [results, setResults] = useState<any[]>([]);
 
-  const busy = stage === 'detecting' || stage === 'saving';
+  const cropFilesRef = useRef<Record<number, File>>({});
+  const busy = stage === 'detecting' || stage === 'saving' || stage === 'reading';
 
   const detect = async () => {
     if (!file) { toast.error('Choose the job sheet PDF first'); return; }
@@ -73,8 +74,9 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
           if (!j.bbox) continue;
           const cropFile = await renderer.crop(j.bbox, j.product_name || j.brand_name || `job_${i + 1}`);
           if (!cropFile) continue;
-          // preview immediately (local), then upload to Drive for permanent thumbnail
+          // preview immediately (local), keep the File for a high-res detail re-scan
           j.__local_preview = URL.createObjectURL(cropFile);
+          cropFilesRef.current[i] = cropFile;
           try {
             const cropUp = await uploadToDrive(tokenJson.accessToken, cropFile, sub.folderId || root.folderId, cropFile.name, { uploadedTo: 'product_library_crop' });
             if (cropUp.success && cropUp.fileId) j.thumbnail_url = getDrivePreviewUrl(cropUp.fileId);
@@ -97,20 +99,48 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
   };
 
   const save = async () => {
-    const chosen = jobs.filter((_, i) => selected[i]);
-    if (chosen.length === 0) { toast.error('Select at least one job'); return; }
+    const chosenEntries = jobs.map((j, i) => ({ j, i })).filter(({ i }) => selected[i]);
+    if (chosenEntries.length === 0) { toast.error('Select at least one job'); return; }
     setStage('saving');
     try {
+      // strip transient client-only fields before sending
+      const cleanJobs = chosenEntries.map(({ j }) => {
+        const { __local_preview, __crop_file, ...clean } = j;
+        return clean;
+      });
       const res = await fetch('/api/products/import-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobs: chosen, sheet: { ...sheetMeta, client_id: clientId || null, sheet_name: file?.name } }),
+        body: JSON.stringify({ jobs: cleanJobs, sheet: { ...sheetMeta, client_id: clientId || null, sheet_name: file?.name } }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Import failed');
-      setResults(json.results || []);
+      const importResults = json.results || [];
+      setResults(importResults);
+
+      // Re-scan each product from its OWN high-res crop so small print (brand
+      // address, phone, composition) is read properly and masters fill fully.
+      // Crops are small JPEGs → multipart is safe (well under the body limit).
+      setStage('reading');
+      for (let k = 0; k < importResults.length; k++) {
+        const r = importResults[k];
+        const origIndex = chosenEntries[k]?.i;
+        const crop = origIndex != null ? cropFilesRef.current[origIndex] : undefined;
+        if (!r?.ok || !r.product_id || !crop) continue;
+        try {
+          const fd = new FormData();
+          fd.append('file', crop);
+          const rr = await fetch(`/api/products/${r.product_id}/scan`, { method: 'POST', body: fd });
+          const rj = await rr.json().catch(() => ({}));
+          if (rr.ok && rj.check_results) {
+            r.brand_check = rj.check_results.brand?.status ?? r.brand_check;
+            r.product_check = rj.check_results.product?.status ?? r.product_check;
+          }
+        } catch { /* per-crop re-scan is best-effort */ }
+      }
+      setResults([...importResults]);
       setStage('done');
-      toast.success(`${json.imported} product(s) added from the sheet`);
+      toast.success(`${json.imported} product(s) added & read from the sheet`);
       onImported();
     } catch (e: any) {
       toast.error(e.message);
@@ -212,6 +242,14 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
           <div className="p-10 text-center space-y-3">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
             <p className="text-sm text-gray-500">Saving products and checking each against brand &amp; product masters…</p>
+          </div>
+        )}
+
+        {/* READING (per-crop detail scan) */}
+        {stage === 'reading' && (
+          <div className="p-10 text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+            <p className="text-sm text-gray-500">Reading each job&apos;s details from its own image (brand address, phone, composition)…</p>
           </div>
         )}
 
