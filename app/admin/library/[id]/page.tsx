@@ -7,12 +7,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import {
   ArrowLeft, Loader2, X, Plus, Pencil, ExternalLink, FileText,
   CheckCircle2, XCircle, MinusCircle, Printer, Clock, User as UserIcon,
-  Package, Upload, History, Ruler,
+  Package, Upload, History, Ruler, Trash2,
 } from 'lucide-react';
 import {
   PACKAGING_TYPES, Product, ProductVersion, ProductActivityRow,
@@ -54,6 +55,10 @@ function CheckBadge({ status, note }: { status: string | null; note?: string | n
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { profile } = useAuth();
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const id = params?.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -88,6 +93,21 @@ export default function ProductDetailPage() {
   }, [id]);
 
   useEffect(() => { if (id) fetchAll(); }, [id, fetchAll]);
+
+  const confirmDelete = async () => {
+    if (!product || deleting || deleteText.trim().toUpperCase() !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/products?id=${product.id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Delete failed');
+      toast.success('Product deleted (logged in Activity Log)');
+      router.push('/admin/library');
+    } catch (e: any) {
+      toast.error(e.message);
+      setDeleting(false);
+    }
+  };
 
   const openEdit = () => {
     if (!product) return;
@@ -293,6 +313,11 @@ export default function ProductDetailPage() {
             <button onClick={() => setShowVersion(true)} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md">
               <Upload className="w-4 h-4" /> Upload Design
             </button>
+            {profile?.role === 'admin' && (
+              <button onClick={() => { setDeleteText(''); setShowDelete(true); }} title="Delete product" className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-red-200 text-red-600 hover:bg-red-50 rounded-md">
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -430,6 +455,46 @@ export default function ProductDetailPage() {
               <button onClick={() => setShowEdit(false)} disabled={saving} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50">Cancel</button>
               <button onClick={handleEditSave} disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md inline-flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />} Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation — must type DELETE */}
+      {showDelete && product && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={() => !deleting && setShowDelete(false)}>
+          <div className="bg-white rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="px-5 py-3 border-b flex items-center gap-2 text-red-700">
+              <Trash2 className="w-5 h-5" /> <h2 className="font-semibold">Delete product</h2>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-sm text-gray-700">
+                You are about to permanently delete <b>{product.name}</b>{product.brand_name ? ` (brand ${product.brand_name})` : ''} and all its {versions.length} design version record(s) from the database.
+              </p>
+              <p className="text-xs text-gray-500">
+                The design files stay safe in Google Drive. This action is recorded in the Activity Log with your name. It cannot be undone.
+              </p>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Type <b>DELETE</b> to confirm</label>
+                <input
+                  autoFocus
+                  value={deleteText}
+                  onChange={(e) => setDeleteText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') confirmDelete(); }}
+                  placeholder="DELETE"
+                  className="w-full border rounded-md px-3 py-2 text-sm uppercase tracking-wide"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t">
+              <button onClick={() => setShowDelete(false)} disabled={deleting} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50">Cancel</button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting || deleteText.trim().toUpperCase() !== 'DELETE'}
+                className="px-4 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 inline-flex items-center gap-2"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />} Delete permanently
               </button>
             </div>
           </div>

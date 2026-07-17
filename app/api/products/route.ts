@@ -102,3 +102,47 @@ export async function PATCH(request: NextRequest) {
 
   return NextResponse.json({ product });
 }
+
+// DELETE /api/products?id=<uuid> — remove a product (versions + activity
+// cascade via FK). Admin only.
+export async function DELETE(request: NextRequest) {
+  const cookieStore = await cookies();
+  const { user, supabase } = await getSupabase(cookieStore);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Only admins can delete products' }, { status: 403 });
+
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+
+  // Snapshot for the audit log BEFORE deleting (product_activity rows are
+  // cascade-deleted with the product, so the record must live in the global
+  // activity_logs table which survives).
+  const { data: prod } = await supabase
+    .from('products')
+    .select('id, name, brand_name, category, current_version_no, client_id')
+    .eq('id', id)
+    .single();
+  if (!prod) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
+  const actorName = await getActorName(supabase, user.id);
+  const { count: versionCount } = await supabase
+    .from('product_versions')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_id', id);
+
+  await supabase.from('activity_logs').insert([{
+    user_id: user.id,
+    user_name: actorName,
+    action: 'delete',
+    entity_type: 'product',
+    entity_id: id,
+    description: `Deleted product "${prod.name}"${prod.brand_name ? ` (brand ${prod.brand_name})` : ''} — ${versionCount || 0} design version(s)`,
+    metadata: { name: prod.name, brand_name: prod.brand_name, category: prod.category, version_count: versionCount || 0 },
+  }]);
+
+  const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true, deleted: prod.name });
+}
