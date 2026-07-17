@@ -18,117 +18,117 @@ const phases: Phase[] = [
     {
         id: 'daily',
         icon: <Clock className="w-5 h-5" />,
-        title: '1. Start of Day',
-        subtitle: 'Check what needs your attention today',
+        title: '1. દિવસની શરૂઆત',
+        subtitle: 'આજે શેના પર ધ્યાન આપવાનું છે તે ચેક કરો',
         color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', headerBg: 'bg-blue-700',
         steps: [
-            { label: 'Check today\'s follow-ups', path: 'Marketing → Follow-ups → Today tab', detail: 'These clients expect a call today' },
-            { label: 'Check overdue follow-ups', path: 'Marketing → Follow-ups → Overdue tab', detail: 'Don\'t let these slip — call immediately' },
-            { label: 'View your leads pipeline', path: 'Marketing → Leads', detail: 'See all active leads and their status' },
-            { label: 'Review your orders', path: 'Marketing → My Orders', detail: 'Track orders you originated' },
-            { label: 'Check dispatched orders', path: 'Marketing → Dispatched Orders', detail: 'See which of your client orders have been dispatched or delivered' },
-            { label: 'Check your calendar', path: 'Calendar', detail: 'Your follow-up dates and lead deadlines show here — only your own, not others' },
+            { label: 'આજના ફોલો-અપ ચેક કરો', path: 'Marketing → Follow-ups → Today tab', detail: 'આ ક્લાયન્ટ આજે તમારા કોલની રાહ જુએ છે' },
+            { label: 'ઓવરડ્યુ ફોલો-અપ ચેક કરો', path: 'Marketing → Follow-ups → Overdue tab', detail: 'આ છૂટવા ના દો — તરત કોલ કરો' },
+            { label: 'તમારી લીડ પાઇપલાઇન જુઓ', path: 'Marketing → Leads', detail: 'બધી એક્ટિવ લીડ અને તેમનું સ્ટેટસ' },
+            { label: 'તમારા ઓર્ડર જુઓ', path: 'Marketing → My Orders', detail: 'તમે લાવેલા ઓર્ડર ટ્રેક કરો' },
+            { label: 'ડિસ્પેચ થયેલા ઓર્ડર ચેક કરો', path: 'Marketing → Dispatched Orders', detail: 'તમારા ક્લાયન્ટના કયા ઓર્ડર ડિસ્પેચ કે ડિલિવર થયા તે જુઓ' },
+            { label: 'તમારું કેલેન્ડર ચેક કરો', path: 'Calendar', detail: 'તમારી ફોલો-અપ તારીખો અને લીડ ડેડલાઇન અહીં દેખાય — ફક્ત તમારી, બીજાની નહીં' },
         ],
-        tip: 'Complete today\'s follow-ups FIRST before adding new leads.',
+        tip: 'નવી લીડ ઉમેરતા પહેલા આજના ફોલો-અપ પહેલા પૂરા કરો.',
     },
     {
         id: 'leads',
         icon: <Users className="w-5 h-5" />,
-        title: '2. Adding a New Lead',
-        subtitle: 'Someone shows interest — add them immediately',
+        title: '2. નવી લીડ ઉમેરવી',
+        subtitle: 'કોઈ રસ બતાવે — તરત તેને ઉમેરો',
         color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', headerBg: 'bg-indigo-700',
         steps: [
-            { label: 'Click New Lead', path: 'Marketing → Leads → + New Lead', detail: 'Fill name, phone, service type, requirement' },
-            { label: 'Add their requirement details', path: 'Lead Form → Requirement field', detail: 'Be specific — product type, quantity, deadline' },
-            { label: 'Save the lead', path: 'Save Lead button', detail: 'Lead is created in your pipeline' },
-            { label: 'Schedule a follow-up', path: 'Lead card → Set Follow-up Date', detail: 'Pick a date when you\'ll call back' },
-            { label: 'Add notes after each call', path: 'Lead → Add Note', detail: 'Record what was discussed, objections, next step' },
+            { label: 'New Lead પર ક્લિક કરો', path: 'Marketing → Leads → + New Lead', detail: 'નામ, ફોન, સર્વિસ ટાઇપ, જરૂરિયાત ભરો' },
+            { label: 'જરૂરિયાતની ડિટેલ ઉમેરો', path: 'Lead Form → Requirement field', detail: 'ચોક્કસ લખો — પ્રોડક્ટ ટાઇપ, ક્વોન્ટિટી, ડેડલાઇન' },
+            { label: 'લીડ સેવ કરો', path: 'Save Lead button', detail: 'લીડ તમારી પાઇપલાઇનમાં બની જાય' },
+            { label: 'ફોલો-અપ શેડ્યુલ કરો', path: 'Lead card → Set Follow-up Date', detail: 'ક્યારે પાછો કોલ કરશો તે તારીખ પસંદ કરો' },
+            { label: 'દરેક કોલ પછી નોટ ઉમેરો', path: 'Lead → Add Note', detail: 'શું વાત થઈ, વાંધા, આગળનું પગલું — બધું નોંધો' },
         ],
-        tip: 'Admin assigns leads to marketing persons. If a lead has no assignment, remind admin.',
+        tip: 'લીડ માર્કેટિંગ વ્યક્તિને એડમિન એસાઇન કરે. લીડ એસાઇન ના થઈ હોય તો એડમિનને યાદ કરાવો.',
     },
     {
         id: 'followup',
         icon: <Phone className="w-5 h-5" />,
-        title: '3. Following Up',
-        subtitle: 'Consistent follow-ups = conversions',
+        title: '3. ફોલો-અપ કરવું',
+        subtitle: 'નિયમિત ફોલો-અપ = કન્વર્ઝન',
         color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
         steps: [
-            { label: 'Open follow-up', path: 'Marketing → Follow-ups', detail: 'See all due and overdue follow-ups' },
-            { label: 'Call the client', path: '—', detail: 'Make the actual call outside the app' },
-            { label: 'Record outcome + notes', path: 'Follow-up → Add Note', detail: 'What happened? Interested? Need more time? Lost?' },
-            { label: 'Update lead status', path: 'Lead → Edit Status', detail: 'Set: Follow-up / Quoted / Negotiating / Converted / Lost' },
-            { label: 'Reschedule next follow-up', path: 'Lead → Set Next Follow-up Date', detail: 'Keep the loop going until converted or lost' },
+            { label: 'ફોલો-અપ ખોલો', path: 'Marketing → Follow-ups', detail: 'બધા આજના અને ઓવરડ્યુ ફોલો-અપ જુઓ' },
+            { label: 'ક્લાયન્ટને કોલ કરો', path: '—', detail: 'ખરો કોલ app ની બહાર કરવાનો' },
+            { label: 'પરિણામ + નોટ્સ રેકોર્ડ કરો', path: 'Follow-up → Add Note', detail: 'શું થયું? રસ છે? સમય જોઈએ? લીડ ગઈ?' },
+            { label: 'લીડ સ્ટેટસ અપડેટ કરો', path: 'Lead → Edit Status', detail: 'સેટ કરો: Follow-up / Quoted / Negotiating / Converted / Lost' },
+            { label: 'આગળનું ફોલો-અપ સેટ કરો', path: 'Lead → Set Next Follow-up Date', detail: 'Converted કે Lost થાય ત્યાં સુધી લૂપ ચાલુ રાખો' },
         ],
-        tip: '3–5 follow-ups before marking a lead as Lost is normal.',
+        tip: 'લીડને Lost માર્ક કરતા પહેલા 3–5 ફોલો-અપ થાય તે નોર્મલ છે.',
     },
     {
         id: 'quotation',
         icon: <FileText className="w-5 h-5" />,
-        title: '4. Creating a Quotation',
-        subtitle: 'Send a formal price to the client',
+        title: '4. ક્વોટેશન બનાવવું',
+        subtitle: 'ક્લાયન્ટને ફોર્મલ ભાવ મોકલો',
         color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', headerBg: 'bg-cyan-700',
         steps: [
-            { label: 'Create new quotation', path: 'Marketing → Quotations → New Quotation', detail: 'Link it to the lead' },
-            { label: 'Add job details & pricing', path: 'Quotation form → Items, GST, total', detail: 'Break down product, qty, rate' },
-            { label: 'Save & share with client', path: 'Save → Share / Print', detail: 'Send via WhatsApp or email' },
-            { label: 'Follow up on quotation', path: 'Marketing → Follow-ups → Quotation tab', detail: 'Check back in 1–2 days' },
+            { label: 'નવું ક્વોટેશન બનાવો', path: 'Marketing → Quotations → New Quotation', detail: 'લીડ સાથે લિંક કરો' },
+            { label: 'જોબ ડિટેલ્સ અને ભાવ ઉમેરો', path: 'Quotation form → Items, GST, total', detail: 'પ્રોડક્ટ, ક્વોન્ટિટી, રેટ અલગ-અલગ લખો' },
+            { label: 'સેવ કરી ક્લાયન્ટને મોકલો', path: 'Save → Share / Print', detail: 'WhatsApp કે ઇમેઇલથી મોકલો' },
+            { label: 'ક્વોટેશન પર ફોલો-અપ કરો', path: 'Marketing → Follow-ups → Quotation tab', detail: '1–2 દિવસમાં પાછું પૂછો' },
         ],
     },
     {
         id: 'convert',
         icon: <UserCheck className="w-5 h-5" />,
-        title: '5. Converting a Lead',
-        subtitle: 'Client says YES — convert to order',
+        title: '5. લીડ કન્વર્ટ કરવી',
+        subtitle: 'ક્લાયન્ટ હા પાડે — ઓર્ડરમાં કન્વર્ટ કરો',
         color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200', headerBg: 'bg-green-700',
         steps: [
-            { label: 'Open the lead', path: 'Marketing → Leads → [Lead name]', detail: '' },
-            { label: 'Click Convert to Client', path: 'Lead → Convert to Client button', detail: 'Creates client record in CRM automatically' },
-            { label: 'Admin creates the job', path: 'Jobs → New Job → Select this client', detail: 'You don\'t create jobs — admin does after briefing' },
-            { label: 'Brief admin on requirements', path: '—', detail: 'Share all specs: size, qty, material, deadline' },
+            { label: 'લીડ ખોલો', path: 'Marketing → Leads → [Lead name]', detail: '' },
+            { label: 'Convert to Client પર ક્લિક કરો', path: 'Lead → Convert to Client button', detail: 'CRM માં ક્લાયન્ટ રેકોર્ડ ઓટોમેટિક બની જાય' },
+            { label: 'એડમિન જોબ બનાવે', path: 'Jobs → New Job → Select this client', detail: 'જોબ તમે નહીં — બ્રીફિંગ પછી એડમિન બનાવે' },
+            { label: 'એડમિનને જરૂરિયાત સમજાવો', path: '—', detail: 'બધા સ્પેક્સ આપો: સાઇઝ, ક્વોન્ટિટી, મટીરિયલ, ડેડલાઇન' },
         ],
-        tip: 'Your commission starts being tracked from the moment a job is created for this client.',
+        tip: 'આ ક્લાયન્ટ માટે જોબ બને તે ક્ષણથી તમારું કમિશન ટ્રેક થવા લાગે.',
     },
     {
         id: 'commission',
         icon: <IndianRupee className="w-5 h-5" />,
-        title: '6. Your Commission',
-        subtitle: 'Automatic — no manual entry needed',
+        title: '6. તમારું કમિશન',
+        subtitle: 'ઓટોમેટિક — કોઈ મેન્યુઅલ એન્ટ્રી નહીં',
         color: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200', headerBg: 'bg-yellow-700',
         steps: [
-            { label: 'Commission is auto-created when job is fully paid', path: 'Marketing → Commissions', detail: 'Status shows "Eligible" — waiting admin approval' },
-            { label: 'Admin approves & sets the %', path: 'Admin action — not yours', detail: 'Based on your profile rate or custom per job' },
-            { label: 'Admin pays you physically + marks paid', path: 'Admin action', detail: 'Status updates to "Paid" in the app' },
-            { label: 'View your earnings', path: 'Marketing → Dashboard → Commission widget', detail: 'Pending / Approved / Paid amounts clearly shown' },
+            { label: 'જોબનું પૂરું પેમેન્ટ થાય એટલે કમિશન ઓટોમેટિક બને', path: 'Marketing → Commissions', detail: 'સ્ટેટસ "Eligible" દેખાય — એડમિન અપ્રૂવલની રાહ' },
+            { label: 'એડમિન અપ્રૂવ કરી % સેટ કરે', path: 'Admin action — તમારું કામ નહીં', detail: 'તમારી પ્રોફાઇલના રેટ પ્રમાણે અથવા જોબ પ્રમાણે અલગ' },
+            { label: 'એડમિન રૂબરૂ પેમેન્ટ કરી Paid માર્ક કરે', path: 'Admin action', detail: 'App માં સ્ટેટસ "Paid" થઈ જાય' },
+            { label: 'તમારી કમાણી જુઓ', path: 'Marketing → Dashboard → Commission widget', detail: 'Pending / Approved / Paid રકમ સ્પષ્ટ દેખાય' },
         ],
-        tip: 'Commissions are on the BASE amount after GST is deducted. Example: ₹1,18,000 job at 18% GST → base = ₹1,00,000 → 5% commission = ₹5,000.',
+        tip: 'કમિશન GST બાદ કરેલી BASE રકમ પર ગણાય. દા.ત.: ₹1,18,000 ની જોબ, 18% GST → base = ₹1,00,000 → 5% કમિશન = ₹5,000.',
     },
     {
         id: 'dispatched',
         icon: <MessageSquare className="w-5 h-5" />,
-        title: '7. Dispatched Orders',
-        subtitle: 'Track deliveries for your clients',
+        title: '7. ડિસ્પેચ થયેલા ઓર્ડર',
+        subtitle: 'તમારા ક્લાયન્ટની ડિલિવરી ટ્રેક કરો',
         color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', headerBg: 'bg-orange-700',
         steps: [
-            { label: 'Open Dispatched Orders', path: 'Marketing → Dispatched Orders', detail: 'See all jobs linked to your leads that are dispatched or delivered' },
-            { label: 'Confirm delivery with client', path: '—', detail: 'Call the client to confirm they received the order in good condition' },
-            { label: 'Note any delivery feedback', path: 'Lead / Job → Add Note', detail: 'Add any client feedback — quality issues, reorder interest, referrals' },
+            { label: 'Dispatched Orders ખોલો', path: 'Marketing → Dispatched Orders', detail: 'તમારી લીડ સાથે જોડાયેલી ડિસ્પેચ કે ડિલિવર થયેલી બધી જોબ' },
+            { label: 'ક્લાયન્ટ સાથે ડિલિવરી કન્ફર્મ કરો', path: '—', detail: 'કોલ કરી પૂછો કે ઓર્ડર સારી હાલતમાં મળ્યો કે નહીં' },
+            { label: 'ડિલિવરી ફીડબેક નોંધો', path: 'Lead / Job → Add Note', detail: 'ક્લાયન્ટનો ફીડબેક — ક્વોલિટી પ્રોબ્લેમ, ફરી ઓર્ડરની શક્યતા, રેફરલ' },
         ],
-        tip: 'A delivered order is an opportunity to ask for a repeat order or referral. Always follow up.',
+        tip: 'ડિલિવર થયેલો ઓર્ડર = રિપીટ ઓર્ડર કે રેફરલ માંગવાની તક. હંમેશા ફોલો-અપ કરો.',
     },
     {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '8. EOD Report (End of Day)',
-        subtitle: 'Submit before leaving — every day',
+        title: '8. EOD રિપોર્ટ (End of Day)',
+        subtitle: 'નીકળતા પહેલા સબમિટ કરો — રોજ',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [
-            { label: 'Open EOD Report', path: 'EOD Report → Submit Report', detail: 'Available only once per day' },
-            { label: 'List today\'s tasks completed', path: 'What did you do today?', detail: 'Calls made, leads added, quotations sent, meetings done' },
-            { label: 'Mention blockers if any', path: 'Blockers section', detail: 'Anything stopping you from converting leads' },
-            { label: 'Add tomorrow\'s plan', path: 'Tomorrow\'s plan section', detail: 'Which leads will you follow up on?' },
-            { label: 'Submit', path: 'Submit EOD button', detail: 'Admin gets notified' },
+            { label: 'EOD રિપોર્ટ ખોલો', path: 'EOD Report → Submit Report', detail: 'દિવસમાં ફક્ત એક જ વાર' },
+            { label: 'આજે પૂરા કરેલા કામ લખો', path: 'What did you do today?', detail: 'કેટલા કોલ, નવી લીડ, મોકલેલા ક્વોટેશન, મીટિંગ' },
+            { label: 'અડચણ હોય તો લખો', path: 'Blockers section', detail: 'લીડ કન્વર્ટ કરવામાં જે કંઈ નડતું હોય' },
+            { label: 'કાલનો પ્લાન લખો', path: 'Tomorrow\'s plan section', detail: 'કઈ લીડ પર ફોલો-અપ કરશો?' },
+            { label: 'સબમિટ કરો', path: 'Submit EOD button', detail: 'એડમિનને નોટિફિકેશન મળે' },
         ],
-        tip: 'EOD report must be submitted daily. Admin reviews and rates your report.',
+        tip: 'EOD રિપોર્ટ રોજ સબમિટ કરવો ફરજિયાત. એડમિન રિવ્યૂ કરી રેટિંગ આપે.',
     },
 ];
 
@@ -154,15 +154,15 @@ export default function MarketingGuidePage() {
                         <TrendingUp className="w-5 h-5 text-blue-900" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold">Marketing — How to Use This App</h1>
-                        <p className="text-blue-200 text-sm">Your complete daily guide: leads → conversions → commissions</p>
+                        <h1 className="text-xl font-bold">Marketing — આ App કેવી રીતે વાપરવી</h1>
+                        <p className="text-blue-200 text-sm">તમારી રોજની પૂરી ગાઇડ: લીડ → કન્વર્ઝન → કમિશન</p>
                     </div>
                 </div>
             </div>
 
             {/* Flow */}
             <div className="bg-white rounded-md border border-gray-200 p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Pipeline Flow</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">તમારો Pipeline Flow</p>
                 <div className="flex flex-wrap items-center gap-1">
                     {flowItems.map((item, i) => (
                         <div key={i} className="flex items-center gap-1">
@@ -176,10 +176,10 @@ export default function MarketingGuidePage() {
             {/* Quick Rules */}
             <div className="grid grid-cols-2 gap-2">
                 {[
-                    { icon: '📞', text: 'Call first, then update app. Don\'t delay adding notes.' },
-                    { icon: '💬', text: 'Add notes after EVERY call — admin reads these.' },
-                    { icon: '📅', text: 'Always set a next follow-up date — never leave a lead hanging.' },
-                    { icon: '💰', text: 'Commission only happens after the client FULLY pays.' },
+                    { icon: '📞', text: 'પહેલા કોલ, પછી app અપડેટ. નોટ ઉમેરવામાં મોડું ના કરો.' },
+                    { icon: '💬', text: 'દરેક કોલ પછી નોટ ઉમેરો — એડમિન આ વાંચે છે.' },
+                    { icon: '📅', text: 'હંમેશા આગળની ફોલો-અપ તારીખ સેટ કરો — લીડ લટકતી ના મૂકો.' },
+                    { icon: '💰', text: 'ક્લાયન્ટ પૂરું પેમેન્ટ કરે પછી જ કમિશન બને.' },
                 ].map((r, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md text-xs text-blue-900">
                         <span className="text-base">{r.icon}</span>

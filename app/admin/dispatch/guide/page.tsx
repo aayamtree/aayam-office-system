@@ -17,79 +17,79 @@ const phases: Phase[] = [
     {
         id: 'daily',
         icon: <Clock className="w-5 h-5" />,
-        title: '1. Start of Day',
-        subtitle: 'Check what\'s ready for dispatch',
+        title: '1. દિવસની શરૂઆત',
+        subtitle: 'ડિસ્પેચ માટે શું તૈયાર છે તે ચેક કરો',
         color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', headerBg: 'bg-orange-700',
         steps: [
-            { label: 'Open Dispatch Command Center', path: 'Dispatch → Command Center', detail: 'See all jobs at Printing and QC stages' },
-            { label: 'Check jobs pending QC', path: 'Dispatch → QC & Packing tab', detail: 'These are printed and waiting for your check' },
-            { label: 'Check today\'s scheduled deliveries', path: 'Dispatch → Scheduled Deliveries', detail: 'Follow up with transporter on pending deliveries' },
-            { label: 'Check your calendar', path: 'Calendar', detail: 'See dispatch deadlines for jobs — design tasks are not shown in your calendar view' },
+            { label: 'Dispatch Command Center ખોલો', path: 'Dispatch → Command Center', detail: 'Printing અને QC સ્ટેજની બધી જોબ જુઓ' },
+            { label: 'QC બાકી હોય તે જોબ ચેક કરો', path: 'Dispatch → QC & Packing tab', detail: 'આ પ્રિન્ટ થઈ ગઈ છે અને તમારા ચેકની રાહ જુએ છે' },
+            { label: 'આજની શેડ્યુલ ડિલિવરી ચેક કરો', path: 'Dispatch → Scheduled Deliveries', detail: 'બાકી ડિલિવરી માટે ટ્રાન્સપોર્ટર સાથે ફોલો-અપ કરો' },
+            { label: 'તમારું કેલેન્ડર ચેક કરો', path: 'Calendar', detail: 'જોબની ડિસ્પેચ ડેડલાઇન દેખાય — ડિઝાઇન ટાસ્ક તમારા વ્યૂમાં નથી દેખાતા' },
         ],
     },
     {
         id: 'qc',
         icon: <PackageCheck className="w-5 h-5" />,
-        title: '2. Quality Check (QC)',
-        subtitle: 'Inspect every job before packing',
+        title: '2. ક્વોલિટી ચેક (QC)',
+        subtitle: 'પેકિંગ પહેલા દરેક જોબ તપાસો',
         color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', headerBg: 'bg-red-700',
         steps: [
-            { label: 'Open QC for a job', path: 'Dispatch → QC & Packing → [Job]', detail: 'See specs: quantity, size, colour, client' },
-            { label: 'Physically inspect material', path: '—', detail: 'Check: colour accuracy, cut marks, quantity, no defects' },
-            { label: 'Mark QC as PASS', path: 'QC → Pass button', detail: 'Job moves to "Ready to Dispatch"' },
-            { label: 'Mark QC as FAIL (if defects)', path: 'QC → Fail → Add reason', detail: 'Job goes back to printing. Admin is notified.' },
+            { label: 'જોબનું QC ખોલો', path: 'Dispatch → QC & Packing → [Job]', detail: 'સ્પેક્સ જુઓ: ક્વોન્ટિટી, સાઇઝ, કલર, ક્લાયન્ટ' },
+            { label: 'મટીરિયલ હાથે તપાસો', path: '—', detail: 'ચેક કરો: કલર બરાબર છે, કટ માર્ક, ક્વોન્ટિટી, કોઈ ખામી નથી' },
+            { label: 'QC PASS માર્ક કરો', path: 'QC → Pass button', detail: 'જોબ "Ready to Dispatch" માં જાય' },
+            { label: 'ખામી હોય તો QC FAIL માર્ક કરો', path: 'QC → Fail → Add reason', detail: 'જોબ પાછી પ્રિન્ટિંગમાં જાય. એડમિનને નોટિફિકેશન મળે.' },
         ],
-        tip: 'NEVER skip QC. A wrong delivery costs more than QC time.',
+        tip: 'QC ક્યારેય છોડો નહીં. ખોટી ડિલિવરીનો ખર્ચ QC ના સમય કરતા ઘણો વધારે.',
     },
     {
         id: 'dispatch',
         icon: <Send className="w-5 h-5" />,
-        title: '3. Packing & Dispatching',
-        subtitle: 'Pack → assign transporter → send',
+        title: '3. પેકિંગ અને ડિસ્પેચ',
+        subtitle: 'પેક કરો → ટ્રાન્સપોર્ટર એસાઇન કરો → મોકલો',
         color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', headerBg: 'bg-orange-700',
         steps: [
-            { label: 'Pack the job', path: '—', detail: 'Box / bubble wrap as needed. Label with job number + client name.' },
-            { label: 'Open ready-to-dispatch job', path: 'Dispatch → Command Center → [Job]', detail: 'QC must be passed first' },
-            { label: 'Assign transporter', path: 'Job → Assign Transporter', detail: 'Choose from saved list. Or select "In-House" for self delivery.' },
-            { label: 'Mark as Dispatched', path: 'Dispatch button', detail: 'Job stage = Dispatched. Time recorded automatically.' },
+            { label: 'જોબ પેક કરો', path: '—', detail: 'જરૂર પ્રમાણે બોક્સ / બબલ રેપ. જોબ નંબર + ક્લાયન્ટ નામનું લેબલ લગાવો.' },
+            { label: 'ડિસ્પેચ માટે તૈયાર જોબ ખોલો', path: 'Dispatch → Command Center → [Job]', detail: 'પહેલા QC પાસ થવું જરૂરી' },
+            { label: 'ટ્રાન્સપોર્ટર એસાઇન કરો', path: 'Job → Assign Transporter', detail: 'સેવ કરેલા લિસ્ટમાંથી પસંદ કરો. જાતે ડિલિવરી હોય તો "In-House" પસંદ કરો.' },
+            { label: 'Dispatched માર્ક કરો', path: 'Dispatch button', detail: 'જોબ સ્ટેજ = Dispatched. સમય ઓટોમેટિક રેકોર્ડ થાય.' },
         ],
     },
     {
         id: 'delivered',
         icon: <CheckCircle2 className="w-5 h-5" />,
-        title: '4. Confirming Delivery',
-        subtitle: 'Confirm with transporter, then close',
+        title: '4. ડિલિવરી કન્ફર્મ કરવી',
+        subtitle: 'ટ્રાન્સપોર્ટર સાથે કન્ફર્મ કરો, પછી જોબ બંધ કરો',
         color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200', headerBg: 'bg-green-700',
         steps: [
-            { label: 'Transporter confirms delivery', path: '—', detail: 'Call/WhatsApp from transporter' },
-            { label: 'Mark job as Delivered', path: 'Dispatch → [Job] → Mark Delivered', detail: 'Final stage — job is complete' },
-            { label: 'Add delivery confirmation note', path: 'Job → Note', detail: 'Who received it, date, any client feedback' },
+            { label: 'ટ્રાન્સપોર્ટર ડિલિવરી કન્ફર્મ કરે', path: '—', detail: 'ટ્રાન્સપોર્ટરનો કોલ/WhatsApp' },
+            { label: 'જોબ Delivered માર્ક કરો', path: 'Dispatch → [Job] → Mark Delivered', detail: 'છેલ્લું સ્ટેજ — જોબ પૂરી' },
+            { label: 'ડિલિવરી કન્ફર્મેશન નોટ ઉમેરો', path: 'Job → Note', detail: 'કોણે લીધું, તારીખ, ક્લાયન્ટનો ફીડબેક' },
         ],
-        tip: 'Get transporter photo proof when possible.',
+        tip: 'શક્ય હોય ત્યાં ટ્રાન્સપોર્ટર પાસેથી ફોટો પ્રૂફ લો.',
     },
     {
         id: 'history',
         icon: <History className="w-5 h-5" />,
-        title: '5. History & Transporters',
-        subtitle: 'Track past deliveries, manage transporters',
+        title: '5. હિસ્ટ્રી અને ટ્રાન્સપોર્ટર',
+        subtitle: 'જૂની ડિલિવરી ટ્રેક કરો, ટ્રાન્સપોર્ટર મેનેજ કરો',
         color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200', headerBg: 'bg-slate-700',
         steps: [
-            { label: 'View delivery history', path: 'Dispatch → Delivery History', detail: 'Filter by date, transporter, or client' },
-            { label: 'Add new transporter', path: 'Dispatch → Transporters → Add Transporter', detail: 'Name, phone, vehicle type' },
-            { label: 'Edit transporter details', path: 'Dispatch → Transporters → [Name] → Edit', detail: 'Update phone, rates' },
+            { label: 'ડિલિવરી હિસ્ટ્રી જુઓ', path: 'Dispatch → Delivery History', detail: 'તારીખ, ટ્રાન્સપોર્ટર કે ક્લાયન્ટ પ્રમાણે filter કરો' },
+            { label: 'નવો ટ્રાન્સપોર્ટર ઉમેરો', path: 'Dispatch → Transporters → Add Transporter', detail: 'નામ, ફોન, વાહનનો પ્રકાર' },
+            { label: 'ટ્રાન્સપોર્ટર ડિટેલ્સ એડિટ કરો', path: 'Dispatch → Transporters → [Name] → Edit', detail: 'ફોન, ભાવ અપડેટ કરો' },
         ],
     },
     {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '6. EOD Report',
-        subtitle: 'Submit before leaving — daily',
+        title: '6. EOD રિપોર્ટ',
+        subtitle: 'નીકળતા પહેલા સબમિટ કરો — રોજ',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [
-            { label: 'Open EOD Report', path: 'EOD Report → Submit Report', detail: '' },
-            { label: 'List dispatches, QC done today', path: 'What did you do today?', detail: 'Job numbers, deliveries confirmed, QC results' },
-            { label: 'Note any delays or issues', path: 'Blockers section', detail: 'Failed QC, transport issues, missing materials' },
-            { label: 'Submit', path: 'Submit EOD button', detail: '' },
+            { label: 'EOD રિપોર્ટ ખોલો', path: 'EOD Report → Submit Report', detail: '' },
+            { label: 'આજના ડિસ્પેચ અને QC લખો', path: 'What did you do today?', detail: 'જોબ નંબર, કન્ફર્મ થયેલી ડિલિવરી, QC ના પરિણામ' },
+            { label: 'મોડું કે પ્રોબ્લેમ હોય તો નોંધો', path: 'Blockers section', detail: 'QC ફેલ, ટ્રાન્સપોર્ટ પ્રોબ્લેમ, મટીરિયલ ખૂટે છે' },
+            { label: 'સબમિટ કરો', path: 'Submit EOD button', detail: '' },
         ],
     },
 ];
@@ -113,8 +113,8 @@ export default function DispatchGuidePage() {
                         <Truck className="w-5 h-5 text-orange-900" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold">Dispatch — How to Use This App</h1>
-                        <p className="text-orange-200 text-sm">QC → Pack → Dispatch → Delivered</p>
+                        <h1 className="text-xl font-bold">Dispatch — આ App કેવી રીતે વાપરવી</h1>
+                        <p className="text-orange-200 text-sm">QC → પેકિંગ → ડિસ્પેચ → ડિલિવર</p>
                     </div>
                 </div>
             </div>
@@ -131,10 +131,10 @@ export default function DispatchGuidePage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
                 {[
-                    { icon: '🔍', text: 'Never skip QC. One error costs a full reprint.' },
-                    { icon: '📦', text: 'Label every package with job number + client name.' },
-                    { icon: '🚚', text: 'Assign transporter before clicking Dispatch.' },
-                    { icon: '✅', text: 'Mark Delivered only after transporter confirms.' },
+                    { icon: '🔍', text: 'QC ક્યારેય ના છોડો. એક ભૂલ = આખું રિપ્રિન્ટ.' },
+                    { icon: '📦', text: 'દરેક પેકેજ પર જોબ નંબર + ક્લાયન્ટ નામનું લેબલ લગાવો.' },
+                    { icon: '🚚', text: 'Dispatch ક્લિક કરતા પહેલા ટ્રાન્સપોર્ટર એસાઇન કરો.' },
+                    { icon: '✅', text: 'ટ્રાન્સપોર્ટર કન્ફર્મ કરે પછી જ Delivered માર્ક કરો.' },
                 ].map((r, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-100 rounded-md text-xs text-orange-900">
                         <span className="text-base">{r.icon}</span><span>{r.text}</span>

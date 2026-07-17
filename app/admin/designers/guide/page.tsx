@@ -18,102 +18,102 @@ const phases: Phase[] = [
     {
         id: 'daily',
         icon: <Clock className="w-5 h-5" />,
-        title: '1. Start of Day',
-        subtitle: 'Open your queue and plan your work',
+        title: '1. દિવસની શરૂઆત',
+        subtitle: 'તમારી ક્યુ ખોલો અને કામ પ્લાન કરો',
         color: 'text-pink-700', bg: 'bg-pink-50', border: 'border-pink-200', headerBg: 'bg-pink-700',
         steps: [
-            { label: 'Open your personal queue', path: 'Design Studio → My Queue', detail: 'See all jobs assigned specifically to you, sorted by deadline' },
-            { label: 'Check your calendar', path: 'Calendar', detail: 'Your task deadlines appear here — so you can see what\'s due today at a glance' },
-            { label: 'Check for overdue tasks', path: 'My Queue → filter by deadline', detail: 'Red deadline badge = past due. Prioritise these first.' },
-            { label: 'Check today\'s briefings / notes', path: 'Design Studio → My Notes', detail: 'Admin may have left instructions or new job details' },
+            { label: 'તમારી પર્સનલ ક્યુ ખોલો', path: 'Design Studio → My Queue', detail: 'ફક્ત તમને એસાઇન થયેલી બધી જોબ — ડેડલાઇન પ્રમાણે ગોઠવેલી' },
+            { label: 'તમારું કેલેન્ડર ચેક કરો', path: 'Calendar', detail: 'તમારા ટાસ્કની ડેડલાઇન અહીં દેખાય — આજે શું પૂરું કરવાનું છે તે એક નજરમાં' },
+            { label: 'ઓવરડ્યુ ટાસ્ક ચેક કરો', path: 'My Queue → filter by deadline', detail: 'લાલ ડેડલાઇન બેજ = સમય વીતી ગયો. પહેલા આ પૂરા કરો.' },
+            { label: 'આજની નોટ્સ / સૂચનાઓ ચેક કરો', path: 'Design Studio → My Notes', detail: 'એડમિને સૂચના કે નવી જોબની ડિટેલ મૂકી હોઈ શકે' },
         ],
-        tip: 'Always check My Queue first. Never start a new task before completing existing overdue ones.',
+        tip: 'હંમેશા પહેલા My Queue ચેક કરો. ઓવરડ્યુ ટાસ્ક પૂરા કર્યા વગર નવું ટાસ્ક શરૂ ના કરો.',
     },
     {
         id: 'pickup',
         icon: <PenTool className="w-5 h-5" />,
-        title: '2. Picking Up a Job',
-        subtitle: 'Job assigned → you take ownership',
+        title: '2. જોબ હાથમાં લેવી',
+        subtitle: 'જોબ એસાઇન થઈ → હવે જવાબદારી તમારી',
         color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
         steps: [
-            { label: 'Open the job card', path: 'My Queue → [Job card] → Click to open', detail: 'See client name, requirements, deadline, reference files' },
-            { label: 'Read the brief carefully', path: 'Job Details → Notes / Brief section', detail: 'Specs: size, bleed, colours, quantity, special instructions' },
-            { label: 'Download reference files', path: 'Job Details → Files section → Download', detail: 'Old artwork, logo, brand guide from Google Drive' },
-            { label: 'Set your task status to Live', path: 'My Queue → Task → 🟢 Live pill', detail: 'Tap the Live pill to show you\'ve started working' },
+            { label: 'જોબ કાર્ડ ખોલો', path: 'My Queue → [Job card] → Click to open', detail: 'ક્લાયન્ટ નામ, જરૂરિયાત, ડેડલાઇન, રેફરન્સ ફાઇલ્સ જુઓ' },
+            { label: 'બ્રીફ ધ્યાનથી વાંચો', path: 'Job Details → Notes / Brief section', detail: 'સ્પેક્સ: સાઇઝ, બ્લીડ, કલર, ક્વોન્ટિટી, ખાસ સૂચનાઓ' },
+            { label: 'રેફરન્સ ફાઇલ ડાઉનલોડ કરો', path: 'Job Details → Files section → Download', detail: 'જૂનું આર્ટવર્ક, લોગો, બ્રાન્ડ ગાઇડ — Google Drive માંથી' },
+            { label: 'ટાસ્ક સ્ટેટસ Live કરો', path: 'My Queue → Task → 🟢 Live pill', detail: 'Live પિલ દબાવો એટલે ખબર પડે કે તમે કામ શરૂ કર્યું' },
         ],
-        tip: 'Read the full brief before starting. Fixing mistakes after printing costs ₹₹₹.',
+        tip: 'કામ શરૂ કરતા પહેલા આખું બ્રીફ વાંચો. પ્રિન્ટ થયા પછી ભૂલ સુધારવી ₹₹₹ માં પડે.',
     },
     {
         id: 'status',
         icon: <ListChecks className="w-5 h-5" />,
-        title: '3. Task Status Pills — Your Signal System',
-        subtitle: 'Tell the team exactly where you are at all times',
+        title: '3. ટાસ્ક સ્ટેટસ પિલ્સ — તમારી સિગ્નલ સિસ્ટમ',
+        subtitle: 'ટીમને હંમેશા ખબર રહે કે તમે ક્યાં પહોંચ્યા છો',
         color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', headerBg: 'bg-indigo-700',
         steps: [
-            { label: '🟢 Live — I am actively working on this right now', path: 'My Queue / Tasks → Live pill', detail: 'Set this when you pick up and start designing' },
-            { label: '🟡 Pause — Paused, waiting for something', path: 'My Queue / Tasks → Pause pill', detail: 'Use when waiting for client files, feedback, or clarification' },
-            { label: '🔵 Review — Sent to client / team for approval', path: 'My Queue / Tasks → Review pill', detail: 'Design is done, now awaiting feedback or sign-off' },
-            { label: '✅ End — Work complete, ready to hand off', path: 'My Queue / Tasks → End pill', detail: 'Final file uploaded, brief is fulfilled — admin takes over' },
-            { label: '🔁 Transfer — Reassigning to another designer', path: 'My Queue / Tasks → Transfer pill', detail: 'If you can\'t complete it — let admin know the reason' },
+            { label: '🟢 Live — હું અત્યારે આ કામ કરી રહ્યો છું', path: 'My Queue / Tasks → Live pill', detail: 'જોબ હાથમાં લઈ ડિઝાઇન શરૂ કરો ત્યારે આ સેટ કરો' },
+            { label: '🟡 Pause — કામ અટક્યું છે, કંઈકની રાહ જોવાય છે', path: 'My Queue / Tasks → Pause pill', detail: 'ક્લાયન્ટની ફાઇલ, ફીડબેક કે સ્પષ્ટતાની રાહ હોય ત્યારે વાપરો' },
+            { label: '🔵 Review — ક્લાયન્ટ / ટીમને અપ્રૂવલ માટે મોકલ્યું', path: 'My Queue / Tasks → Review pill', detail: 'ડિઝાઇન પૂરી, હવે ફીડબેક કે અપ્રૂવલની રાહ' },
+            { label: '✅ End — કામ પૂરું, આગળ સોંપવા તૈયાર', path: 'My Queue / Tasks → End pill', detail: 'ફાઇનલ ફાઇલ અપલોડ થઈ ગઈ, બ્રીફ પૂરું — હવે એડમિન સંભાળે' },
+            { label: '🔁 Transfer — બીજા ડિઝાઇનરને સોંપવું', path: 'My Queue / Tasks → Transfer pill', detail: 'તમે પૂરું ના કરી શકો તો — એડમિનને કારણ જણાવો' },
         ],
-        tip: 'Update your status every time something changes. Admin watches these pills to know the live state of every job.',
+        tip: 'કંઈ પણ બદલાય એટલે તરત સ્ટેટસ અપડેટ કરો. એડમિન આ પિલ્સ જોઈને દરેક જોબની લાઇવ સ્થિતિ જાણે છે.',
     },
     {
         id: 'work',
         icon: <FileImage className="w-5 h-5" />,
-        title: '4. Working on Design',
-        subtitle: 'Do the creative work, then upload',
+        title: '4. ડિઝાઇન પર કામ કરવું',
+        subtitle: 'ક્રિએટિવ કામ કરો, પછી અપલોડ કરો',
         color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', headerBg: 'bg-blue-700',
         steps: [
-            { label: 'Work on design in your software', path: '—', detail: 'Illustrator, Photoshop, CorelDRAW — your tools' },
-            { label: 'Upload work-in-progress file', path: 'Job Details → Files → Upload', detail: 'Upload to Google Drive every time you save major progress' },
-            { label: 'Add a note about what you did', path: 'Job Details → Notes → Add Note', detail: 'Example: "Draft 1 uploaded. Awaiting client colour feedback."' },
-            { label: 'Set status to Review when ready for feedback', path: 'Task → 🔵 Review pill', detail: 'Admin knows to send to client now' },
-            { label: 'Upload final artwork and set status to End', path: 'Files → Upload final → Task → ✅ End pill', detail: 'Print-ready PDF or AI file with bleeds & crops' },
+            { label: 'તમારા સોફ્ટવેરમાં ડિઝાઇન કરો', path: '—', detail: 'Illustrator, Photoshop, CorelDRAW — તમારા ટૂલ્સ' },
+            { label: 'ચાલુ કામની (WIP) ફાઇલ અપલોડ કરો', path: 'Job Details → Files → Upload', detail: 'મોટું કામ સેવ થાય એટલે દર વખતે Google Drive પર અપલોડ કરો' },
+            { label: 'શું કર્યું તેની નોટ ઉમેરો', path: 'Job Details → Notes → Add Note', detail: 'દા.ત.: "Draft 1 અપલોડ કર્યો. ક્લાયન્ટના કલર ફીડબેકની રાહ."' },
+            { label: 'ફીડબેક માટે તૈયાર થાય એટલે સ્ટેટસ Review કરો', path: 'Task → 🔵 Review pill', detail: 'એડમિનને ખબર પડે કે હવે ક્લાયન્ટને મોકલવાનું છે' },
+            { label: 'ફાઇનલ આર્ટવર્ક અપલોડ કરી સ્ટેટસ End કરો', path: 'Files → Upload final → Task → ✅ End pill', detail: 'બ્લીડ અને ક્રોપ માર્ક સાથે print-ready PDF કે AI ફાઇલ' },
         ],
-        tip: 'Upload files regularly — don\'t wait until the job is done. If you lose local work, Drive has backup.',
+        tip: 'ફાઇલ નિયમિત અપલોડ કરો — જોબ પૂરી થાય તેની રાહ ના જુઓ. લોકલ કામ ખોવાય તો Drive માં બેકઅપ રહે.',
     },
     {
         id: 'newjob',
         icon: <Upload className="w-5 h-5" />,
-        title: '5. Adding a New Design Task',
-        subtitle: 'Admin or you can create tasks via New Project',
+        title: '5. નવું ડિઝાઇન ટાસ્ક ઉમેરવું',
+        subtitle: 'એડમિન કે તમે New Project થી ટાસ્ક બનાવી શકો',
         color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-200', headerBg: 'bg-teal-700',
         steps: [
-            { label: 'Click New Project', path: 'Design Studio → + New Project', detail: 'Opens the full task creation form' },
-            { label: 'Fill in client, job type, deadline', path: 'New Project form', detail: 'Link to an existing job if it\'s part of one' },
-            { label: 'Assign to yourself or a designer', path: 'Assign To field', detail: 'Task appears in that designer\'s My Queue immediately' },
-            { label: 'Set initial status', path: 'Status field → Live / Pause', detail: 'Live if starting now, Hold if queued for later' },
+            { label: 'New Project પર ક્લિક કરો', path: 'Design Studio → + New Project', detail: 'ટાસ્ક બનાવવાનું આખું ફોર્મ ખૂલે' },
+            { label: 'ક્લાયન્ટ, જોબ ટાઇપ, ડેડલાઇન ભરો', path: 'New Project form', detail: 'હાલની જોબનો ભાગ હોય તો તેની સાથે લિંક કરો' },
+            { label: 'તમને કે બીજા ડિઝાઇનરને એસાઇન કરો', path: 'Assign To field', detail: 'ટાસ્ક તરત તે ડિઝાઇનરની My Queue માં દેખાય' },
+            { label: 'શરૂઆતનું સ્ટેટસ સેટ કરો', path: 'Status field → Live / Pause', detail: 'અત્યારે શરૂ કરો તો Live, પછી કરવાનું હોય તો Pause' },
         ],
-        tip: 'Admin creates most tasks — but you can create sub-tasks for your own workflow.',
+        tip: 'મોટા ભાગના ટાસ્ક એડમિન બનાવે — પણ તમે તમારા કામ માટે સબ-ટાસ્ક બનાવી શકો.',
     },
     {
         id: 'timeline',
         icon: <BarChart2 className="w-5 h-5" />,
-        title: '6. Tracking Your Work',
-        subtitle: 'Timeline, dossier, notes',
+        title: '6. તમારા કામનું ટ્રેકિંગ',
+        subtitle: 'ટાઇમલાઇન, ડોઝિયર, નોટ્સ',
         color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-200', headerBg: 'bg-cyan-700',
         steps: [
-            { label: 'View your timeline', path: 'Design Studio → Timeline', detail: 'Gantt-style bar chart of all your tasks by date' },
-            { label: 'View full job history (Dossier)', path: 'Design Studio → Dossier (admin only)', detail: 'Admin view: every task ever created with status and time logs' },
-            { label: 'Add personal sticky notes', path: 'Design Studio → My Notes', detail: 'Private notes visible only to you — use for reminders, colour codes, client preferences' },
-            { label: 'Check your calendar', path: 'Calendar', detail: 'Deadlines for your assigned tasks show on the calendar — only YOUR tasks, not others' },
+            { label: 'તમારી ટાઇમલાઇન જુઓ', path: 'Design Studio → Timeline', detail: 'તમારા બધા ટાસ્કનો તારીખ પ્રમાણે Gantt-સ્ટાઇલ ચાર્ટ' },
+            { label: 'આખી જોબ હિસ્ટ્રી જુઓ (Dossier)', path: 'Design Studio → Dossier (admin only)', detail: 'એડમિન વ્યૂ: અત્યાર સુધીના બધા ટાસ્ક, સ્ટેટસ અને ટાઇમ લોગ સાથે' },
+            { label: 'પર્સનલ સ્ટીકી નોટ્સ ઉમેરો', path: 'Design Studio → My Notes', detail: 'ફક્ત તમને દેખાતી પ્રાઇવેટ નોટ્સ — રિમાઇન્ડર, કલર કોડ, ક્લાયન્ટની પસંદ માટે' },
+            { label: 'તમારું કેલેન્ડર ચેક કરો', path: 'Calendar', detail: 'તમારા ટાસ્કની ડેડલાઇન કેલેન્ડરમાં દેખાય — ફક્ત તમારા ટાસ્ક, બીજાના નહીં' },
         ],
     },
     {
         id: 'eod',
         icon: <Target className="w-5 h-5" />,
-        title: '7. EOD Report',
-        subtitle: 'Submit before you log out — every day',
+        title: '7. EOD રિપોર્ટ',
+        subtitle: 'લોગ આઉટ પહેલા સબમિટ કરો — રોજ',
         color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', headerBg: 'bg-rose-700',
         steps: [
-            { label: 'Click End My Day button', path: 'Sidebar bottom → End My Day button', detail: 'This opens the EOD report for today' },
-            { label: 'List designs completed today', path: 'What did you do today?', detail: 'Job name / task name / draft number completed' },
-            { label: 'List designs still in progress', path: 'Current WIP', detail: 'What\'s not done yet and when will it be ready?' },
-            { label: 'Mention blockers', path: 'Blockers section', detail: 'Missing brief? Waiting for client feedback? Note it here.' },
-            { label: 'Submit', path: 'Submit EOD button', detail: 'Admin reviews your output daily and rates it' },
+            { label: 'End My Day બટન દબાવો', path: 'Sidebar bottom → End My Day button', detail: 'આજનો EOD રિપોર્ટ ખૂલે' },
+            { label: 'આજે પૂરી કરેલી ડિઝાઇન લખો', path: 'What did you do today?', detail: 'જોબ નામ / ટાસ્ક નામ / કયો ડ્રાફ્ટ પૂરો કર્યો' },
+            { label: 'હજુ ચાલુ હોય તે ડિઝાઇન લખો', path: 'Current WIP', detail: 'શું બાકી છે અને ક્યારે તૈયાર થશે?' },
+            { label: 'અડચણો (blockers) લખો', path: 'Blockers section', detail: 'બ્રીફ નથી મળ્યું? ક્લાયન્ટ ફીડબેકની રાહ છે? અહીં નોંધો.' },
+            { label: 'સબમિટ કરો', path: 'Submit EOD button', detail: 'એડમિન રોજ તમારું કામ રિવ્યૂ કરી રેટિંગ આપે' },
         ],
-        tip: 'Admin looks at both your task status (Live/End) AND your EOD quality. Update status pills before submitting.',
+        tip: 'એડમિન તમારું ટાસ્ક સ્ટેટસ (Live/End) અને EOD ક્વોલિટી બંને જુએ છે. સબમિટ કરતા પહેલા સ્ટેટસ પિલ્સ અપડેટ કરો.',
     },
 ];
 
@@ -139,14 +139,14 @@ export default function DesignerGuidePage() {
                         <Palette className="w-5 h-5 text-pink-900" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold">Design Studio — How to Use This App</h1>
-                        <p className="text-pink-200 text-sm">Your daily workflow: brief → design → upload → complete</p>
+                        <h1 className="text-xl font-bold">Design Studio — આ App કેવી રીતે વાપરવી</h1>
+                        <p className="text-pink-200 text-sm">તમારું રોજનું કામ: બ્રીફ → ડિઝાઇન → અપલોડ → પૂરું</p>
                     </div>
                 </div>
             </div>
 
             <div className="bg-white rounded-md border border-gray-200 p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Work Flow</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">તમારો Work Flow</p>
                 <div className="flex flex-wrap items-center gap-1">
                     {flowItems.map((item, i) => (
                         <div key={i} className="flex items-center gap-1">
@@ -159,10 +159,10 @@ export default function DesignerGuidePage() {
 
             <div className="grid grid-cols-2 gap-2">
                 {[
-                    { icon: '📂', text: 'Upload every major save to Drive — don\'t wait.' },
-                    { icon: '📝', text: 'Add a note every time you change status.' },
-                    { icon: '⏰', text: 'Red deadline = urgent. Do this first.' },
-                    { icon: '🎨', text: 'Always mark Complete after uploading final file.' },
+                    { icon: '📂', text: 'દરેક મોટા સેવ પછી Drive પર અપલોડ કરો — રાહ ના જુઓ.' },
+                    { icon: '📝', text: 'સ્ટેટસ બદલો ત્યારે દર વખતે નોટ ઉમેરો.' },
+                    { icon: '⏰', text: 'લાલ ડેડલાઇન = અરજન્ટ. પહેલા આ કરો.' },
+                    { icon: '🎨', text: 'ફાઇનલ ફાઇલ અપલોડ કર્યા પછી હંમેશા Complete માર્ક કરો.' },
                 ].map((r, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 bg-pink-50 border border-pink-100 rounded-md text-xs text-pink-900">
                         <span className="text-base">{r.icon}</span><span>{r.text}</span>
