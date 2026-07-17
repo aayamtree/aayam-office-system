@@ -10,10 +10,11 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import {
   Plus, Search, X, Loader2, Package, Tag, ShoppingBag,
-  Box as BoxIcon, FileImage, Printer, ExternalLink, Upload,
+  Box as BoxIcon, FileImage, Printer, ExternalLink, Upload, Layers,
 } from 'lucide-react';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { PACKAGING_TYPES, Product, formatSize, clientLabel } from '@/lib/product-library';
+import ImportSheetModal from '@/components/library/ImportSheetModal';
 
 interface ClientOption { id: string; name: string; company: string | null }
 
@@ -52,6 +53,7 @@ export default function ProductLibraryPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [addFile, setAddFile] = useState<File | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -174,12 +176,20 @@ export default function ProductLibraryPage() {
             Every final design — by client, product, packaging type &amp; size
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" /> Add Product
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Layers className="w-4 h-4" /> Import Job Sheet
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" /> Add Product
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -385,6 +395,14 @@ export default function ProductLibraryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <ImportSheetModal
+          clients={clients}
+          onClose={() => setShowImport(false)}
+          onImported={fetchAll}
+        />
       )}
 
       <div className="text-xs text-gray-400 flex items-center gap-1">
