@@ -20,6 +20,7 @@ import {
   formatSize, clientLabel, readPdfSizeMm, checkSize,
 } from '@/lib/product-library';
 import DesignScanCard from '@/components/library/DesignScanCard';
+import ReferenceImages from '@/components/library/ReferenceImages';
 
 const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
 
@@ -332,6 +333,13 @@ export default function ProductDetailPage() {
         hasFile={versions.some((v) => !!v.file_url)}
         onScanned={fetchAll}
         onRequestUpload={() => setShowVersion(true)}
+      />
+
+      <ReferenceImages
+        productId={product.id}
+        productName={product.name}
+        images={((product as any).reference_images as any[]) || []}
+        onChanged={fetchAll}
       />
 
       <div className="grid md:grid-cols-2 gap-4">

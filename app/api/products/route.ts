@@ -25,7 +25,7 @@ async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
 const PRODUCT_FIELDS = [
   'client_id', 'brand_id', 'brand_name', 'name', 'category', 'category_id',
   'size_w', 'size_h', 'size_d', 'size_unit', 'size_text',
-  'thumbnail_url', 'file_url', 'notes', 'is_active',
+  'thumbnail_url', 'file_url', 'notes', 'is_active', 'reference_images',
 ] as const;
 
 function pickFields(body: any) {
