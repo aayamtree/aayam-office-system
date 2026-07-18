@@ -327,6 +327,8 @@ export default function ProductDetailPage() {
         scanData={(product as any).scan_data || null}
         checkResults={(product as any).check_results || null}
         latestVersionId={versions.find((v) => v.file_url)?.id || null}
+        productName={product.name}
+        brandName={product.brand_name || null}
         hasFile={versions.some((v) => !!v.file_url)}
         onScanned={fetchAll}
         onRequestUpload={() => setShowVersion(true)}

@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Attach the sheet file as this product's design version
+      let versionId: string | null = null;
       if (sheet?.file_url) {
         const { data: version } = await supabase.from('product_versions')
           .insert({
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single();
         if (version) {
+          versionId = version.id;
           await supabase.from('product_activity').update({ actor_id: user.id, actor_name: actorName }).eq('version_id', version.id).is('actor_id', null);
         }
       }
@@ -117,7 +119,8 @@ export async function POST(request: NextRequest) {
       }).eq('id', product.id);
 
       results.push({
-        name, ok: true, product_id: product.id,
+        name, ok: true, product_id: product.id, version_id: versionId,
+        brand_name: job.brand_name || null,
         brand_check: checkResults.brand.status,
         product_check: checkResults.product.status,
       });

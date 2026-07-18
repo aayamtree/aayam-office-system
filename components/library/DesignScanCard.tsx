@@ -18,6 +18,8 @@ interface Props {
   scanData: any | null;
   checkResults: any | null;
   latestVersionId: string | null;
+  productName?: string;
+  brandName?: string | null;
   hasFile: boolean;
   onScanned: () => void;
   onRequestUpload?: () => void;
@@ -144,7 +146,7 @@ function MasterCheck({ type, check, productId, onUpdated }: { type: 'brand' | 'p
   );
 }
 
-export default function DesignScanCard({ productId, scanData, checkResults, latestVersionId, hasFile, onScanned, onRequestUpload }: Props) {
+export default function DesignScanCard({ productId, scanData, checkResults, latestVersionId, productName, brandName, hasFile, onScanned, onRequestUpload }: Props) {
   const [scanning, setScanning] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
 
@@ -155,7 +157,7 @@ export default function DesignScanCard({ productId, scanData, checkResults, late
       const res = await fetch(`/api/products/${productId}/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ version_id: latestVersionId }),
+        body: JSON.stringify({ version_id: latestVersionId, focus: (productName || brandName) ? { name: productName, brand: brandName } : undefined }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Scan failed');

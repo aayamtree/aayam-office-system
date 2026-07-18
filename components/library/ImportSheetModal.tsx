@@ -124,19 +124,22 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       setStage('reading');
       for (let k = 0; k < importResults.length; k++) {
         const r = importResults[k];
-        const origIndex = chosenEntries[k]?.i;
-        const crop = origIndex != null ? cropFilesRef.current[origIndex] : undefined;
-        if (!r?.ok || !r.product_id || !crop) continue;
+        if (!r?.ok || !r.product_id || !r.version_id) continue;
         try {
-          const fd = new FormData();
-          fd.append('file', crop);
-          const rr = await fetch(`/api/products/${r.product_id}/scan`, { method: 'POST', body: fd });
+          // Focused scan of the FULL-resolution sheet for THIS product only —
+          // reliably reads the tiny manufacturer / address / phone block that a
+          // tight crop or a whole-sheet pass misses.
+          const rr = await fetch(`/api/products/${r.product_id}/scan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ version_id: r.version_id, focus: { name: r.name, brand: r.brand_name } }),
+          });
           const rj = await rr.json().catch(() => ({}));
           if (rr.ok && rj.check_results) {
             r.brand_check = rj.check_results.brand?.status ?? r.brand_check;
             r.product_check = rj.check_results.product?.status ?? r.product_check;
           }
-        } catch { /* per-crop re-scan is best-effort */ }
+        } catch { /* per-job detail scan is best-effort */ }
       }
       setResults([...importResults]);
       setStage('done');

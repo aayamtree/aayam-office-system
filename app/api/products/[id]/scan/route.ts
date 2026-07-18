@@ -107,12 +107,16 @@ export async function POST(
   let fileBuffer: ArrayBuffer | null = null;
   let mediaType = 'application/pdf';
   let versionId: string | null = null;
+  let focus: { name?: string; brand?: string } | null = null;
 
   const contentType = request.headers.get('content-type') || '';
   if (contentType.includes('multipart/form-data')) {
     const form = await request.formData();
     const file = form.get('file') as File | null;
     versionId = (form.get('version_id') as string) || null;
+    const fn = form.get('focus_name') as string | null;
+    const fb = form.get('focus_brand') as string | null;
+    if (fn || fb) focus = { name: fn || undefined, brand: fb || undefined };
     if (file) {
       if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File too large to scan (max 18 MB). Upload a smaller PDF/JPG preview.' }, { status: 413 });
       fileBuffer = await file.arrayBuffer();
@@ -121,6 +125,7 @@ export async function POST(
   } else {
     const body = await request.json().catch(() => ({}));
     versionId = body.version_id || null;
+    if (body.focus && (body.focus.name || body.focus.brand)) focus = body.focus;
   }
 
   if (!fileBuffer) {
@@ -166,6 +171,11 @@ export async function POST(
     ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: fileBase64 } }
     : { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: fileBase64 } };
 
+  const focusPrefix = focus && (focus.name || focus.brand)
+    ? `IMPORTANT: This file may contain SEVERAL different products laid out on one sheet. Extract details for ONLY the single product identified as ${focus.name ? `"${focus.name}"` : ''}${focus.brand ? ` (brand "${focus.brand}")` : ''}. Ignore every other product on the sheet. Read that product's small print carefully — the manufacturer / marketed-by company, full address and customer-care phone are usually in tiny text at the bottom of the label.\n\n`
+    : '';
+  const promptText = focusPrefix + SCAN_PROMPT;
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   let scan: any;
   try {
@@ -173,7 +183,7 @@ export async function POST(
       model: 'claude-sonnet-4-5',
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: SCAN_PROMPT }] }],
+      messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: promptText }] }],
     });
     const text = msg.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
     scan = JSON.parse(text.replace(/^```json?\s*/i, '').replace(/```\s*$/, ''));
