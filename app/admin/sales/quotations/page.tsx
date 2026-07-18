@@ -1131,51 +1131,84 @@ export default function QuotationsPage() {
                   <label className="block text-sm font-semibold text-gray-700">Items</label>
                   <button type="button" onClick={addItem} className="text-sm font-medium text-primary hover:text-primary">+ Add Item</button>
                 </div>
-                {/* Column headers */}
+                {/* Column headers (desktop) */}
                 <div className="hidden sm:grid grid-cols-12 gap-2 px-3 mb-1">
-                  <div className="col-span-5 text-xs font-semibold text-gray-500 uppercase">Description</div>
+                  <div className="col-span-6 text-xs font-semibold text-gray-500 uppercase">Description</div>
                   <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Qty</div>
                   <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Rate/pc</div>
-                  <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase">Amount</div>
+                  <div className="col-span-2 text-xs font-semibold text-gray-500 uppercase text-right">Amount</div>
                 </div>
                 <div className="space-y-3">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-md border border-gray-200">
-                      <div className="col-span-12 sm:col-span-5">
-                        <ItemAutocomplete
-                          placeholder="Item name (type to search saved items)"
-                          value={item.description}
-                          onChange={(text) => updateItem(index, 'description', text)}
-                          onSelect={(cat) => fillItemFromCatalog(index, cat)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                    <div key={index} className="bg-gray-50 p-3 rounded-md border border-gray-200 space-y-2">
+                      {/* Top line: name + qty + rate + amount, all on one aligned row */}
+                      <div className="grid grid-cols-12 gap-2 items-start">
+                        <div className="col-span-12 sm:col-span-6">
+                          <ItemAutocomplete
+                            placeholder="Item name (type to search saved items)"
+                            value={item.description}
+                            onChange={(text) => updateItem(index, 'description', text)}
+                            onSelect={(cat) => fillItemFromCatalog(index, cat)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="col-span-4 sm:col-span-2">
+                          <input
+                            type="number"
+                            placeholder="Qty"
+                            min="1"
+                            value={item.quantity || ''}
+                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="col-span-4 sm:col-span-2">
+                          <input
+                            type="number"
+                            placeholder="Rate/pc"
+                            min="0"
+                            step="any"
+                            value={item.rate || ''}
+                            onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="col-span-4 sm:col-span-2 flex items-center justify-end gap-2 h-[38px]">
+                          <span className="font-semibold text-gray-800 text-sm whitespace-nowrap">{formatCurrency(item.amount)}</span>
+                          {formData.items.length > 1 && (
+                            <button type="button" onClick={() => removeItem(index)} title="Remove item" className="shrink-0 text-red-500 hover:text-red-700">
+                              <X size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {/* Detail fields — full width, with aligned labels */}
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[76px] text-right">Item Details</span>
+                        <input
+                          type="text"
+                          placeholder="From saved item — size, process..."
+                          value={item.item_specs || ''}
+                          onChange={(e) => updateItem(index, 'item_specs', e.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-600 bg-white"
                         />
-                        {/* Line 2: saved item details (auto-filled from catalog, editable) */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">Item Details</span>
-                          <input
-                            type="text"
-                            placeholder="From saved item — size, process..."
-                            value={item.item_specs || ''}
-                            onChange={(e) => updateItem(index, 'item_specs', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-600 bg-white"
-                          />
-                        </div>
-                        {/* Line 3: particular details for THIS quote */}
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[72px] text-right">This Job</span>
-                          <input
-                            type="text"
-                            placeholder='Particular details — e.g. "Medhini Royal 500 ml label"'
-                            value={item.item_notes || ''}
-                            onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
-                          />
-                        </div>
-                        {/* Per-item category — routes THIS item to its own production channel (mix jobs) */}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[76px] text-right">This Job</span>
+                        <input
+                          type="text"
+                          placeholder='Particular details — e.g. "Medhini Royal 500 ml label"'
+                          value={item.item_notes || ''}
+                          onChange={(e) => updateItem(index, 'item_notes', e.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-md text-sm text-gray-700 bg-white"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400 w-[76px] text-right">Category</span>
                         <select
                           value={item.product_category || ''}
                           onChange={(e) => updateItem(index, 'product_category', e.target.value)}
-                          className={`w-full mt-2 px-3 py-2 border rounded-md text-sm bg-white ${item.product_category ? 'border-gray-200 text-gray-800' : 'border-amber-300 text-amber-700'}`}
+                          className={`flex-1 min-w-0 px-3 py-2 border rounded-md text-sm bg-white ${item.product_category ? 'border-gray-200 text-gray-800' : 'border-amber-300 text-amber-700'}`}
                           title="Product category for this item (Box / Label / Pouch). Each item routes to its own production channel."
                         >
                           <option value="">⚠ Select category…</option>
@@ -1183,35 +1216,6 @@ export default function QuotationsPage() {
                             <option key={c.id || c.name} value={c.name}>{c.name}</option>
                           ))}
                         </select>
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <input
-                          type="number"
-                          placeholder="Qty"
-                          min="1"
-                          value={item.quantity || ''}
-                          onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                        />
-                      </div>
-                      <div className="col-span-3 sm:col-span-2">
-                        <input
-                          type="number"
-                          placeholder="Rate/pc"
-                          min="0"
-                          step="any"
-                          value={item.rate || ''}
-                          onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
-                        />
-                      </div>
-                      <div className="col-span-5 sm:col-span-2 flex items-center justify-between pt-2">
-                        <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
-                        {formData.items.length > 1 && (
-                          <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">
-                            <X size={16} />
-                          </button>
-                        )}
                       </div>
                     </div>
                   ))}
