@@ -124,16 +124,26 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       setStage('reading');
       for (let k = 0; k < importResults.length; k++) {
         const r = importResults[k];
-        if (!r?.ok || !r.product_id || !r.version_id) continue;
+        if (!r?.ok || !r.product_id) continue;
+        const origIndex = chosenEntries[k]?.i;
+        const crop = origIndex != null ? cropFilesRef.current[origIndex] : undefined;
         try {
-          // Focused scan of the FULL-resolution sheet for THIS product only —
-          // reliably reads the tiny manufacturer / address / phone block that a
-          // tight crop or a whole-sheet pass misses.
-          const rr = await fetch(`/api/products/${r.product_id}/scan`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ version_id: r.version_id, focus: { name: r.name, brand: r.brand_name } }),
-          });
+          let rr: Response;
+          if (crop) {
+            // Prefer the per-job CROP: small JPEG (no size limit) that now
+            // includes the label's bottom manufacturer/address print.
+            const fd = new FormData();
+            fd.append('file', crop);
+            fd.append('focus_name', r.name || '');
+            if (r.brand_name) fd.append('focus_brand', r.brand_name);
+            rr = await fetch(`/api/products/${r.product_id}/scan`, { method: 'POST', body: fd });
+          } else if (r.version_id) {
+            // Fallback: focused scan of the full sheet.
+            rr = await fetch(`/api/products/${r.product_id}/scan`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ version_id: r.version_id, focus: { name: r.name, brand: r.brand_name } }),
+            });
+          } else continue;
           const rj = await rr.json().catch(() => ({}));
           if (rr.ok && rj.check_results) {
             r.brand_check = rj.check_results.brand?.status ?? r.brand_check;

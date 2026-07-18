@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 90;
 
-const MAX_BYTES = 30 * 1024 * 1024; // sheets are bigger; Claude PDF limit ~32MB base64
+const MAX_BYTES = 22 * 1024 * 1024; // base64 ~29MB, under Claude's 32MB request limit
 
 function normalizeMediaType(type: string | null, fileName: string | null): string {
   let t = (type || '').toLowerCase().trim();
@@ -46,7 +46,7 @@ brand_name, product_name, variant,
 net_qty, mrp (number only),
 category (Box | Label | Pouch | Carton | Sticker | Bag | Other),
 copies_on_sheet (integer, best estimate),
-bbox (bounding box of ONE representative copy of this job's artwork on the sheet, as { "page": 1-based page number, "x": left, "y": top, "w": width, "h": height } where x,y,w,h are FRACTIONS 0.0-1.0 of the page. Give the tightest box around this single design/dieline.),
+bbox (bounding box around ONE COMPLETE copy of this job — include the WHOLE label/dieline with ALL its text, especially the small manufacturer / marketed-by / address / customer-care block usually at the BOTTOM. Format { "page": 1-based page number, "x": left, "y": top, "w": width, "h": height } as FRACTIONS 0.0-1.0 of the page. Prefer a slightly generous box over a tight one so no text is cut off.),
 languages (array),
 barcode, fssai_no, other_regn_nos (array),
 manufactured_by, marketed_by, address,
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const form = await request.formData();
     const file = form.get('file') as File | null;
     if (!file) return NextResponse.json({ error: 'file is required' }, { status: 400 });
-    if (file.size > MAX_BYTES) return NextResponse.json({ error: 'Sheet too large (max 30 MB). Export a compressed PDF.' }, { status: 413 });
+    if (file.size > MAX_BYTES) return NextResponse.json({ error: 'Sheet too large (over 22 MB). Export a compressed PDF and try again.' }, { status: 413 });
     fileBuffer = await file.arrayBuffer();
     mediaType = normalizeMediaType(file.type, file.name);
   } else {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     if (!sa.success || !sa.accessToken) return NextResponse.json({ error: sa.error || 'Drive token failed' }, { status: 503 });
     const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=size,mimeType&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${sa.accessToken}` } });
     const meta = await metaRes.json().catch(() => ({}));
-    if (meta.size && parseInt(meta.size) > MAX_BYTES) return NextResponse.json({ error: 'Sheet too large (max 30 MB).' }, { status: 413 });
+    if (meta.size && parseInt(meta.size) > MAX_BYTES) return NextResponse.json({ error: 'Sheet too large (over 22 MB). Export a compressed PDF.' }, { status: 413 });
     mediaType = normalizeMediaType(meta.mimeType, body.file_name || null);
     const dlRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${sa.accessToken}` } });
     if (!dlRes.ok) return NextResponse.json({ error: `Drive download failed (${dlRes.status})` }, { status: 502 });

@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_BYTES = 18 * 1024 * 1024;
+const MAX_BYTES = 22 * 1024 * 1024; // base64 ~29MB, under Claude's 32MB request limit
 
 async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   const auth = createServerClient(
@@ -118,7 +118,7 @@ export async function POST(
     const fb = form.get('focus_brand') as string | null;
     if (fn || fb) focus = { name: fn || undefined, brand: fb || undefined };
     if (file) {
-      if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File too large to scan (max 18 MB). Upload a smaller PDF/JPG preview.' }, { status: 413 });
+      if (file.size > MAX_BYTES) return NextResponse.json({ error: 'This design file is too large to scan (over 22 MB). Export/compress it to a smaller PDF or JPG.' }, { status: 413 });
       fileBuffer = await file.arrayBuffer();
       mediaType = normalizeMediaType(file.type, file.name);
     }
@@ -148,7 +148,7 @@ export async function POST(
     if (!metaRes.ok) return NextResponse.json({ error: `Drive metadata failed (${metaRes.status})` }, { status: 502 });
     const meta = await metaRes.json();
     if (meta.size && parseInt(meta.size) > MAX_BYTES) {
-      return NextResponse.json({ error: 'File too large to scan (max 18 MB). Re-upload a smaller PDF/JPG preview version.' }, { status: 413 });
+      return NextResponse.json({ error: 'This sheet is too large to scan directly (over 22 MB). Re-import it as a compressed PDF, or the per-job crop is used instead.' }, { status: 413 });
     }
     mediaType = normalizeMediaType(meta.mimeType, version?.file_name || null);
 
