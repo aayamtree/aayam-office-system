@@ -373,6 +373,43 @@ td {
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }
+/* =============================================
+   MODAL / POPUP NORMALIZATION (applies app-wide)
+   Every hand-rolled popup uses a `fixed inset-0`
+   dark backdrop. These rules give them all one
+   consistent frosted backdrop + elevated, animated
+   panel without editing each modal individually.
+   ============================================= */
+.fixed.inset-0[class*="bg-black"] {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: modalOverlayIn 0.15s ease-out;
+}
+
+/* Centered modal panels: consistent elevation + gentle pop-in */
+.fixed.inset-0[class*="justify-center"][class*="bg-black"] > div {
+  box-shadow: 0 24px 60px -15px rgba(15, 23, 42, 0.35),
+    0 8px 20px -8px rgba(15, 23, 42, 0.2);
+  animation: modalPanelIn 0.16s ease-out;
+}
+
+@keyframes modalOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalPanelIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fixed.inset-0[class*="bg-black"],
+  .fixed.inset-0[class*="justify-center"][class*="bg-black"] > div {
+    animation: none;
+  }
+}
+
 
 /* =============================================
    SAFE AREA INSETS (for notch devices)

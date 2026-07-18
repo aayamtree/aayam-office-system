@@ -1021,8 +1021,8 @@ export default function QuotationsPage() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="text-section text-gray-900">
                 {isEditing ? 'Edit Quotation' : 'New Quotation'}
@@ -1140,7 +1140,7 @@ export default function QuotationsPage() {
                 </div>
                 <div className="space-y-3">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded-md border border-gray-200">
+                    <div key={index} className="grid grid-cols-12 gap-2 items-start bg-gray-50 p-3 rounded-md border border-gray-200">
                       <div className="col-span-12 sm:col-span-5">
                         <ItemAutocomplete
                           placeholder="Item name (type to search saved items)"
@@ -1205,7 +1205,7 @@ export default function QuotationsPage() {
                           className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm"
                         />
                       </div>
-                      <div className="col-span-5 sm:col-span-2 flex items-center justify-between">
+                      <div className="col-span-5 sm:col-span-2 flex items-center justify-between pt-2">
                         <span className="font-medium text-gray-700 text-sm">{formatCurrency(item.amount)}</span>
                         {formData.items.length > 1 && (
                           <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700 p-1">

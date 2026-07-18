@@ -11,6 +11,7 @@ import { ConfirmProvider } from '@/components/ConfirmModal';
 import { SessionProvider } from 'next-auth/react';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 import ToastContainer from '@/components/ToastContainer';
+import EscapeToClose from '@/components/EscapeToClose';
 import RouteGuard from '@/components/layout/RouteGuard';
 import { RealtimeProvider } from '@/lib/realtime-context';
 
@@ -113,6 +114,9 @@ export default function AdminLayout({
 
           {/* Global toast notifications — replaces native alert() across app */}
           <ToastContainer />
+
+          {/* Press Esc to close the top-most popup, system-wide */}
+          <EscapeToClose />
 
           {/* EOD Nudge — appears at 5:30pm for non-admin staff who haven't submitted yet */}
           {profile && profile.role !== 'admin' && <EODNudge />}
