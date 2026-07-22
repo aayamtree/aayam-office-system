@@ -40,14 +40,6 @@ const TAG_CONFIG: Record<NoteTag, { label: string; bg: string; text: string; ico
     design_note: { label: 'Design Note', bg: 'bg-purple-50', text: 'text-purple-700', icon: <Palette size={10} /> },
 };
 
-// Source configuration
-const SOURCE_CONFIG: Record<NoteSource, { label: string; icon: string }> = {
-    call: { label: 'Call', icon: '📞' },
-    whatsapp: { label: 'WhatsApp', icon: '💬' },
-    in_person: { label: 'In-Person', icon: '🤝' },
-    self: { label: 'Self', icon: '📝' },
-};
-
 interface ProjectNotesLogProps {
     jobId: string;
     canWrite: boolean;
@@ -472,9 +464,9 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
         : (Object.keys(TAG_CONFIG) as NoteTag[]);
 
     return (
-        <section className="flex-1 flex flex-col min-h-[300px]">
+        <section className="flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                     <FileText size={16} className="text-orange-500" /> Project Notes & Feedback
                 </h4>
@@ -519,21 +511,20 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                 </div>
             )}
 
-            <div className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden h-[380px]">
-                {/* Notes Timeline */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/30">
+            <div className="bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden">
+                {/* Notes Timeline — compact, scrolls internally so the pre-print checklist stays visible */}
+                <div className="overflow-y-auto p-3 space-y-2 bg-gray-50/30 max-h-[220px]">
                     {loading ? (
-                        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-gray-400" size={20} /></div>
+                        <div className="flex justify-center py-6"><Loader2 className="animate-spin text-gray-400" size={18} /></div>
                     ) : notes.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                            <MessageSquare size={24} className="mb-2 opacity-50" />
+                        <div className="flex flex-col items-center justify-center py-6 text-gray-400">
+                            <MessageSquare size={20} className="mb-1.5 opacity-50" />
                             <p className="text-xs">No notes yet.</p>
-                            {canWriteNow && <p className="text-[10px] mt-1">Add the first note below.</p>}
+                            {canWriteNow && <p className="text-[10px] mt-0.5">Type below to add the first note.</p>}
                         </div>
                     ) : (
                         notes.map((note) => {
                             const tagConf = TAG_CONFIG[note.tag];
-                            const sourceConf = SOURCE_CONFIG[note.source];
                             const isOwnNote = note.user_id === profile?.id;
                             const isAdminNote = note.user_role === 'admin' || note.user_role === 'manager';
 
@@ -558,7 +549,6 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                             <span className={`flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${tagConf.bg} ${tagConf.text}`}>
                                                 {tagConf.icon} {tagConf.label}
                                             </span>
-                                            <span className="text-[9px] text-gray-400 font-medium">{sourceConf.icon} {sourceConf.label}</span>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             {pendingLocalIds.has(note.id) && (
@@ -601,38 +591,8 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                             </div>
                         )}
 
-                        {/* Tag chips — limited in locked mode */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {availableTags.map((key) => {
-                                const conf = TAG_CONFIG[key];
-                                return (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => setTag(key)}
-                                        className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border transition-all ${tag === key
-                                            ? `${conf.bg} ${conf.text} border-current ring-1 ring-current/20`
-                                            : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        {conf.icon} {conf.label}
-                                    </button>
-                                );
-                            })}
-                            {!isLocked && (
-                                <select
-                                    value={source}
-                                    onChange={(e) => setSource(e.target.value as NoteSource)}
-                                    className="ml-auto text-[10px] font-bold text-gray-500 bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none"
-                                >
-                                    {(Object.entries(SOURCE_CONFIG) as [NoteSource, typeof SOURCE_CONFIG[NoteSource]][]).map(([key, conf]) => (
-                                        <option key={key} value={key}>{conf.icon} {conf.label}</option>
-                                    ))}
-                                </select>
-                            )}
-                        </div>
-
-                        {/* Input with @mention support */}
+                        {/* Compact input row: note field first, small type dropdown, send.
+                            Default type is "Design Note" — just type and hit send. */}
                         <div className="flex gap-2 items-center relative">
                             <div className="flex-1 relative">
                                 <input
@@ -677,6 +637,18 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                                     </div>
                                 )}
                             </div>
+                            {/* Small note-type selector — defaults to Design Note.
+                                Only Correction is offered when a job is locked (admin pullback). */}
+                            <select
+                                value={tag}
+                                onChange={(e) => setTag(e.target.value as NoteTag)}
+                                title="Note type"
+                                className={`shrink-0 text-[11px] font-bold rounded-lg border px-2 py-2 outline-none cursor-pointer ${TAG_CONFIG[tag].bg} ${TAG_CONFIG[tag].text} border-gray-200`}
+                            >
+                                {availableTags.map((key) => (
+                                    <option key={key} value={key}>{TAG_CONFIG[key].label}</option>
+                                ))}
+                            </select>
                             <button
                                 type="submit"
                                 disabled={!content.trim() || saving}

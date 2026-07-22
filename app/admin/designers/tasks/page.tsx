@@ -1376,9 +1376,10 @@ export default function DesignerWorkspace() {
 
                     {/* 3. Project Notes & Feedback Log (handles approval + revisions + lock) */}
                     {selectedTask?.realId && (() => {
-                      const myDesigner = designers.find((d: any) => d.user_id === profile?.id);
-                      const isAssignedDesigner = myDesigner ? selectedTask.designerId === myDesigner.id : false;
-                      const canWriteNotes = isAdmin || isAssignedDesigner;
+                      // Any logged-in designer/staff can leave a note (locked jobs still
+                      // restrict to admin inside ProjectNotesLog). Assigned-designer check
+                      // is no longer a gate — it was making the box read-only for most users.
+                      const canWriteNotes = !!profile?.id;
                       const effectiveStage = selectedTask.is_on_hold ? 'printing' : (selectedTask.current_stage || 'new');
                       return <ProjectNotesLog jobId={selectedTask.realId} canWrite={canWriteNotes} isAdmin={isAdmin} currentStage={effectiveStage} onStageChange={() => refetchJobs()} />;
                     })()}
