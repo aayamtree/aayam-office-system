@@ -31,6 +31,7 @@ import {
   Star,
   Search,
   ScanLine,
+  Library,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -91,6 +92,12 @@ const menuItems: MenuItem[] = [
       { name: 'Planner', href: '/admin/print-planner' },
       { name: 'Print Runs', href: '/admin/print-runs' },
     ]
+  },
+  {
+    name: 'Product Library',
+    icon: Library,
+    href: '/admin/library',
+    allowedRoles: ['admin', 'designer', 'marketing', 'finance'],
   },
   {
     name: 'Design Studio',
