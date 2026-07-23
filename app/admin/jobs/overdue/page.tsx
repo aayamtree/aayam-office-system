@@ -82,7 +82,7 @@ export default function OverduePage() {
         .from('jobs')
         .select('id, job_number, project_name, client_deadline, current_stage, priority, job_type, designer_id, client_id')
         .lt('client_deadline', today)
-        .not('current_stage', 'in', '("delivered","cancelled","completed")')
+        .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
         .order('client_deadline', { ascending: true });
 
       if (error) throw error;
@@ -484,7 +484,7 @@ export default function OverduePage() {
 
           <p className="text-xs text-gray-400 text-center">
             <Clock className="inline w-3 h-3 mr-1" />
-            Based on client deadline. Delivered and cancelled jobs are excluded.
+            Based on client deadline. Delivered, cancelled, and design files sent to client are excluded.
           </p>
         </>
       )}

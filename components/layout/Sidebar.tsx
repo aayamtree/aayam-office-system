@@ -31,7 +31,6 @@ import {
   Star,
   Search,
   ScanLine,
-  Library,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -92,12 +91,6 @@ const menuItems: MenuItem[] = [
       { name: 'Planner', href: '/admin/print-planner' },
       { name: 'Print Runs', href: '/admin/print-runs' },
     ]
-  },
-  {
-    name: 'Product Library',
-    icon: Library,
-    href: '/admin/library',
-    allowedRoles: ['admin', 'designer', 'marketing', 'finance'],
   },
   {
     name: 'Design Studio',
@@ -391,7 +384,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     Promise.all([
       supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
-      supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed)'),
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed,file_sent_client)'),
     ]).then(([leadsRes, prodRes, overdueRes]) => {
       const leads = leadsRes.count || 0;
       const prod  = prodRes.count || 0;
