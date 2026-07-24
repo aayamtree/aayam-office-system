@@ -80,6 +80,7 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/jobs' },
       { name: 'Job Dossier', href: '/admin/jobs/dossier' },
       { name: 'Production Queue', href: '/admin/jobs/queue' },
+      { name: '📊 Daily Pulse', href: '/admin/pulse' },
       { name: '🔴 Overdue', href: '/admin/jobs/overdue' },
     ]
   },
@@ -153,6 +154,7 @@ const menuItems: MenuItem[] = [
       { name: 'Overview', href: '/admin/finance' },
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
+      { name: '💰 Awaiting Payment', href: '/admin/finance/awaiting-payment' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: '⚡ Quick Expense', href: '/admin/finance/expenses/quick' },
@@ -370,6 +372,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   const [activeLeadsCount, setActiveLeadsCount] = useState(0);
   const [prodQueueCount, setProdQueueCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
+  const [awaitingPayCount, setAwaitingPayCount] = useState(0);
   useEffect(() => {
     const CACHE_KEY = 'sidebar_badge_counts';
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -377,12 +380,13 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { ts, leads, prod, overdue } = JSON.parse(cached);
+        const { ts, leads, prod, overdue, awaitingPay } = JSON.parse(cached);
         if (Date.now() - ts < CACHE_TTL) {
           setActiveLeadsCount(leads);
           setProdQueueCount(prod);
           setOverdueCount(overdue);
-          return; // skip all 3 queries
+          setAwaitingPayCount(awaitingPay || 0);
+          return; // skip all queries
         }
       }
     } catch { /* sessionStorage unavailable */ }
@@ -392,14 +396,17 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
       supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed,file_sent_client)'),
-    ]).then(([leadsRes, prodRes, overdueRes]) => {
+      supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'file_sent_client').eq('design_billing', 'billable').neq('payment_status', 'paid'),
+    ]).then(([leadsRes, prodRes, overdueRes, awaitingPayRes]) => {
       const leads = leadsRes.count || 0;
       const prod  = prodRes.count || 0;
       const overdue = overdueRes.count || 0;
+      const awaitingPay = awaitingPayRes.count || 0;
       setActiveLeadsCount(leads);
       setProdQueueCount(prod);
       setOverdueCount(overdue);
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), leads, prod, overdue })); } catch { /* ignore */ }
+      setAwaitingPayCount(awaitingPay);
+      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), leads, prod, overdue, awaitingPay })); } catch { /* ignore */ }
     });
   }, []);
 
@@ -634,6 +641,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
                         if (sub.name === '🔴 Overdue') badge = overdueCount;
+                        if (sub.name === '💰 Awaiting Payment') badge = awaitingPayCount;
 
                         const showBadge = badge > 0;
 
