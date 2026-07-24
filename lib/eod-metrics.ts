@@ -258,31 +258,43 @@ export async function getWeeklyScorecard(supabase: SupabaseClient): Promise<Week
     if (!firstDone.has(e.job_id)) firstDone.set(e.job_id, e);
   }
 
-  // Completions by person
-  const personCount = new Map<string, number>();
-  for (const e of Array.from(firstDone.values())) {
-    const name = e.changed_by_name || 'Unknown';
-    personCount.set(name, (personCount.get(name) || 0) + 1);
-  }
-  const byPerson = Array.from(personCount.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-
-  // On-time % + avg pipeline days need job deadline + created date
+  // On-time % + avg pipeline days need job deadline + created date.
+  // We also resolve the job's designer so the leaderboard shows a real name
+  // even when the stage-history row has no changed_by_name (e.g. system moves).
   const doneJobIds = Array.from(firstDone.keys());
   let onTimeSample = 0;
   let onTimeHits = 0;
   let pipelineDaysSum = 0;
   let pipelineSample = 0;
+  const jobDesigner = new Map<string, string | null>();
 
   if (doneJobIds.length) {
     const { data: jobRows } = await supabase
       .from('jobs')
-      .select('id, client_deadline, created_at, order_date')
+      .select('id, client_deadline, created_at, order_date, designer_id')
       .in('id', doneJobIds);
 
+    const rows = (jobRows || []) as {
+      id: string; client_deadline: string | null; created_at: string;
+      order_date: string | null; designer_id: string | null;
+    }[];
+
+    // Resolve designer names in one shot
+    const designerIds = Array.from(new Set(rows.map((r) => r.designer_id).filter(Boolean))) as string[];
+    const nameById = new Map<string, string>();
+    if (designerIds.length) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', designerIds);
+      for (const p of (profs || []) as { id: string; full_name: string | null }[]) {
+        if (p.full_name) nameById.set(p.id, p.full_name);
+      }
+    }
+
     const DAY_MS = 24 * 60 * 60 * 1000;
-    for (const j of (jobRows || []) as { id: string; client_deadline: string | null; created_at: string; order_date: string | null }[]) {
+    for (const j of rows) {
+      jobDesigner.set(j.id, j.designer_id ? nameById.get(j.designer_id) || null : null);
       const done = firstDone.get(j.id);
       if (!done) continue;
       const doneAt = new Date(done.created_at).getTime();
@@ -298,6 +310,16 @@ export async function getWeeklyScorecard(supabase: SupabaseClient): Promise<Week
       }
     }
   }
+
+  // Completions by person: prefer who made the move, else the job's designer.
+  const personCount = new Map<string, number>();
+  for (const [jobId, e] of Array.from(firstDone.entries())) {
+    const name = e.changed_by_name || jobDesigner.get(jobId) || 'Unassigned';
+    personCount.set(name, (personCount.get(name) || 0) + 1);
+  }
+  const byPerson = Array.from(personCount.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
 
   const revenue = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const rangeLabel = `${weekStart.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })} – ${now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })}`;
