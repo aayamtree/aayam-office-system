@@ -12,6 +12,8 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { normalizeJobType, getStageName, getStageColor } from '@/lib/job-workflow';
+import { hasInvoiceAttached } from '@/lib/invoice-status';
+import ActionButton from '@/components/ActionButton';
 
 // ─── Types ───────────────────────────────────────────────────
 interface JobDetail {
@@ -172,37 +174,22 @@ export default function JobDetailPage() {
         setLoading(false);
     };
 
-    // Save invoice ref & e-way bill number
+    // Save invoice ref & e-way bill number — via server route so the write and
+    // the dispatch notification actually happen (browser writes could silently
+    // fail as anon) and success is reported honestly to the button.
     const handleSaveInvoiceDetails = async () => {
         if (!job) return;
-        setUploading(true);
-
-        await supabase
-            .from('jobs')
-            .update({
-                invoice_reference: invoiceRef || null,
-                eway_bill_number: ewayBillNo || null,
-            })
-            .eq('id', job.id);
-
+        const res = await fetch(`/api/jobs/${job.id}/invoice-details`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoice_reference: invoiceRef, eway_bill_number: ewayBillNo }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        // Reflect saved values locally so the badge/state update immediately.
+        setJob(prev => prev ? { ...prev, invoice_reference: invoiceRef || null, eway_bill_number: ewayBillNo || null } as any : prev);
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-        setUploading(false);
-
-        // Notify dispatch — only for print jobs (design-only has no physical dispatch)
-        const jobTypeKey = normalizeJobType(job.job_type);
-        const jobIsPrint = jobTypeKey === 'print_only' || jobTypeKey === 'design_print';
-        if (invoiceRef && jobIsPrint) {
-            try {
-                await supabase.from('broadcast_notifications').insert({
-                    message: `✅ Invoice ready for ${job.job_number}\nInvoice: ${invoiceRef}${ewayBillNo ? `\nE-Way Bill: ${ewayBillNo}` : ''}\nJob is ready for dispatch!`,
-                    target_audience: 'dispatch',
-                    priority: 'normal',
-                });
-            } catch (err) {
-                console.warn('Failed to notify dispatch:', err);
-            }
-        }
+        return data;
     };
 
     // Upload file (invoice PDF, e-way bill PDF)
@@ -248,6 +235,20 @@ export default function JobDetailPage() {
 
         setJob({ ...job, files: updatedFiles });
         setUploadedFiles(prev => [...prev, { label: fileLabel, name: file.name }]);
+        toast.success(`${fileLabel} uploaded ✓`);
+
+        // If an Invoice PDF was just uploaded, tell dispatch it's ready — the
+        // accountant often uploads the file instead of typing a reference, and
+        // dispatch must still be notified. (Server route decides & notifies.)
+        if (/invoice/i.test(fileLabel)) {
+            try {
+                await fetch(`/api/jobs/${job.id}/invoice-details`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ invoice_reference: invoiceRef, eway_bill_number: ewayBillNo }),
+                });
+            } catch { /* notification is best-effort; the file is already saved */ }
+        }
 
         setUploading(false);
         e.target.value = '';
@@ -271,7 +272,11 @@ export default function JobDetailPage() {
     }
 
     const latestQC = qcRecords[0];
-    const hasInvoice = (job.invoices && job.invoices.length > 0) || !!invoiceRef;
+    const hasInvoice = hasInvoiceAttached({
+        invoice_reference: invoiceRef || (job as any).invoice_reference,
+        files: job.files,
+        invoices: job.invoices,
+    });
     const profit = (job.total_amount || 0) - totalExpense;
     const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
@@ -426,15 +431,17 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
-                <button
-                    onClick={handleSaveInvoiceDetails}
+                <ActionButton
+                    onAction={handleSaveInvoiceDetails}
                     disabled={uploading}
+                    stayDone={false}
+                    loadingLabel="Saving…"
+                    successToast={isDesignOnly ? 'Invoice saved ✓' : 'Saved & dispatch notified ✓'}
+                    errorToast="Could not save invoice details"
                     className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                 >
-                    {uploading ? 'Saving...' : saved
-                        ? (isDesignOnly ? '✓ Saved' : '✓ Saved & Dispatch Notified')
-                        : (isDesignOnly ? 'Save Invoice' : 'Save & Notify Dispatch')}
-                </button>
+                    {isDesignOnly ? 'Save Invoice' : 'Save & Notify Dispatch'}
+                </ActionButton>
             </div>
 
             {/* Packing Details — print jobs only (design-only has no physical packing) */}

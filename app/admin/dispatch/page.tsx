@@ -9,6 +9,8 @@ import { useAuth } from '@/lib/auth-context';
 import { Job, Dispatch } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { getStageName, getStageColor } from '@/lib/job-workflow';
+import { hasInvoiceAttached } from '@/lib/invoice-status';
+import ActionButton from '@/components/ActionButton';
 
 // ─── Transporter vendor ──────────────────────────────────────
 interface TransporterVendor {
@@ -24,7 +26,7 @@ export default function DispatchPage() {
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
     // We fetch both so "Invoice ready" reflects reality either way.
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, invoice_reference, eway_bill_number, client:clients(id, name, company), invoices:invoices(id)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
@@ -358,8 +360,8 @@ export default function DispatchPage() {
         })}
 
         {readyToDispatch.map((job) => {
-          const hasInvoice = !!(job as any).invoice_reference ||
-            ((job as any).invoices && (job as any).invoices.length > 0);
+          const hasInvoice = hasInvoiceAttached(job as any);
+          const invoiceAlreadyRequested = !!(job as any).invoice_requested_at;
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
             <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
@@ -389,28 +391,24 @@ export default function DispatchPage() {
                 )}
                 <div className="flex gap-1.5 flex-wrap">
                   {!hasInvoice && (
-                    <button
-                      onClick={async () => {
-                        if (invoiceRequested.has(job.id)) return;
-                        try {
-                          await supabase.from('broadcast_notifications').insert({
-                            message: `🔔 Dispatch requesting invoice for ${job.job_number}\nClient: ${job.client?.company || job.client?.name || 'N/A'}\nProject: ${job.project_name}`,
-                            target_audience: 'admin',
-                            priority: 'urgent',
-                          });
-                          setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
-                        } catch (err) {
-                          console.warn('Failed to send invoice request:', err);
-                        }
+                    <ActionButton
+                      done={invoiceAlreadyRequested || invoiceRequested.has(job.id)}
+                      doneLabel="Requested"
+                      loadingLabel="Sending…"
+                      successToast="Invoice requested from accounts ✓"
+                      errorToast="Could not send invoice request"
+                      onAction={async () => {
+                        const res = await fetch(`/api/jobs/${job.id}/request-invoice`, { method: 'POST' });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.error || 'Request failed');
+                        setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
+                        return data;
                       }}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors ${invoiceRequested.has(job.id)
-                          ? 'bg-green-100 text-green-700 cursor-default'
-                          : 'bg-card border border-border text-muted-foreground hover:text-foreground'
-                        }`}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors bg-card border border-border text-muted-foreground hover:text-foreground"
+                      doneClassName="bg-green-100 text-green-700 border-green-200"
                     >
-                      <FileText className="w-3 h-3" />
-                      {invoiceRequested.has(job.id) ? 'Requested ✓' : 'Request Invoice'}
-                    </button>
+                      <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> Request Invoice</span>
+                    </ActionButton>
                   )}
                   <button
                     onClick={() => handleOpenDispatch(job)}
