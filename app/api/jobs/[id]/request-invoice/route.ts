@@ -55,6 +55,7 @@ export async function POST(
     target_audience: 'admin',
     priority: 'urgent',
     created_by: user.id,
+    link: `/admin/jobs/${id}`,
   });
   // The request itself is recorded even if the notification insert fails; report
   // partial success honestly so the UI doesn't claim a delivery that didn't happen.

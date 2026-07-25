@@ -94,6 +94,7 @@ export async function PATCH(
       priority: 'high',
       target_audience: 'designer',
       created_by: user.id,
+      link: `/admin/jobs/${id}`,
     });
   }
 

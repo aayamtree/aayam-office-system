@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, AlertCircle, Info } from 'lucide-react';
+import { X, AlertCircle, Info, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useRealtime } from '@/lib/realtime-context';
 
 interface Notification {
     id: string;
@@ -11,70 +13,73 @@ interface Notification {
     priority: 'normal' | 'urgent';
     target_audience: string;
     created_at: string;
+    link?: string | null;
 }
 
 export function NotificationPopup() {
     const { profile } = useAuth();
+    const router = useRouter();
+    const { lastBroadcast } = useRealtime();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
+    // Initial load of existing undismissed notifications.
     useEffect(() => {
         if (!profile) return;
-
-        // Load existing undismissed notifications
         loadNotifications();
-
-        // Subscribe to new notifications via Realtime
-        const channel = supabase
-            .channel('broadcast-notifications')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'broadcast_notifications',
-                },
-                async (payload) => {
-                    const newNotification = payload.new as any;
-                    // Show if targeted at this user specifically, their role, or all
-                    if (
-                        newNotification.target_audience === 'all' ||
-                        newNotification.target_audience === profile.role ||
-                        newNotification.target_audience === `user_${profile.id}`
-                    ) {
-                        setNotifications((prev) => [newNotification, ...prev]);
-                    }
-
-                    // Trigger push notification — only if THIS user created the notification
-                    // This prevents duplicate pushes when multiple users have the app open
-                    if (newNotification.created_by === profile.id) {
-                        try {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            if (session?.access_token) {
-                                fetch('/api/push/send', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        Authorization: `Bearer ${session.access_token}`,
-                                    },
-                                    body: JSON.stringify({
-                                        title: newNotification.priority === 'urgent' ? '🚨 Urgent — Aayam' : '📢 Aayam Office',
-                                        message: newNotification.message,
-                                        targetAudience: newNotification.target_audience,
-                                        url: '/admin/dashboard',
-                                    }),
-                                }).catch(() => { /* silent — push is best-effort */ });
-                            }
-                        } catch { /* ignore push errors */ }
-                    }
-                }
-            )
-            .subscribe();
-
-        return () => {
-            channel.unsubscribe();
-        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile]);
+
+    // React to new broadcast notifications delivered by the shared realtime channel.
+    // The subscription itself lives once in RealtimeProvider — this component no longer
+    // opens its own channel.
+    useEffect(() => {
+        if (!profile || !lastBroadcast) return;
+
+        const newNotification = lastBroadcast as any;
+
+        // Skip if already dismissed (e.g. re-render with same payload)
+        if (dismissedIds.has(newNotification.id)) return;
+
+        // Show if targeted at this user specifically, their role, or all
+        if (
+            newNotification.target_audience === 'all' ||
+            newNotification.target_audience === profile.role ||
+            newNotification.target_audience === `user_${profile.id}`
+        ) {
+            setNotifications((prev) =>
+                prev.some((n) => n.id === newNotification.id)
+                    ? prev
+                    : [newNotification, ...prev]
+            );
+        }
+
+        // Trigger push notification — only if THIS user created the notification.
+        // This prevents duplicate pushes when multiple users have the app open.
+        if (newNotification.created_by === profile.id) {
+            (async () => {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.access_token) {
+                        fetch('/api/push/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${session.access_token}`,
+                            },
+                            body: JSON.stringify({
+                                title: newNotification.priority === 'urgent' ? '🚨 Urgent — Aayam' : '📢 Aayam Office',
+                                message: newNotification.message,
+                                targetAudience: newNotification.target_audience,
+                                url: newNotification.link || '/admin/dashboard',
+                            }),
+                        }).catch(() => { /* silent — push is best-effort */ });
+                    }
+                } catch { /* ignore push errors */ }
+            })();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lastBroadcast, profile]);
 
     const loadNotifications = async () => {
         if (!profile) return;
@@ -117,6 +122,13 @@ export function NotificationPopup() {
         setDismissedIds((prev) => new Set(Array.from(prev).concat(notificationId)));
     };
 
+    // Tap the card -> jump straight to the concerned page, and dismiss it.
+    const handleOpen = (notification: Notification) => {
+        if (!notification.link) return;
+        handleDismiss(notification.id);
+        router.push(notification.link);
+    };
+
     // Don't render if no notifications
     if (notifications.length === 0) return null;
 
@@ -125,8 +137,13 @@ export function NotificationPopup() {
             {notifications.map((notification) => (
                 <div
                     key={notification.id}
+                    onClick={() => handleOpen(notification)}
+                    role={notification.link ? 'button' : undefined}
+                    tabIndex={notification.link ? 0 : undefined}
+                    onKeyDown={(e) => { if (notification.link && (e.key === 'Enter' || e.key === ' ')) handleOpen(notification); }}
                     className={`
-            rounded-lg  p-4 animate-slide-in-right
+            rounded-lg  p-4 animate-slide-in-right transition-shadow
+            ${notification.link ? 'cursor-pointer hover:shadow-md' : ''}
             ${notification.priority === 'urgent'
                             ? 'bg-red-50 border-2 border-red-500'
                             : 'bg-blue-50 border-2 border-blue-500'
@@ -177,14 +194,21 @@ export function NotificationPopup() {
                             >
                                 {notification.message}
                             </p>
-                            <p className="text-xs text-gray-500 mt-2">
-                                {new Date(notification.created_at).toLocaleString()}
-                            </p>
+                            <div className="flex items-center justify-between mt-2 gap-2">
+                                <p className="text-xs text-gray-500">
+                                    {new Date(notification.created_at).toLocaleString()}
+                                </p>
+                                {notification.link && (
+                                    <span className={`inline-flex items-center gap-1 text-xs font-semibold ${notification.priority === 'urgent' ? 'text-red-700' : 'text-blue-700'}`}>
+                                        Open <ArrowRight className="w-3 h-3" />
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Dismiss Button */}
                         <button
-                            onClick={() => handleDismiss(notification.id)}
+                            onClick={(e) => { e.stopPropagation(); handleDismiss(notification.id); }}
                             className={`
                 flex-shrink-0 p-1 rounded-lg transition-colors
                 ${notification.priority === 'urgent'

@@ -162,10 +162,11 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
             target_audience: 'direct',
             created_by: profile?.id,
             priority: 'normal',
+            link: jobId ? `/admin/jobs/${jobId}` : undefined,
         }));
         // Fire and forget — no error shown, not critical path
         await supabase.from('broadcast_notifications').insert(inserts).then();
-    }, [profile]);
+    }, [profile, jobId]);
 
 
     // Fetch notes

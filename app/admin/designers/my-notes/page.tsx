@@ -330,6 +330,7 @@ export default function MyNotes() {
                 priority: 'normal',
                 target_audience: `user_${userId}`,
                 created_by: profile?.id,
+                link: '/admin/designers/my-notes',
             }).select();
         }
     };

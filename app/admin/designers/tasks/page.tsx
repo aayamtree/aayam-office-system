@@ -508,6 +508,7 @@ export default function DesignerWorkspace() {
           priority: 'normal',
           target_audience: 'designer',
           created_by: profile.id,
+          link: selectedTask.realId ? `/admin/jobs/${selectedTask.realId}` : undefined,
         });
       }
 
@@ -593,6 +594,7 @@ export default function DesignerWorkspace() {
         priority: 'high',
         target_audience: 'admin',
         created_by: profile?.id,
+        link: selectedTask.realId ? `/admin/jobs/${selectedTask.realId}` : undefined,
       });
 
       refetchJobs();
@@ -1333,6 +1335,7 @@ export default function DesignerWorkspace() {
                                           });
                                           const result = await res.json();
                                           if (!res.ok) {
+                                            // Roll back on failure
                                             setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: prevFiles } : t));
                                             toast.error(`Could not remove file: ${result.error || res.statusText}`);
                                             return;

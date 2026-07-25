@@ -292,6 +292,7 @@ export default function QCCheckPage() {
           `QC By: ${profile?.full_name || 'Unknown'}`,
         target_audience: 'admin',
         priority: 'urgent',
+        link: `/admin/jobs/${selectedJob.id}`,
       });
     } catch (err) {
       console.warn('Could not send invoice notification:', err);

@@ -53,6 +53,7 @@ export async function POST(
       target_audience: 'dispatch',
       priority: 'normal',
       created_by: user.id,
+      link: '/admin/dispatch',
     });
     notified = !notifyErr;
   }
