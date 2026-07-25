@@ -41,6 +41,25 @@ export default function DispatchPage() {
       document.removeEventListener('visibilitychange', onFocus);
     };
   }, [refetchJobs]);
+
+  // Auth-race guard: on a cold load the jobs query can fire before the Supabase
+  // cookie session is hydrated, so it runs as `anon` and RLS returns 0 rows —
+  // leaving the dispatcher staring at an empty board until a manual refresh.
+  // (profile alone isn't reliable here: a cached fallback profile can appear
+  // before the real session.) Refetch when Supabase confirms a live session.
+  useEffect(() => {
+    let done = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session && !done) { done = true; refetchJobs?.(); }
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+        refetchJobs?.();
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refetchJobs]);
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
 
   // Transporters
