@@ -28,19 +28,20 @@ export default function DispatchPage() {
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
+  const { dispatches, loading: dispatchesLoading, createDispatch, refetch: refetchDispatches } = useDispatches();
 
   // Jobs are not on the realtime channel (perf), so an already-open dispatch
   // screen won't see the accountant's invoice until it refetches. Refresh when
   // the dispatcher returns to the tab / focuses the window.
   useEffect(() => {
-    const onFocus = () => refetchJobs?.();
+    const onFocus = () => { refetchJobs?.(); refetchDispatches?.(); };
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
     return () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onFocus);
     };
-  }, [refetchJobs]);
+  }, [refetchJobs, refetchDispatches]);
 
   // Auth-race guard: on a cold load the jobs query can fire before the Supabase
   // cookie session is hydrated, so it runs as `anon` and RLS returns 0 rows —
@@ -50,17 +51,17 @@ export default function DispatchPage() {
   useEffect(() => {
     let done = false;
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session && !done) { done = true; refetchJobs?.(); }
+      if (data.session && !done) { done = true; refetchJobs?.(); refetchDispatches?.(); }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
         refetchJobs?.();
+        refetchDispatches?.();
       }
     });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refetchJobs]);
-  const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
+  }, [refetchJobs, refetchDispatches]);
 
   // Transporters
   const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
