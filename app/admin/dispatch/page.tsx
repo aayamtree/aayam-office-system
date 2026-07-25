@@ -19,10 +19,28 @@ interface TransporterVendor {
 
 export default function DispatchPage() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, updateJobStage } = useJobs({
+  const { jobs, loading: jobsLoading, updateJobStage, refetch: refetchJobs } = useJobs({
+    // Explicit select so the dispatch card can see the invoice signals.
+    // The accountant may attach an invoice two ways: by saving invoice_reference
+    // on the job, or by creating a row in the invoices table (job_id FK).
+    // We fetch both so "Invoice ready" reflects reality either way.
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, invoice_reference, eway_bill_number, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
+
+  // Jobs are not on the realtime channel (perf), so an already-open dispatch
+  // screen won't see the accountant's invoice until it refetches. Refresh when
+  // the dispatcher returns to the tab / focuses the window.
+  useEffect(() => {
+    const onFocus = () => refetchJobs?.();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [refetchJobs]);
   const { dispatches, loading: dispatchesLoading, createDispatch } = useDispatches();
 
   // Transporters
@@ -320,7 +338,8 @@ export default function DispatchPage() {
         })}
 
         {readyToDispatch.map((job) => {
-          const hasInvoice = (job as any).invoices && (job as any).invoices.length > 0;
+          const hasInvoice = !!(job as any).invoice_reference ||
+            ((job as any).invoices && (job as any).invoices.length > 0);
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
             <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
