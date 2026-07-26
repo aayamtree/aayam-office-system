@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
 import { getEodSnapshot, inr, STUCK_DAYS, type JobBrief } from '@/lib/eod-metrics';
+import { authorizeCron } from '@/lib/api-auth';
 
 /**
  * EOD Report Cron — 7:30 PM IST, Mon–Sat ("0 14 * * 1-6").
@@ -17,7 +18,6 @@ import { getEodSnapshot, inr, STUCK_DAYS, type JobBrief } from '@/lib/eod-metric
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const CRON_SECRET = process.env.CRON_SECRET;
 
 function jobLine(j: JobBrief, tail: string): string {
   return `  • <b>${escapeHtml(j.job_number || '?')}</b> ${escapeHtml((j.project_name || '').slice(0, 40))} — <i>${escapeHtml(j.stage_name)}</i>${tail}`;
@@ -67,11 +67,10 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>): string {
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const isDebug = request.nextUrl.searchParams.get('debug') === '1';
-  if (CRON_SECRET && !isDebug && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Vercel cron secret, or an admin session for ?debug=1 previews.
+  const gate = await authorizeCron(request);
+  if (!gate.ok) return gate.response;
+  const isDebug = gate.isDebug;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

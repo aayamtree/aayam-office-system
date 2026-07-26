@@ -3,8 +3,13 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/api-auth';
 
 export async function POST() {
+    // Destructive: wipes the org Drive connection for everyone. Admin only.
+    const gate = await requireAdmin();
+    if (!gate.ok) return gate.response;
+
     try {
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

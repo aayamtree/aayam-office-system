@@ -5,12 +5,17 @@
 import { NextResponse } from 'next/server';
 import { getServiceClient, getValidDriveAccessToken } from '@/lib/google-drive-server';
 import { isServiceAccountConfigured, getServiceAccountToken } from '@/lib/google-service-account';
+import { requireUser } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
+    // This hands out a live org-wide Google Drive token — staff only.
+    const gate = await requireUser();
+    if (!gate.ok) return gate.response;
+
     try {
         // Preferred: service account (no interactive login, files land in the Shared Drive).
         if (isServiceAccountConfigured()) {

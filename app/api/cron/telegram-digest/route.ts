@@ -239,7 +239,8 @@ function buildPersonalBrief(
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  // Fail closed: if CRON_SECRET is unset, reject rather than run unauthenticated.
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

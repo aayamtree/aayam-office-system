@@ -9,29 +9,26 @@ import {
     getActiveCredential,
     refreshDriveToken,
 } from '@/lib/google-drive-server';
+import { requireUser, requireAdmin } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+    // Identity comes from the verified cookie session, never from the request
+    // body — a caller-supplied userId can be forged.
+    const gate = await requireAdmin();
+    if (!gate.ok) return gate.response;
+    const userId = gate.user.id;
+
     try {
         const body = await request.json();
-        const { accessToken, refreshToken, expiresIn, scopes, userId } = body;
+        const { accessToken, refreshToken, expiresIn, scopes } = body;
+
+        if (!accessToken) {
+            return NextResponse.json({ error: 'accessToken is required' }, { status: 400 });
+        }
 
         const supabase = getServiceClient();
-
-        // Verify user exists and is admin
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', userId)
-            .single();
-
-        if (profileError || !profile) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
-        }
-        if (profile.role !== 'admin') {
-            return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-        }
 
         // Deactivate any existing credentials, then store the new one.
         await supabase
@@ -69,6 +66,9 @@ export async function POST(request: NextRequest) {
 // and self-heals an expired access token when a refresh token is present so the
 // UI doesn't falsely show "expired / reconnect".
 export async function GET() {
+    const gate = await requireUser();
+    if (!gate.ok) return gate.response;
+
     try {
         const supabase = getServiceClient();
         const credential = await getActiveCredential(supabase);
@@ -106,6 +106,10 @@ export async function GET() {
 
 // Disconnect Google Drive
 export async function DELETE() {
+    // Disconnects Drive for the whole organisation. Admin only.
+    const gate = await requireAdmin();
+    if (!gate.ok) return gate.response;
+
     try {
         const supabase = getServiceClient();
 

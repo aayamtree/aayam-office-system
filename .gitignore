@@ -26,7 +26,18 @@ yarn-error.log*
 
 # local env files
 .env
-.env*.local
+.env*
+*.env
+
+# credentials — never commit these
+# Google service-account keys are named like aayam-office-<hash>.json
+aayam-office-*.json
+*service-account*.json
+*credentials*.json
+*.pem
+*.key
+*.p12
+vapid.env
 
 # vercel
 .vercel

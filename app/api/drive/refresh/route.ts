@@ -4,10 +4,15 @@
 
 import { NextResponse } from 'next/server';
 import { getServiceClient, getActiveCredential, refreshDriveToken } from '@/lib/google-drive-server';
+import { requireUser } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST() {
+    // Returns a live access token — staff only.
+    const gate = await requireUser();
+    if (!gate.ok) return gate.response;
+
     try {
         const supabase = getServiceClient();
 

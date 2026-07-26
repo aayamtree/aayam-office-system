@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
 import { getWeeklyScorecard, inr } from '@/lib/eod-metrics';
+import { authorizeCron } from '@/lib/api-auth';
 
 /**
  * Weekly Scorecard Cron — 8:00 PM IST every Saturday ("30 14 * * 6").
@@ -16,7 +17,6 @@ import { getWeeklyScorecard, inr } from '@/lib/eod-metrics';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const CRON_SECRET = process.env.CRON_SECRET;
 
 function medal(i: number): string {
   return ['🥇', '🥈', '🥉'][i] || '  •';
@@ -51,11 +51,10 @@ function buildMessage(s: Awaited<ReturnType<typeof getWeeklyScorecard>>): string
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const isDebug = request.nextUrl.searchParams.get('debug') === '1';
-  if (CRON_SECRET && !isDebug && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Vercel cron secret, or an admin session for ?debug=1 previews.
+  const gate = await authorizeCron(request);
+  if (!gate.ok) return gate.response;
+  const isDebug = gate.isDebug;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
