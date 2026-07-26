@@ -1,22 +1,24 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '@/lib/api-auth';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://aayam-office-system.vercel.app';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/telegram/setup
- * Registers the Telegram webhook. Visit this URL once after deployment.
- * Admin only — protected by checking for a secret param.
+ * Registers the Telegram webhook. Visit this URL while signed in as an admin
+ * after rotating the bot token (revoking a token drops the webhook).
+ *
+ * Previously this was gated on `?secret=` holding the first 12 characters of
+ * NEXTAUTH_SECRET. That put a long-lived secret into URLs, browser history and
+ * server logs, and it meant rotating NEXTAUTH_SECRET locked you out of the very
+ * page needed to repair Telegram. Now it uses the normal admin session check.
  */
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const secret = searchParams.get('secret');
-
-  // Basic protection — only admin can trigger this
-  if (secret !== process.env.NEXTAUTH_SECRET?.slice(0, 12)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export async function GET() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate.response;
 
   if (!BOT_TOKEN) {
     return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN not set' }, { status: 500 });
