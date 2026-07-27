@@ -9,9 +9,31 @@ export default function Error({
     error: Error & { digest?: string };
     reset: () => void;
 }) {
+    // A tab left open across a deploy fails on chunks that no longer exist.
+    // Reload once rather than showing the user a dead end. The guard stops a
+    // reload loop if the error is something genuinely broken.
+    const staleBuild = /ChunkLoadError|Loading chunk|Loading CSS chunk|dynamically imported module/i
+        .test(error.message || '');
+
     useEffect(() => {
         console.error(error);
-    }, [error]);
+        if (!staleBuild) return;
+        try {
+            if (sessionStorage.getItem('aayam:stale-build-reloaded')) return;
+            sessionStorage.setItem('aayam:stale-build-reloaded', '1');
+        } catch {
+            return;
+        }
+        window.location.reload();
+    }, [error, staleBuild]);
+
+    if (staleBuild) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+                <div className="text-center text-sm text-gray-600">Updating to the latest version…</div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">

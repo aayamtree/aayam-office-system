@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from '@/components/Providers';
+import { StaleBuildReloader } from '@/components/StaleBuildReloader';
 
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
@@ -38,6 +39,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
+        {/* Recovers tabs left open across a deploy — see the component for why. */}
+        <StaleBuildReloader />
         <Providers>
 
           {children}

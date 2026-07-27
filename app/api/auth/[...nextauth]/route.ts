@@ -2,7 +2,9 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
 const authOptions: NextAuthOptions = {
-    debug: true, // Enable debug logging to see exact errors
+    // Verbose auth logging in development only — in production it writes token
+    // and account detail into the Vercel logs.
+    debug: process.env.NODE_ENV !== 'production',
     providers: [
         GoogleProvider({
             clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
