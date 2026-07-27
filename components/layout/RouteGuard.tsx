@@ -32,8 +32,6 @@ const ROUTE_PERMISSIONS: { prefix: string; allowed: string[] }[] = [
     { prefix: '/admin/design-studio', allowed: ['admin', 'designer'] },
     // Product Library — core roles
     { prefix: '/admin/library', allowed: ['admin', 'designer', 'marketing', 'finance'] },
-    // Label Studio — admin + designers only
-    { prefix: '/admin/label-studio', allowed: ['admin', 'designer'] },
     // Print Planner — admin, finance, cmyk (matches sidebar allowedRoles)
     { prefix: '/admin/print-planner', allowed: ['admin', 'finance', 'cmyk'] },
     // CMYK Print — admin + cmyk

@@ -30,7 +30,6 @@ import {
   Share2,
   Star,
   Search,
-  ScanLine,
   Library,
 } from 'lucide-react';
 
@@ -252,19 +251,6 @@ const menuItems: MenuItem[] = [
     icon: Settings,
     href: '/admin/settings/profile',
     allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'],
-  },
-  {
-    name: 'Label Studio',
-    icon: ScanLine,
-    href: '/admin/label-studio',
-    allowedRoles: ['admin', 'designer'],
-    submenu: [
-      { name: 'Extract Master', href: '/admin/label-studio/extract' },
-      { name: 'Brands',        href: '/admin/label-studio/brands' },
-      { name: 'Products',      href: '/admin/label-studio/products' },
-      { name: 'Label Check',   href: '/admin/label-studio/check' },
-      { name: 'History',       href: '/admin/label-studio/history' },
-    ]
   },
   {
     name: 'Settings',
