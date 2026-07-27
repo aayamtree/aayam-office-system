@@ -139,9 +139,95 @@ independent of security.
 
 ---
 
-## NOT fixed — needs your decision
+## RLS Phase 1 — DONE (27 July, migration `rls_phase1_drop_redundant_open_policies`)
 
-### 5. Any logged-in staff member can read the finance tables — HIGH
+Dropped **19 redundant duplicate policies** across 9 tables. Policy count 202 → 183.
+
+Every one was provably redundant because a broader open policy on the same table
+remains, so **effective access is identical**. Verified by snapshotting open
+SELECT/INSERT/UPDATE/DELETE per table before and after — all 9 tables came back
+`access_unchanged = true`.
+
+| Table | Dropped | Kept |
+| --- | --- | --- |
+| `clients` | 4 | `clients_all` (ALL, open) |
+| `vendors` | 4 | `vendors_all` (ALL, open) |
+| `jobs` | 3 | `Public jobs access` + strict admin/finance DELETE |
+| `design_tasks` | 2 | `design_tasks_open_all` + 4 strict policies |
+| `quotations` | 2 | `quotations_open_all` |
+| `activity_logs` | 1 | duplicate INSERT policy removed |
+| `calendar_event_mentions` | 1 | ALL policy already covered SELECT |
+| `design_projects` | 1 | ALL policy already covered SELECT |
+| `job_checklists` | 1 | ALL policy already covered SELECT |
+
+Deliberately left alone: `product_categories`, `chat_channels`, `chat_channel_members`,
+`job_stage_history`, `payments_received`, `pos_sales`, `pos_sale_items`, `purchase_bills`.
+These *look* like they have stacked open policies, but each policy covers a **different
+command** — none is redundant, and dropping any would have changed behaviour.
+
+Strict/role-based policies were kept everywhere, even though the remaining open policy
+still overrides them. They document the intent Phase 2 will switch on.
+
+Still true after this: RLS on all 87 tables, **zero** anon policies, 64 open
+`USING(true)` policies remaining (was 78).
+
+---
+
+## RLS Phase 2 — DONE (27 July, migration `rls_phase2_lock_bank_and_cash_reads`)
+
+**The money tables are now admin-only.**
+
+Phase 2 turned out to be far smaller than expected. Writes on `bank_accounts`,
+`bank_transactions`, `cash_accounts`, `cash_transactions`, `vendor_payments`,
+`journal_entries` and `direct_payees` were **already** restricted to
+`fn_is_finance_staff()` by earlier work. Only four SELECT policies were still
+`USING(true)` — and those four were what let any of the 19 staff accounts read every
+bank and cash movement from the browser console.
+
+Four policies replaced:
+
+| Table | Before | After |
+| --- | --- | --- |
+| `bank_accounts` | `SELECT USING (true)` | `USING (fn_is_finance_staff())` |
+| `bank_transactions` | `SELECT USING (true)` | `USING (fn_is_finance_staff())` |
+| `cash_accounts` | `SELECT USING (true)` | `USING (fn_is_finance_staff())` |
+| `cash_transactions` | `SELECT USING (true)` | `USING (fn_is_finance_staff())` |
+
+All seven money tables now report **no open policy on any command**. Open policies
+across the database: 78 → 64 (Phase 1) → 60.
+
+### Why this was safe
+
+Every screen reading these tables is already role-gated in the sidebar to
+`admin` + `finance`: all of `/admin/finance/*`, all of `/admin/reports/*`, and
+`/admin/jobs`. The one server route that touches them
+(`/api/crm/clients/[id]/finance`) uses the **service role**, which bypasses RLS
+entirely — unaffected.
+
+The one borderline case was `/admin/jobs`, which pulls bank and cash accounts for a
+payment-account dropdown. It is admin-gated anyway, and the dropdown is guarded by
+`.length > 0`, so the worst case is "no options shown" rather than an error.
+
+Worth knowing: **under RLS, a blocked SELECT returns zero rows — it does not raise an
+error.** So the failure mode for a non-admin is always "sees nothing", never a crash.
+
+### Two things this does NOT cover
+
+1. **`fn_finance_overview_pnl` and `fn_finance_period_review` are `SECURITY DEFINER`**,
+   which means they bypass RLS by design. A non-admin who called them directly would
+   still get P&L totals. Closing this needs a role check inside the function body —
+   a `GRANT` won't work, because every staff member is the same `authenticated` role.
+2. **`invoices`, `payments_received` and `purchase_bills` are still readable by all
+   staff.** I deliberately left them: unlike the money tables, these are read by
+   components that run for every role — `Header.tsx` (overdue notifications),
+   `CommandPalette`, `OverdueAlertsWidget`, and `CreatePrintRunForm`, which *inserts*
+   a purchase bill when print staff record paper. Locking them without changing those
+   components first would silently blank out notifications and break print-run
+   creation. That is a code change, not a policy change.
+
+---
+
+## NOT fixed — needs your decision
 
 This is the biggest remaining gap and it is a judgement call, not a quick fix.
 
