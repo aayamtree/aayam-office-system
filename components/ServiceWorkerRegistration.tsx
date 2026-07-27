@@ -3,19 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-
-/** Convert base64url VAPID key → ArrayBuffer for pushManager.subscribe() */
-function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const buffer = new ArrayBuffer(rawData.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < rawData.length; i++) {
-    view[i] = rawData.charCodeAt(i);
-  }
-  return buffer;
-}
+import { getFreshPushSubscription } from '@/lib/push-subscription';
 
 export function ServiceWorkerRegistration() {
   const { profile } = useAuth();
@@ -49,12 +37,12 @@ export function ServiceWorkerRegistration() {
       if (!vapidKey) return;
 
       try {
-        // Re-use existing subscription or create a new one
-        const existing = await reg.pushManager.getSubscription();
-        const sub = existing || (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToArrayBuffer(vapidKey),
-        }));
+        // Re-use the existing subscription ONLY if it was created with the VAPID
+        // key we still use. Blindly reusing it is what left staff with silently
+        // dead notifications after the 26 July key rotation — see
+        // lib/push-subscription.ts for the full explanation.
+        const sub = await getFreshPushSubscription(reg, vapidKey);
+        if (!sub) return;
 
         // Save to DB (upserts by endpoint)
         const { data: { session } } = await supabase.auth.getSession();

@@ -101,8 +101,14 @@ export async function POST(request: NextRequest) {
           sent++;
         } catch (err: any) {
           failed++;
-          // If subscription has expired or is invalid, mark for cleanup
-          if (err.statusCode === 410 || err.statusCode === 404) {
+          // Mark dead subscriptions for cleanup.
+          //   410 Gone / 404      — the browser dropped it (uninstalled, cleared data)
+          //   403 Forbidden / 400 — signed with a VAPID key we no longer hold, which
+          //                         is what a key rotation leaves behind. These used
+          //                         to be retried forever because only 404/410 were
+          //                         cleaned, so a rotation left permanently dead rows
+          //                         that looked healthy in the table.
+          if ([410, 404, 403, 400].includes(err.statusCode)) {
             expiredEndpoints.push(sub.endpoint);
           }
           console.error(`Push failed for ${sub.endpoint.slice(0, 50)}...`, err.statusCode || err.message);

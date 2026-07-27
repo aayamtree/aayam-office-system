@@ -5,19 +5,9 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Bell, X } from 'lucide-react';
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+import { getFreshPushSubscription } from '@/lib/push-subscription';
 
-// Convert VAPID key to Uint8Array for the Push API
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 export function PushNotificationManager() {
   const { profile } = useAuth();
@@ -34,12 +24,14 @@ export function PushNotificationManager() {
       const registration = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
 
-      // Check existing subscription
+      // An existing subscription is only useful if it was created with the VAPID
+      // key we still use — otherwise it can never receive a notification, and it
+      // looks healthy in the database while being dead. See lib/push-subscription.ts.
       const existingSubscription = await registration.pushManager.getSubscription();
 
-      if (existingSubscription) {
-        // Already subscribed — ensure it's saved in our DB
-        await saveSubscription(existingSubscription);
+      if (existingSubscription && Notification.permission === 'granted') {
+        const fresh = await getFreshPushSubscription(registration, VAPID_PUBLIC_KEY!);
+        if (fresh) await saveSubscription(fresh);
         return;
       }
 
@@ -71,10 +63,8 @@ export function PushNotificationManager() {
   const subscribeToPush = async (registration: ServiceWorkerRegistration) => {
     try {
       setIsSubscribing(true);
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY!) as BufferSource,
-      });
+      const subscription = await getFreshPushSubscription(registration, VAPID_PUBLIC_KEY!);
+      if (!subscription) return;
 
       await saveSubscription(subscription);
       setShowPrompt(false);
