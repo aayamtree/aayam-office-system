@@ -26,14 +26,25 @@ export default function CustomerDetailPage() {
     if (!clientId) return;
     setLoading(true);
     try {
-      const [{ data: c }, { data: invs }, { data: pays }] = await Promise.all([
+      // Invoices and receipts come from a server route rather than straight
+      // from the tables: those are readable only by admins at the database
+      // level now, and the route re-opens them to admin + marketing only.
+      const [{ data: c }, financeRes] = await Promise.all([
         supabase.from('clients').select('*').eq('id', clientId).single(),
-        supabase.from('invoices').select('id, invoice_number, invoice_date, due_date, total_amount, amount_paid, payment_status').eq('client_id', clientId).order('invoice_date', { ascending: false }),
-        supabase.from('payments_received').select('id, payment_number, payment_date, amount, payment_mode, reference_number, invoice_id').eq('client_id', clientId).order('payment_date', { ascending: false }),
+        fetch(`/api/crm/clients/${clientId}/finance`, { cache: 'no-store' }),
       ]);
       setClient(c);
-      setInvoices(invs || []);
-      setPayments(pays || []);
+
+      if (financeRes.ok) {
+        const finance = await financeRes.json();
+        setInvoices(finance.invoices || []);
+        setPayments(finance.payments || []);
+      } else {
+        // Not permitted (or the session lapsed) — show the client without the
+        // money, rather than failing the whole page.
+        setInvoices([]);
+        setPayments([]);
+      }
     } finally {
       setLoading(false);
     }

@@ -118,14 +118,20 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
   // Fetch real payment totals (bank + cash) instead of jobs.amount_received
   const [totalReceived, setTotalReceived] = useState(0);
   useEffect(() => {
+    // Bank and cash transactions are admin-only at the database level now, so
+    // this goes through a server route that allows admin + marketing.
     const fetchPayments = async () => {
-      const [{ data: bankData }, { data: cashData }] = await Promise.all([
-        supabase.from('bank_transactions').select('amount').eq('client_id', clientId).eq('is_verified', true),
-        supabase.from('cash_transactions').select('amount').eq('client_id', clientId).eq('transaction_type', 'in'),
-      ]);
-      const bankTotal = (bankData || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      const cashTotal = (cashData || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      setTotalReceived(bankTotal + cashTotal);
+      try {
+        const res = await fetch(`/api/crm/clients/${clientId}/finance`, { cache: 'no-store' });
+        if (!res.ok) {
+          setTotalReceived(0);
+          return;
+        }
+        const finance = await res.json();
+        setTotalReceived(Number(finance.received_total || 0));
+      } catch {
+        setTotalReceived(0);
+      }
     };
     fetchPayments();
   }, [clientId]);
