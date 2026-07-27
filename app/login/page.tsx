@@ -9,7 +9,7 @@ import { logLogin } from '@/lib/activity-logger';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, profile, session, loading, isConfigured, bypassLogin } = useAuth();
+  const { signIn, profile, session, loading, isConfigured } = useAuth();
   const hasRedirected = useRef(false);
 
   const [email, setEmail] = useState('');
@@ -60,20 +60,11 @@ export default function LoginPage() {
     }
   }, [profile, session, loading, router]);
 
-  // Keyboard shortcut for quick login (localhost only)
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
-        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-          e.preventDefault();
-          bypassLogin();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [bypassLogin]);
+  // SECURITY 2026-07-27: the Ctrl+Shift+L "quick login" shortcut and its
+  // matching button were removed along with bypassLogin(). They handed out an
+  // admin profile with no server check. The localhost guard was client-side
+  // only, and the localStorage flag it set (aayam_bypass_mode) was honoured
+  // everywhere, including production. Sign in with a real account instead.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,18 +217,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Localhost Quick Login - Only visible on localhost (rendered after mount to avoid hydration error) */}
-        {isLocalhost && (
-          <div className="text-center mt-4">
-            <button
-              onClick={() => bypassLogin()}
-              className="px-4 py-2 bg-oms-orange text-white rounded-md text-sm font-semibold hover:bg-oms-orange/90 transition-colors"
-            >
-              ⚡ Quick Login (Localhost Only)
-            </button>
-            <p className="text-xs text-gray-400 mt-2">Or press Ctrl+Shift+L</p>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="text-center mt-3 md:mt-6">

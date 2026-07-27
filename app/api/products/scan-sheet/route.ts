@@ -9,6 +9,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -58,6 +59,10 @@ summary_text (short transcript of the key text for THIS job only)
 Be precise: FIPROX and CULTEX are different jobs even if same manufacturer. A label repeated 12 times is ONE job with copies_on_sheet 12.`;
 
 export async function POST(request: NextRequest) {
+  // Paid Anthropic call — cap it so a stuck loop can't run up the bill.
+  const limited = rateLimit(request, { key: 'ai-scan-sheet', limit: 10, windowMs: 60_000 });
+  if (limited) return limited;
+
   const cookieStore = await cookies();
   const auth = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

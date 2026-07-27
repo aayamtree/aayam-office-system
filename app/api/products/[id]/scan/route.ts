@@ -16,6 +16,7 @@ import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
 import { runMasterChecks } from '@/lib/product-masters-server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -95,6 +96,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Paid Anthropic call — cap it so a stuck loop can't run up the bill.
+  const limited = rateLimit(request, { key: 'ai-product-scan', limit: 10, windowMs: 60_000 });
+  if (limited) return limited;
+
   const { id: productId } = await params;
   const cookieStore = await cookies();
   const { user, supabase } = await getSupabase(cookieStore);

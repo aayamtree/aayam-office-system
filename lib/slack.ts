@@ -1,7 +1,7 @@
 // Slack Integration for Aayam Office
 // Optimized for Free Webhook Usage
 
-const SLACK_WEBHOOK_URL = process.env.NEXT_PUBLIC_SLACK_WEBHOOK;
+const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
 
 interface DesignNotification {
     jobNumber: string;
@@ -17,7 +17,7 @@ interface DesignNotification {
  */
 export const notifyDesignTeam = async (data: DesignNotification) => {
     if (!SLACK_WEBHOOK_URL) {
-        console.warn('Slack Webhook URL not configured (NEXT_PUBLIC_SLACK_WEBHOOK)');
+        console.warn('Slack Webhook URL not configured (SLACK_WEBHOOK_URL)');
         return;
     }
 

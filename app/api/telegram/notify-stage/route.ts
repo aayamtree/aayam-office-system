@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
 import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, sendToChat } from '@/lib/telegram-groups';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/telegram/notify-stage — auto-alert the right department group
@@ -20,6 +21,12 @@ import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, sendToChat } from '@/lib/tel
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  // This route is intentionally unauthenticated (the Postgres trigger calls it
+  // via pg_net and has no session). The payload is only a hint — the real stage
+  // is re-read from the DB — but a cap stops anyone spamming the groups.
+  const limited = rateLimit(req, { key: 'telegram-notify-stage', limit: 60, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const body = await req.json().catch(() => ({}));
     const jobId: string | undefined = body?.job_id;

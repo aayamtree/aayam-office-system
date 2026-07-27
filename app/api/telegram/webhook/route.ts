@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // FIX 2026-07-06: accept both env names (was NEXT_PUBLIC_* only, while the
 // notification service used TELEGRAM_BOT_TOKEN — whichever wasn't set silently broke)
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function sendMessage(chatId: number | string, text: string) {

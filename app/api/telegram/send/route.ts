@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/telegram/send — the ONE way the app sends Telegram messages.
@@ -22,7 +23,7 @@ import { createClient } from '@supabase/supabase-js';
  * }
  */
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 const esc = (s: string) =>
@@ -38,6 +39,10 @@ async function tgSend(method: string, payload: Record<string, unknown>) {
 }
 
 export async function POST(request: NextRequest) {
+  // Telegram throttles bots hard — keep one browser from burning the quota.
+  const limited = rateLimit(request, { key: 'telegram-send', limit: 30, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     if (!BOT_TOKEN) {
       return NextResponse.json({ error: 'Telegram not configured' }, { status: 503 });

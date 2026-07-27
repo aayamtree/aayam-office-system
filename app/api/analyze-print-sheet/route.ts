@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
+import { rateLimit } from '@/lib/rate-limit';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,10 @@ Keys: n=label_name, u=ups_count, id=matched_job_id (null if none), c=confidence 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+    // Paid Anthropic call — cap it so a stuck loop can't run up the bill.
+    const limited = rateLimit(request, { key: 'ai-print-sheet', limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -57,7 +57,7 @@ export const STAGE_EMOJI: Record<string, string> = {
   delivered: '🎉',
 };
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 export const APP_URL = 'https://aayam-office-system.vercel.app';
 

@@ -21,7 +21,6 @@ interface AuthContextType {
   isManager: boolean;
   isDesigner: boolean;
   isFinance: boolean;
-  bypassLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -141,50 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // SPEED MODE: DYNAMIC ROLE
-    const savedSpeedRole = typeof window !== 'undefined' ? localStorage.getItem('aayam_speed_role') : null;
-
-    if (savedSpeedRole) {
-      const roleKey = savedSpeedRole as UserRole;
-      // Mock Profiles for Speed Login
-      const mockId = `speed-${roleKey}-${Math.random().toString(36).substr(2, 5)}`;
-
-      const speedProfile: Profile = {
-
-
-        id: roleKey === 'admin' ? 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' :
-          roleKey === 'designer' ? 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380d22' :
-            roleKey === 'marketing' ? '40eebc99-9c0b-4ef8-bb6d-6bb9bd380433' : // Valid UUID (replaced m with 4)
-              roleKey === 'dispatch' ? '50eebc99-9c0b-4ef8-bb6d-6bb9bd380544' : // Valid UUID (replaced p with 5)
-                roleKey === 'cmyk' ? 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380c55' :
-                  roleKey === 'finance' ? 'acebc99-9c0b-4ef8-bb6d-6bb9bd380a55' :
-                    '60eebc99-9c0b-4ef8-bb6d-6bb9bd380666', // fallback (replaced u with 6)
-
-        email: `${roleKey}@aayam.com`,
-        full_name: `Speed ${roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}`,
-        role: roleKey,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-
-      setProfile(speedProfile);
-      setUser({ id: speedProfile.id, email: speedProfile.email, role: 'authenticated' } as User);
-      setLoading(false);
-      return;
-    }
-
-    // Check for Bypass Mode (Legacy)
-    if (localStorage.getItem('aayam_bypass_mode') === 'true') {
-      const cached = localStorage.getItem('aayam_fallback_profile');
-      if (cached) {
-        try {
-          const p = JSON.parse(cached);
-          setProfile(p);
-          setUser({ id: p.id, email: p.email, role: 'authenticated' } as User);
-          setLoading(false);
-          return;
-        } catch (e) { }
-      }
+    // SECURITY 2026-07-27: "speed mode" and "bypass mode" were removed.
+    // Both read a role straight out of localStorage and handed back an admin
+    // profile with no server check, so anyone who could open DevTools could
+    // run `localStorage.setItem('aayam_speed_role','admin')` and unlock every
+    // admin screen. Neither had any UI that set them — they were dead
+    // backdoors. Roles now come only from the verified Supabase session.
+    // Any stale flags left in a staff browser are cleared here.
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('aayam_speed_role');
+      localStorage.removeItem('aayam_bypass_mode');
     }
 
     let mounted = true;
@@ -235,9 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const savedDate = localStorage.getItem('aayam_session_date');
       const today = new Date().toISOString().split('T')[0];
       // Only applies to real Supabase sessions (not speed/bypass mode)
-      const isSpeedMode = !!localStorage.getItem('aayam_speed_role');
-      const isBypassMode = localStorage.getItem('aayam_bypass_mode') === 'true';
-      if (savedDate && savedDate !== today && !isSpeedMode && !isBypassMode) {
+      if (savedDate && savedDate !== today) {
         // New day — invalidate the old session and force re-login
         console.info('[Attendance] New day detected — forcing re-login for fresh attendance record.');
         localStorage.removeItem('aayam_session_date');
@@ -495,21 +458,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isManager: hasRole(['admin', 'manager']),
     isDesigner: hasRole(['admin', 'manager', 'designer']),
     isFinance: hasRole(['admin', 'finance']),
-    bypassLogin: () => {
-      const bypassedProfile: Profile = {
-        id: 'bypass-admin',
-        email: 'admin@aayam.com',
-        full_name: 'Emergency Admin',
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-      localStorage.setItem('aayam_bypass_mode', 'true');
-      localStorage.setItem('aayam_fallback_profile', JSON.stringify(bypassedProfile));
-      setProfile(bypassedProfile);
-      setUser({ id: 'bypass-admin', email: 'admin@aayam.com', role: 'authenticated' } as User);
-      window.location.href = '/admin/dashboard';
-    }
   };
 
   return (
