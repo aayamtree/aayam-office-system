@@ -248,8 +248,10 @@ export default function SystemHealthPage() {
                                             </tr>
                                         ))
                                     ) : (
-                                        // Basic stats from /api/health
-                                        Object.entries(healthData.tables).map(([name, info]) => (
+                                        // Basic stats from /api/health. `tables` is only returned to
+                                        // admin sessions and the cron, so default to {} rather than
+                                        // crashing the page if the session lapsed mid-view.
+                                        Object.entries(healthData.tables ?? {}).map(([name, info]) => (
                                             <tr key={name} className="border-t border-gray-50 hover:bg-gray-50">
                                                 <td className="px-4 py-2 font-mono text-xs font-medium">{name}</td>
                                                 <td className="px-4 py-2 text-right tabular-nums">{info.count.toLocaleString()}</td>
