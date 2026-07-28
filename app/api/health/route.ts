@@ -59,6 +59,22 @@ export async function GET() {
             // RPC not deployed yet — that's fine
         }
 
+        // 4. Are the env vars the background jobs depend on actually present?
+        //
+        // These are BOOLEANS ONLY — never the values. Added 2026-07-27 because
+        // sendToChat() returns false silently when TELEGRAM_BOT_TOKEN is missing,
+        // so a misconfigured variable meant the 7:30pm EOD report simply never
+        // arrived, with nothing anywhere to say why. Now it is visible.
+        const config = {
+            telegramBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
+            cronSecret: !!process.env.CRON_SECRET,
+            vapidPrivateKey: !!process.env.VAPID_PRIVATE_KEY,
+            vapidPublicKey: !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+            anthropicApiKey: !!process.env.ANTHROPIC_API_KEY,
+            googleServiceAccount: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+            supabaseServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        };
+
         return NextResponse.json({
             status: 'healthy',
             timestamp: new Date().toISOString(),
@@ -67,6 +83,7 @@ export async function GET() {
                 responseTime: `${dbTime}ms`,
             },
             tables,
+            config,
             systemHealth,
             responseTime: `${Date.now() - start}ms`,
         });

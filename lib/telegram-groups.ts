@@ -71,7 +71,16 @@ export async function sendToChat(
   html: string,
   appPath?: string
 ): Promise<boolean> {
-  if (!BOT_TOKEN) return false;
+  if (!BOT_TOKEN) {
+    // Loud, not silent. This used to return false quietly, which meant a missing
+    // or misnamed env var made the EOD report, weekly scorecard and every stage
+    // alert vanish with no trace anywhere. /api/health now reports this too.
+    console.error(
+      '[telegram] TELEGRAM_BOT_TOKEN is not set — message NOT sent to chat ' +
+      chatId + '. Set it in Vercel → Settings → Environment Variables.'
+    );
+    return false;
+  }
   try {
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
