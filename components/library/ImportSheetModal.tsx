@@ -8,8 +8,10 @@ import { useState, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { SheetRenderer } from '@/lib/pdf-crop';
+import { hashFile } from '@/lib/file-hash';
 import {
   X, Loader2, Upload, ScanLine, CheckCircle2, Package, Layers,
+  AlertTriangle, RefreshCw, Copy,
 } from 'lucide-react';
 
 const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
@@ -22,21 +24,59 @@ interface Props {
   onImported: () => void;
 }
 
-type Stage = 'pick' | 'detecting' | 'cropping' | 'review' | 'saving' | 'reading' | 'done';
+type Stage = 'pick' | 'checking' | 'duplicate' | 'detecting' | 'cropping' | 'review' | 'saving' | 'reading' | 'done';
+
+interface KnownSheet {
+  file_name: string | null;
+  scanned_at: string | null;
+  scanned_by_name: string | null;
+  job_count: number | null;
+  times_seen: number | null;
+}
 
 export default function ImportSheetModal({ clients, onClose, onImported }: Props) {
   const [stage, setStage] = useState<Stage>('pick');
   const [file, setFile] = useState<File | null>(null);
+  const [fileHash, setFileHash] = useState<string | null>(null);
   const [clientId, setClientId] = useState('');
   const [jobs, setJobs] = useState<any[]>([]);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
-  const [sheetMeta, setSheetMeta] = useState<{ file_url?: string; file_name?: string; thumbnail_url?: string }>({});
+  const [sheetMeta, setSheetMeta] = useState<{ file_url?: string; file_name?: string; thumbnail_url?: string; file_hash?: string }>({});
   const [results, setResults] = useState<any[]>([]);
+  const [known, setKnown] = useState<KnownSheet | null>(null);
+  const [knownProducts, setKnownProducts] = useState<any[]>([]);
 
   const cropFilesRef = useRef<Record<number, File>>({});
-  const busy = stage === 'detecting' || stage === 'saving' || stage === 'reading';
+  const busy = stage === 'checking' || stage === 'detecting' || stage === 'saving' || stage === 'reading';
 
-  const detect = async () => {
+  const pickFile = (f: File | null) => { setFile(f); setFileHash(null); setKnown(null); setKnownProducts([]); };
+
+  // Step 0 — fingerprint the file locally and ask the server whether we have
+  // seen it before. Costs nothing and happens before any upload or AI call.
+  const checkThenDetect = async () => {
+    if (!file) { toast.error('Choose the job sheet PDF first'); return; }
+    setStage('checking');
+    try {
+      const hash = await hashFile(file);
+      setFileHash(hash);
+      const res = await fetch('/api/products/sheet-lookup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_hash: hash }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.known) {
+        setKnown(json.sheet);
+        setKnownProducts(json.products || []);
+        setStage('duplicate');
+        return;
+      }
+    } catch {
+      // hashing/lookup is best-effort — never block a genuine import
+    }
+    detect();
+  };
+
+  const detect = async (force = false) => {
     if (!file) { toast.error('Choose the job sheet PDF first'); return; }
     setStage('detecting');
     try {
@@ -49,15 +89,17 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       const sub = await findOrCreateFolder(tokenJson.accessToken, 'Job Sheets', root.folderId);
       const up = await uploadToDrive(tokenJson.accessToken, file, sub.folderId || root.folderId, file.name, { uploadedTo: 'product_library_sheet' });
       if (!up.success) throw new Error(up.error || 'Upload failed');
-      const meta = { file_url: up.webViewLink, file_name: file.name, thumbnail_url: up.fileId ? getDrivePreviewUrl(up.fileId) : undefined };
+      const hash = fileHash || (await hashFile(file).catch(() => null));
+      const meta = { file_url: up.webViewLink, file_name: file.name, thumbnail_url: up.fileId ? getDrivePreviewUrl(up.fileId) : undefined, file_hash: hash || undefined };
       setSheetMeta(meta);
 
       // 2. Detect unique jobs — server reads the file from Drive (avoids the
-      //    serverless request-body size limit on big sheets).
+      //    serverless request-body size limit on big sheets). The hash lets
+      //    the server return a cached scan instead of paying for another one.
       const res = await fetch('/api/products/scan-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_url: meta.file_url, file_name: meta.file_name }),
+        body: JSON.stringify({ file_url: meta.file_url, file_name: meta.file_name, file_hash: hash, force }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Detection failed');
@@ -115,8 +157,9 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Import failed');
-      const importResults = json.results || [];
+      const importResults: any[] = json.results || [];
       setResults(importResults);
+      if (json.reused > 0) toast.success(`${json.reused} job(s) matched products you already had — saved as new versions, not duplicates`);
 
       // Re-scan each product from its OWN high-res crop so small print (brand
       // address, phone, composition) is read properly and masters fill fully.
@@ -178,7 +221,7 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
             <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-md px-4 py-8 text-sm text-gray-500 cursor-pointer hover:border-indigo-300 hover:text-indigo-600">
               <Upload className="w-4 h-4" />
               {file ? file.name : 'Choose job sheet (PDF or image)…'}
-              <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(e) => pickFile(e.target.files?.[0] || null)} />
             </label>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Client (optional — applies to all jobs)</label>
@@ -188,9 +231,79 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
               </select>
             </div>
             <div className="flex justify-end">
-              <button onClick={detect} disabled={!file} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md inline-flex items-center gap-2 disabled:opacity-40">
+              <button onClick={() => checkThenDetect()} disabled={!file} className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md inline-flex items-center gap-2 disabled:opacity-40">
                 <ScanLine className="w-4 h-4" /> Detect jobs
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* CHECKING — local fingerprint + "seen before?" lookup */}
+        {stage === 'checking' && (
+          <div className="p-10 text-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+            <p className="text-sm text-gray-500">Checking whether this exact file has been imported before…</p>
+          </div>
+        )}
+
+        {/* DUPLICATE — this exact file was already scanned */}
+        {stage === 'duplicate' && known && (
+          <div className="p-5 space-y-4">
+            <div className="flex gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-amber-900">This file has already been imported.</p>
+                <p className="text-amber-800 mt-1">
+                  <b>{known.file_name || file?.name}</b> was scanned
+                  {known.scanned_at ? ` on ${new Date(known.scanned_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                  {known.scanned_by_name ? ` by ${known.scanned_by_name}` : ''}
+                  {known.job_count ? ` — ${known.job_count} job(s) found.` : '.'}
+                </p>
+                {(known.times_seen || 0) > 2 && (
+                  <p className="text-amber-700 text-xs mt-1">Uploaded {known.times_seen} times now.</p>
+                )}
+              </div>
+            </div>
+
+            {knownProducts.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1.5">Products it already created:</p>
+                <ul className="divide-y border rounded-md max-h-52 overflow-y-auto">
+                  {knownProducts.map((p) => (
+                    <li key={p.id} className="px-3 py-2 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded border bg-gray-50 overflow-hidden shrink-0">
+                        {p.thumbnail_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.thumbnail_url} alt={p.name} className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <a href={`/admin/library/${p.id}`} className="text-sm font-medium text-indigo-600 hover:underline truncate block">{p.name}</a>
+                        <div className="text-xs text-gray-500">{[p.brand_name, p.category, p.current_version_no ? `v${p.current_version_no}` : null].filter(Boolean).join(' · ')}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500">
+              Importing it again will not create duplicates — jobs that match an existing product are saved as a new
+              version instead. Re-scan only if the artwork inside the file actually changed.
+            </p>
+
+            <div className="flex flex-wrap justify-between gap-2">
+              <button onClick={() => { setStage('pick'); pickFile(null); }} className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50">
+                Choose a different file
+              </button>
+              <div className="flex gap-2">
+                <button onClick={() => detect(false)} className="px-4 py-2 text-sm border border-indigo-200 text-indigo-700 rounded-md hover:bg-indigo-50 inline-flex items-center gap-2">
+                  <Copy className="w-4 h-4" /> Re-use saved scan
+                </button>
+                <button onClick={() => detect(true)} className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-md inline-flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4" /> Scan again anyway
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -269,11 +382,19 @@ export default function ImportSheetModal({ clients, onClose, onImported }: Props
         {/* DONE */}
         {stage === 'done' && (
           <div className="p-5 space-y-3">
-            <div className="flex items-center gap-2 text-emerald-700 font-medium"><CheckCircle2 className="w-5 h-5" /> Imported {results.filter((r) => r.ok).length} product(s)</div>
+            <div className="flex items-center gap-2 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-5 h-5" />
+              {results.filter((r) => r.ok && !r.matched).length} new product(s)
+              {results.some((r) => r.matched) ? `, ${results.filter((r) => r.matched).length} matched existing` : ''}
+            </div>
             <ul className="divide-y border rounded-md">
               {results.map((r, i) => (
                 <li key={i} className="px-3 py-2 text-sm flex items-center justify-between gap-2">
-                  <span className="truncate">{r.name}</span>
+                  <span className="truncate flex items-center gap-2 min-w-0">
+                    <span className="truncate">{r.name}</span>
+                    {r.matched && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 shrink-0">existing · new version</span>}
+                    {r.version_skipped && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">same file · skipped</span>}
+                  </span>
                   {r.ok ? (
                     <span className="text-xs flex items-center gap-2 shrink-0">
                       <span className={r.brand_check === 'mismatch' ? 'text-red-600' : r.brand_check === 'review' ? 'text-amber-600' : 'text-emerald-600'}>brand: {(r.brand_check || '').replace(/_/g, ' ')}</span>

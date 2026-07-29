@@ -35,6 +35,7 @@ export interface ProductVersion {
   version_no: number;
   file_url: string | null;
   file_name: string | null;
+  file_hash?: string | null;
   size_w: number | null;
   size_h: number | null;
   size_d: number | null;

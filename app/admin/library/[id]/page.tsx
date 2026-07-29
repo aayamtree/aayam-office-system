@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
+import { hashFile } from '@/lib/file-hash';
 import {
   ArrowLeft, Loader2, X, Plus, Pencil, ExternalLink, FileText,
   CheckCircle2, XCircle, MinusCircle, Printer, Clock, User as UserIcon,
@@ -180,6 +181,19 @@ export default function ProductDetailPage() {
     }
     setUploading(true);
     try {
+      // 0. Fingerprint the file — if this exact artwork is already a version
+      //    of this product, don't upload it or create a second copy.
+      let vHash: string | null = null;
+      try {
+        vHash = await hashFile(vFile);
+        const dup = versions.find((v: any) => v.file_hash && v.file_hash === vHash);
+        if (dup) {
+          toast.error(`This exact file is already saved as version ${dup.version_no}. Nothing to add.`);
+          setUploading(false);
+          return;
+        }
+      } catch { /* hashing is best-effort */ }
+
       // 1. Get org Drive token
       const tokenRes = await fetch('/api/drive/token');
       const tokenJson = await tokenRes.json();
@@ -207,6 +221,7 @@ export default function ProductDetailPage() {
         body: JSON.stringify({
           file_url: upload.webViewLink,
           file_name: vFile.name,
+          file_hash: vHash,
           thumbnail_url: upload.fileId ? getDrivePreviewUrl(upload.fileId) : null,
           size_w: vForm.size_w ? parseFloat(vForm.size_w) : null,
           size_h: vForm.size_h ? parseFloat(vForm.size_h) : null,

@@ -6,10 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
 import { rateLimit } from '@/lib/rate-limit';
+import { hashBuffer } from '@/lib/file-hash';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -72,8 +74,17 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
 
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    : null;
+
   let fileBuffer: ArrayBuffer | null = null;
   let mediaType = 'application/pdf';
+  let fileHash: string | null = null;
+  let fileName: string | null = null;
+  let fileUrl: string | null = null;
+  let fileSize: number | null = null;
+  let force = false;
 
   const contentType = request.headers.get('content-type') || '';
   if (contentType.includes('multipart/form-data')) {
@@ -83,8 +94,38 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_BYTES) return NextResponse.json({ error: 'Sheet too large (over 22 MB). Export a compressed PDF and try again.' }, { status: 413 });
     fileBuffer = await file.arrayBuffer();
     mediaType = normalizeMediaType(file.type, file.name);
+    fileName = file.name;
+    fileSize = file.size;
+    force = String(form.get('force') || '') === '1';
   } else {
     const body = await request.json().catch(() => ({}));
+    fileHash = body.file_hash || null;
+    fileName = body.file_name || null;
+    fileUrl = body.file_url || null;
+    force = !!body.force;
+
+    // Already scanned this exact file? Return the cached jobs — no Claude
+    // call, no cost, and the caller can see it is a repeat.
+    if (fileHash && service && !force) {
+      const { data: known } = await service
+        .from('library_sheets')
+        .select('scan_result, job_count, scanned_at, scanned_by_name, product_ids')
+        .eq('file_hash', fileHash)
+        .maybeSingle();
+      if (known?.scan_result) {
+        return NextResponse.json({
+          ok: true,
+          cached: true,
+          duplicate: true,
+          jobs: known.scan_result,
+          count: known.job_count || (known.scan_result as any[]).length,
+          previously_scanned_at: known.scanned_at,
+          previously_scanned_by: known.scanned_by_name,
+          existing_product_ids: known.product_ids || [],
+        });
+      }
+    }
+
     const fileId = driveFileId(body.file_url || null);
     if (!fileId) return NextResponse.json({ error: 'file or file_url is required' }, { status: 400 });
     const sa = await getServiceAccountToken();
@@ -117,7 +158,27 @@ export async function POST(request: NextRequest) {
     const text = msg.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
     const parsed = JSON.parse(text.replace(/^```json?\s*/i, '').replace(/```\s*$/, ''));
     const jobs = Array.isArray(parsed) ? parsed : (parsed.jobs || []);
-    return NextResponse.json({ ok: true, jobs, count: jobs.length });
+
+    // Remember this sheet by its content hash so a repeat upload is free and
+    // visible. Hash the bytes ourselves if the caller did not supply one.
+    if (!fileHash && fileBuffer) fileHash = await hashBuffer(fileBuffer);
+    if (fileHash && service) {
+      const { data: profile } = await service.from('profiles').select('full_name').eq('id', user.id).single();
+      await service.from('library_sheets').upsert({
+        file_hash: fileHash,
+        file_name: fileName,
+        file_size: fileSize,
+        file_url: fileUrl,
+        scan_result: jobs,
+        job_count: jobs.length,
+        scanned_by: user.id,
+        scanned_by_name: profile?.full_name || null,
+        scanned_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+      }, { onConflict: 'file_hash' });
+    }
+
+    return NextResponse.json({ ok: true, cached: false, jobs, count: jobs.length, file_hash: fileHash });
   } catch (e: any) {
     return NextResponse.json({ error: `Sheet scan failed: ${e.message}` }, { status: 500 });
   }

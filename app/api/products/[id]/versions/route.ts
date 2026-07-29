@@ -23,7 +23,7 @@ async function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
 }
 
 const VERSION_FIELDS = [
-  'file_url', 'file_name', 'thumbnail_url',
+  'file_url', 'file_name', 'file_hash', 'thumbnail_url',
   'size_w', 'size_h', 'size_d', 'size_unit', 'size_text',
   'size_check_status', 'size_check_note',
   'job_id', 'job_number', 'status', 'notes',
@@ -43,6 +43,26 @@ export async function POST(
   const fields: Record<string, any> = {};
   for (const f of VERSION_FIELDS) {
     if (f in body) fields[f] = body[f] === '' ? null : body[f];
+  }
+
+  // Same file already on this product? Don't create a second identical
+  // version — return the one that is already there.
+  if (fields.file_hash) {
+    const { data: dup } = await supabase
+      .from('product_versions')
+      .select('*')
+      .eq('product_id', id)
+      .eq('file_hash', fields.file_hash)
+      .order('version_no', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (dup) {
+      return NextResponse.json({
+        version: dup,
+        duplicate: true,
+        message: `This exact file is already saved as version ${dup.version_no}.`,
+      });
+    }
   }
 
   const { data: version, error } = await supabase
