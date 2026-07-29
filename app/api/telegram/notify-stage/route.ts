@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
-import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, sendToChat } from '@/lib/telegram-groups';
+import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, sendToChatResult } from '@/lib/telegram-groups';
 import { rateLimit } from '@/lib/rate-limit';
 
 /**
@@ -50,15 +50,23 @@ export async function POST(req: NextRequest) {
 
     const stage = job.current_stage as string;
 
-    // 2. Dedupe — skip if we already announced this job at this stage
+    // 2. Dedupe — skip if we already announced this job at this stage.
+    //    Exception: if that previous attempt targeted Telegram groups and NONE
+    //    of them accepted it, the job was never actually announced. Retry once
+    //    rather than treating a failed send as done.
     const { data: lastAlert } = await service
       .from('telegram_stage_alerts')
-      .select('stage')
+      .select('stage, groups_targeted, telegram_sent')
       .eq('job_id', jobId)
       .order('sent_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (lastAlert?.stage === stage) return NextResponse.json({ skipped: 'duplicate' });
+    if (lastAlert?.stage === stage) {
+      const previouslyFailed =
+        (lastAlert.groups_targeted || 0) > 0 && (lastAlert.telegram_sent || 0) === 0;
+      if (!previouslyFailed) return NextResponse.json({ skipped: 'duplicate' });
+      console.warn(`[telegram] retrying stage alert for job ${jobId} at ${stage} — previous attempt reached no group`);
+    }
 
     // 3. Which department group gets it?
     const department = STAGE_DEPARTMENT[stage];
@@ -81,10 +89,18 @@ export async function POST(req: NextRequest) {
       `👤 ${escapeHtml(clientName)}${job.quantity ? ` · Qty ${job.quantity}` : ''}`;
 
     // 5. Send to Telegram group(s), if any are mapped
+    const targeted = (groups || []).length;
     const results = await Promise.all(
-      (groups || []).map((g) => sendToChat(g.chat_id, msg, `/admin/jobs/${job.id}`))
+      (groups || []).map((g) => sendToChatResult(g.chat_id, msg, `/admin/jobs/${job.id}`))
     );
-    const sent = results.filter(Boolean).length;
+    const sent = results.filter((r) => r.ok).length;
+    const firstError = results.find((r) => !r.ok)?.error || null;
+
+    if (targeted === 0) {
+      console.warn(`[telegram] no group mapped to department "${department}" — stage ${stage} announced nowhere on Telegram`);
+    } else if (sent < targeted) {
+      console.error(`[telegram] stage alert reached ${sent}/${targeted} groups for department "${department}": ${firstError}`);
+    }
 
     // 6. Mirror the alert into the app's department chat room (for PC staff)
     let mirrored = false;
@@ -108,12 +124,25 @@ export async function POST(req: NextRequest) {
       mirrored = !mirrorErr;
     }
 
-    // 7. Log for dedupe/audit (if the alert went anywhere)
+    // 7. Log what ACTUALLY happened.
+    //
+    // This row used to be written whenever Telegram OR the in-app mirror
+    // succeeded, and recorded neither. Since the mirror nearly always succeeds,
+    // a completely broken Telegram left behind a log identical to a healthy
+    // one. Now the row carries the real numbers and Telegram's own error, so
+    // "reached nobody" is a queryable fact rather than a guess.
     if (sent > 0 || mirrored) {
-      await service.from('telegram_stage_alerts').insert({ job_id: jobId, stage });
+      await service.from('telegram_stage_alerts').insert({
+        job_id: jobId,
+        stage,
+        groups_targeted: targeted,
+        telegram_sent: sent,
+        mirrored,
+        last_error: firstError,
+      });
     }
 
-    return NextResponse.json({ sent, mirrored });
+    return NextResponse.json({ sent, targeted, mirrored, error: firstError });
   } catch (err) {
     console.error('notify-stage error:', err);
     return NextResponse.json({ ok: false }, { status: 200 });

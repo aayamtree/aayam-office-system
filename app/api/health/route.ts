@@ -125,10 +125,39 @@ export async function GET(request: NextRequest) {
             supabaseServiceRole: !!serviceKey,
         };
 
+        // 5. Telegram delivery over the last 7 days.
+        //    A configured bot token only proves the variable exists. This says
+        //    whether alerts are actually landing: any row where fewer groups
+        //    accepted the message than were targeted is a real, named failure.
+        let telegram: any = null;
+        try {
+            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: alerts } = await db
+                .from('telegram_stage_alerts')
+                .select('groups_targeted, telegram_sent, last_error, sent_at')
+                .gte('sent_at', since)
+                .order('sent_at', { ascending: false });
+
+            const rows = alerts || [];
+            const failed = rows.filter((r: any) => (r.telegram_sent || 0) < (r.groups_targeted || 0));
+            const unrouted = rows.filter((r: any) => (r.groups_targeted || 0) === 0);
+            telegram = {
+                alerts7d: rows.length,
+                delivered: rows.length - failed.length - unrouted.length,
+                failed: failed.length,
+                unrouted: unrouted.length, // department has no group mapped
+                lastError: failed[0]?.last_error || null,
+                lastAlertAt: rows[0]?.sent_at || null,
+            };
+        } catch {
+            // Column set not migrated yet — omit rather than fail the check.
+        }
+
         return NextResponse.json({
             ...base,
             tables,
             config,
+            telegram,
             systemHealth,
             responseTime: `${Date.now() - start}ms`,
         });
