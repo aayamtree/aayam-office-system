@@ -48,7 +48,11 @@ const WORKFLOWS = {
 };
 
 export default function PrintPlannerPage() {
-    const { jobs, loading } = useJobs();
+    // The planner batches jobs by quantity, which the default select omits.
+    const { jobs, loading } = useJobs({
+        select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+        limit: 500,
+    });
 
     // Local State for Batch Planning
     const [selectedWorkflow, setSelectedWorkflow] = useState<keyof typeof WORKFLOWS>('generic');

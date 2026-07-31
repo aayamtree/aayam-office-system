@@ -15,7 +15,13 @@ type ViewMode = 'vendor' | 'client' | 'job_type';
 type DateRange = 'all' | 'month' | 'quarter' | 'year';
 
 export default function VendorReportsPage() {
-    const { jobs, loading: jobsLoading } = useJobs();
+    // A vendor report needs vendor_id to group by and order_date for the CSV
+    // export — neither is in the default select, so jobs grouped into nothing and
+    // the date column exported blank. The 50-row default also truncated the report.
+    const { jobs, loading: jobsLoading } = useJobs({
+        select: 'id, job_number, project_name, client_id, vendor_id, current_stage, job_type, order_date, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+        limit: 2000,
+    });
     const { vendors, loading: vendorsLoading } = useVendors();
     const { clients, loading: clientsLoading } = useClients();
 

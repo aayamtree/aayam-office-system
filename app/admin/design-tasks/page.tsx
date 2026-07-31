@@ -10,9 +10,13 @@ import { useConfirm } from '@/components/ConfirmModal';
 
 export default function DesignTasksPage() {
     const { profile } = useAuth();
+    // The task card shows the brief (description) and checklist completion; neither
+    // is in the default select, so both rendered as empty.
     const { jobs, loading, updateJobStage, refetch } = useJobs({
+        select: 'id, job_number, project_name, client_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, description, checklist_progress, files, total_amount, amount_received, payment_status, client:clients(id, name, company)',
         filter: [{ column: 'current_stage', value: ['new', 'designing', 'approval'], op: 'in' }],
-        orderBy: { column: 'created_at', ascending: false }
+        orderBy: { column: 'created_at', ascending: false },
+        limit: 500,
     });
 
     const [processingId, setProcessingId] = useState<string | null>(null);

@@ -93,7 +93,12 @@ export default function ReportsPage() {
 
 function ClientStatementGenerator() {
   const { clients } = useClients();
-  const { jobs } = useJobs();
+  // Reports hub: needs created_at/order_date to bucket by period, and must not be
+  // capped at the default 50 rows or every total here understates reality.
+  const { jobs } = useJobs({
+    select: 'id, job_number, project_name, client_id, current_stage, job_type, product_category, order_date, created_at, quantity, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+    limit: 2000,
+  });
   const { data: payments } = usePaymentsReceivedDirect();
 
   const [selectedClientId, setSelectedClientId] = useState('');

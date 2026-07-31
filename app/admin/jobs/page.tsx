@@ -156,7 +156,14 @@ export default function JobsPage() {
   const searchParams = useSearchParams();
   // PERF: Limit to 500 most recent jobs — prevents full table scan on large datasets.
   // Jobs page uses client-side filter/search on this set, which covers all practical needs.
-  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs({ limit: 500 });
+  // Explicit select. The default JOB_SELECTS.LIST does not fetch the pricing and
+  // assignment fields the edit form pre-fills from (quote_per_piece, design_charge,
+  // gst_rate, quantity, vendor_id, designer_id) — so opening a job and saving it
+  // wrote those back as blank. The card also needs advance_* and files.
+  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs({
+    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, client:clients(id, name, company)',
+    limit: 500,
+  });
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
   const { designers } = useDesigners();

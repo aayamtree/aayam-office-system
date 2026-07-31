@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { reportCrash } from '@/lib/report-crash';
 
 interface Props {
     children: React.ReactNode;
@@ -47,7 +48,16 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
         if (isChunkError) {
             window.location.reload();
+            return;
         }
+
+        reportCrash({
+            path: window.location.pathname,
+            message: error.message || error.name || 'Unknown error',
+            stack: error.stack,
+            component: info?.componentStack || undefined,
+            source: 'boundary',
+        });
     }
 
     handleReset = () => {

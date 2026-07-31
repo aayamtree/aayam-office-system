@@ -44,8 +44,12 @@ const kanbanCols = [
 ];
 
 export default function TeamQueue() {
+    // designer_id is not in the default select, so every card resolved to
+    // "Unassigned" no matter who the job was actually assigned to.
     const { jobs, loading } = useJobs({
-        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+        select: 'id, job_number, project_name, client_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }],
+        limit: 500,
     });
     const { clients } = useClients();
     const { designers } = useDesigners();

@@ -764,7 +764,14 @@ export default function InvoicesPage() {
     }).format(amount);
   };
 
-  const { jobs } = useJobs();
+  // Jobs become invoice line items, so the pricing fields must actually be
+  // fetched — quantity, quote_per_piece and gst_rate are not in the default
+  // select, so line items were being built from undefined values. The default
+  // 50-row cap also hid older billable jobs from the picker.
+  const { jobs } = useJobs({
+    select: 'id, job_number, project_name, client_id, current_stage, job_type, product_category, quantity, quote_per_piece, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, description, client:clients(id, name, company)',
+    limit: 1000,
+  });
 
   // Currently selected client (for Ship To billing-address preview)
   const selectedClient = clients.find((c: any) => c.id === formData.clientId) as any;

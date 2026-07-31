@@ -8,8 +8,12 @@ import { Truck, CheckCircle } from 'lucide-react';
 export default function MarketingDispatchPage() {
   const { profile, user } = useAuth();
 
+  // created_by scopes this view to the marketing user's own jobs; it is not in
+  // the default select, so the filter had nothing to match on.
   const { jobs, loading } = useJobs({
-    orderBy: { column: 'updated_at', ascending: false }
+    select: 'id, job_number, project_name, client_id, created_by, priority, current_stage, job_type, product_category, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+    orderBy: { column: 'updated_at', ascending: false },
+    limit: 500,
   });
 
   if (loading) return <div>Loading...</div>;

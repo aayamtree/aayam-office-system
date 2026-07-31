@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { reportCrash } from '@/lib/report-crash';
 
 export default function Error({
     error,
@@ -17,6 +18,18 @@ export default function Error({
 
     useEffect(() => {
         console.error(error);
+
+        // Record it so the daily health audit can see it. Stale-build errors are
+        // deploy noise and are skipped — the route below already auto-reloads them.
+        if (!staleBuild) {
+            reportCrash({
+                path: window.location.pathname,
+                message: error.message || error.name || 'Unknown application error',
+                stack: error.stack,
+                source: 'route-error',
+            });
+        }
+
         if (!staleBuild) return;
         try {
             if (sessionStorage.getItem('aayam:stale-build-reloaded')) return;

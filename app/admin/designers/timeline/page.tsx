@@ -4,8 +4,12 @@ import { useJobs, useClients, useDesigners } from '@/lib/hooks';
 import { Calendar, User, AlertTriangle } from 'lucide-react';
 
 export default function Timeline() {
+    // designer_id is not in the default select — without it the timeline could not
+    // resolve who a job belongs to and showed everything as unassigned.
     const { jobs, loading } = useJobs({
-        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }]
+        select: 'id, job_number, project_name, client_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+        filter: [{ column: 'current_stage', value: ['new', 'awaiting_admin', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'], op: 'in' }],
+        limit: 500,
     });
     const { clients } = useClients();
     const { designers } = useDesigners();

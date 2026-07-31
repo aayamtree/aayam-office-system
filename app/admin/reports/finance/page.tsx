@@ -41,7 +41,12 @@ export default function FinanceReportPage() {
   const { data: paymentsRaw, isLoading: loadingPayments } = usePaymentsReceivedDirect();
   const { expenses, loading: loadingExpenses } = useExpenses();
   const { vendorPayments, loading: loadingVendor } = useVendorPayments();
-  const { jobs, loading: loadingJobs } = useJobs();
+  // Needs order_date/created_at for the billed-in-range total; the default
+  // JOB_SELECTS.LIST omits them (and caps at 50 rows), which silently zeroed it out.
+  const { jobs, loading: loadingJobs } = useJobs({
+    select: 'id, job_number, order_date, created_at, current_stage, total_amount, amount_received',
+    limit: 2000,
+  });
 
   const isLoading = loadingPayments || loadingExpenses || loadingVendor || loadingJobs;
 

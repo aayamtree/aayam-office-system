@@ -35,7 +35,12 @@ interface SaleRecord {
 import { useJobs } from '@/lib/hooks';
 
 export default function SalesReportPage() {
-  const { jobs, loading } = useJobs();
+  // Sales report needs order_date + quantity, which the default JOB_SELECTS.LIST
+  // does NOT fetch. Without them job.order_date is undefined and .split() crashes.
+  const { jobs, loading } = useJobs({
+    select: 'id, job_number, project_name, order_date, quantity, current_stage, total_amount, client:clients(id, name, company)',
+    limit: 2000,
+  });
   const { data: paymentsRaw } = usePaymentsReceivedDirect();
 
   // Financial year start
@@ -49,7 +54,8 @@ export default function SalesReportPage() {
   const [clientFilter, setClientFilter] = useState('');
 
   const filteredSales = jobs.filter(job => {
-    const jobDate = job.order_date.split('T')[0];
+    const jobDate = String(job.order_date || '').split('T')[0];
+    if (!jobDate) return false;
     const matchesDate = jobDate >= dateFrom && jobDate <= dateTo;
 
     // Map job stages to simpler status for report
@@ -63,7 +69,7 @@ export default function SalesReportPage() {
     return matchesDate && matchesStatus && matchesClient;
   }).map(job => ({
     id: job.id,
-    date: job.order_date.split('T')[0],
+    date: String(job.order_date || '').split('T')[0],
     orderNumber: job.job_number,
     client: job.client?.company || job.client?.name || 'Unknown',
     items: job.project_name,

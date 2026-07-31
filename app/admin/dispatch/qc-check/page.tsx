@@ -48,8 +48,12 @@ export default function QCCheckPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // quantity and notes are shown on the QC card and read by the QC form; neither
+  // is in the default select, so both rendered empty.
   const { jobs, loading, updateJobStage, updateJob } = useJobs({
-    filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }]
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+    filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }],
+    limit: 500,
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
