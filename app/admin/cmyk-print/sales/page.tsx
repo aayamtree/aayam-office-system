@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download, Eye, X } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download, Eye, X, Pencil } from 'lucide-react';
 import { usePOSSales } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -24,6 +24,9 @@ export default function POSSalesListPage() {
   const { settings } = useCompanySettings();
   const confirm = useConfirm();
   const isAdmin = profile?.role === 'admin';
+  // Correcting a bill is an admin / CMYK-team job — designers, marketing and dispatch
+  // never see the button. The real lock is the role check in PUT /api/cmyk-print/sales/[id].
+  const canEdit = ['admin', 'cmyk'].includes(profile?.role || '');
   // Default to All time so the list always shows every bill; month is an optional filter.
   const [month, setMonth] = useState<string>('');
   const [query, setQuery] = useState('');
@@ -252,6 +255,15 @@ export default function POSSalesListPage() {
                             >
                               <Eye size={15} />
                             </button>
+                            {canEdit && (
+                              <Link
+                                href={`/admin/cmyk-print/retail-pos?edit=${s.id}`}
+                                title="Edit this bill (admin / CMYK team)"
+                                className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                              >
+                                <Pencil size={15} />
+                              </Link>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleDownload(s)}
@@ -408,7 +420,15 @@ export default function POSSalesListPage() {
             </div>
 
             {/* Footer actions */}
-            <div className="flex items-center justify-end gap-2 border-t px-5 py-3">
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t px-5 py-3">
+              {canEdit && (
+                <Link
+                  href={`/admin/cmyk-print/retail-pos?edit=${viewSale.id}`}
+                  className="mr-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <Pencil size={15} /> Edit bill
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => handleDownload(viewSale)}

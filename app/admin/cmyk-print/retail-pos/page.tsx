@@ -3,10 +3,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Plus, Trash2, ShoppingCart,
   Printer, Banknote, Smartphone, X, Search, Settings,
-  Edit, Loader2, Download, Package, Clock, Tag, FileText, Copy
+  Edit, Loader2, Download, Package, Clock, Tag, FileText, Copy, Save, Pencil
 } from 'lucide-react';
 import type { ReceiptData } from '@/components/receipt/ReceiptPDF';
 // Lazy PDF: @react-pdf/renderer (~500KB) loads only when printing/downloading a receipt
@@ -66,10 +67,15 @@ const categoryColors = [
   'bg-purple-100 text-purple-700',
 ];
 
+// Roles allowed to correct an existing bill. Mirrors the server-side check in
+// /api/cmyk-print/sales/[id] — this only hides the UI, the API is the real lock.
+const CAN_EDIT_ROLES = ['admin', 'cmyk'];
+
 export default function RetailPOSPage() {
   const { profile } = useAuth();
+  const router = useRouter();
   const { settings: companySettings } = useCompanySettings();
-  const { createPOSSale } = usePOSSales();
+  const { sales, loading: salesLoading, createPOSSale, refetch: refetchSales } = usePOSSales();
   const { stock: paperStock } = usePaperStock();
   const { cmykClients } = useCMYKClients();
   const { cmykAccounts } = useCMYKAccounts();
@@ -109,6 +115,71 @@ export default function RetailPOSPage() {
   }, [accountOptions, payAccount]);
 
   const [notes, setNotes] = useState('');
+
+  // ── EDIT MODE ─────────────────────────────────────────────────────────────
+  // Arriving as /admin/cmyk-print/retail-pos?edit=<sale id> loads that bill back into
+  // the cart so it can be corrected. The bill number and its original date never change —
+  // the same bill is fixed, not replaced, so the day's takings stay complete.
+  // (Read from window.location instead of useSearchParams: no Suspense boundary needed.)
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editSale, setEditSale] = useState<any | null>(null);
+  const [loadedEditId, setLoadedEditId] = useState<string | null>(null);
+  const canEdit = CAN_EDIT_ROLES.includes(profile?.role || '');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const id = new URLSearchParams(window.location.search).get('edit');
+    setEditId(id);
+  }, []);
+
+  // Rebuild the cart from the saved bill, once its rows have arrived.
+  useEffect(() => {
+    if (!editId || loadedEditId === editId) return;
+    const sale = (sales || []).find((s: any) => s.id === editId);
+    if (!sale) return; // still loading, or not found — handled by the banner below
+
+    setEditSale(sale);
+    setLoadedEditId(editId);
+
+    setCart((sale.items || []).map((it: any, idx: number) => {
+      // quantity stored on the bill is the PRINT count (2-side lines are already doubled),
+      // while sheets is the piece count. Restore both so the line total comes back exactly.
+      const twoSide = it.print_sides === 'two';
+      const pieces = it.sheets || (twoSide ? Math.max(1, Math.round((it.quantity || 1) / 2)) : (it.quantity || 1));
+      const name = it.product_name || 'Item';
+      return {
+        id: it.product_id || `line-${idx}-${it.id || Math.random().toString(36).slice(2, 7)}`,
+        name,
+        price: Number(it.price) || 0,
+        qty: pieces,
+        kind: it.product_id ? 'product' : (CHARGE_PRESETS.includes(name) ? 'charge' : 'item'),
+        details: it.details || '',
+        sides: (it.print_sides as 'one' | 'two' | null) || null,
+        // Keep the exact stored print count so an edited 2-side line doesn't silently re-price
+        prints: twoSide ? String(it.quantity || '') : '',
+        paperStockId: it.paper_stock_id || '',
+      } as CartItem;
+    }));
+
+    setCustomerName(sale.customer_name || '');
+    setCustomerPhone(sale.customer_phone || '');
+    setCmykClientId(sale.cmyk_client_id || '');
+    setDiscount(Number(sale.discount_percent) || 0);
+    setOrderType((sale.order_type as 'walkin' | 'pickup') || 'walkin');
+    setArtworkLink(sale.artwork_link || '');
+    setNotes(sale.notes || '');
+    setAmountReceived(sale.amount_received ? String(sale.amount_received) : '');
+    setPaymentMethod((sale.payment_mode === 'upi' ? 'upi' : 'cash'));
+    if (sale.cmyk_account_id) setPayAccount(sale.cmyk_account_id);
+  }, [editId, loadedEditId, sales]);
+
+  // Drop out of edit mode and go back to a blank counter bill
+  const exitEditMode = () => {
+    setEditId(null);
+    setEditSale(null);
+    setLoadedEditId(null);
+    if (typeof window !== 'undefined') window.history.replaceState(null, '', '/admin/cmyk-print/retail-pos');
+  };
 
   // Settings Modal State
   const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
@@ -246,6 +317,7 @@ export default function RetailPOSPage() {
     setPaymentMethod('cash');
     setNotes('');
     setShowPaymentModal(false);
+    exitEditMode();
   };
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -301,6 +373,60 @@ export default function RetailPOSPage() {
         };
       });
 
+      // EDIT: correct the existing bill instead of raising a new one. Goes through the
+      // server route so the role check, the audit reason and the paper-stock adjustment
+      // all happen in one place that the browser cannot skip.
+      if (editId) {
+        const { confirmed, inputValue } = await confirm({
+          title: `Save changes to ${editSale?.sale_number || 'this bill'}?`,
+          message: `The bill number and its original date stay the same — only the contents change.${
+            editSale ? `\n\nTotal: ₹${editSale.total_amount} → ₹${grandTotal}` : ''
+          }\n\nWhy is this bill being changed? (required — saved to the activity log)`,
+          confirmLabel: 'Save changes',
+          showInput: true,
+          inputRequired: true,
+          inputPlaceholder: 'e.g. "wrong rate entered", "customer added 100 more copies"',
+        });
+        if (!confirmed) return null;
+
+        const reason = (inputValue || '').trim();
+        if (reason.length < 3) {
+          toast.error('Please enter a reason (at least 3 characters). Nothing was changed.');
+          return null;
+        }
+
+        // JSON.stringify silently DROPS undefined keys, so a field the operator just
+        // cleared would never reach the server. Send explicit nulls for everything
+        // optional, otherwise "remove the phone number" would quietly do nothing.
+        const editPayload = {
+          ...saleData,
+          customer_name: customerName || null,
+          customer_phone: customerPhone || null,
+          cmyk_client_id: cmykClientId || null,
+          artwork_link: artworkLink || null,
+          notes: notes || null,
+          cmyk_account_id: payAccount || null,
+          paper_stock_id: paperList[0]?.paper_stock_id || null,
+          papers: paperList.length > 0 ? paperList : null,
+          // A pickup that's already been collected stays collected — editing the
+          // bill must not send a finished order back to "pending".
+          pickup_status: orderType === 'pickup' ? (editSale?.pickup_status || 'pending') : null,
+        };
+
+        const res = await fetch(`/api/cmyk-print/sales/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason, sale: editPayload, items: saleItems }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(json.error || 'Could not save the changes');
+          return null;
+        }
+        refetchSales();
+        return json.sale_number || editSale?.sale_number || null;
+      }
+
       const result = await createPOSSale(saleData as any, saleItems);
       if (result.error) {
         toast.error('Failed to save sale: ' + result.error);
@@ -324,7 +450,8 @@ export default function RetailPOSPage() {
   };
 
   const buildReceiptData = (saleNumber: string): ReceiptData => {
-    const now = new Date();
+    // A reprinted, corrected bill must still carry its ORIGINAL date — not today's.
+    const now = editSale?.created_at ? new Date(editSale.created_at) : new Date();
     return {
       companyName: companySettings.companyName,
       companyAddress: `${companySettings.companyAddress}, ${companySettings.companyCity} ${companySettings.companyPincode}`,
@@ -349,12 +476,23 @@ export default function RetailPOSPage() {
     };
   };
 
+  // After an EDIT the operator belongs back on the Sales list, looking at the corrected
+  // bill — not at a blank counter screen wondering whether it saved.
+  const finishAfterSave = (saleNumber: string) => {
+    const wasEdit = !!editId;
+    clearCart();
+    if (wasEdit) {
+      toast.success(`Bill ${saleNumber} updated`);
+      router.push('/admin/cmyk-print/sales');
+    }
+  };
+
   const handlePrint = async () => {
     const saleNumber = await saveSale();
     if (!saleNumber) { setIsProcessing(false); return; }
     try {
       await printReceipt(buildReceiptData(saleNumber));
-      clearCart();
+      finishAfterSave(saleNumber);
     } catch {
       toast.error('Error printing receipt.');
     } finally {
@@ -367,7 +505,7 @@ export default function RetailPOSPage() {
     if (!saleNumber) { setIsProcessing(false); return; }
     try {
       await downloadReceipt(buildReceiptData(saleNumber));
-      clearCart();
+      finishAfterSave(saleNumber);
     } catch {
       toast.error('Error downloading receipt.');
     } finally {
@@ -378,8 +516,8 @@ export default function RetailPOSPage() {
   const handleCompleteWithoutReceipt = async () => {
     const saleNumber = await saveSale();
     if (saleNumber) {
-      toast.success(`Sale ${saleNumber} recorded`);
-      clearCart();
+      if (!editId) toast.success(`Sale ${saleNumber} recorded`);
+      finishAfterSave(saleNumber);
     }
     setIsProcessing(false);
   };
@@ -397,8 +535,12 @@ export default function RetailPOSPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-page-title text-gray-900">Retail POS</h1>
-            <p className="text-sm text-gray-500">Quick billing system</p>
+            <h1 className="text-page-title text-gray-900">
+              {editId ? `Editing ${editSale?.sale_number || 'bill'}` : 'Retail POS'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {editId ? 'Same bill number, same date — only the contents change' : 'Quick billing system'}
+            </p>
           </div>
         </div>
         <button onClick={() => setShowSettingsModal(true)}
@@ -407,6 +549,33 @@ export default function RetailPOSPage() {
           <span className="hidden sm:inline">Manage Items</span>
         </button>
       </div>
+
+      {/* Edit-mode banner — always visible so nobody edits a bill by accident */}
+      {editId && (
+        <div className={`shrink-0 px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-2 text-sm ${
+          canEdit ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
+          <span className="inline-flex items-center gap-2">
+            <Pencil className="w-4 h-4 shrink-0" />
+            {!canEdit ? (
+              <span>You do not have permission to edit bills. Only admin and CMYK team members can.</span>
+            ) : editSale ? (
+              <span>
+                Editing <strong>{editSale.sale_number}</strong> ({editSale.customer_name || 'Walk-in'}) —
+                originally {formatCurrency(Number(editSale.total_amount) || 0)}. Saving asks for a reason and logs the change.
+              </span>
+            ) : salesLoading ? (
+              <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Loading this bill…</span>
+            ) : (
+              // Don't leave a spinner running forever on a bad or deleted link
+              <span>That bill could not be found — it may have been deleted. Nothing here will be saved to it.</span>
+            )}
+          </span>
+          <button onClick={exitEditMode} className="underline font-medium shrink-0">
+            {canEdit ? 'Cancel edit' : 'Start a new bill'}
+          </button>
+        </div>
+      )}
 
       {/* Main Content — 3 panels: catalog | bill builder | summary */}
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
@@ -690,9 +859,14 @@ export default function RetailPOSPage() {
               {discount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Taxable Value</span><span>{formatCurrency(taxableAmount)}</span></div>}
               <div className="flex justify-between text-section pt-2 border-t"><span>Grand Total</span><span className="text-primary">{formatCurrency(grandTotal)}</span></div>
             </div>
-            <button onClick={() => setShowPaymentModal(true)} disabled={grandTotal <= 0}
+            {editId && editSale && grandTotal !== Number(editSale.total_amount) && (
+              <p className="text-xs text-amber-700 mb-2 text-center">
+                Was {formatCurrency(Number(editSale.total_amount) || 0)} → now {formatCurrency(grandTotal)}
+              </p>
+            )}
+            <button onClick={() => setShowPaymentModal(true)} disabled={grandTotal <= 0 || (!!editId && (!canEdit || !editSale))}
               className="w-full py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
-              Pay {formatCurrency(grandTotal)}
+              {editId ? `Review & save changes` : `Pay ${formatCurrency(grandTotal)}`}
             </button>
           </div>
         </div>
@@ -703,7 +877,7 @@ export default function RetailPOSPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-md w-full max-w-md animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-page-title">Payment</h2>
+              <h2 className="text-page-title">{editId ? 'Save changes' : 'Payment'}</h2>
               <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-5 space-y-4">
@@ -760,22 +934,45 @@ export default function RetailPOSPage() {
                   className="w-full mt-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
               </div>
 
-              <div className="flex gap-3">
-                <button onClick={handleDownloadReceipt} disabled={isProcessing}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 transition-colors">
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                  Download
-                </button>
-                <button onClick={handlePrint} disabled={isProcessing}
-                  className="flex-1 py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 disabled:opacity-50 transition-colors">
-                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />}
-                  Print
-                </button>
-              </div>
-              <button onClick={handleCompleteWithoutReceipt} disabled={isProcessing}
-                className="w-full py-2.5 border border-gray-200 text-gray-600 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                Complete without receipt
-              </button>
+              {/* In edit mode the primary action is simply saving; reprinting is optional. */}
+              {editId ? (
+                <>
+                  <button onClick={handleCompleteWithoutReceipt} disabled={isProcessing}
+                    className="w-full py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 disabled:opacity-50 transition-colors">
+                    {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    Save changes
+                  </button>
+                  <div className="flex gap-3">
+                    <button onClick={handleDownloadReceipt} disabled={isProcessing}
+                      className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                      <Download className="w-4 h-4" /> Save &amp; download
+                    </button>
+                    <button onClick={handlePrint} disabled={isProcessing}
+                      className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                      <Printer className="w-4 h-4" /> Save &amp; print
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex gap-3">
+                    <button onClick={handleDownloadReceipt} disabled={isProcessing}
+                      className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                      {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                      Download
+                    </button>
+                    <button onClick={handlePrint} disabled={isProcessing}
+                      className="flex-1 py-3 bg-gray-900 text-white rounded-md font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 disabled:opacity-50 transition-colors">
+                      {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Printer className="w-5 h-5" />}
+                      Print
+                    </button>
+                  </div>
+                  <button onClick={handleCompleteWithoutReceipt} disabled={isProcessing}
+                    className="w-full py-2.5 border border-gray-200 text-gray-600 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                    Complete without receipt
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

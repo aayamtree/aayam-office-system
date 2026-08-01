@@ -748,6 +748,7 @@ export interface POSSale extends BaseEntity {
   gstin?: string;
   total_amount: number;
   payment_mode: PaymentMode;
+  cmyk_account_id?: string;      // Which CMYK cash/bank account the money landed in
   amount_received: number;
   change_amount: number;
   payment_status?: 'paid' | 'pending' | 'partial';
