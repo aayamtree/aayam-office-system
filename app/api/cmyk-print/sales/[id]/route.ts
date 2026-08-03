@@ -83,9 +83,11 @@ export async function PUT(
     .single();
   if (!before) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
 
-  // Whitelist of editable columns. sale_number, created_at and id are deliberately absent:
-  // a corrected bill keeps its identity and its place in the day's takings.
+  // Whitelist of editable columns. sale_number and id are deliberately absent — a corrected
+  // bill keeps its identity. created_at IS editable (bills entered a day or two late need
+  // their real date), but it is validated below and the move is recorded in the audit log.
   const ALLOWED = [
+    'created_at',
     'customer_name', 'customer_phone', 'cmyk_client_id',
     'subtotal', 'discount_percent', 'discount_amount', 'total_amount',
     'gst_rate', 'gst_amount', 'cgst_amount', 'sgst_amount',
@@ -100,6 +102,31 @@ export async function PUT(
   for (const key of ALLOWED) {
     if (key in (body.sale || {})) updates[key] = body.sale[key] ?? null;
   }
+
+  // A bad date would quietly park the bill in 1970 or the next century, where nobody
+  // would find it again. Reject anything unparseable, in the future, or absurdly old.
+  if ('created_at' in updates) {
+    if (updates.created_at === null) {
+      delete updates.created_at; // never blank the date — leave it as it was
+    } else {
+      const when = new Date(updates.created_at);
+      const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+      if (isNaN(when.getTime())) {
+        return NextResponse.json({ error: 'That bill date could not be read.' }, { status: 400 });
+      }
+      if (when.getTime() > tomorrow) {
+        return NextResponse.json({ error: 'A bill cannot be dated in the future.' }, { status: 400 });
+      }
+      if (when.getFullYear() < 2020) {
+        return NextResponse.json({ error: 'That bill date is too far in the past.' }, { status: 400 });
+      }
+      updates.created_at = when.toISOString();
+    }
+  }
+
+  const dateMoved =
+    !!updates.created_at &&
+    new Date(updates.created_at).getTime() !== new Date(before.created_at).getTime();
 
   // The paper columns drive the stock trigger, so they must always be written together —
   // a partial update would leave stock adjusted against a half-changed bill.
@@ -142,16 +169,22 @@ export async function PUT(
     entity_type: 'pos_sale',
     entity_id: before.id,
     entity_name: before.sale_number,
-    description: `Edited bill ${before.sale_number} (${before.customer_name || 'Walk-in'}): ₹${before.total_amount} → ₹${newTotal}. Reason: ${reason}`,
+    description:
+      `Edited bill ${before.sale_number} (${before.customer_name || 'Walk-in'}): ₹${before.total_amount} → ₹${newTotal}.` +
+      (dateMoved ? ` DATE MOVED ${before.created_at} → ${updates.created_at}.` : '') +
+      ` Reason: ${reason}`,
     metadata: {
       reason,
+      date_moved: dateMoved,
       before: {
+        created_at: before.created_at,
         total_amount: before.total_amount,
         customer_name: before.customer_name,
         sheets_used: before.sheets_used,
         papers: before.papers,
       },
       after: {
+        created_at: updates.created_at ?? before.created_at,
         total_amount: newTotal,
         customer_name: updates.customer_name ?? before.customer_name,
         sheets_used: updates.sheets_used ?? before.sheets_used,
@@ -160,7 +193,7 @@ export async function PUT(
     },
   }]);
 
-  console.log(`[POS edit] Bill ${before.sale_number} edited by ${caller?.full_name || user.email} (${caller?.role}): ₹${before.total_amount} → ₹${newTotal}. Reason: ${reason}`);
+  console.log(`[POS edit] Bill ${before.sale_number} edited by ${caller?.full_name || user.email} (${caller?.role}): ₹${before.total_amount} → ₹${newTotal}${dateMoved ? `, date ${before.created_at} → ${updates.created_at}` : ''}. Reason: ${reason}`);
 
   return NextResponse.json({ success: true, sale_number: before.sale_number });
 }

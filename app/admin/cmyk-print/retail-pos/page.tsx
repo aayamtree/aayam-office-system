@@ -71,6 +71,26 @@ const categoryColors = [
 // /api/cmyk-print/sales/[id] — this only hides the UI, the API is the real lock.
 const CAN_EDIT_ROLES = ['admin', 'cmyk'];
 
+// Date helpers for the bill date. Everything here is LOCAL time: a bill dated 1 Aug
+// must read 1 Aug to the shop, whatever the server's timezone thinks.
+const localYmd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/**
+ * Turn the picked day into a full timestamp, keeping the time of day from `base`
+ * (the bill's original time when editing, or right now for a new bill). Moving a bill
+ * to another date shouldn't also move it to midnight.
+ */
+const withDate = (ymd: string, base?: string | null): string | undefined => {
+  if (!ymd) return undefined;
+  const [y, m, d] = ymd.split('-').map(Number);
+  if (!y || !m || !d) return undefined;
+  const out = base ? new Date(base) : new Date();
+  if (isNaN(out.getTime())) return undefined;
+  out.setFullYear(y, m - 1, d);
+  return out.toISOString();
+};
+
 export default function RetailPOSPage() {
   const { profile } = useAuth();
   const router = useRouter();
@@ -115,6 +135,13 @@ export default function RetailPOSPage() {
   }, [accountOptions, payAccount]);
 
   const [notes, setNotes] = useState('');
+
+  // ── BILL DATE ─────────────────────────────────────────────────────────────
+  // Counter bills normally carry today's date, but yesterday's work is often entered
+  // the next morning — so the date is editable on both a new bill and an existing one.
+  // Only the DAY moves; the time of day is kept, so bills stay in sensible order within
+  // a date and the bill number (GEN-26-NNN, no date in it) is unaffected.
+  const [billDate, setBillDate] = useState<string>(() => localYmd(new Date()));
 
   // ── EDIT MODE ─────────────────────────────────────────────────────────────
   // Arriving as /admin/cmyk-print/retail-pos?edit=<sale id> loads that bill back into
@@ -170,6 +197,7 @@ export default function RetailPOSPage() {
     setNotes(sale.notes || '');
     setAmountReceived(sale.amount_received ? String(sale.amount_received) : '');
     setPaymentMethod((sale.payment_mode === 'upi' ? 'upi' : 'cash'));
+    setBillDate(sale.created_at ? localYmd(new Date(sale.created_at)) : localYmd(new Date()));
     if (sale.cmyk_account_id) setPayAccount(sale.cmyk_account_id);
   }, [editId, loadedEditId, sales]);
 
@@ -316,6 +344,7 @@ export default function RetailPOSPage() {
     setAmountReceived('');
     setPaymentMethod('cash');
     setNotes('');
+    setBillDate(localYmd(new Date()));
     setShowPaymentModal(false);
     exitEditMode();
   };
@@ -355,6 +384,8 @@ export default function RetailPOSPage() {
         papers: paperList.length > 0 ? paperList : undefined,
         notes: notes || undefined,
         sold_by: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
+        // Back-dating a new bill: keep the current time of day on the chosen date.
+        created_at: withDate(billDate, null),
       };
 
       const saleItems = cart.map(item => {
@@ -377,10 +408,23 @@ export default function RetailPOSPage() {
       // server route so the role check, the audit reason and the paper-stock adjustment
       // all happen in one place that the browser cannot skip.
       if (editId) {
+        const originalYmd = editSale?.created_at ? localYmd(new Date(editSale.created_at)) : '';
+        const dateMoved = !!originalYmd && originalYmd !== billDate;
+        const asDate = (ymd: string) =>
+          ymd ? new Date(`${ymd}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+
         const { confirmed, inputValue } = await confirm({
           title: `Save changes to ${editSale?.sale_number || 'this bill'}?`,
-          message: `The bill number and its original date stay the same — only the contents change.${
+          message: `The bill number stays the same — only the contents change.${
             editSale ? `\n\nTotal: ₹${editSale.total_amount} → ₹${grandTotal}` : ''
+          }${
+            dateMoved
+              ? `\n\nDATE: ${asDate(originalYmd)} → ${asDate(billDate)}${
+                  originalYmd.slice(0, 7) !== billDate.slice(0, 7)
+                    ? '\nThis moves the bill into a different MONTH, so both months’ sales totals and the client statement will change.'
+                    : ''
+                }`
+              : ''
           }\n\nWhy is this bill being changed? (required — saved to the activity log)`,
           confirmLabel: 'Save changes',
           showInput: true,
@@ -411,6 +455,8 @@ export default function RetailPOSPage() {
           // A pickup that's already been collected stays collected — editing the
           // bill must not send a finished order back to "pending".
           pickup_status: orderType === 'pickup' ? (editSale?.pickup_status || 'pending') : null,
+          // Only the day moves; the bill keeps its original time of day.
+          created_at: withDate(billDate, editSale?.created_at),
         };
 
         const res = await fetch(`/api/cmyk-print/sales/${editId}`, {
@@ -450,8 +496,9 @@ export default function RetailPOSPage() {
   };
 
   const buildReceiptData = (saleNumber: string): ReceiptData => {
-    // A reprinted, corrected bill must still carry its ORIGINAL date — not today's.
-    const now = editSale?.created_at ? new Date(editSale.created_at) : new Date();
+    // The receipt carries the bill's own date — the one chosen above, not today's.
+    const stamped = withDate(billDate, editSale?.created_at ?? null);
+    const now = stamped ? new Date(stamped) : new Date();
     return {
       companyName: companySettings.companyName,
       companyAddress: `${companySettings.companyAddress}, ${companySettings.companyCity} ${companySettings.companyPincode}`,
@@ -634,7 +681,44 @@ export default function RetailPOSPage() {
 
             {/* Customer */}
             <div className="bg-white border rounded-md p-4">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Customer</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</p>
+                {/* Bill date — defaults to today; change it to enter an earlier day's work */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="bill-date" className="text-xs font-medium text-gray-500">Bill date</label>
+                  <input
+                    id="bill-date"
+                    type="date"
+                    value={billDate}
+                    max={localYmd(new Date())}
+                    onChange={(e) => setBillDate(e.target.value || localYmd(new Date()))}
+                    className="px-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+              </div>
+              {(() => {
+                const today = localYmd(new Date());
+                const originalYmd = editSale?.created_at ? localYmd(new Date(editSale.created_at)) : '';
+                // Moving a bill across a month boundary changes two months of totals and
+                // the client's monthly statement — say so before it is saved, not after.
+                if (originalYmd && originalYmd !== billDate) {
+                  const crossesMonth = originalYmd.slice(0, 7) !== billDate.slice(0, 7);
+                  return (
+                    <p className={`text-xs mb-3 ${crossesMonth ? 'text-red-600' : 'text-amber-700'}`}>
+                      Moving this bill from {new Date(`${originalYmd}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} to {new Date(`${billDate}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      {crossesMonth && ' — a different month, so both months’ sales totals and the client statement will change.'}
+                    </p>
+                  );
+                }
+                if (!editId && billDate !== today) {
+                  return (
+                    <p className="text-xs text-amber-700 mb-3">
+                      This bill will be dated {new Date(`${billDate}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}, not today.
+                    </p>
+                  );
+                }
+                return null;
+              })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* CMYK print client — links this bill to a client for the monthly statement */}
                 <div className="sm:col-span-2">
