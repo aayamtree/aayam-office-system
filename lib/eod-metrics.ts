@@ -388,10 +388,14 @@ export async function getFinancialSnapshot(supabase: SupabaseClient): Promise<Fi
   const DAY_MS = 24 * 60 * 60 * 1000;
 
   for (const inv of invoices) {
+    // Supabase types an embed as an ARRAY unless it can prove the relationship is
+    // to-one, so inv.client?.name does not compile and fails the production build.
+    // At runtime this FK gives a single row; normalise so both shapes are safe.
+    const client = Array.isArray(inv.client) ? inv.client[0] : inv.client;
     const brief: InvoiceBrief = {
       invoice_number: inv.invoice_number || '',
-      client_name: inv.client?.name || '',
-      client_company: inv.client?.company || '',
+      client_name: client?.name || '',
+      client_company: client?.company || '',
       total_amount: inv.total_amount || 0,
       amount_paid: inv.amount_paid || 0,
       payment_status: inv.payment_status || '',
