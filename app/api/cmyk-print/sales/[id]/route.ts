@@ -175,6 +175,8 @@ export async function PUT(
       ` Reason: ${reason}`,
     metadata: {
       reason,
+      role: caller?.role,
+      user_email: user.email,
       date_moved: dateMoved,
       before: {
         created_at: before.created_at,
@@ -255,7 +257,7 @@ export async function DELETE(
   // Fetch for audit + to confirm it exists.
   const { data: sale } = await service
     .from('pos_sales')
-    .select('id, sale_number, total_amount, customer_name, sheets_used, papers')
+    .select('id, sale_number, total_amount, customer_name, sheets_used, papers, created_at')
     .eq('id', id)
     .single();
   if (!sale) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
@@ -272,6 +274,9 @@ export async function DELETE(
     description: `Cancelled bill ${sale.sale_number} (${sale.customer_name || 'Walk-in'}, ₹${sale.total_amount}). Reason: ${reason}`,
     metadata: {
       reason,
+      role: caller?.role,
+      user_email: user.email,
+      bill_date: sale.created_at,
       total_amount: sale.total_amount,
       customer_name: sale.customer_name,
       sheets_used: sale.sheets_used,
