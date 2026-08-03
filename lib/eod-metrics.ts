@@ -338,3 +338,106 @@ export async function getWeeklyScorecard(supabase: SupabaseClient): Promise<Week
 
 // Re-export for consumers that want stage ordering context.
 export { MASTER_STAGE_ORDER };
+
+/* ------------------------------------------------------------------ */
+/* Financial Summary (Invoice Status by Category)                      */
+/* ------------------------------------------------------------------ */
+
+export interface InvoiceBrief {
+  invoice_number: string;
+  client_name: string;
+  client_company: string;
+  total_amount: number;
+  amount_paid: number;
+  payment_status: string;
+  due_date: string | null;
+  days_overdue?: number;
+  days_until_due?: number;
+}
+
+export interface FinancialSnapshot {
+  overdue: InvoiceBrief[];
+  pending: InvoiceBrief[];
+  partial: InvoiceBrief[];
+  paid: InvoiceBrief[];
+  totalOutstanding: number;
+  totalPending: number;
+}
+
+export async function getFinancialSnapshot(supabase: SupabaseClient): Promise<FinancialSnapshot> {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, total_amount, amount_paid, payment_status, due_date, created_at, client:clients(name, company)')
+    .order('created_at', { ascending: false });
+
+  if (error || !invoices) {
+    console.error('Financial snapshot fetch error:', error);
+    return { overdue: [], pending: [], partial: [], paid: [], totalOutstanding: 0, totalPending: 0 };
+  }
+
+  const overdue: InvoiceBrief[] = [];
+  const pending: InvoiceBrief[] = [];
+  const partial: InvoiceBrief[] = [];
+  const paid: InvoiceBrief[] = [];
+  let totalOutstanding = 0;
+  let totalPending = 0;
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  for (const inv of invoices) {
+    const brief: InvoiceBrief = {
+      invoice_number: inv.invoice_number || '',
+      client_name: inv.client?.name || '',
+      client_company: inv.client?.company || '',
+      total_amount: inv.total_amount || 0,
+      amount_paid: inv.amount_paid || 0,
+      payment_status: inv.payment_status || '',
+      due_date: inv.due_date,
+    };
+
+    const outstanding = (inv.total_amount || 0) - (inv.amount_paid || 0);
+
+    if (inv.payment_status === 'paid') {
+      paid.push(brief);
+    } else if (inv.payment_status === 'partial') {
+      partial.push(brief);
+      totalOutstanding += outstanding;
+      totalPending += outstanding;
+    } else if (inv.payment_status === 'pending' || inv.payment_status === 'overdue') {
+      totalOutstanding += outstanding;
+      totalPending += outstanding;
+
+      // Check if overdue
+      if (inv.due_date) {
+        const dueDate = new Date(inv.due_date).getTime();
+        const nowTime = now.getTime();
+        if (dueDate < nowTime) {
+          const daysOver = Math.floor((nowTime - dueDate) / DAY_MS);
+          brief.days_overdue = daysOver;
+          overdue.push(brief);
+        } else {
+          const daysUntil = Math.floor((dueDate - nowTime) / DAY_MS);
+          brief.days_until_due = daysUntil;
+          pending.push(brief);
+        }
+      } else {
+        pending.push(brief);
+      }
+    }
+  }
+
+  overdue.sort((a, b) => (b.days_overdue || 0) - (a.days_overdue || 0));
+  pending.sort((a, b) => (a.days_until_due || 999) - (b.days_until_due || 999));
+
+  return {
+    overdue,
+    pending,
+    partial,
+    paid,
+    totalOutstanding,
+    totalPending,
+  };
+}

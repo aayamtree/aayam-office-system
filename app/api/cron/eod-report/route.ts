@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
-import { getEodSnapshot, inr, STUCK_DAYS, type JobBrief } from '@/lib/eod-metrics';
+import { getEodSnapshot, getFinancialSnapshot, inr, STUCK_DAYS, type JobBrief, type InvoiceBrief } from '@/lib/eod-metrics';
 import { authorizeCron } from '@/lib/api-auth';
+import { withCronLog } from '@/lib/cron-log';
 
 /**
  * EOD Report Cron — 7:30 PM IST, Mon–Sat ("0 14 * * 1-6").
@@ -23,7 +24,61 @@ function jobLine(j: JobBrief, tail: string): string {
   return `  • <b>${escapeHtml(j.job_number || '?')}</b> ${escapeHtml((j.project_name || '').slice(0, 40))} — <i>${escapeHtml(j.stage_name)}</i>${tail}`;
 }
 
-function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>): string {
+function invoiceLine(inv: InvoiceBrief, showDays: boolean = false): string {
+  const client = inv.client_company || inv.client_name || 'Unknown';
+  const clientShort = escapeHtml(client.slice(0, 35));
+  const amount = inr(inv.total_amount);
+  const dayInfo = showDays && inv.days_overdue ? ` | <b>${inv.days_overdue}d overdue</b>` :
+                  showDays && inv.days_until_due ? ` | Due in ${inv.days_until_due}d` : '';
+  return `  • <b>${escapeHtml(inv.invoice_number)}</b> | ${clientShort} | ${amount}${dayInfo}`;
+}
+
+function buildFinancialSection(fin: Awaited<ReturnType<typeof getFinancialSnapshot>>): string[] {
+  const lines: string[] = [];
+
+  if (fin.overdue.length === 0 && fin.pending.length === 0 && fin.partial.length === 0) {
+    lines.push('💚 <b>All invoices up to date!</b>');
+    return lines;
+  }
+
+  lines.push('');
+  lines.push('<b>💰 INVOICE STATUS</b>');
+
+  // Overdue — high priority
+  if (fin.overdue.length) {
+    const list = fin.overdue.slice(0, 5).map(inv => invoiceLine(inv, true)).join('\n');
+    const more = fin.overdue.length > 5 ? `\n  …and ${fin.overdue.length - 5} more` : '';
+    lines.push('');
+    lines.push(`🔴 <b>OVERDUE — ${fin.overdue.length}</b>`);
+    lines.push(`${list}${more}`);
+  }
+
+  // Pending — show 5 soonest due
+  if (fin.pending.length) {
+    const list = fin.pending.slice(0, 5).map(inv => invoiceLine(inv, true)).join('\n');
+    const more = fin.pending.length > 5 ? `\n  …and ${fin.pending.length - 5} more` : '';
+    lines.push('');
+    lines.push(`⏳ <b>PENDING — ${fin.pending.length}</b>`);
+    lines.push(`${list}${more}`);
+  }
+
+  // Partial payments
+  if (fin.partial.length) {
+    const list = fin.partial.slice(0, 3).map(inv => invoiceLine(inv, false)).join('\n');
+    const more = fin.partial.length > 3 ? `\n  …and ${fin.partial.length - 3} more` : '';
+    lines.push('');
+    lines.push(`🟡 <b>PARTIAL — ${fin.partial.length}</b>`);
+    lines.push(`${list}${more}`);
+  }
+
+  // Summary
+  lines.push('');
+  lines.push(`Outstanding: <b>${inr(fin.totalOutstanding)}</b> | Pending: <b>${inr(fin.totalPending)}</b>`);
+
+  return lines;
+}
+
+function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, fin: Awaited<ReturnType<typeof getFinancialSnapshot>>): string {
   const lines: string[] = [];
   lines.push(`🌙 <b>EOD Report</b> — ${s.dateLabel}`);
   lines.push('');
@@ -49,24 +104,27 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>): string {
     lines.push(`${list}${more}`);
   }
 
-  // Overdue
+  // Job overdue
   if (s.overdue.length) {
     const list = s.overdue.slice(0, 6).map((j) => jobLine(j, ` — <b>${j.days_overdue}d over</b>`)).join('\n');
     const more = s.overdue.length > 6 ? `\n  …and ${s.overdue.length - 6} more` : '';
     lines.push('');
-    lines.push(`🔴 <b>Past deadline — ${s.overdue.length}</b>`);
+    lines.push(`🔴 <b>Jobs Past deadline — ${s.overdue.length}</b>`);
     lines.push(`${list}${more}`);
   }
 
   if (!s.stuck.length && !s.overdue.length) {
     lines.push('');
-    lines.push('🟢 <b>Nothing stuck or overdue. Clean board!</b>');
+    lines.push('🟢 <b>No stuck or overdue jobs. Clean board!</b>');
   }
+
+  // Financial summary
+  lines.push(...buildFinancialSection(fin));
 
   return lines.join('\n');
 }
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest) {
   // Vercel cron secret, or an admin session for ?debug=1 previews.
   const gate = await authorizeCron(request);
   if (!gate.ok) return gate.response;
@@ -78,11 +136,14 @@ export async function GET(request: NextRequest) {
     { auth: { persistSession: false } }
   );
 
-  const snapshot = await getEodSnapshot(supabase);
-  const text = buildMessage(snapshot);
+  const [snapshot, financial] = await Promise.all([
+    getEodSnapshot(supabase),
+    getFinancialSnapshot(supabase),
+  ]);
+  const text = buildMessage(snapshot, financial);
 
   if (isDebug) {
-    return NextResponse.json({ preview: text, snapshot });
+    return NextResponse.json({ preview: text, snapshot, financial });
   }
 
   // Recipients: admin department groups + linked admin staff DMs
@@ -109,5 +170,13 @@ export async function GET(request: NextRequest) {
     if (await sendToChat(chatId, text, '/admin/pulse')) sent++;
   }
 
-  return NextResponse.json({ sent, targets: targets.size, done: snapshot.doneToday.length, stuck: snapshot.stuck.length });
+  return NextResponse.json({ sent, targets: targets.size, done: snapshot.doneToday.length, stuck: snapshot.stuck.length, overdue_invoices: financial.overdue.length, pending_invoices: financial.pending.length });
+}
+
+// Every run of this cron is recorded in public.cron_runs (see lib/cron-log.ts).
+// Vercel knows whether the schedule fired, but that lives in a dashboard nobody
+// opens; the daily audit needs the fact inside the database so it can alert when
+// this job silently stops running.
+export async function GET(request: NextRequest) {
+    return withCronLog('eod-report', () => runJob(request));
 }
