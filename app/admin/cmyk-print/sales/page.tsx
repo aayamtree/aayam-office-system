@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download, Eye, X, Pencil } from 'lucide-react';
-import { usePOSSales } from '@/lib/hooks';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Trash2, Loader2, Download, Eye, X, Pencil, Wallet, Banknote, Smartphone } from 'lucide-react';
+import { usePOSSales, useCMYKAccounts } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
@@ -18,8 +18,12 @@ import { Badge } from '@/components/ui/Badge';
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
+/** What is actually still owed on a bill — the single source of truth for "unpaid". */
+const dueOf = (s: any) => Math.max(0, (Number(s.total_amount) || 0) - (Number(s.amount_received) || 0));
+
 export default function POSSalesListPage() {
   const { sales, loading, refetch } = usePOSSales();
+  const { cmykAccounts } = useCMYKAccounts();
   const { profile } = useAuth();
   const { settings } = useCompanySettings();
   const confirm = useConfirm();
@@ -34,6 +38,44 @@ export default function POSSalesListPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   // Bill selected for the on-screen detail popup (null = closed)
   const [viewSale, setViewSale] = useState<any | null>(null);
+  // Bill being settled from the list + which account is taking the money
+  const [receiveSale, setReceiveSale] = useState<any | null>(null);
+  const [receiveAccount, setReceiveAccount] = useState('');
+  const [receiveAmount, setReceiveAmount] = useState('');
+  const [receiving, setReceiving] = useState(false);
+
+  const activeAccounts = useMemo(
+    () => (cmykAccounts || []).filter((a: any) => a.is_active !== false),
+    [cmykAccounts]
+  );
+
+  const openReceive = (s: any) => {
+    setReceiveSale(s);
+    setReceiveAccount(s.cmyk_account_id || activeAccounts[0]?.id || '');
+    setReceiveAmount(String(dueOf(s)));
+  };
+
+  const handleReceive = async () => {
+    if (!receiveSale) return;
+    if (!receiveAccount) { toast.error('Choose which account received the money'); return; }
+    setReceiving(true);
+    try {
+      const res = await fetch(`/api/cmyk-print/sales/${receiveSale.id}/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmyk_account_id: receiveAccount, amount: receiveAmount }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not record the payment');
+      toast.success(`₹${json.amount_received} recorded into ${json.account_name} for ${json.sale_number}`);
+      setReceiveSale(null);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || 'Could not record the payment');
+    } finally {
+      setReceiving(false);
+    }
+  };
 
   // Rebuild the ESTIMATE PDF for a past bill from its stored line items.
   const buildEstimate = (s: any): ReceiptData => {
@@ -61,8 +103,10 @@ export default function POSSalesListPage() {
       cgstAmount: 0,
       sgstAmount: 0,
       grandTotal: s.total_amount || 0,
-      paymentMode: s.payment_mode || 'cash',
-      amountReceived: s.amount_received || s.total_amount || 0,
+      // Never print money that was not collected. This used to fall back to the grand
+      // total, so an unpaid bill's PDF read "Payment: Cash" and looked settled.
+      paymentMode: dueOf(s) > 0 ? 'UNPAID · pay later' : (s.payment_mode || 'cash'),
+      amountReceived: Number(s.amount_received) || 0,
       change: s.change_amount || 0,
       cashier: s.sold_by || 'CMYK',
     };
@@ -130,6 +174,9 @@ export default function POSSalesListPage() {
   }, [sales, month, query]);
 
   const total = filtered.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0);
+  // Billed is not collected. Showing both side by side is the whole point of this fix.
+  const collected = filtered.reduce((sum: number, s: any) => sum + (Number(s.amount_received) || 0), 0);
+  const outstanding = filtered.reduce((sum: number, s: any) => sum + dueOf(s), 0);
 
   return (
     <div className="space-y-4">
@@ -186,9 +233,17 @@ export default function POSSalesListPage() {
               />
             </div>
 
-            <div className="text-sm text-right whitespace-nowrap">
-              <span className="text-muted-foreground">{filtered.length} sale{filtered.length !== 1 ? 's' : ''} · </span>
-              <span className="font-semibold text-foreground">{fmt(total)}</span>
+            <div className="text-sm text-right whitespace-nowrap leading-tight">
+              <div>
+                <span className="text-muted-foreground">{filtered.length} sale{filtered.length !== 1 ? 's' : ''} · billed </span>
+                <span className="font-semibold text-foreground">{fmt(total)}</span>
+              </div>
+              <div className="text-xs mt-0.5">
+                <span className="text-green-700 font-medium">{fmt(collected)} collected</span>
+                {outstanding > 0 && (
+                  <span className="text-amber-600 font-medium"> · {fmt(outstanding)} unpaid</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -222,6 +277,8 @@ export default function POSSalesListPage() {
                 <tbody>
                   {filtered.map((s: any) => {
                     const d = new Date(s.created_at);
+                    const due = dueOf(s);
+                    const partly = due > 0 && (Number(s.amount_received) || 0) > 0;
                     return (
                       <tr
                         key={s.id}
@@ -244,9 +301,26 @@ export default function POSSalesListPage() {
                         </td>
                         <td className="px-3 py-2.5">{s.customer_name || s.cmyk_client?.name || 'Walk-in'}</td>
                         <td className="px-3 py-2.5 text-center text-muted-foreground">{s.items?.length ?? '—'}</td>
-                        <td className="px-3 py-2.5 text-right font-semibold">{fmt(s.total_amount)}</td>
+                        <td className="px-3 py-2.5 text-right font-semibold">
+                          {fmt(s.total_amount)}
+                          {due > 0 && (
+                            <span className="block text-[10px] font-medium text-amber-600 mt-0.5">
+                              {partly ? `${fmt(due)} still due` : 'UNPAID'}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="inline-flex items-center justify-end gap-1">
+                            {canEdit && due > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => openReceive(s)}
+                                title={`Record ${fmt(due)} received`}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                              >
+                                <Wallet size={13} /> Mark received
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => setViewSale(s)}
@@ -407,10 +481,23 @@ export default function POSSalesListPage() {
                 <span>Grand Total</span>
                 <span>{fmt(viewSale.total_amount || 0)}</span>
               </div>
+              {/* "Payment" used to show only the mode, so an unpaid bill read "Cash" and
+                  looked settled. Show what was actually collected, and what is still due. */}
               <div className="flex justify-between text-muted-foreground pt-1">
-                <span>Payment</span>
-                <span className="capitalize">{viewSale.payment_mode || 'cash'}</span>
+                <span>Received</span>
+                <span className={dueOf(viewSale) > 0 ? 'text-amber-600 font-medium' : 'text-green-700 font-medium'}>
+                  {fmt(Number(viewSale.amount_received) || 0)}
+                  {(Number(viewSale.amount_received) || 0) > 0 && (
+                    <span className="capitalize font-normal text-muted-foreground"> · {viewSale.payment_mode || 'cash'}</span>
+                  )}
+                </span>
               </div>
+              {dueOf(viewSale) > 0 && (
+                <div className="flex justify-between font-semibold text-amber-600">
+                  <span>Still due</span>
+                  <span>{fmt(dueOf(viewSale))}</span>
+                </div>
+              )}
               {viewSale.sold_by && (
                 <div className="flex justify-between text-muted-foreground">
                   <span>Billed by</span>
@@ -429,6 +516,15 @@ export default function POSSalesListPage() {
                   <Pencil size={15} /> Edit bill
                 </Link>
               )}
+              {canEdit && dueOf(viewSale) > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { const s = viewSale; setViewSale(null); openReceive(s); }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+                >
+                  <Wallet size={15} /> Mark received
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => handleDownload(viewSale)}
@@ -446,6 +542,90 @@ export default function POSSalesListPage() {
                 className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record money received against a past bill → lands in a real CMYK account */}
+      {receiveSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setReceiveSale(null)}>
+          <div className="w-full max-w-md rounded-lg bg-background shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <div>
+                <h2 className="text-base font-bold text-foreground">Record payment</h2>
+                <p className="text-xs text-muted-foreground">
+                  {receiveSale.sale_number} · {receiveSale.customer_name || receiveSale.cmyk_client?.name || 'Walk-in'}
+                </p>
+              </div>
+              <button onClick={() => setReceiveSale(null)} className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Bill total</span><span>{fmt(receiveSale.total_amount || 0)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Already received</span><span>{fmt(Number(receiveSale.amount_received) || 0)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-amber-600 pt-1 border-t">
+                  <span>Still due</span><span>{fmt(dueOf(receiveSale))}</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2">Received in account</p>
+                {activeAccounts.length === 0 ? (
+                  <p className="text-sm text-amber-600">
+                    No CMYK accounts yet. <Link href="/admin/cmyk-print/accounts" className="underline">Add one</Link>.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {activeAccounts.map((a: any) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setReceiveAccount(a.id)}
+                        className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 text-center transition-all ${receiveAccount === a.id ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/40'}`}
+                      >
+                        {a.type === 'cash' ? <Banknote size={18} /> : <Smartphone size={18} />}
+                        <span className="text-xs leading-tight">{a.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Amount received</label>
+                <input
+                  type="number"
+                  value={receiveAmount}
+                  onChange={(e) => setReceiveAmount(e.target.value)}
+                  className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Prefilled with the full balance. Lower it for a part payment.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t px-5 py-3">
+              <button type="button" onClick={() => setReceiveSale(null)} className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReceive}
+                disabled={receiving || !receiveAccount}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {receiving ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
+                Record payment
               </button>
             </div>
           </div>

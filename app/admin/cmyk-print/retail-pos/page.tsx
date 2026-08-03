@@ -117,6 +117,10 @@ export default function RetailPOSPage() {
   // Which real account the money went into ("cash:<id>" / "bank:<id>")
   const [payAccount, setPayAccount] = useState('');
   const [amountReceived, setAmountReceived] = useState('');
+  // Counter sales are collected on the spot, so "paid in full" is the default and CREDIT is
+  // the deliberate choice. Before this, a blank amount box silently saved every bill as
+  // pending while the receipt still printed "Payment: Cash" — money vanished from Accounts.
+  const [isCredit, setIsCredit] = useState(false);
   const [discount, setDiscount] = useState(0);
 
   // Order type & artwork (no GST — this CMYK counter issues estimates, not GST invoices)
@@ -131,8 +135,9 @@ export default function RetailPOSPage() {
   [cmykAccounts]);
 
   useEffect(() => {
-    if (!payAccount && accountOptions.length > 0) setPayAccount(accountOptions[0].value);
-  }, [accountOptions, payAccount]);
+    // Don't re-arm a default account in credit mode — the empty account IS the choice there.
+    if (!isCredit && !payAccount && accountOptions.length > 0) setPayAccount(accountOptions[0].value);
+  }, [accountOptions, payAccount, isCredit]);
 
   const [notes, setNotes] = useState('');
 
@@ -196,6 +201,8 @@ export default function RetailPOSPage() {
     setArtworkLink(sale.artwork_link || '');
     setNotes(sale.notes || '');
     setAmountReceived(sale.amount_received ? String(sale.amount_received) : '');
+    // Reopen an unpaid bill in credit mode so re-saving it doesn't invent a receipt.
+    setIsCredit(!Number(sale.amount_received));
     setPaymentMethod((sale.payment_mode === 'upi' ? 'upi' : 'cash'));
     setBillDate(sale.created_at ? localYmd(new Date(sale.created_at)) : localYmd(new Date()));
     if (sale.cmyk_account_id) setPayAccount(sale.cmyk_account_id);
@@ -342,6 +349,7 @@ export default function RetailPOSPage() {
     setOrderType('walkin');
     setArtworkLink('');
     setAmountReceived('');
+    setIsCredit(false);
     setPaymentMethod('cash');
     setNotes('');
     setBillDate(localYmd(new Date()));
@@ -355,9 +363,10 @@ export default function RetailPOSPage() {
     setIsProcessing(true);
     try {
       // Only what was actually collected now is recorded as received (0 = pending payment).
-      const paidAmount = receivedAmt > 0 ? receivedAmt : 0;
+      const paidAmount = isCredit ? 0 : (receivedAmt > 0 ? receivedAmt : 0);
       // Which CMYK account the money landed in; derive legacy payment_mode from its type.
-      const payAcct = accountOptions.find(o => o.value === payAccount);
+      // A credit sale is tagged to NO account — otherwise Accounts would list it as a receipt.
+      const payAcct = isCredit ? undefined : accountOptions.find(o => o.value === payAccount);
       const saleData = {
         customer_name: customerName || undefined,
         customer_phone: customerPhone || undefined,
@@ -374,7 +383,7 @@ export default function RetailPOSPage() {
         artwork_link: artworkLink || undefined,
         total_amount: grandTotal,
         payment_mode: payAcct ? (payAcct.type === 'cash' ? 'cash' : 'upi') : paymentMethod,
-        cmyk_account_id: payAccount || undefined,
+        cmyk_account_id: isCredit ? null : (payAccount || undefined),
         amount_received: paidAmount,
         change_amount: changeAmount > 0 ? changeAmount : 0,
         payment_status: getPaymentStatus(),
@@ -449,7 +458,7 @@ export default function RetailPOSPage() {
           cmyk_client_id: cmykClientId || null,
           artwork_link: artworkLink || null,
           notes: notes || null,
-          cmyk_account_id: payAccount || null,
+          cmyk_account_id: isCredit ? null : (payAccount || null),
           paper_stock_id: paperList[0]?.paper_stock_id || null,
           papers: paperList.length > 0 ? paperList : null,
           // A pickup that's already been collected stays collected — editing the
@@ -516,8 +525,13 @@ export default function RetailPOSPage() {
       cgstAmount: 0,
       sgstAmount: 0,
       grandTotal,
-      paymentMode: accountOptions.find(o => o.value === payAccount)?.label || paymentMethod,
-      amountReceived: parseFloat(amountReceived || '0') || grandTotal,
+      // The receipt must not claim money that was never collected. It used to fall back to
+      // the grand total when nothing was received, so an unpaid bill printed "Payment: Cash"
+      // and looked settled while Accounts correctly showed ₹0.
+      paymentMode: isCredit || receivedAmt <= 0
+        ? 'UNPAID · pay later'
+        : (accountOptions.find(o => o.value === payAccount)?.label || paymentMethod),
+      amountReceived: isCredit ? 0 : (receivedAmt > 0 ? receivedAmt : 0),
       change: changeAmount > 0 ? changeAmount : 0,
       cashier: profile?.full_name || profile?.email?.split('@')[0] || 'CMYK',
     };
@@ -948,7 +962,7 @@ export default function RetailPOSPage() {
                 Was {formatCurrency(Number(editSale.total_amount) || 0)} → now {formatCurrency(grandTotal)}
               </p>
             )}
-            <button onClick={() => setShowPaymentModal(true)} disabled={grandTotal <= 0 || (!!editId && (!canEdit || !editSale))}
+            <button onClick={() => { if (!isCredit) setAmountReceived(String(grandTotal)); setShowPaymentModal(true); }} disabled={grandTotal <= 0 || (!!editId && (!canEdit || !editSale))}
               className="w-full py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors shadow-sm">
               {editId ? `Review & save changes` : `Pay ${formatCurrency(grandTotal)}`}
             </button>
@@ -985,22 +999,33 @@ export default function RetailPOSPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     {accountOptions.map(o => (
-                      <button key={o.value} type="button" onClick={() => setPayAccount(o.value)}
-                        className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all text-center ${payAccount === o.value ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <button key={o.value} type="button"
+                        onClick={() => { setPayAccount(o.value); setIsCredit(false); setAmountReceived(String(grandTotal)); }}
+                        className={`p-3 rounded-md border-2 flex flex-col items-center gap-1 transition-all text-center ${!isCredit && payAccount === o.value ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
                         {o.type === 'cash' ? <Banknote className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
                         <span className="text-xs leading-tight">{o.label}</span>
                       </button>
                     ))}
+                    {/* Deliberate "not collected" choice. Clears the account so an unpaid bill
+                        can never sit tagged to Rohan/Eklavya/Cash pretending to be a receipt. */}
+                    <button type="button"
+                      onClick={() => { setIsCredit(true); setPayAccount(''); setAmountReceived(''); }}
+                      className={`p-3 rounded-md border-2 border-dashed flex flex-col items-center gap-1 transition-all text-center ${isCredit ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-gray-200 hover:border-gray-300 text-gray-500'}`}>
+                      <Clock className="w-5 h-5" />
+                      <span className="text-xs leading-tight">Credit · pay later</span>
+                    </button>
                   </div>
                 )}
               </div>
 
-              {/* Amount received — leave blank to save as a pending payment */}
+              {/* Amount received — prefilled with the full total; edit only for part payment */}
               <div>
                 <label className="text-sm font-medium">Amount Received</label>
-                <input type="number" value={amountReceived || ''} onChange={(e) => setAmountReceived(e.target.value)}
-                  className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400" placeholder="Leave blank if not paid yet" />
-                {receivedAmt <= 0 ? (
+                <input type="number" value={amountReceived || ''} disabled={isCredit}
+                  onChange={(e) => setAmountReceived(e.target.value)}
+                  className="w-full mt-1 px-4 py-2.5 border rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:bg-gray-100 disabled:text-gray-400"
+                  placeholder={isCredit ? 'Nothing collected — credit sale' : '0'} />
+                {isCredit || receivedAmt <= 0 ? (
                   <p className="mt-2 inline-flex items-center gap-1.5 text-amber-600 font-medium text-sm">
                     <Clock className="w-4 h-4" /> This bill will be saved as PENDING PAYMENT
                   </p>

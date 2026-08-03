@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit, X, Loader2, Zap, Truck, Wrench, Package, Users, MoreHorizontal } from 'lucide-react';
-import { useCMYKExpenses } from '@/lib/hooks';
+import { ArrowLeft, Plus, Trash2, Edit, X, Loader2, Zap, Truck, Wrench, Package, Users, MoreHorizontal, Banknote, Smartphone, Building2 } from 'lucide-react';
+import { useCMYKExpenses, useCMYKAccounts } from '@/lib/hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -25,7 +25,18 @@ const today = () => new Date().toISOString().split('T')[0];
 
 export default function CMYKExpensesPage() {
   const { expenses, loading, createExpense, updateExpense, deleteExpense } = useCMYKExpenses();
+  const { cmykAccounts } = useCMYKAccounts();
   const confirm = useConfirm();
+
+  // Which CMYK account the money left. Untagged expenses are still recorded, they just
+  // can't be deducted from any one account's balance.
+  const activeAccounts = useMemo(
+    () => (cmykAccounts || []).filter((a: any) => a.is_active !== false),
+    [cmykAccounts]
+  );
+  const accountIcon = (t: string) => (t === 'cash' ? Banknote : t === 'bank' ? Building2 : Smartphone);
+  const accountName = (id?: string | null) =>
+    (cmykAccounts || []).find((a: any) => a.id === id)?.name || null;
 
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -40,6 +51,7 @@ export default function CMYKExpensesPage() {
     category: 'transportation',
     amount: '',
     description: '',
+    cmyk_account_id: '',
   });
 
   const filtered = (expenses || []).filter(e => {
@@ -56,7 +68,13 @@ export default function CMYKExpensesPage() {
   })).filter(c => c.total > 0);
 
   const openAdd = () => {
-    setForm({ expense_date: today(), category: 'transportation', amount: '', description: '' });
+    setForm({
+      expense_date: today(),
+      category: 'transportation',
+      amount: '',
+      description: '',
+      cmyk_account_id: activeAccounts[0]?.id || '',
+    });
     setIsEditing(false);
     setEditingId('');
     setShowModal(true);
@@ -68,6 +86,7 @@ export default function CMYKExpensesPage() {
       category: expense.category,
       amount: String(expense.amount),
       description: expense.description || '',
+      cmyk_account_id: expense.cmyk_account_id || '',
     });
     setIsEditing(true);
     setEditingId(expense.id);
@@ -84,6 +103,8 @@ export default function CMYKExpensesPage() {
         category: form.category,
         amount: parseFloat(form.amount),
         description: form.description || undefined,
+        // Explicit null, not undefined — clearing the account must actually clear it.
+        cmyk_account_id: form.cmyk_account_id || null,
       };
       if (isEditing) {
         await updateExpense(editingId, payload);
@@ -196,6 +217,11 @@ export default function CMYKExpensesPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{meta.label}</span>
                         <Badge variant="outline" className="text-xs">{new Date(expense.expense_date + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</Badge>
+                        {accountName((expense as any).cmyk_account_id) ? (
+                          <Badge variant="outline" className="text-xs">{accountName((expense as any).cmyk_account_id)}</Badge>
+                        ) : (
+                          <span className="text-[10px] text-amber-600 font-medium" title="Not deducted from any CMYK account balance">No account</span>
+                        )}
                       </div>
                       {expense.description && <p className="text-xs text-muted-foreground truncate">{expense.description}</p>}
                     </div>
@@ -255,6 +281,35 @@ export default function CMYKExpensesPage() {
                     );
                   })}
                 </div>
+              </div>
+              {/* Which account the money left — this is what makes the Accounts page
+                  balance reflect real cash in hand instead of receipts only. */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground">Paid from</label>
+                  <Link href="/admin/cmyk-print/accounts" className="text-[11px] text-muted-foreground hover:text-foreground underline">Manage accounts</Link>
+                </div>
+                {activeAccounts.length === 0 ? (
+                  <p className="text-sm text-amber-600">
+                    No CMYK accounts yet. <Link href="/admin/cmyk-print/accounts" className="underline">Add one</Link>.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {activeAccounts.map((a: any) => {
+                      const Icon = accountIcon(a.type);
+                      return (
+                        <button key={a.id} type="button" onClick={() => setForm({ ...form, cmyk_account_id: a.id })}
+                          className={`p-2.5 rounded-md border-2 flex items-center justify-center gap-1.5 text-xs transition-all ${form.cmyk_account_id === a.id ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/40'}`}>
+                          <Icon size={15} /> {a.name}
+                        </button>
+                      );
+                    })}
+                    <button type="button" onClick={() => setForm({ ...form, cmyk_account_id: '' })}
+                      className={`p-2.5 rounded-md border-2 border-dashed flex items-center justify-center gap-1.5 text-xs transition-all ${!form.cmyk_account_id ? 'border-muted-foreground/60 bg-muted' : 'border-border text-muted-foreground hover:border-muted-foreground/40'}`}>
+                      Not from a CMYK account
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>

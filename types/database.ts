@@ -845,6 +845,8 @@ export interface CMYKExpense {
   category: string;
   amount: number;
   description?: string;
+  /** Which CMYK account (cash/UPI) the money was paid OUT of. Null = not deducted anywhere. */
+  cmyk_account_id?: string | null;
   job_id?: string;
   pos_sale_id?: string;
   approved_by?: string;

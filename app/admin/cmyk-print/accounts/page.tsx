@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Wallet, Banknote, Smartphone, Building2, Plus, Pencil, Trash2, Loader2, X } from 'lucide-react';
-import { useCMYKAccounts, usePOSSales, useCMYKClientPayments } from '@/lib/hooks';
+import { useCMYKAccounts, usePOSSales, useCMYKClientPayments, useCMYKExpenses } from '@/lib/hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 
@@ -22,6 +22,7 @@ export default function CMYKAccountsPage() {
   const { cmykAccounts, loading, createAccount, updateAccount, deleteAccount } = useCMYKAccounts();
   const { sales } = usePOSSales();
   const { payments } = useCMYKClientPayments();
+  const { expenses } = useCMYKExpenses();
   const confirm = useConfirm();
 
   const [showForm, setShowForm] = useState(false);
@@ -40,8 +41,36 @@ export default function CMYKAccountsPage() {
     return map;
   }, [sales, payments]);
 
+  // Money paid OUT of each account. Untagged expenses are deliberately excluded — they
+  // can't be attributed to an account, so guessing would make the balance wrong.
+  const paidByAccount = useMemo(() => {
+    const map: Record<string, number> = {};
+    (expenses || []).forEach((e: any) => {
+      if (e.cmyk_account_id) map[e.cmyk_account_id] = (map[e.cmyk_account_id] || 0) + (Number(e.amount) || 0);
+    });
+    return map;
+  }, [expenses]);
+
+  const untaggedExpenses = useMemo(
+    () => (expenses || []).reduce((sum: number, e: any) => sum + (e.cmyk_account_id ? 0 : (Number(e.amount) || 0)), 0),
+    [expenses]
+  );
+
+  // Billed but not yet collected — the figure that used to silently disappear.
+  const outstanding = useMemo(
+    () => (sales || []).reduce(
+      (sum: number, s: any) => sum + Math.max(0, (Number(s.total_amount) || 0) - (Number(s.amount_received) || 0)),
+      0
+    ),
+    [sales]
+  );
+
   const accounts = (cmykAccounts || []) as any[];
-  const totalInHand = accounts.reduce((sum, a) => sum + (Number(a.opening_balance) || 0) + (receivedByAccount[a.id] || 0), 0);
+  const balanceOf = (a: any) =>
+    (Number(a.opening_balance) || 0) + (receivedByAccount[a.id] || 0) - (paidByAccount[a.id] || 0);
+  const totalInHand = accounts.reduce((sum, a) => sum + balanceOf(a), 0);
+  const totalReceived = accounts.reduce((sum, a) => sum + (receivedByAccount[a.id] || 0), 0);
+  const totalPaid = accounts.reduce((sum, a) => sum + (paidByAccount[a.id] || 0), 0);
 
   const openAdd = () => { setForm(EMPTY); setShowForm(true); };
   const openEdit = (a: any) => {
@@ -67,8 +96,9 @@ export default function CMYKAccountsPage() {
 
   const handleDelete = async (a: any) => {
     const received = receivedByAccount[a.id] || 0;
-    if (received > 0) {
-      toast.error('This account already has receipts. Deactivate it instead of deleting.');
+    const paidOut = paidByAccount[a.id] || 0;
+    if (received > 0 || paidOut > 0) {
+      toast.error('This account already has receipts or expenses against it. Deactivate it instead of deleting.');
       return;
     }
     const { confirmed } = await confirm({
@@ -100,14 +130,38 @@ export default function CMYKAccountsPage() {
       </div>
 
       {/* Total */}
-      <div className="bg-white border rounded-md p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-500">Total in CMYK accounts (opening + received)</p>
-          <p className="text-2xl font-bold">{fmt(totalInHand)}</p>
+      <div className="bg-white border rounded-md p-4">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-xs text-gray-500">Money in CMYK accounts (opening + received − paid out)</p>
+            <p className="text-2xl font-bold">{fmt(totalInHand)}</p>
+          </div>
+          <div className="text-xs text-right space-y-0.5">
+            <p className="text-green-700 font-medium">+ {fmt(totalReceived)} received</p>
+            <p className="text-red-600 font-medium">− {fmt(totalPaid)} paid out</p>
+          </div>
         </div>
-        <span className="text-xs text-gray-400 max-w-[220px] text-right">
-          Money-in only. Expenses paid from these accounts aren&apos;t deducted yet.
-        </span>
+
+        {(outstanding > 0 || untaggedExpenses > 0) && (
+          <div className="mt-3 pt-3 border-t space-y-1.5 text-xs">
+            {outstanding > 0 && (
+              <p className="flex items-center justify-between gap-3 text-amber-700">
+                <span>
+                  <strong>{fmt(outstanding)}</strong> billed but not yet collected — not in the balance above.
+                </span>
+                <Link href="/admin/cmyk-print/sales" className="underline whitespace-nowrap shrink-0">See unpaid bills</Link>
+              </p>
+            )}
+            {untaggedExpenses > 0 && (
+              <p className="flex items-center justify-between gap-3 text-gray-500">
+                <span>
+                  <strong>{fmt(untaggedExpenses)}</strong> of expenses aren&apos;t tagged to an account, so they aren&apos;t deducted.
+                </span>
+                <Link href="/admin/cmyk-print/expenses" className="underline whitespace-nowrap shrink-0">Tag them</Link>
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* List */}
@@ -120,19 +174,21 @@ export default function CMYKAccountsPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Opening</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Received</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Paid out</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Balance</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading…</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading…</td></tr>
               ) : accounts.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-400">No CMYK accounts yet. Add one to start.</td></tr>
+                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No CMYK accounts yet. Add one to start.</td></tr>
               ) : accounts.map((a) => {
                 const Icon = (TYPE_META[a.type] || TYPE_META.cash).icon;
                 const received = receivedByAccount[a.id] || 0;
-                const balance = (Number(a.opening_balance) || 0) + received;
+                const paidOut = paidByAccount[a.id] || 0;
+                const balance = balanceOf(a);
                 return (
                   <tr key={a.id} className={`hover:bg-gray-50 ${a.is_active === false ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3 font-medium flex items-center gap-2">
@@ -142,7 +198,8 @@ export default function CMYKAccountsPage() {
                     <td className="px-4 py-3 text-gray-500">{(TYPE_META[a.type] || TYPE_META.cash).label}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{fmt(Number(a.opening_balance) || 0)}</td>
                     <td className="px-4 py-3 text-right text-green-700">{fmt(received)}</td>
-                    <td className="px-4 py-3 text-right font-semibold">{fmt(balance)}</td>
+                    <td className="px-4 py-3 text-right text-red-600">{paidOut > 0 ? `− ${fmt(paidOut)}` : '—'}</td>
+                    <td className={`px-4 py-3 text-right font-semibold ${balance < 0 ? 'text-red-600' : ''}`}>{fmt(balance)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
                         <button onClick={() => openEdit(a)} title="Edit" className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"><Pencil className="w-4 h-4" /></button>
