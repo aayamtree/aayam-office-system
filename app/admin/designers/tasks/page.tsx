@@ -163,6 +163,74 @@ const JOBS_QUERY_OPTIONS = {
   limit: 200
 };
 
+// ─── Shared search box for the Board and Timeline headers ───────────────────
+// Hoisted so it is not redefined on every render (that would remount the input
+// and drop focus after each keystroke). The List view keeps its own inline box
+// because it sits in a narrow sidebar with different spacing.
+function TaskSearchInput({
+  value,
+  onChange,
+  matchCount,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  matchCount: number;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // "/" focuses the box, Esc clears it — same convention as the ⌘K palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      const typingElsewhere =
+        el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if (e.key === '/' && !typingElsewhere) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+      if (e.key === 'Escape' && el === inputRef.current) {
+        onChange('');
+        inputRef.current?.blur();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onChange]);
+
+  return (
+    <div className="relative flex-1 min-w-[200px] max-w-md mx-3">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Search project, client, job no, designer…"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-9 pr-20 py-2 text-sm border border-gray-200 rounded-md bg-white focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
+      />
+      {value ? (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          <span className={`text-[11px] font-bold tabular-nums ${matchCount === 0 ? 'text-red-600' : 'text-gray-500'}`}>
+            {matchCount}
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            aria-label="Clear search"
+            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 border border-gray-200 rounded px-1.5 py-0.5 bg-gray-50 pointer-events-none">
+          /
+        </kbd>
+      )}
+    </div>
+  );
+}
+
 export default function DesignerWorkspace() {
   const { profile } = useAuth();
   const router = useRouter();
@@ -211,7 +279,11 @@ export default function DesignerWorkspace() {
   useEffect(() => {
     const fetchChecklists = async () => {
       // PERF: Select only needed fields + limit — was unbounded select('*')
-      const { data } = await supabase.from('job_checklists').select('job_type, items').limit(100);
+      // job_checklists was found completely empty on 2026-08-01, which left
+      // designers with no checklist and nothing on screen to say why. A query
+      // failure here looks exactly the same, so it is reported explicitly.
+      const { data, error } = await supabase.from('job_checklists').select('job_type, items').limit(100);
+      if (error) toast.error('Could not load design checklists: ' + error.message);
       if (data) {
         const map: Record<string, string[]> = {};
         data.forEach((d: any) => {
@@ -382,13 +454,25 @@ export default function DesignerWorkspace() {
   // Pre-compute myDesignerRecord once instead of inside filteredTasks per-task
   const myDesignerRecord = useMemo(() => designers.find((d: any) => d.id === profile?.id), [designers, profile?.id]);
 
+  // One search rule for every view. List, Board and Timeline used to each carry
+  // their own copy (Board's checked fewer fields, Timeline had none at all), so
+  // the same word gave different results depending on which tab you were on.
+  const taskMatchesSearch = useCallback((task: any) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return [
+      task.title,
+      task.clientName,
+      task.taskId,          // job number, e.g. DO-0408001
+      task.designerName,
+      task.jobType,
+      task.productCategory,
+      task.deadline,
+    ].some(field => (field || '').toString().toLowerCase().includes(q));
+  }, [searchQuery]);
+
   const filteredTasks = useMemo(() => tasks.filter(task => {
-    const matchesSearch =
-      (task.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.jobType && task.jobType.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (task.productCategory && task.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (task.deadline && task.deadline.includes(searchQuery));
+    const matchesSearch = taskMatchesSearch(task);
 
     const isAssignedToMe = myDesignerRecord ? task.designerId === myDesignerRecord.id : task.designerId === profile?.id;
 
@@ -406,7 +490,13 @@ export default function DesignerWorkspace() {
     }
 
     return matchesSearch && matchesView;
-  }), [tasks, searchQuery, myDesignerRecord, activeTab, isAdmin, profile?.id]);
+  }), [tasks, taskMatchesSearch, myDesignerRecord, activeTab, isAdmin, profile?.id]);
+
+  // Board and Timeline show every task regardless of assignment, so their match
+  // count is the whole list filtered by the query — not filteredTasks, which
+  // also applies the My/Team tab rule.
+  const searchMatchedTasks = useMemo(() => tasks.filter(taskMatchesSearch), [tasks, taskMatchesSearch]);
+  const boardMatchCount = searchMatchedTasks.length;
 
   const selectedTask = useMemo(() => tasks.find(t => (t.id === selectedTaskId) || (t.realId === selectedTaskId)), [tasks, selectedTaskId]);
 
@@ -678,17 +768,16 @@ export default function DesignerWorkspace() {
                   <button onClick={() => router.push('/admin/designers/my-notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+              <TaskSearchInput value={searchQuery} onChange={setSearchQuery} matchCount={boardMatchCount} />
+
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center shrink-0"><Plus size={16} /> New Task</button>
             </div>
 
             <div className="flex h-[calc(100%-5rem)] gap-3 md:gap-4 min-w-max pb-4">
               {kanbanColumns.map(col => {
                 const colTasks = tasks.filter(t => {
                   const matchesStatus = t.status === col.id || (col.id === 'pending' && (!t.status || t.status === 'new')); // fallback
-                  const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    (t.productCategory && t.productCategory.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                    t.clientName?.toLowerCase().includes(searchQuery.toLowerCase());
-                  return matchesStatus && matchesSearch;
+                  return matchesStatus && taskMatchesSearch(t);
                 });
 
                 return (
@@ -808,7 +897,10 @@ export default function DesignerWorkspace() {
                   <button onClick={() => router.push('/admin/designers/my-notes')} className="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-900">Notes</button>
                 </div>
               </div>
-              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center"><Plus size={16} /> New Task</button>
+
+              <TaskSearchInput value={searchQuery} onChange={setSearchQuery} matchCount={boardMatchCount} />
+
+              <button onClick={() => router.push('/admin/designers/new-project')} className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-bold flex gap-2 items-center shrink-0"><Plus size={16} /> New Task</button>
             </div>
 
             {/* Gantt Chart Body */}
@@ -826,7 +918,13 @@ export default function DesignerWorkspace() {
                 </div>
 
                 {/* Rows */}
-                {tasks.length === 0 ? <p className="p-8 text-center text-gray-400">No active tasks to show.</p> : tasks.map(task => {
+                {searchMatchedTasks.length === 0 ? (
+                  <p className="p-8 text-center text-gray-400">
+                    {searchQuery.trim()
+                      ? <>No task matches “{searchQuery.trim()}”.</>
+                      : 'No active tasks to show.'}
+                  </p>
+                ) : searchMatchedTasks.map(task => {
                   // Calculate simplified progress bar width
                   const isOverdue = task.rawDeadline && new Date(task.rawDeadline) < new Date();
 
@@ -921,7 +1019,7 @@ export default function DesignerWorkspace() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                   <input
                     type="text"
-                    placeholder="Search project, date..."
+                    placeholder="Search project, client, job no…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 bg-white"
