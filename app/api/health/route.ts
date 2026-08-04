@@ -18,6 +18,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/api-auth';
 import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
+import {
+    checkSchemaDrift, checkRpcs, checkConfigTables, checkCrons, checkDataLoss,
+    checkWriteDrift, captureRowSnapshot, EXPECTED_CRONS, type Finding,
+} from '@/lib/health-checks';
+import { checkExpectedActivity } from '@/lib/activity-expectations';
+import { logCronRun } from '@/lib/cron-log';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -65,6 +71,19 @@ async function alertAdmins(db: any, payload: any) {
             for (const c of payload.pageErrors.top.slice(0, 5)) {
                 lines.push(`• <code>${escapeHtml(c.path)}</code> ×${c.count}`);
                 lines.push(`   ${escapeHtml(String(c.message).slice(0, 120))}`);
+            }
+        }
+
+        // The named detail is the difference between "something is wrong" and a
+        // message you can act on before opening a laptop. Capped at three lines
+        // per finding: a Telegram message long enough to scroll gets skimmed.
+        const detailed = (payload.findings as Finding[] || []).filter(f => f.detail?.length);
+        if (detailed.length) {
+            lines.push('', '<b>Detail</b>');
+            for (const f of detailed) {
+                lines.push(`<i>${escapeHtml(f.check)}</i>`);
+                for (const d of f.detail!.slice(0, 3)) lines.push(`• ${escapeHtml(d)}`);
+                if (f.detail!.length > 3) lines.push(`• …and ${f.detail!.length - 3} more`);
             }
         }
 
@@ -242,6 +261,59 @@ export async function GET(request: NextRequest) {
             // Table not migrated yet — omit rather than fail the whole check.
         }
 
+        // 7. Application-layer checks — the contract between code and database.
+        //
+        //    Everything above still only measures the plumbing. On 2026-08-01
+        //    every check above passed while public.job_checklists sat empty and
+        //    the Production Settings page showed nothing: no crash, so no
+        //    page_errors row, so nothing to find. These four assert instead of
+        //    waiting to be told — that the columns the app selects still exist,
+        //    that the functions it calls still exist, that configuration tables
+        //    still have rows, and that the crons still fire.
+        //
+        //    Each is isolated: one failing check must not take down the others,
+        //    or a single bad query would blind the whole audit.
+        const findings: Finding[] = [];
+        const runCheck = async (fn: () => Promise<Finding[]>, name: string) => {
+            try {
+                findings.push(...await fn());
+            } catch (e: any) {
+                findings.push({
+                    severity: 'warning',
+                    check: name,
+                    summary: `check failed to run: ${e?.message || e}`,
+                });
+            }
+        };
+
+        await Promise.all([
+            runCheck(() => checkSchemaDrift(db), 'schema-drift'),
+            // Reads were already covered. Writes were not — and a write that
+            // fails is silent, because the UI reports success from the click,
+            // not from the row. This is the check that would have caught
+            // Create Dispatch being dead for months.
+            runCheck(() => checkWriteDrift(db), 'write-drift'),
+            runCheck(() => checkRpcs(db), 'rpc-drift'),
+            runCheck(() => checkConfigTables(db), 'config-tables'),
+            runCheck(() => checkCrons(db, EXPECTED_CRONS), 'cron-freshness'),
+            // The only check that asks whether anyone is actually getting work
+            // done. Every other check can pass on a system where nothing works.
+            runCheck(() => checkExpectedActivity(db), 'expected-activity'),
+            // Compares every table against its own numbers from yesterday.
+            // Growth is never reported, which is what makes it safe to run while
+            // the business is still filling the app up — most tables are
+            // legitimately empty today and will not be in a month.
+            runCheck(() => checkDataLoss(db), 'data-loss'),
+        ]);
+
+        // Take today's snapshot AFTER comparing, or we would be comparing today
+        // against itself and would never see a thing. Cron-only: an admin
+        // refreshing /api/health must not overwrite the day's baseline and erase
+        // the evidence of a loss that happened this morning.
+        const isCronRun = !!process.env.CRON_SECRET &&
+            request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
+        if (isCronRun) await runCheck(() => captureRowSnapshot(db), 'data-loss');
+
         // A crashing page is not "healthy", whatever the database says. This is
         // the line that would have turned 2026-07-31 into an alert instead of a
         // discovery. Uptime monitors key off `status`, so it has to move.
@@ -249,6 +321,7 @@ export async function GET(request: NextRequest) {
         if (pageErrors && pageErrors.distinct > 0) {
             degradedReasons.push(`${pageErrors.distinct} page crash type(s) in the last 24h`);
         }
+        for (const f of findings) degradedReasons.push(f.summary);
         if (!config.telegramBotToken) degradedReasons.push('TELEGRAM_BOT_TOKEN missing');
         if (!config.supabaseServiceRole) degradedReasons.push('SUPABASE_SERVICE_ROLE_KEY missing');
         if (telegram && telegram.failed > 0) {
@@ -263,16 +336,25 @@ export async function GET(request: NextRequest) {
             config,
             telegram,
             pageErrors,
+            findings,
             systemHealth,
             responseTime: `${Date.now() - start}ms`,
         };
 
-        // 7. Tell someone. A daily audit nobody reads is not an audit. Only the
+        // 8. Tell someone. A daily audit nobody reads is not an audit. Only the
         //    cron alerts — an admin loading this page should not fire Telegram.
         const isCron = !!process.env.CRON_SECRET &&
             request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
-        if (isCron && degradedReasons.length) {
-            await alertAdmins(db, payload);
+        if (isCron) {
+            if (degradedReasons.length) await alertAdmins(db, payload);
+            // Record our own run last, so tomorrow's check can tell "the audit
+            // is clean" apart from "the audit stopped running" — which look
+            // identical from the outside and are the opposite of each other.
+            await logCronRun('health', {
+                ok: !degradedReasons.length,
+                durationMs: Date.now() - start,
+                message: degradedReasons.join('; ') || null as any,
+            });
         }
 
         return NextResponse.json(payload);
