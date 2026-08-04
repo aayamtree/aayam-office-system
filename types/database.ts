@@ -247,6 +247,23 @@ export interface Job extends BaseEntity {
   revision_count?: number;
   file_version?: string;
 
+  // Why an overdue job is late. The job still counts as overdue — this only
+  // says who we are waiting on, so the list can be read at a glance.
+  delay_reason?: DelayReason | null;
+  delay_note?: string | null;
+  delay_reason_at?: string | null;
+
+  // Order tracking
+  /** Client's own PO / reference number — what they quote back to us later. */
+  client_ref_no?: string | null;
+  /** Set by DB trigger when a dispatch is created. Day-0 for payment ageing. */
+  dispatched_at?: string | null;
+  dispatch_mode?: DispatchMode | null;
+  dispatch_receipt_url?: string | null;
+  eway_bill_number?: string | null;
+  invoice_reference?: string | null;
+  invoice_requested_at?: string | null;
+
   // Files and notes
   files: FileAttachment[];
   notes?: string;
@@ -677,10 +694,49 @@ export interface Dispatch extends BaseEntity {
 
   dispatched_by?: string;
 
+  /** How the goods left the building. Drives which fields the form asks for. */
+  dispatch_mode?: DispatchMode;
+  /** Courier / transport receipt (mandatory for those two modes). */
+  receipt_url?: string;
+  /** Client Collect: the person who actually came and collected. */
+  received_by_name?: string;
+
   // Joined data
   job?: Job;
   client?: Client;
 }
+
+/**
+ * Mode of dispatch. `local_transport` is a local driver (tempo / auto) who has
+ * no LR number and no tracking — all we can record is who drove it.
+ */
+export type DispatchMode = 'collect' | 'courier' | 'transport' | 'local_transport';
+
+/** Which fields the Create Dispatch form shows for each mode. */
+export const DISPATCH_MODE_FIELDS: Record<DispatchMode, {
+  label: string;
+  receipt: boolean;
+  transporter: boolean;
+  tracking: boolean;
+  vehicle: boolean;
+  driver: boolean;
+  receivedBy: boolean;
+}> = {
+  collect:         { label: 'Client Collect',  receipt: false, transporter: false, tracking: false, vehicle: false, driver: false, receivedBy: true  },
+  courier:         { label: 'Courier',         receipt: true,  transporter: true,  tracking: true,  vehicle: false, driver: false, receivedBy: false },
+  transport:       { label: 'Transport',       receipt: true,  transporter: true,  tracking: true,  vehicle: true,  driver: false, receivedBy: false },
+  local_transport: { label: 'Local Transport', receipt: false, transporter: false, tracking: false, vehicle: true,  driver: true,  receivedBy: false },
+};
+
+/** Why an overdue job is late. Explains the delay — does not excuse it. */
+export type DelayReason = 'waiting_client' | 'vendor_delay' | 'internal_delay' | 'payment_hold';
+
+export const DELAY_REASONS: { id: DelayReason; label: string; short: string; color: string }[] = [
+  { id: 'waiting_client', label: 'Waiting on client',    short: 'Client',   color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { id: 'vendor_delay',   label: 'Printer / vendor delay', short: 'Vendor', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { id: 'internal_delay', label: 'Internal delay (ours)', short: 'Internal', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { id: 'payment_hold',   label: 'Payment hold',          short: 'Payment',  color: 'bg-amber-50 text-amber-800 border-amber-300' },
+];
 
 // POS Category
 export interface POSCategory {

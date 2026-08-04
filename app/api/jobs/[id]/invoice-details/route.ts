@@ -28,10 +28,22 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const invoiceRef: string | null = (body.invoice_reference || '').trim() || null;
   const ewayNo: string | null = (body.eway_bill_number || '').trim() || null;
+  // The client's own PO number. Months later this is usually the number they
+  // quote back at us, so it must be stored and searchable alongside ours.
+  const clientRef: string | null = (body.client_ref_no || '').trim() || null;
+
+  // Only overwrite client_ref_no when the caller actually sent the field —
+  // other callers of this route (e.g. the file-upload handler) don't, and
+  // must not blank it out.
+  const patch: Record<string, string | null> = {
+    invoice_reference: invoiceRef,
+    eway_bill_number: ewayNo,
+  };
+  if ('client_ref_no' in body) patch.client_ref_no = clientRef;
 
   const { error: updErr } = await supabase
     .from('jobs')
-    .update({ invoice_reference: invoiceRef, eway_bill_number: ewayNo })
+    .update(patch)
     .eq('id', id);
   if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
 

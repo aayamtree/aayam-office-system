@@ -86,6 +86,8 @@ export default function JobDetailPage() {
     // Invoice / E-Way Bill form
     const [invoiceRef, setInvoiceRef] = useState('');
     const [ewayBillNo, setEwayBillNo] = useState('');
+    // The client's own PO / reference number — what they quote back at us later.
+    const [clientRefNo, setClientRefNo] = useState('');
     const [uploading, setUploading] = useState(false);
     const [saved, setSaved] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<{ label: string; name: string }[]>([]);
@@ -140,6 +142,7 @@ export default function JobDetailPage() {
             setJob(jobData as JobDetail);
             if (jobData.invoice_reference) setInvoiceRef(jobData.invoice_reference);
             if (jobData.eway_bill_number) setEwayBillNo(jobData.eway_bill_number);
+            if (jobData.client_ref_no) setClientRefNo(jobData.client_ref_no);
         }
 
         // Fetch QC records
@@ -207,12 +210,12 @@ export default function JobDetailPage() {
         const res = await fetch(`/api/jobs/${job.id}/invoice-details`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ invoice_reference: invoiceRef, eway_bill_number: ewayBillNo }),
+            body: JSON.stringify({ invoice_reference: invoiceRef, eway_bill_number: ewayBillNo, client_ref_no: clientRefNo }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Save failed');
         // Reflect saved values locally so the badge/state update immediately.
-        setJob(prev => prev ? { ...prev, invoice_reference: invoiceRef || null, eway_bill_number: ewayBillNo || null } as any : prev);
+        setJob(prev => prev ? { ...prev, invoice_reference: invoiceRef || null, eway_bill_number: ewayBillNo || null, client_ref_no: clientRefNo || null } as any : prev);
         setSaved(true);
         return data;
     };
@@ -424,6 +427,19 @@ export default function JobDetailPage() {
                             />
                         </div>
                     )}
+                    {/* The client's own number. A year from now they will ring up
+                        quoting THIS, not our job number — so it has to be stored
+                        and it has to be searchable from ⌘K. */}
+                    <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Client Reference / Their PO No.</label>
+                        <input
+                            type="text"
+                            value={clientRefNo}
+                            onChange={e => setClientRefNo(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            placeholder="the number the client uses"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3 flex-wrap">

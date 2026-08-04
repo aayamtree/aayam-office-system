@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
 import { sendToChat, escapeHtml, TelegramDepartment } from '@/lib/telegram-groups';
+import { withCronLog } from '@/lib/cron-log';
+import {
+  getPendingPayments,
+  buildPendingPaymentsBlock,
+  inr,
+  type PendingPaymentsSnapshot,
+} from '@/lib/pending-payments';
 
 /**
  * Telegram Digest Cron — runs twice daily, Mon–Sat:
@@ -143,7 +150,12 @@ function buildQueueGroupDigest(slot: Slot, department: 'print' | 'dispatch', job
   return `${header(slot, label)}\n<b>${mine.length}</b> job${mine.length !== 1 ? 's' : ''} in the queue:\n\n${listed}${more}`;
 }
 
-function buildAdminGroupDigest(slot: Slot, jobs: DigestJob[], leadsDue: DigestLead[]): string {
+function buildAdminGroupDigest(
+  slot: Slot,
+  jobs: DigestJob[],
+  leadsDue: DigestLead[],
+  pendingPayments?: PendingPaymentsSnapshot | null,
+): string {
   const counts: Record<string, number> = {};
   for (const dept of ['design', 'print', 'dispatch'] as const) {
     counts[dept] = jobs.filter((j) => DEPT_STAGES[dept].includes(j.current_stage)).length;
@@ -155,13 +167,22 @@ function buildAdminGroupDigest(slot: Slot, jobs: DigestJob[], leadsDue: DigestLe
   const title = slot === 'morning'
     ? `👑 <b>Aayam Morning Digest</b> — ${todayLabel()}`
     : `👑 <b>Aayam Evening Recap</b> — ${todayLabel()}`;
+
+  // Goods that have already left the building and are still unpaid.
+  // Deliberately separate from "pending on active jobs": that money is
+  // still ours to earn, this money is already owed.
+  const collections = pendingPayments
+    ? buildPendingPaymentsBlock(pendingPayments, { limit: 8, escape: escapeHtml })
+    : null;
+
   return (
     `${title}\n\n` +
     `🎨 Design queue: <b>${counts.design}</b>\n` +
     `🖨️ Print queue: <b>${counts.print}</b>\n` +
     `📦 Dispatch queue: <b>${counts.dispatch}</b>\n` +
     `📞 Lead follow-ups due: <b>${leadsDue.length}</b>\n` +
-    `💰 Pending on active jobs: <b>₹${pending.toLocaleString('en-IN')}</b>`
+    `💰 Pending on active jobs: <b>${inr(pending)}</b>` +
+    (collections ? `\n\n${collections}` : '')
   );
 }
 
@@ -173,7 +194,8 @@ function buildPersonalBrief(
   slot: Slot,
   p: Staff,
   jobs: DigestJob[],
-  leadsDue: DigestLead[]
+  leadsDue: DigestLead[],
+  pendingPayments?: PendingPaymentsSnapshot | null,
 ): { text: string; appPath: string } | null {
   const name = (p.full_name || '').split(' ')[0] || 'there';
   const head = slot === 'morning'
@@ -225,10 +247,10 @@ function buildPersonalBrief(
     };
   }
 
-  if (p.role === 'admin') {
+  if (p.role === 'admin' || p.role === 'accounts') {
     return {
-      text: buildAdminGroupDigest(slot, jobs, leadsDue),
-      appPath: '/admin/dashboard',
+      text: buildAdminGroupDigest(slot, jobs, leadsDue, pendingPayments),
+      appPath: '/admin/finance/awaiting-payment',
     };
   }
 
@@ -237,7 +259,7 @@ function buildPersonalBrief(
 
 /* ------------------------------------------------------------------ */
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   // Fail closed: if CRON_SECRET is unset, reject rather than run unauthenticated.
   if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
@@ -285,6 +307,17 @@ export async function GET(request: NextRequest) {
   const allStaff = (staff || []) as Staff[];
   const leadsDue = (leads || []) as DigestLead[];
 
+  // Dispatched-but-unpaid. Fetched separately because the jobs query above
+  // excludes `delivered` — exactly the rows where the money is oldest.
+  // A failure here must not take the whole brief down with it: a digest
+  // without the collections block is far better than no digest at all.
+  let pendingPayments: PendingPaymentsSnapshot | null = null;
+  try {
+    pendingPayments = await getPendingPayments(service);
+  } catch (err) {
+    console.error('[telegram-digest] pending payments block skipped:', err);
+  }
+
   // 1) Department group digests (per-person sections for design)
   let groupsSent = 0;
   for (const g of groups || []) {
@@ -292,9 +325,9 @@ export async function GET(request: NextRequest) {
     let text: string | null = null;
     if (dept === 'design') text = buildDesignGroupDigest(slot, allJobs, allStaff);
     else if (dept === 'print' || dept === 'dispatch') text = buildQueueGroupDigest(slot, dept, allJobs);
-    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue);
+    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue, pendingPayments);
     if (!text) continue;
-    const appPath = dept === 'admin' ? '/admin/dashboard' : '/admin/jobs/queue';
+    const appPath = dept === 'admin' ? '/admin/finance/awaiting-payment' : '/admin/jobs/queue';
     if (await sendToChat(g.chat_id, text, appPath)) groupsSent++;
   }
 
@@ -302,7 +335,7 @@ export async function GET(request: NextRequest) {
   let dmsSent = 0;
   for (const p of allStaff) {
     if (!p.telegram_chat_id) continue;
-    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue);
+    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue, pendingPayments);
     if (!brief) continue;
     if (await sendToChat(p.telegram_chat_id, brief.text, brief.appPath)) dmsSent++;
   }
@@ -312,5 +345,18 @@ export async function GET(request: NextRequest) {
     groupsSent,
     dmsSent,
     linkedStaff: allStaff.filter((p) => p.telegram_chat_id).length,
+    // Surfaced so the health audit can tell "nothing outstanding" apart from
+    // "the collections query silently failed again".
+    pendingPayments: pendingPayments
+      ? { count: pendingPayments.items.length, outstanding: pendingPayments.totalOutstanding }
+      : 'unavailable',
   });
+}
+
+// Every run of this cron is recorded in public.cron_runs (see lib/cron-log.ts).
+// Vercel knows whether the schedule fired, but that lives in a dashboard nobody
+// opens; the daily audit needs the fact inside the database so it can alert when
+// this job silently stops running.
+export async function GET(request: NextRequest) {
+    return withCronLog('telegram-digest', () => runJob(request));
 }

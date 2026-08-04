@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import DispatchedUnpaid from '@/components/finance/DispatchedUnpaid';
 import {
   IndianRupee, Building2, User, RefreshCw, Loader2, CheckCircle2, Clock,
 } from 'lucide-react';
@@ -103,13 +104,30 @@ export default function AwaitingPaymentPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <IndianRupee className="w-5 h-5 text-emerald-600" />
+          Awaiting Payment
+        </h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Everything we have delivered that has not been paid for — print consignments and design files.
+        </p>
+      </div>
+
+      {/* Print / production work that has already shipped. Listed first
+          because the goods are gone: that money is at more risk than a
+          design file we could still withhold. */}
+      <DispatchedUnpaid />
+
+      <hr className="border-gray-200" />
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <IndianRupee className="w-5 h-5 text-emerald-600" />
-            Awaiting Payment
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <IndianRupee className="w-4 h-4 text-emerald-600" />
+            Design Files Sent
+          </h2>
+          <p className="text-xs text-gray-500 mt-0.5">
             Billable design jobs delivered to the client, waiting for payment. Mark paid to close.
           </p>
         </div>

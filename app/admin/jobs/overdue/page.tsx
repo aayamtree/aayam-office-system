@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getStageName, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
+import { toast } from '@/lib/toast';
+import { DELAY_REASONS, type DelayReason } from '@/types/database';
 import {
   AlertTriangle, Clock, User, Building2,
   RefreshCw, Loader2, ArrowRight, ChevronDown, ChevronUp, X, Filter
@@ -22,7 +24,14 @@ interface OverdueJob {
   client_name: string;
   designer_name: string;
   days_overdue: number;
+  // Who we are waiting on. This does NOT excuse the job from being overdue —
+  // a 40-day wait on a client is still 40 days late. It only says whose court
+  // the ball is in, so 36 red rows can be read at a glance.
+  delay_reason: DelayReason | null;
+  delay_note: string | null;
 }
+
+const REASON_BY_ID = Object.fromEntries(DELAY_REASONS.map(r => [r.id, r])) as Record<DelayReason, typeof DELAY_REASONS[number]>;
 
 // Stage labels from the single source of truth (lib/job-workflow.ts)
 const STAGE_LABELS: Record<string, string> = Object.fromEntries(
@@ -62,8 +71,11 @@ export default function OverduePage() {
   const [filterStage, setFilterStage] = useState<string | null>(null);
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [filterJobType, setFilterJobType] = useState<string | null>(null);
+  // 'unset' surfaces the jobs nobody has explained yet — usually the ones worth chasing.
+  const [filterReason, setFilterReason] = useState<DelayReason | 'unset' | null>(null);
+  const [savingReason, setSavingReason] = useState<string | null>(null);
 
-  const hasAnyFilter = filterDesigner || filterUrgency !== 'all' || filterStage || filterPriority || filterJobType;
+  const hasAnyFilter = filterDesigner || filterUrgency !== 'all' || filterStage || filterPriority || filterJobType || filterReason;
 
   const clearAllFilters = () => {
     setFilterDesigner(null);
@@ -71,6 +83,25 @@ export default function OverduePage() {
     setFilterStage(null);
     setFilterPriority(null);
     setFilterJobType(null);
+    setFilterReason(null);
+  };
+
+  // Set (or clear) who we're waiting on. Optimistic: the row updates instantly
+  // and rolls back if the write fails, so nobody is left believing a save that
+  // never happened.
+  const setDelayReason = async (jobId: string, reason: DelayReason | null) => {
+    const previous = jobs.find(j => j.id === jobId)?.delay_reason ?? null;
+    setSavingReason(jobId);
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, delay_reason: reason } : j));
+    const { error } = await supabase
+      .from('jobs')
+      .update({ delay_reason: reason, delay_reason_at: reason ? new Date().toISOString() : null })
+      .eq('id', jobId);
+    setSavingReason(null);
+    if (error) {
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, delay_reason: previous } : j));
+      toast.error('Could not save the reason: ' + error.message);
+    }
   };
 
   const fetchOverdue = async () => {
@@ -80,7 +111,7 @@ export default function OverduePage() {
 
       const { data: jobData, error } = await supabase
         .from('jobs')
-        .select('id, job_number, project_name, client_deadline, current_stage, priority, job_type, designer_id, client_id')
+        .select('id, job_number, project_name, client_deadline, current_stage, priority, job_type, designer_id, client_id, delay_reason, delay_note')
         .lt('client_deadline', today)
         .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
         .order('client_deadline', { ascending: true });
@@ -125,6 +156,8 @@ export default function OverduePage() {
           client_name: j.client_id ? (clientMap[j.client_id] || '—') : '—',
           designer_name: j.designer_id ? (designerMap[j.designer_id] || 'Unassigned') : 'Unassigned',
           days_overdue: daysOverdue,
+          delay_reason: (j.delay_reason as DelayReason) || null,
+          delay_note: j.delay_note || null,
         };
       });
 
@@ -172,6 +205,8 @@ export default function OverduePage() {
     if (filterStage) arr = arr.filter(j => j.current_stage === filterStage);
     if (filterPriority) arr = arr.filter(j => j.priority === filterPriority);
     if (filterJobType) arr = arr.filter(j => j.job_type === filterJobType);
+    if (filterReason === 'unset') arr = arr.filter(j => !j.delay_reason);
+    else if (filterReason) arr = arr.filter(j => j.delay_reason === filterReason);
 
     arr.sort((a, b) => {
       let cmp = 0;
@@ -185,7 +220,15 @@ export default function OverduePage() {
       return sortAsc ? -cmp : cmp;
     });
     return arr;
-  }, [jobs, filterDesigner, filterUrgency, filterStage, filterPriority, filterJobType, sortBy, sortAsc]);
+  }, [jobs, filterDesigner, filterUrgency, filterStage, filterPriority, filterJobType, filterReason, sortBy, sortAsc]);
+
+  // How the overdue pile splits by who we're waiting on.
+  const reasonCounts = useMemo(() => {
+    const counts: Record<string, number> = { unset: 0 };
+    DELAY_REASONS.forEach(r => { counts[r.id] = 0; });
+    jobs.forEach(j => { counts[j.delay_reason || 'unset'] = (counts[j.delay_reason || 'unset'] || 0) + 1; });
+    return counts;
+  }, [jobs]);
 
   const toggleSort = (col: typeof sortBy) => {
     if (sortBy === col) setSortAsc(p => !p);
@@ -285,6 +328,47 @@ export default function OverduePage() {
                   <X className="w-3 h-3" /> Clear all
                 </button>
               )}
+            </div>
+
+            {/* ── Blocked on ── the question the red list never answered:
+                 late, yes, but whose court is the ball in? ── */}
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Blocked On
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {DELAY_REASONS.map(r => {
+                  const count = reasonCounts[r.id] || 0;
+                  if (count === 0) return null;
+                  const active = filterReason === r.id;
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => setFilterReason(prev => prev === r.id ? null : r.id)}
+                      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
+                        active ? 'bg-gray-900 text-white border-gray-900' : `${r.color} hover:opacity-80`
+                      }`}
+                    >
+                      {r.label}
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${active ? 'bg-white/20' : 'bg-black/10'}`}>{count}</span>
+                    </button>
+                  );
+                })}
+                {reasonCounts.unset > 0 && (
+                  <button
+                    onClick={() => setFilterReason(prev => prev === 'unset' ? null : 'unset')}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
+                      filterReason === 'unset'
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 border-dashed hover:bg-gray-100'
+                    }`}
+                    title="Nobody has said why these are late"
+                  >
+                    Not explained
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${filterReason === 'unset' ? 'bg-white/20' : 'bg-black/10'}`}>{reasonCounts.unset}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Designer filter */}
@@ -395,13 +479,14 @@ export default function OverduePage() {
             </div>
 
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_1.5fr_1fr_120px_100px_100px_48px] gap-0 border-b bg-gray-50 px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:grid">
+            <div className="grid grid-cols-[1fr_1.4fr_0.9fr_115px_150px_95px_90px_48px] gap-0 border-b bg-gray-50 px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:grid">
               <span>Job</span>
               <span>Project / Client</span>
               <button onClick={() => toggleSort('designer')} className="flex items-center gap-1 hover:text-gray-800">
                 Designer <SortIcon col="designer" />
               </button>
               <span>Stage</span>
+              <span>Blocked On</span>
               <button onClick={() => toggleSort('days')} className="flex items-center gap-1 hover:text-gray-800">
                 Overdue <SortIcon col="days" />
               </button>
@@ -421,7 +506,7 @@ export default function OverduePage() {
                 {filtered.map(job => (
                   <div
                     key={job.id}
-                    className={`border-l-4 ${urgencyClass(job.days_overdue)} grid grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr_120px_100px_100px_48px] gap-2 md:gap-0 px-4 py-3 items-center hover:bg-black/[0.02] transition-colors`}
+                    className={`border-l-4 ${urgencyClass(job.days_overdue)} grid grid-cols-1 md:grid-cols-[1fr_1.4fr_0.9fr_115px_150px_95px_90px_48px] gap-2 md:gap-0 px-4 py-3 items-center hover:bg-black/[0.02] transition-colors`}
                   >
                     <div>
                       <span className="font-mono text-xs font-bold text-gray-700">{job.job_number}</span>
@@ -455,6 +540,28 @@ export default function OverduePage() {
                       </span>
                     </div>
 
+                    {/* Blocked on — editable in place. The person looking at the
+                        red list is the person who knows why it is red. */}
+                    <div className="flex items-center gap-1">
+                      <select
+                        value={job.delay_reason || ''}
+                        disabled={savingReason === job.id}
+                        onChange={e => setDelayReason(job.id, (e.target.value || null) as DelayReason | null)}
+                        aria-label={`Why is ${job.job_number} late`}
+                        className={`w-full text-[11px] font-medium border rounded-md px-1.5 py-1 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50 ${
+                          job.delay_reason
+                            ? REASON_BY_ID[job.delay_reason].color
+                            : 'bg-white border-gray-200 border-dashed text-gray-400'
+                        }`}
+                      >
+                        <option value="">— why? —</option>
+                        {DELAY_REASONS.map(r => (
+                          <option key={r.id} value={r.id}>{r.label}</option>
+                        ))}
+                      </select>
+                      {savingReason === job.id && <Loader2 className="w-3 h-3 animate-spin text-gray-400 shrink-0" />}
+                    </div>
+
                     <div>
                       <span className={`text-xs font-bold px-2 py-1 rounded-md ${urgencyBadge(job.days_overdue)}`}>
                         {job.days_overdue}d late
@@ -485,6 +592,7 @@ export default function OverduePage() {
           <p className="text-xs text-gray-400 text-center">
             <Clock className="inline w-3 h-3 mr-1" />
             Based on client deadline. Delivered, cancelled, and design files sent to client are excluded.
+            Setting &ldquo;Blocked On&rdquo; explains a delay — it never hides one.
           </p>
         </>
       )}

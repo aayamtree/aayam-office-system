@@ -211,12 +211,29 @@ export default function CommandPalette() {
 
         // 2. DB search — async
         setLoading(true);
-        const dbQ = `%${searchQuery}%`;
+        // PostgREST's `or=` filter is comma-and-parenthesis delimited, so those
+        // characters in a user's query would corrupt the filter and silently
+        // return the wrong rows. Strip them rather than risk it.
+        const safeQuery = searchQuery.replace(/[,()]/g, ' ').trim();
+        if (!safeQuery) { setLoading(false); return; }
+        const dbQ = `%${safeQuery}%`;
 
         try {
-            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes] = await Promise.all([
-                supabase.from('jobs').select('id, job_number, project_name, current_stage')
-                    .or(`job_number.ilike.${dbQ},project_name.ilike.${dbQ}`).limit(5),
+            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes, dispatchRes] = await Promise.all([
+                // A job carries FOUR numbers people quote back at us: ours, the
+                // client's own PO, the invoice, and the e-way bill. Searching
+                // only our own job number meant that a client ringing up with
+                // "invoice INV-2026-0142" could not be answered.
+                supabase.from('jobs')
+                    .select('id, job_number, project_name, current_stage, invoice_reference, eway_bill_number, client_ref_no')
+                    .or([
+                        `job_number.ilike.${dbQ}`,
+                        `project_name.ilike.${dbQ}`,
+                        `invoice_reference.ilike.${dbQ}`,
+                        `eway_bill_number.ilike.${dbQ}`,
+                        `client_ref_no.ilike.${dbQ}`,
+                    ].join(','))
+                    .limit(6),
                 supabase.from('clients').select('id, name, company, phone')
                     .or(`name.ilike.${dbQ},company.ilike.${dbQ},phone.ilike.${dbQ}`).limit(5),
                 supabase.from('leads').select('id, lead_number, name, company, status')
@@ -225,9 +242,27 @@ export default function CommandPalette() {
                     .or(`invoice_number.ilike.${dbQ}`).limit(5),
                 supabase.from('quotations').select('id, quote_number, total_amount, status')
                     .or(`quote_number.ilike.${dbQ}`).limit(5),
+                // The LR / consignment number lives on the dispatch, not the job,
+                // so it needs its own lookup — then we land on the job it belongs to.
+                supabase.from('dispatches')
+                    .select('id, tracking_number, dispatch_number, job_id, job:jobs(id, job_number, project_name, current_stage)')
+                    .or(`tracking_number.ilike.${dbQ},dispatch_number.ilike.${dbQ}`).limit(5),
             ]);
 
             const dbResults: SearchResult[] = [];
+            // A job can match on more than one identifier, and can also be
+            // reached via its dispatch. Show it once.
+            const seenJobIds = new Set<string>();
+
+            /** Say WHICH number matched, so a hit on an unfamiliar code is explainable. */
+            const matchedOn = (row: any): string | null => {
+                const needle = safeQuery.toLowerCase();
+                const hit = (v: unknown) => typeof v === 'string' && v.toLowerCase().includes(needle);
+                if (hit(row.invoice_reference)) return `invoice ${row.invoice_reference}`;
+                if (hit(row.eway_bill_number)) return `e-way bill ${row.eway_bill_number}`;
+                if (hit(row.client_ref_no)) return `client ref ${row.client_ref_no}`;
+                return null;
+            };
 
             // Every result must land ON the record, not on the list that
             // contains it. Picking a job out of 200+ and then being dropped on
@@ -238,12 +273,35 @@ export default function CommandPalette() {
             //   quotations      → list page; its highlight handler fills the
             //                     search box, so it needs the quote NUMBER.
             //                     Passing the uuid, as before, matched nothing.
-            if (jobsRes.data) jobsRes.data.forEach(j => dbResults.push({
-                id: j.id, type: 'job',
-                title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
-                subtitle: getStageName(j.current_stage) || 'New',
-                href: `/admin/jobs/${j.id}`,
-            }));
+            if (jobsRes.data) jobsRes.data.forEach(j => {
+                if (seenJobIds.has(j.id)) return;
+                seenJobIds.add(j.id);
+                const via = matchedOn(j);
+                dbResults.push({
+                    id: j.id, type: 'job',
+                    title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
+                    subtitle: via
+                        ? `${getStageName(j.current_stage) || 'New'} · matched ${via}`
+                        : (getStageName(j.current_stage) || 'New'),
+                    href: `/admin/jobs/${j.id}`,
+                });
+            });
+
+            // LR / consignment number → the job it shipped under.
+            if (dispatchRes.data) (dispatchRes.data as any[]).forEach(d => {
+                const job = Array.isArray(d.job) ? d.job[0] : d.job;
+                if (!job?.id || seenJobIds.has(job.id)) return;
+                seenJobIds.add(job.id);
+                const label = d.tracking_number
+                    ? `LR / tracking ${d.tracking_number}`
+                    : `dispatch ${d.dispatch_number}`;
+                dbResults.push({
+                    id: job.id, type: 'job',
+                    title: `${job.job_number} — ${job.project_name || 'Untitled'}`,
+                    subtitle: `${getStageName(job.current_stage) || 'New'} · matched ${label}`,
+                    href: `/admin/jobs/${job.id}`,
+                });
+            });
 
             if (clientsRes.data) clientsRes.data.forEach(c => dbResults.push({
                 id: c.id, type: 'client',
@@ -351,7 +409,7 @@ export default function CommandPalette() {
                         value={query}
                         onChange={(e) => handleQueryChange(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Search pages, jobs, clients, leads..."
+                        placeholder="Job no, invoice no, e-way bill, LR no, client ref, name…"
                         className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-12 text-sm"
                     />
                     {loading && (

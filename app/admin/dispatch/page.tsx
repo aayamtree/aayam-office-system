@@ -10,7 +10,10 @@ import { Job, Dispatch } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { getStageName, getStageColor } from '@/lib/job-workflow';
 import { hasInvoiceAttached } from '@/lib/invoice-status';
+import { DISPATCH_MODE_FIELDS, type DispatchMode } from '@/types/database';
 import ActionButton from '@/components/ActionButton';
+import LoadError from '@/components/LoadError';
+import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
 
 // ─── Transporter vendor ──────────────────────────────────────
 interface TransporterVendor {
@@ -21,7 +24,7 @@ interface TransporterVendor {
 
 export default function DispatchPage() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, updateJobStage, refetch: refetchJobs } = useJobs({
+  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, refetch: refetchJobs } = useJobs({
     // Explicit select so the dispatch card can see the invoice signals.
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
@@ -30,7 +33,7 @@ export default function DispatchPage() {
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true }
   });
-  const { dispatches, loading: dispatchesLoading, createDispatch, refetch: refetchDispatches } = useDispatches();
+  const { dispatches, loading: dispatchesLoading, error: dispatchesError, createDispatch, refetch: refetchDispatches } = useDispatches();
 
   // Jobs are not on the realtime channel (perf), so an already-open dispatch
   // screen won't see the accountant's invoice until it refetches. Refresh when
@@ -95,14 +98,21 @@ export default function DispatchPage() {
     vehicle_number: '',
     driver_name: '',
     driver_phone: '',
+    received_by_name: '',
     packages: 1,
     notes: '',
-    dispatch_mode: 'collect' as 'collect' | 'courier' | 'transport',
+    dispatch_mode: 'collect' as DispatchMode,
   });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  // Dispatch must tick that it has actually opened the invoice / e-way bill.
+  const [docsVerified, setDocsVerified] = useState(false);
+
+  // Which fields this mode asks for. Local Transport is the odd one: a local
+  // driver has no LR number and no tracking, so all we can record is who drove.
+  const modeFields = DISPATCH_MODE_FIELDS[dispatchForm.dispatch_mode];
 
   // Receipt is mandatory when goods leave via courier or transport
-  const receiptRequired = dispatchForm.dispatch_mode !== 'collect';
+  const receiptRequired = modeFields.receipt;
 
   const loading = jobsLoading || dispatchesLoading;
 
@@ -167,10 +177,12 @@ export default function DispatchPage() {
     setSelectedJob(job);
     setDispatchForm({
       transporter_name: '', tracking_number: '', vehicle_number: '',
-      driver_name: '', driver_phone: '', packages: job.quantity || 1, notes: '',
+      driver_name: '', driver_phone: '', received_by_name: '',
+      packages: job.quantity || 1, notes: '',
       dispatch_mode: 'collect',
     });
     setReceiptFile(null);
+    setDocsVerified(false);
     setShowDispatchModal(true);
   };
 
@@ -181,6 +193,16 @@ export default function DispatchPage() {
     // Courier / transport must have a receipt for traceability
     if (receiptRequired && !receiptFile) {
       toast.error('Please attach the courier / transport receipt before dispatching.');
+      return;
+    }
+    // Local transport has no LR and no tracking — the driver IS the record.
+    if (modeFields.driver && !dispatchForm.driver_name.trim()) {
+      toast.error('Enter the driver name — for local transport it is the only record we have.');
+      return;
+    }
+    // Nothing leaves until someone has actually looked at the paperwork.
+    if (!docsVerified) {
+      toast.error('Open and tick the invoice / e-way bill check before dispatching.');
       return;
     }
     setSubmitting(true);
@@ -195,22 +217,51 @@ export default function DispatchPage() {
         receiptUrl = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl || null;
       }
 
+      // Build the row explicitly. Spreading the form used to send
+      // `dispatch_mode` into a table that had no such column, so PostgREST
+      // rejected EVERY insert — 232 jobs and not one dispatch record.
+      // An explicit payload means a new form field can never silently break
+      // the insert again.
+      const modeLabel = DISPATCH_MODE_FIELDS[dispatchForm.dispatch_mode].label;
       const result = await createDispatch({
         job_id: selectedJob.id,
         client_id: selectedJob.client_id,
         status: 'dispatched',
         dispatch_date: new Date().toISOString(),
-        ...dispatchForm
+        dispatch_mode: dispatchForm.dispatch_mode,
+        packages: dispatchForm.packages || 1,
+        notes: dispatchForm.notes || undefined,
+        receipt_url: receiptUrl || undefined,
+        // Only send what this mode actually asked for, so a stale value from a
+        // mode the user switched away from can't be saved.
+        transporter_name: modeFields.transporter ? dispatchForm.transporter_name || undefined : undefined,
+        tracking_number: modeFields.tracking ? dispatchForm.tracking_number || undefined : undefined,
+        vehicle_number: modeFields.vehicle ? dispatchForm.vehicle_number || undefined : undefined,
+        driver_name: modeFields.driver ? dispatchForm.driver_name || undefined : undefined,
+        driver_phone: modeFields.driver ? dispatchForm.driver_phone || undefined : undefined,
+        received_by_name: modeFields.receivedBy ? dispatchForm.received_by_name || undefined : undefined,
+        dispatched_by: profile?.id || undefined,
       } as any);
 
       if (result.error) throw new Error(result.error);
 
-      const modeLabel = { collect: 'Client Collect', courier: 'Courier', transport: 'Transport' }[dispatchForm.dispatch_mode];
+      const who = modeFields.receivedBy
+        ? (dispatchForm.received_by_name ? ` — collected by ${dispatchForm.received_by_name}` : '')
+        : modeFields.driver
+          ? (dispatchForm.driver_name ? ` — driver ${dispatchForm.driver_name}` : '')
+          : (dispatchForm.transporter_name ? ` (${dispatchForm.transporter_name})` : '');
+      const tracking = modeFields.tracking && dispatchForm.tracking_number
+        ? `. Tracking: ${dispatchForm.tracking_number}`
+        : '';
+
       await updateJobStage(selectedJob.id, 'dispatched',
-        `Dispatched via ${modeLabel}${dispatchForm.transporter_name ? ` (${dispatchForm.transporter_name})` : ''}. Tracking: ${dispatchForm.tracking_number || 'N/A'}`
+        `Dispatched via ${modeLabel}${who}${tracking}. Paperwork verified by ${profile?.full_name || 'dispatcher'}.`
       );
 
-      // Persist mode of dispatch + receipt on the job
+      // Persist mode of dispatch + receipt on the job.
+      // (dispatched_at is set by the DB trigger on the dispatches insert —
+      // it is the day-0 for payment ageing and must not depend on this call
+      // succeeding.)
       await supabase.from('jobs')
         .update({ dispatch_mode: dispatchForm.dispatch_mode, dispatch_receipt_url: receiptUrl })
         .eq('id', selectedJob.id);
@@ -220,9 +271,9 @@ export default function DispatchPage() {
         await supabase.from('qc_records').insert({
           job_id: selectedJob.id,
           qc_type: 'post_print',
-          checklist: {},
+          checklist: { paperwork_verified: true },
           result: 'passed',
-          notes: `Dispatched via ${dispatchForm.transporter_name || 'Self'}`,
+          notes: `Dispatched via ${modeLabel}. Invoice / e-way bill checked by ${profile?.full_name || 'dispatcher'}.`,
           performed_by: profile?.id || null,
           performed_by_name: profile?.full_name || 'Unknown',
         });
@@ -241,6 +292,16 @@ export default function DispatchPage() {
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6 px-2 animate-fade-in">
+      {/* A failed fetch used to leave this screen looking merely quiet.
+          On an operations board that is dangerous: an empty list reads as
+          "nothing to dispatch" and work silently stops. Say so instead. */}
+      {/* Parenthesised deliberately: `&&` binds tighter than `||`, so
+          `a || b && <X/>` means `a || (b && <X/>)` — with a truthy jobsError
+          React would render the raw error string as page text instead of the
+          component. */}
+      {(jobsError || dispatchesError) && (
+        <LoadError variant="inline" what="the dispatch board" error={jobsError || dispatchesError} onRetry={() => { refetchJobs?.(); refetchDispatches?.(); }} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div>
@@ -481,33 +542,42 @@ export default function DispatchPage() {
             </div>
 
             <form onSubmit={handleDispatchSubmit} className="p-4 space-y-4">
+              {/* ── Paperwork from accounts — shown BEFORE the form fields,
+                   because verifying it is the first thing dispatch should do. */}
+              <DispatchPaperwork
+                job={selectedJob as any}
+                verified={docsVerified}
+                onVerifiedChange={setDocsVerified}
+              />
+
               {/* Mode of dispatch */}
               <div>
                 <label className="block text-sm font-medium mb-1">Mode of Dispatch</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { id: 'collect', label: 'Client Collect' },
-                    { id: 'courier', label: 'Courier' },
-                    { id: 'transport', label: 'Transport' },
-                  ] as const).map(m => (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(Object.keys(DISPATCH_MODE_FIELDS) as DispatchMode[]).map(id => (
                     <button
-                      key={m.id}
+                      key={id}
                       type="button"
-                      onClick={() => setDispatchForm({ ...dispatchForm, dispatch_mode: m.id })}
+                      onClick={() => setDispatchForm({ ...dispatchForm, dispatch_mode: id })}
                       className={`px-2 py-2 text-xs font-semibold rounded-md border transition-colors ${
-                        dispatchForm.dispatch_mode === m.id
+                        dispatchForm.dispatch_mode === id
                           ? 'bg-gray-900 text-white border-gray-900'
                           : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
-                      {m.label}
+                      {DISPATCH_MODE_FIELDS[id].label}
                     </button>
                   ))}
                 </div>
+                {dispatchForm.dispatch_mode === 'local_transport' && (
+                  <p className="text-[11px] text-gray-500 mt-1.5">
+                    Local driver — no LR or tracking number. Record the driver so the consignment can be traced.
+                  </p>
+                )}
               </div>
 
               {/* Receipt — required for courier / transport */}
-              {receiptRequired && (
+              {modeFields.receipt && (
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     {dispatchForm.dispatch_mode === 'courier' ? 'Courier' : 'Transport'} Receipt
@@ -523,41 +593,60 @@ export default function DispatchPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Client Collect — the only thing worth recording is who came. */}
+              {modeFields.receivedBy && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Transporter</label>
-                  {transporters.length > 0 ? (
-                    <select
-                      value={dispatchForm.transporter_name}
-                      onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md text-sm"
-                    >
-                      <option value="">Self / Manual</option>
-                      {transporters.map(t => (
-                        <option key={t.id} value={t.name}>{t.name}{t.company ? ` (${t.company})` : ''}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input type="text" placeholder="e.g. DTDC, Self"
-                      value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                  <label className="block text-sm font-medium mb-1">Collected By (Client Name)</label>
+                  <input type="text" placeholder="Name of person collecting"
+                    value={dispatchForm.received_by_name}
+                    onChange={e => setDispatchForm({ ...dispatchForm, received_by_name: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md text-sm" />
+                </div>
+              )}
+
+              {(modeFields.transporter || modeFields.tracking) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {modeFields.transporter && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Transporter</label>
+                      {transporters.length > 0 ? (
+                        <select
+                          value={dispatchForm.transporter_name}
+                          onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md text-sm"
+                        >
+                          <option value="">Self / Manual</option>
+                          {transporters.map(t => (
+                            <option key={t.id} value={t.name}>{t.name}{t.company ? ` (${t.company})` : ''}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input type="text" placeholder="e.g. DTDC, Self"
+                          value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
+                          className="w-full px-3 py-2 border rounded-md text-sm" />
+                      )}
+                    </div>
+                  )}
+                  {modeFields.tracking && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Tracking / LR No</label>
+                      <input type="text" placeholder="Optional"
+                        value={dispatchForm.tracking_number} onChange={e => setDispatchForm({ ...dispatchForm, tracking_number: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-md text-sm" />
+                    </div>
                   )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tracking / LR No</label>
-                  <input type="text" placeholder="Optional"
-                    value={dispatchForm.tracking_number} onChange={e => setDispatchForm({ ...dispatchForm, tracking_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm" />
-                </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Vehicle No</label>
-                  <input type="text" placeholder="e.g. OD-02-AA-1234"
-                    value={dispatchForm.vehicle_number} onChange={e => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm" />
-                </div>
+                {modeFields.vehicle && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Vehicle No</label>
+                    <input type="text" placeholder="e.g. OD-02-AA-1234"
+                      value={dispatchForm.vehicle_number} onChange={e => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium mb-1">Packages Count</label>
                   <input type="number" min="1"
@@ -566,20 +655,26 @@ export default function DispatchPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Driver Name</label>
-                  <input type="text" placeholder="Optional"
-                    value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm" />
+              {/* Driver — local transport only. A local tempo has no LR number,
+                  so the driver's name and phone ARE the tracking. */}
+              {modeFields.driver && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Driver Name<span className="text-red-500"> *</span>
+                    </label>
+                    <input type="text" placeholder="Who is driving"
+                      value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Driver Phone</label>
+                    <input type="tel" inputMode="tel" placeholder="Optional"
+                      value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Driver Phone</label>
-                  <input type="text" placeholder="Optional"
-                    value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm" />
-                </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium mb-1">Notes</label>
@@ -595,7 +690,12 @@ export default function DispatchPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-md text-sm">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm">
+                <button
+                  type="submit"
+                  disabled={submitting || !docsVerified}
+                  title={!docsVerified ? 'Tick the paperwork check first' : undefined}
+                  className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
+                >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create Dispatch'}
                 </button>
               </div>
