@@ -20,7 +20,7 @@ import { requireAdmin } from '@/lib/api-auth';
 import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
 import {
     checkSchemaDrift, checkRpcs, checkConfigTables, checkCrons, checkDataLoss,
-    checkWriteDrift, captureRowSnapshot, EXPECTED_CRONS, type Finding,
+    checkWriteDrift, checkLedgerPosting, captureRowSnapshot, EXPECTED_CRONS, type Finding,
 } from '@/lib/health-checks';
 import { checkExpectedActivity } from '@/lib/activity-expectations';
 import { logCronRun } from '@/lib/cron-log';
@@ -299,6 +299,11 @@ export async function GET(request: NextRequest) {
             // The only check that asks whether anyone is actually getting work
             // done. Every other check can pass on a system where nothing works.
             runCheck(() => checkExpectedActivity(db), 'expected-activity'),
+            // Money recorded but never posted to the books. Expenses silently
+            // stopped reaching the P&L on 2026-07-14 and nobody saw it for
+            // three weeks, because the payment saved fine — only the ledger
+            // half was skipped.
+            runCheck(() => checkLedgerPosting(db), 'ledger-posting'),
             // Compares every table against its own numbers from yesterday.
             // Growth is never reported, which is what makes it safe to run while
             // the business is still filling the app up — most tables are

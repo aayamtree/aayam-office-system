@@ -238,6 +238,95 @@ export async function checkWriteDrift(db: any): Promise<Finding[]> {
     return findings;
 }
 
+/**
+ * Money that was recorded but never reached the books.
+ *
+ * THE BUG THIS EXISTS FOR
+ * 2026-08-04: expenses stopped appearing in the P&L on 14 July and nobody
+ * noticed for three weeks. `fn_record_expense` posts to the ledger only inside
+ * `IF v_exp IS NOT NULL AND v_src IS NOT NULL THEN`, where v_src is the
+ * chart_of_accounts row linked to the bank or cash account the money moved
+ * through. Two of six money accounts had no such link, so every payment through
+ * them skipped the ledger — no journal entry, no error, and the function still
+ * returned success.
+ *
+ * A trigger now links every new money account, so the state cannot be reached
+ * by adding an account. This check exists for the two ways it still could be:
+ * someone unlinks an account by hand, or a row predates the trigger.
+ *
+ * It counts UNPOSTED MONEY rather than missing links, because that is the thing
+ * that actually hurts: a link is only interesting once a payment has fallen
+ * through it.
+ */
+export async function checkLedgerPosting(db: any): Promise<Finding[]> {
+    const findings: Finding[] = [];
+
+    // 1. Money accounts with no ledger account behind them.
+    const unlinked: string[] = [];
+    for (const [table, column, label] of [
+        ['bank_accounts', 'linked_bank_account_id', 'bank'],
+        ['cash_accounts', 'linked_cash_account_id', 'cash'],
+    ] as const) {
+        const { data: accounts, error: accErr } = await db.from(table).select('id, name');
+        const { data: coa, error: coaErr } = await db.from('chart_of_accounts').select(column);
+        if (accErr || coaErr) {
+            return [{
+                severity: 'warning',
+                check: 'ledger-posting',
+                summary: 'Could not read the chart of accounts, so ledger links were NOT checked',
+                detail: [accErr?.message || coaErr?.message].filter(Boolean) as string[],
+            }];
+        }
+        const linked = new Set((coa || []).map((r: any) => r[column]).filter(Boolean));
+        for (const a of accounts || []) {
+            if (!linked.has(a.id)) unlinked.push(`${label} account "${a.name}" has no ledger account`);
+        }
+    }
+
+    if (unlinked.length) {
+        findings.push({
+            severity: 'critical',
+            check: 'ledger-posting',
+            summary: `${unlinked.length} money account(s) are not linked to the ledger — payments through them skip the P&L silently`,
+            detail: unlinked,
+        });
+    }
+
+    // 2. Payments recorded recently that never got a journal entry.
+    const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    for (const [table, label] of [
+        ['vendor_payments', 'vendor payments'],
+        ['payments_received', 'receipts'],
+    ] as const) {
+        const { data, error } = await db
+            .from(table)
+            .select('amount')
+            .is('journal_entry_id', null)
+            .gte('created_at', since);
+        if (error) {
+            findings.push({
+                severity: 'warning',
+                check: 'ledger-posting',
+                summary: `Could not check ${label} for missing ledger entries`,
+                detail: [error.message],
+            });
+            continue;
+        }
+        const rows = data || [];
+        if (rows.length) {
+            const total = rows.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
+            findings.push({
+                severity: 'critical',
+                check: 'ledger-posting',
+                summary: `${rows.length} ${label} in the last 30 days have no ledger entry — ₹${Math.round(total).toLocaleString('en-IN')} is missing from the P&L`,
+                detail: ['Recorded in the payments table but never posted to journal_entries, so no report that reads the ledger can see it.'],
+            });
+        }
+    }
+
+    return findings;
+}
+
 /** Every Postgres function the app calls via .rpc() must still exist. */
 export async function checkRpcs(db: any): Promise<Finding[]> {
     const { data, error } = await db.rpc('fn_public_functions');

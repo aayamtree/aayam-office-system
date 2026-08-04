@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-04T12:53:40.413Z",
+  "generatedAt": "2026-08-04T13:19:00.068Z",
   "filesScanned": 430,
-  "queriesSeen": 610,
+  "queriesSeen": 611,
   "wildcardQueries": 95,
   "writesSeen": 245,
   "tables": {
@@ -1292,7 +1292,7 @@
       "sites": [
         {
           "file": "lib/health-checks.ts",
-          "line": 313
+          "line": 383
         }
       ]
     },
@@ -5619,7 +5619,7 @@
     },
     "fn_capture_row_snapshot": {
       "file": "lib/health-checks.ts",
-      "line": 298
+      "line": 368
     },
     "fn_delete_expense": {
       "file": "app/admin/finance/expenses/quick/page.tsx",
@@ -5639,7 +5639,7 @@
     },
     "fn_public_functions": {
       "file": "lib/health-checks.ts",
-      "line": 184
+      "line": 254
     },
     "fn_record_bill_payment": {
       "file": "app/admin/finance/vendors/purchases/page.tsx",
@@ -5655,7 +5655,7 @@
     },
     "fn_row_count_regressions": {
       "file": "lib/health-checks.ts",
-      "line": 255
+      "line": 325
     },
     "fn_system_health_check": {
       "file": "app/admin/health/page.tsx",
@@ -5663,7 +5663,7 @@
     },
     "fn_table_row_counts": {
       "file": "lib/health-checks.ts",
-      "line": 209
+      "line": 279
     },
     "fn_update_expense": {
       "file": "app/admin/finance/expenses/quick/page.tsx",
