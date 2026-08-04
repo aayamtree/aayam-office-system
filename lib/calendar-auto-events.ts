@@ -51,7 +51,10 @@ export async function upsertAutoCalendarEvent(options: AutoEventOptions) {
             .from('user_calendar_events')
             .update({
                 title,
-                event_date: date,
+                // The column is `start_date`. It was written as `event_date` on
+                // both the insert and the update path, so PostgREST rejected
+                // every one and no auto calendar event has ever been saved.
+                start_date: date,
                 description: description || null,
                 visibility: visibility || 'private',
             })
@@ -66,7 +69,13 @@ export async function upsertAutoCalendarEvent(options: AutoEventOptions) {
         .insert([{
             user_id: userId,
             title,
-            event_date: date,
+            // `start_date`, not `event_date` — see the update path above. Both
+            // were wrong, so no auto calendar event has ever been saved.
+            start_date: date,
+            // A deadline has no clock time. `start_time` was NOT NULL, which
+            // blocked the insert even once the column name was right — a second
+            // fault hiding behind the first.
+            all_day: true,
             event_type: 'deadline',
             description: description || null,
             source: 'auto',

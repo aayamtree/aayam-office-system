@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { X, Loader2, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useProductCategories } from '@/lib/hooks';
 
 interface VendorCategoryQuickAddProps {
     isOpen: boolean;
@@ -14,16 +13,17 @@ interface VendorCategoryQuickAddProps {
 
 export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: VendorCategoryQuickAddProps) {
     const [saving, setSaving] = useState(false);
-    const { categories: existingCategories } = useProductCategories();
+    // No checklist_type here. This form was copied from ProductCategoryQuickAdd,
+    // and the copy kept a "Production Checklist Type" field that vendor_categories
+    // has no column for — so every vendor category ever added through this dialog
+    // failed to save. A checklist belongs to a PRODUCT (visiting card, pouch), not
+    // to a supplier, so the field was wrong here as well as broken.
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        checklist_type: ''
     });
 
     if (!isOpen) return null;
-
-    const checklistTypes = existingCategories.map((c: any) => c.name);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,7 +40,6 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
                 .insert([{
                     name: formData.name,
                     description: formData.description || null,
-                    checklist_type: formData.checklist_type || null,
                     is_active: true
                 }])
                 .select()
@@ -56,7 +55,6 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
             setFormData({
                 name: '',
                 description: '',
-                checklist_type: ''
             });
         } catch (error: any) {
             console.error('Error adding category:', error);
@@ -93,7 +91,7 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
                             required
                             type="text"
                             className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
-                            placeholder="e.g. Visiting Card, Flyer, Packaging"
+                            placeholder="e.g. Printer, Laminator, Courier"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -108,21 +106,6 @@ export default function VendorCategoryQuickAdd({ isOpen, onClose, onSuccess }: V
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                         />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Production Checklist Type</label>
-                        <select
-                            className="w-full px-3 py-2 border rounded-md focus:ring-2 ring-ring/20 focus:border-gray-400"
-                            value={formData.checklist_type}
-                            onChange={e => setFormData({ ...formData, checklist_type: e.target.value })}
-                        >
-                            <option value="">No checklist</option>
-                            {checklistTypes.map(type => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Links to production workflow checklist</p>
                     </div>
 
                     {/* Actions */}

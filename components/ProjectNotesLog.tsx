@@ -10,6 +10,32 @@ import {
     MessageSquare, Send, FileText, Lock,
     AlertCircle, CheckCircle, Palette, RefreshCw, Loader2, MessageCircle, RotateCcw, Cloud, AtSign
 } from 'lucide-react';
+
+/**
+ * Run a note's side-effects and SAY SO if any of them fail.
+ *
+ * These were `Promise.allSettled([...])`, which hides the failure that actually
+ * happens here: a PostgREST error is a RESOLVED promise carrying `.error`, so
+ * allSettled reports it as fulfilled and nobody ever reads the value. Three of
+ * these updates wrote `approval_status`, `approval_by` and `approval_remark` —
+ * columns that did not exist — so the database rejected every one and every one
+ * looked like a success on screen.
+ */
+async function runSideEffects(
+    tasks: PromiseLike<{ error: { message: string } | null }>[],
+    label: string,
+): Promise<void> {
+    const results = await Promise.allSettled(tasks);
+    const problems: string[] = [];
+    for (const r of results) {
+        if (r.status === 'rejected') problems.push(String(r.reason?.message || r.reason));
+        else if (r.value?.error) problems.push(r.value.error.message);
+    }
+    if (problems.length) {
+        console.error(`[notes] "${label}" side-effects failed:`, problems);
+        toast.error(`Note saved, but "${label}" did not fully apply: ${problems[0]}`);
+    }
+}
 import {
     enqueueNote, dequeueNote, markFailed, getPendingNotes,
     SYNC_INTERVAL_MS
@@ -240,36 +266,36 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
 
                 // Side-effects for special tags
                 if (qn.tag === 'approved') {
-                    await Promise.allSettled([
-                        Promise.resolve(supabase.from('jobs').update({
+                    await runSideEffects([
+                        supabase.from('jobs').update({
                             approval_status: 'approved', client_approval: true,
                             approval_date: qn.createdAt, approval_by: qn.userId,
                             approval_remark: qn.content,
-                        }).eq('id', qn.jobId))
-                    ]);
+                        }).eq('id', qn.jobId)
+                    ], 'approved');
                 } else if (qn.tag === 'approved_closed') {
-                    await Promise.allSettled([
-                        Promise.resolve(supabase.from('jobs').update({
+                    await runSideEffects([
+                        supabase.from('jobs').update({
                             approval_status: 'approved', client_approval: true,
                             approval_date: qn.createdAt, approval_by: qn.userId,
                             approval_remark: qn.content, current_stage: 'printing',
-                        }).eq('id', qn.jobId)),
-                        Promise.resolve(supabase.from('job_stage_history').insert([{
+                        }).eq('id', qn.jobId),
+                        supabase.from('job_stage_history').insert([{
                             job_id: qn.jobId, from_stage: currentStage, to_stage: 'printing',
                             notes: `🔒 Approved & Closed — "${qn.content}"`,
-                        }]))
-                    ]);
+                        }])
+                    ], 'approved & closed');
                 } else if (qn.tag === 'correction' && isAdmin) {
-                    await Promise.allSettled([
-                        Promise.resolve(supabase.from('jobs').update({
+                    await runSideEffects([
+                        supabase.from('jobs').update({
                             approval_status: 'changes_requested', client_approval: false,
                             current_stage: 'designing',
-                        }).eq('id', qn.jobId)),
-                        Promise.resolve(supabase.from('job_stage_history').insert([{
+                        }).eq('id', qn.jobId),
+                        supabase.from('job_stage_history').insert([{
                             job_id: qn.jobId, from_stage: currentStage, to_stage: 'designing',
                             notes: `🔄 Admin pullback — "${qn.content}"`,
-                        }]))
-                    ]);
+                        }])
+                    ], 'correction');
                     if (onStageChange) onStageChange();
                 }
 
@@ -411,7 +437,7 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
                 );
             }
             if (sideEffects.length > 0) {
-                await Promise.allSettled(sideEffects);
+                await runSideEffects(sideEffects as any, tag);
                 if (tag === 'approved_closed' || tag === 'correction') onStageChange?.();
             }
 

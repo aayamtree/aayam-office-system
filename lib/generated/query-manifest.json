@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T12:22:25.567Z",
+  "generatedAt": "2026-08-04T12:53:40.413Z",
   "filesScanned": 430,
   "queriesSeen": 610,
   "wildcardQueries": 95,
@@ -1292,7 +1292,7 @@
       "sites": [
         {
           "file": "lib/health-checks.ts",
-          "line": 311
+          "line": 313
         }
       ]
     },
@@ -2265,12 +2265,12 @@
           },
           {
             "file": "components/ProjectNotesLog.tsx",
-            "line": 232,
+            "line": 249,
             "verb": "insert"
           },
           {
             "file": "components/ProjectNotesLog.tsx",
-            "line": 372,
+            "line": 389,
             "verb": "insert"
           }
         ]
@@ -2624,22 +2624,22 @@
         "columns": {
           "approval_by": {
             "file": "app/api/jobs/[id]/approve/route.ts",
-            "line": 76,
+            "line": 82,
             "verb": "update"
           },
           "approval_date": {
             "file": "app/api/jobs/[id]/approve/route.ts",
-            "line": 76,
+            "line": 82,
             "verb": "update"
           },
           "approval_remark": {
             "file": "components/ProjectNotesLog.tsx",
-            "line": 244,
+            "line": 261,
             "verb": "update"
           },
           "approval_status": {
             "file": "app/api/jobs/[id]/approve/route.ts",
-            "line": 76,
+            "line": 82,
             "verb": "update"
           },
           "calendar_event_id": {
@@ -2654,7 +2654,7 @@
           },
           "client_approval": {
             "file": "components/ProjectNotesLog.tsx",
-            "line": 244,
+            "line": 261,
             "verb": "update"
           },
           "commission_amount": {
@@ -2801,7 +2801,7 @@
         "spreads": [
           {
             "file": "app/api/jobs/[id]/approve/route.ts",
-            "line": 76,
+            "line": 82,
             "verb": "update"
           }
         ],
@@ -5264,35 +5264,40 @@
       "relations": [],
       "writes": {
         "columns": {
-          "description": {
+          "all_day": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 47,
-            "verb": "update"
+            "line": 64,
+            "verb": "insert"
           },
-          "event_date": {
+          "description": {
             "file": "lib/calendar-auto-events.ts",
             "line": 47,
             "verb": "update"
           },
           "event_type": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
           },
           "source": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
           },
           "source_id": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
           },
           "source_type": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
+          },
+          "start_date": {
+            "file": "lib/calendar-auto-events.ts",
+            "line": 47,
+            "verb": "update"
           },
           "title": {
             "file": "lib/calendar-auto-events.ts",
@@ -5306,7 +5311,7 @@
           },
           "user_id": {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
           },
           "visibility": {
@@ -5330,7 +5335,7 @@
           },
           {
             "file": "lib/calendar-auto-events.ts",
-            "line": 61,
+            "line": 64,
             "verb": "insert"
           },
           {
@@ -5357,11 +5362,6 @@
       "relations": [],
       "writes": {
         "columns": {
-          "checklist_type": {
-            "file": "components/shared/VendorCategoryQuickAdd.tsx",
-            "line": 39,
-            "verb": "insert"
-          },
           "color": {
             "file": "components/settings/VendorCategoriesManager.tsx",
             "line": 65,
@@ -5619,7 +5619,7 @@
     },
     "fn_capture_row_snapshot": {
       "file": "lib/health-checks.ts",
-      "line": 296
+      "line": 298
     },
     "fn_delete_expense": {
       "file": "app/admin/finance/expenses/quick/page.tsx",
@@ -5639,7 +5639,7 @@
     },
     "fn_public_functions": {
       "file": "lib/health-checks.ts",
-      "line": 182
+      "line": 184
     },
     "fn_record_bill_payment": {
       "file": "app/admin/finance/vendors/purchases/page.tsx",
@@ -5655,7 +5655,7 @@
     },
     "fn_row_count_regressions": {
       "file": "lib/health-checks.ts",
-      "line": 253
+      "line": 255
     },
     "fn_system_health_check": {
       "file": "app/admin/health/page.tsx",
@@ -5663,7 +5663,7 @@
     },
     "fn_table_row_counts": {
       "file": "lib/health-checks.ts",
-      "line": 207
+      "line": 209
     },
     "fn_update_expense": {
       "file": "app/admin/finance/expenses/quick/page.tsx",

@@ -71,16 +71,25 @@ export async function PATCH(
     });
   }
 
-  // Step 2: Try to add audit fields — silently ignore if columns don't exist yet
-  try {
-    await supabase.from('jobs').update({
-      approval_status: action === 'approve' ? 'approved' : 'rejected',
-      approval_by: user.id,
-      approval_date: new Date().toISOString(),
-      ...(action === 'reject' && body.reason ? { approval_remark: body.reason } : {}),
-    }).eq('id', id);
-  } catch (_) {
-    // Audit columns not yet added — main approval already succeeded
+  // Step 2: record WHO approved this and what was said.
+  //
+  // This used to be wrapped in try/catch with a comment saying it failed
+  // safely if the columns did not exist. It did not fail safely — it failed
+  // SILENTLY, which is worse. Supabase RETURNS errors, it does not throw them,
+  // so the catch never ran, nothing was logged, and not one approval was ever
+  // recorded. The columns are real now; if this ever breaks again it will say
+  // so out loud.
+  const { error: auditErr } = await supabase.from('jobs').update({
+    approval_status: action === 'approve' ? 'approved' : 'rejected',
+    approval_by: user.id,
+    approval_date: new Date().toISOString(),
+    ...(action === 'reject' && body.reason ? { approval_remark: body.reason } : {}),
+  }).eq('id', id);
+
+  if (auditErr) {
+    // The approval itself already succeeded in step 1, so this is not fatal —
+    // but it must be visible rather than swallowed.
+    console.error(`[approve] job ${id}: approval recorded but audit trail NOT saved:`, auditErr.message);
   }
 
   // Notify designer via broadcast_notifications

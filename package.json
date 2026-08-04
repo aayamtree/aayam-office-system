@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "audit:selects": "node scripts/audit-select-contracts.js",
-    "predeploy": "node scripts/audit-select-contracts.js"
+    "audit:manifest": "node scripts/extract-query-manifest.js",
+    "audit:health": "node scripts/test-health-checks.mjs",
+    "audit:query": "node scripts/test-query-failure.mjs",
+    "audit:errors": "node scripts/audit-error-handling.js",
+    "audit": "npm run audit:manifest && npm run audit:selects && npm run audit:health && npm run audit:query && npm run audit:errors",
+    "_comment_audit": "Run `npm run audit` before pushing anything you are unsure about. It regenerates the query manifest FIRST — /api/health compares that manifest against the live schema every night, and a stale one would quietly audit the previous deploy's queries instead of this one.",
+    "_comment_no_prebuild": "There is deliberately no `prebuild` hook. Wiring these into the build would block a deploy whenever a check fails, and for a one-person business a site that refuses to ship is worse than one that ships with a known warning. The same checks run nightly at 03:45 via /api/health and alert on Telegram, where they can be read and judged instead of silently stopping a release. If a check ever becomes trustworthy enough to gate on, move it here on purpose — not by default."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

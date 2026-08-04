@@ -1,0 +1,5 @@
+{
+  "errors": 91,
+  "recordedAt": "2026-08-04T12:56:13.636Z",
+  "note": "Upper bound on swallowed/unchecked query errors that reach rendered state. May only be lowered. Every query failure is still surfaced at the transport layer by lib/query-failure.ts; this counts the ones that do not yet show a proper <LoadError/> in place."
+}
