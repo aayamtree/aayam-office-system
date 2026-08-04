@@ -292,7 +292,42 @@ export async function checkLedgerPosting(db: any): Promise<Finding[]> {
         });
     }
 
-    // 2. Payments recorded recently that never got a journal entry.
+    // 2. Opening balances that have drifted apart.
+    //    The ledger started every bank account at zero while the real accounts
+    //    held lakhs, which is most of why every ledger balance read negative.
+    //    A trigger keeps them in step now; this catches a direct edit that
+    //    bypasses it.
+    {
+        const [{ data: banks }, { data: cash }, { data: coa }] = await Promise.all([
+            db.from('bank_accounts').select('id, name, opening_balance'),
+            db.from('cash_accounts').select('id, name, opening_balance'),
+            db.from('chart_of_accounts').select('code, name, opening_balance, linked_bank_account_id, linked_cash_account_id'),
+        ]);
+        const drifted: string[] = [];
+        for (const row of coa || []) {
+            const account = row.linked_bank_account_id
+                ? (banks || []).find((b: any) => b.id === row.linked_bank_account_id)
+                : row.linked_cash_account_id
+                    ? (cash || []).find((c: any) => c.id === row.linked_cash_account_id)
+                    : null;
+            if (!account) continue;
+            const a = Number(account.opening_balance) || 0;
+            const l = Number(row.opening_balance) || 0;
+            if (Math.round((a - l) * 100) !== 0) {
+                drifted.push(`${row.code} ${row.name}: ledger opens at ₹${l.toLocaleString('en-IN')}, the account says ₹${a.toLocaleString('en-IN')}`);
+            }
+        }
+        if (drifted.length) {
+            findings.push({
+                severity: 'critical',
+                check: 'ledger-posting',
+                summary: `${drifted.length} account(s) have an opening balance the ledger disagrees with — every balance sheet is wrong by the difference`,
+                detail: drifted,
+            });
+        }
+    }
+
+    // 3. Payments recorded recently that never got a journal entry.
     const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
     for (const [table, label] of [
         ['vendor_payments', 'vendor payments'],
