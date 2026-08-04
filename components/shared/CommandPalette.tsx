@@ -189,39 +189,48 @@ export default function CommandPalette() {
 
             const dbResults: SearchResult[] = [];
 
+            // Every result must land ON the record, not on the list that
+            // contains it. Picking a job out of 200+ and then being dropped on
+            // the jobs list to find it again is not a search result.
+            //   jobs, clients  → their own detail page
+            //   leads, invoices → list page, with ?open=<id> popping the record's
+            //                     view modal (neither has a detail route)
+            //   quotations      → list page; its highlight handler fills the
+            //                     search box, so it needs the quote NUMBER.
+            //                     Passing the uuid, as before, matched nothing.
             if (jobsRes.data) jobsRes.data.forEach(j => dbResults.push({
                 id: j.id, type: 'job',
                 title: `${j.job_number} — ${j.project_name || 'Untitled'}`,
                 subtitle: getStageName(j.current_stage) || 'New',
-                href: `/admin/jobs?highlight=${j.id}`,
+                href: `/admin/jobs/${j.id}`,
             }));
 
             if (clientsRes.data) clientsRes.data.forEach(c => dbResults.push({
                 id: c.id, type: 'client',
                 title: c.company || c.name,
                 subtitle: c.phone || '',
-                href: `/admin/crm/clients?highlight=${c.id}`,
+                href: `/admin/crm/clients/${c.id}`,
             }));
 
             if (leadsRes.data) leadsRes.data.forEach(l => dbResults.push({
                 id: l.id, type: 'lead',
                 title: `${l.lead_number} — ${l.name}`,
                 subtitle: l.status || '',
-                href: `/admin/marketing/leads?highlight=${l.id}`,
+                href: `/admin/marketing/leads?open=${l.id}`,
             }));
 
             if (invoicesRes.data) invoicesRes.data.forEach(inv => dbResults.push({
                 id: inv.id, type: 'invoice',
                 title: inv.invoice_number,
                 subtitle: `₹${(inv.total_amount || 0).toLocaleString('en-IN')} · ${inv.payment_status || 'draft'}`,
-                href: `/admin/finance/invoices?highlight=${inv.id}`,
+                href: `/admin/finance/invoices?open=${inv.id}`,
             }));
 
             if (quotationsRes.data) quotationsRes.data.forEach(q => dbResults.push({
                 id: q.id, type: 'quotation',
                 title: q.quote_number,
                 subtitle: `₹${(q.total_amount || 0).toLocaleString('en-IN')} · ${q.status || 'draft'}`,
-                href: `/admin/sales/quotations?highlight=${q.id}`,
+                href: `/admin/sales/quotations?highlight=${encodeURIComponent(q.quote_number || '')}`,
             }));
 
             setResults([...navResults, ...dbResults]);

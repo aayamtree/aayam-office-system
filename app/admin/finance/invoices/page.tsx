@@ -149,6 +149,27 @@ export default function InvoicesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showViewModal, selectedInvoice]);
 
+  // ?open=<invoice id> — the ⌘K palette links straight to an invoice. There is
+  // no /invoices/[id] route, so open this invoice's detail drawer rather than
+  // dropping the user on the list to find it. Fires once, after the data lands.
+  const [openedFromUrl, setOpenedFromUrl] = useState(false);
+  useEffect(() => {
+    if (openedFromUrl || invoicesLoading || !invoices?.length) return;
+    const wantedId = new URLSearchParams(window.location.search).get('open');
+    if (!wantedId) return;
+
+    setOpenedFromUrl(true);
+    const inv = invoices.find((i: any) => i.id === wantedId);
+    if (inv) {
+      setSelectedInvoice(inv);
+      setShowViewModal(true);
+    } else {
+      toast.error('That invoice is no longer in this list.');
+    }
+    // Drop the param so refresh / back doesn't reopen the drawer.
+    window.history.replaceState({}, '', window.location.pathname);
+  }, [invoices, invoicesLoading, openedFromUrl]);
+
   const handleReceiptTelegram = async (payment: any) => {
     if (!selectedInvoice) return;
     try {

@@ -107,6 +107,30 @@ export default function LeadsPage() {
             });
     }, []);
 
+    // ?open=<lead id> — the ⌘K palette links straight to a lead. There is no
+    // /leads/[id] route, so open this lead's view modal instead of dropping the
+    // user on the list to hunt for it. Waits for leads to arrive, then fires
+    // once: openedFromUrl stops it re-opening every time the list refetches.
+    const [openedFromUrl, setOpenedFromUrl] = useState(false);
+    useEffect(() => {
+        if (openedFromUrl || leadsLoading || !leads?.length) return;
+        const wantedId = new URLSearchParams(window.location.search).get('open');
+        if (!wantedId) return;
+
+        setOpenedFromUrl(true);
+        const lead = leads.find((l: any) => l.id === wantedId);
+        if (lead) {
+            setSelectedLead(lead);
+            setShowViewModal(true);
+        } else {
+            // Filtered out by the default status tab, or deleted since the
+            // search ran. Say so rather than silently doing nothing.
+            toast.error('That lead is no longer in this list.');
+        }
+        // Drop the param so a refresh or a back-navigation doesn't reopen it.
+        window.history.replaceState({}, '', window.location.pathname);
+    }, [leads, leadsLoading, openedFromUrl]);
+
     // --- ACTIONS ---
 
     const handleAddNew = () => {
