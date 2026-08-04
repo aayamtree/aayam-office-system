@@ -161,15 +161,40 @@ export default function JobDetailPage() {
             setTotalExpense(billsData.reduce((s: number, b: any) => s + (b.total_amount || 0), 0));
         }
 
-        // Fetch activity logs
-        const { data: logData } = await supabase
-            .from('activity_logs')
-            .select('*, profiles:user_id(full_name, role)')
-            .eq('entity_id', jobId)
-            .order('created_at', { ascending: false })
-            .limit(50);
+        // Fetch the timeline. This used to read activity_logs alone, which only
+        // records deliberate actions someone took in the UI — so a job that had
+        // genuinely moved through seven stages showed "No activity recorded
+        // yet". The stage moves live in job_stage_history and are the part of
+        // the story that always exists. Read both and interleave them.
+        const [logRes, stageRes] = await Promise.all([
+            supabase.from('activity_logs')
+                .select('*, profiles:user_id(full_name, role)')
+                .eq('entity_id', jobId)
+                .order('created_at', { ascending: false })
+                .limit(50),
+            supabase.from('job_stage_history')
+                .select('id, from_stage, to_stage, notes, changed_by, changed_by_name, changed_by_role, created_at')
+                .eq('job_id', jobId)
+                .order('created_at', { ascending: false })
+                .limit(50),
+        ]);
 
-        if (logData) setActivityLogs(logData as ActivityLog[]);
+        const stageEntries: ActivityLog[] = (stageRes.data || []).map((h: any) => ({
+            id: `stage-${h.id}`,
+            action: 'stage_change',
+            description: h.from_stage
+                ? `Moved from ${getStageName(h.from_stage)} to ${getStageName(h.to_stage)}`
+                : `Started at ${getStageName(h.to_stage)}`,
+            metadata: h.notes ? { notes: h.notes } : undefined,
+            created_at: h.created_at,
+            user_id: h.changed_by,
+            profiles: { full_name: h.changed_by_name, role: h.changed_by_role },
+        }));
+
+        setActivityLogs(
+            [...((logRes.data as ActivityLog[]) || []), ...stageEntries]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        );
 
         setLoading(false);
     };

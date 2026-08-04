@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText, ShieldCheck } from 'lucide-react';
@@ -64,6 +64,19 @@ export default function DispatchPage() {
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refetchJobs, refetchDispatches]);
+
+  // ?job=<id> — arrived from ⌘K's "where does this appear" list. The job sits in
+  // one of three columns here depending on its stage, and we don't know which,
+  // so ring whichever card matches and scroll it into view.
+  const [focusJobId, setFocusJobId] = useState<string | null>(null);
+  const focusCardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    setFocusJobId(new URLSearchParams(window.location.search).get('job'));
+  }, []);
+  useEffect(() => {
+    if (!focusJobId || jobsLoading) return;
+    focusCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusJobId, jobsLoading, jobs]);
 
   // Transporters
   const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
@@ -294,7 +307,7 @@ export default function DispatchPage() {
         {materialReceived.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
-            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-teal-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+            <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-teal-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
               <div className="bg-teal-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">
@@ -330,7 +343,7 @@ export default function DispatchPage() {
         {pendingQC.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
-            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-violet-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+            <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-violet-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
               <div className="bg-violet-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">
@@ -364,7 +377,7 @@ export default function DispatchPage() {
           const invoiceAlreadyRequested = !!(job as any).invoice_requested_at;
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
-            <div key={job.id} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+            <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
               <div className="bg-green-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">

@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import {
     Search, Package, Users, FileText, IndianRupee,
-    UserPlus, ArrowRight, LayoutDashboard, Navigation
+    UserPlus, ArrowRight, LayoutDashboard, Navigation, CornerDownRight, Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { getStageName } from '@/lib/job-workflow';
+import { getRecordLocations, RecordLocation } from '@/lib/record-locations';
 
 interface SearchResult {
     id: string;
@@ -129,15 +130,54 @@ export default function CommandPalette() {
         };
     }, []);
 
+    const navigateToHref = useCallback((href: string) => {
+        setOpen(false);
+        router.push(href);
+    }, [router]);
+
+    // ── "Where does this live?" expansion ────────────────────────────────────
+    // A job is a card in Design Studio, a line in the Print Planner, a row on
+    // Dispatch and an invoice in Finance, all at once. Opening one of those on
+    // the user's behalf is a guess. Pressing → on a result asks the database
+    // which of those places the record is actually in and lists them.
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [locations, setLocations] = useState<RecordLocation[]>([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
+    const [locationIndex, setLocationIndex] = useState(0);
+
+    const collapse = useCallback(() => {
+        setExpandedId(null);
+        setLocations([]);
+        setLocationIndex(0);
+    }, []);
+
+    const expandResult = useCallback(async (result: SearchResult) => {
+        if (result.type === 'nav') return;   // a page is already its own place
+        setExpandedId(result.id);
+        setLocations([]);
+        setLocationIndex(0);
+        setLocationsLoading(true);
+        const found = await getRecordLocations(result.type, result.id);
+        setLocationsLoading(false);
+        // One place (or none we can determine) is not worth a menu — just go.
+        if (found.length <= 1) {
+            collapse();
+            navigateToHref(result.href);
+            return;
+        }
+        setLocations(found);
+    }, [collapse, navigateToHref]);
+
     // Focus input when opened
     useEffect(() => {
         if (open) {
             setQuery('');
             setResults([]);
             setSelectedIndex(0);
+            collapse();
             setTimeout(() => inputRef.current?.focus(), 100);
         }
-    }, [open]);
+    }, [open, collapse]);
 
     // Search function — nav items are instant & case-insensitive; DB uses ilike
     const performSearch = useCallback(async (searchQuery: string) => {
@@ -245,6 +285,7 @@ export default function CommandPalette() {
     // Debounced search
     const handleQueryChange = (value: string) => {
         setQuery(value);
+        collapse();   // the expanded record is about to stop being on screen
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => performSearch(value), 250);
     };
@@ -255,17 +296,34 @@ export default function CommandPalette() {
         router.push(result.href);
     };
 
-    // Keyboard navigation
+    // Keyboard navigation. While a result is expanded the arrows drive the
+    // location list instead of the results list, so ↑↓↵ mean the same thing
+    // wherever the user's attention is. ← backs out, Esc closes as before.
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        const isExpanded = expandedId !== null && locations.length > 0;
+
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setSelectedIndex(i => Math.min(i + 1, results.length - 1));
+            if (isExpanded) setLocationIndex(i => Math.min(i + 1, locations.length - 1));
+            else setSelectedIndex(i => Math.min(i + 1, results.length - 1));
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            setSelectedIndex(i => Math.max(i - 1, 0));
-        } else if (e.key === 'Enter' && results[selectedIndex]) {
+            if (isExpanded) setLocationIndex(i => Math.max(i - 1, 0));
+            else setSelectedIndex(i => Math.max(i - 1, 0));
+        } else if (e.key === 'ArrowRight' && !isExpanded && results[selectedIndex]) {
+            // Only steal → when the caret is at the end of the query, otherwise
+            // the user is editing their search text and expects it to move.
+            const el = e.target as HTMLInputElement;
+            if (el.selectionStart !== null && el.selectionStart < query.length) return;
             e.preventDefault();
-            navigateTo(results[selectedIndex]);
+            expandResult(results[selectedIndex]);
+        } else if (e.key === 'ArrowLeft' && isExpanded) {
+            e.preventDefault();
+            collapse();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isExpanded && locations[locationIndex]) navigateToHref(locations[locationIndex].href);
+            else if (results[selectedIndex]) navigateTo(results[selectedIndex]);
         }
     };
 
@@ -327,26 +385,71 @@ export default function CommandPalette() {
                                 {items.map((item) => {
                                     const currentIndex = flatIndex++;
                                     const isSelected = currentIndex === selectedIndex;
+                                    const isExpanded = expandedId === item.id;
+                                    const canExpand = item.type === 'job' || item.type === 'client';
                                     return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => navigateTo(item)}
-                                            onMouseEnter={() => setSelectedIndex(currentIndex)}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isSelected ? 'bg-accent' : 'hover:bg-accent/50'}`}
-                                        >
-                                            <div className={`h-7 w-7 rounded flex items-center justify-center shrink-0 ${config.color}`}>
-                                                <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{item.title}</p>
-                                                {item.subtitle && (
-                                                    <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
+                                        <div key={item.id}>
+                                            <button
+                                                onClick={() => navigateTo(item)}
+                                                onMouseEnter={() => !isExpanded && setSelectedIndex(currentIndex)}
+                                                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isSelected || isExpanded ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                            >
+                                                <div className={`h-7 w-7 rounded flex items-center justify-center shrink-0 ${config.color}`}>
+                                                    <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{item.title}</p>
+                                                    {item.subtitle && (
+                                                        <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
+                                                    )}
+                                                </div>
+                                                {/* Expand is its own control: clicking the row still opens the
+                                                    record, so the fast path is unchanged for anyone who
+                                                    already knows where they're going. */}
+                                                {canExpand && (
+                                                    <span
+                                                        role="button"
+                                                        tabIndex={-1}
+                                                        aria-label={isExpanded ? 'Hide where this appears' : 'Show where this appears'}
+                                                        onClick={(ev) => {
+                                                            ev.stopPropagation();
+                                                            if (isExpanded) collapse();
+                                                            else { setSelectedIndex(currentIndex); expandResult(item); }
+                                                        }}
+                                                        className={`shrink-0 text-[10px] font-medium px-1.5 py-1 rounded border transition-colors ${isExpanded ? 'bg-background border-border text-foreground' : 'border-transparent text-muted-foreground hover:bg-background hover:border-border'}`}
+                                                    >
+                                                        {isExpanded ? 'hide' : 'where?'}
+                                                    </span>
                                                 )}
-                                            </div>
-                                            {isSelected && (
-                                                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                {isSelected && !isExpanded && (
+                                                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                )}
+                                            </button>
+
+                                            {isExpanded && (
+                                                <div className="bg-muted/20 border-y">
+                                                    {locationsLoading ? (
+                                                        <div className="flex items-center gap-2 px-4 py-3 pl-14 text-xs text-muted-foreground">
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                            Checking where this appears…
+                                                        </div>
+                                                    ) : locations.map((loc, li) => (
+                                                        <button
+                                                            key={loc.key}
+                                                            onClick={() => navigateToHref(loc.href)}
+                                                            onMouseEnter={() => setLocationIndex(li)}
+                                                            className={`w-full flex items-center gap-2 px-4 py-2 pl-11 text-left transition-colors ${li === locationIndex ? 'bg-accent' : 'hover:bg-accent/50'}`}
+                                                        >
+                                                            <CornerDownRight className="h-3 w-3 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                                                            <span className="text-xs font-medium">{loc.label}</span>
+                                                            {loc.detail && (
+                                                                <span className="text-xs text-muted-foreground truncate">— {loc.detail}</span>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             )}
-                                        </button>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -363,6 +466,10 @@ export default function CommandPalette() {
                     <span className="flex items-center gap-1">
                         <kbd className="px-1.5 py-0.5 rounded border bg-background text-[10px] font-mono">↵</kbd>
                         select
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <kbd className="px-1.5 py-0.5 rounded border bg-background text-[10px] font-mono">→</kbd>
+                        where?
                     </span>
                     <span className="flex items-center gap-1">
                         <kbd className="px-1.5 py-0.5 rounded border bg-background text-[10px] font-mono">esc</kbd>

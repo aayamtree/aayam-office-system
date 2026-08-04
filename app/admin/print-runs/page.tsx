@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { syncRunJobsToStage, revertJobsToReadyToPrint } from '@/lib/print-run-sync';
 import { useAuth } from '@/lib/auth-context';
@@ -89,6 +89,16 @@ export default function PrintRunsPage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
     const [updating, setUpdating] = useState<string | null>(null);
+    const [focusJobId, setFocusJobId] = useState<string | null>(null);
+    const focusRunRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setFocusJobId(new URLSearchParams(window.location.search).get('job'));
+    }, []);
+    useEffect(() => {
+        if (!focusJobId || loading) return;
+        focusRunRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [focusJobId, loading, runs]);
 
     // Modals
     const [viewRun, setViewRun] = useState<PrintRun | null>(null);
@@ -325,6 +335,12 @@ export default function PrintRunsPage() {
     const filteredRuns = filter === 'all' ? runs : filter === 'overdue'
         ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !['printing_done'].includes(r.status))
         : runs.filter(r => r.status === filter);
+
+    // ?job=<id> — arrived from ⌘K's "where does this appear" list. A job isn't a
+    // row here, it's a line inside a run, so highlight the RUN that carries it.
+    const focusRunId = focusJobId
+        ? runs.find(r => r.jobs?.some(j => j.job_id === focusJobId))?.id ?? null
+        : null;
     const counts: Record<string, number> = {
         all: runs.length,
         planned: runs.filter(r => r.status === 'planned').length,
@@ -438,7 +454,11 @@ export default function PrintRunsPage() {
                         const nextLabel = getNextLabel(run.status);
 
                         return (
-                            <div key={run.id} className={`bg-card rounded-md border border-border border-l-4 ${statusConf.borderColor} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+                            <div
+                                key={run.id}
+                                ref={run.id === focusRunId ? focusRunRef : undefined}
+                                className={`bg-card rounded-md border border-border border-l-4 ${statusConf.borderColor} hover:shadow-sm transition-shadow ${run.id === focusRunId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}
+                            >
                                 {/* Light tinted top strip */}
                                 <div className={`${statusConf.tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
                                     <span className="text-[10px] font-mono text-muted-foreground">{run.print_run_number}</span>

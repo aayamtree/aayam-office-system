@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Palette, Printer, AlertCircle, Clock, CheckCircle2, TrendingUp, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -23,6 +23,19 @@ export default function ProductionQueuePage() {
     const [filter, setFilter] = useState<string | null>(null);
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [categories, setCategories] = useState<string[]>([]);
+
+    // ?job=<id> — arrived here from ⌘K's "where does this appear" list. This
+    // page is a flat table with no detail view, so the honest thing is to
+    // scroll the row into view and mark it, rather than pretend to "open" it.
+    const [focusJobId, setFocusJobId] = useState<string | null>(null);
+    const focusRowRef = useRef<HTMLTableRowElement>(null);
+    useEffect(() => {
+        setFocusJobId(new URLSearchParams(window.location.search).get('job'));
+    }, []);
+    useEffect(() => {
+        if (!focusJobId || loading) return;
+        focusRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [focusJobId, loading, jobs]);
 
     useEffect(() => {
         fetchData();
@@ -323,7 +336,10 @@ export default function ProductionQueuePage() {
                                         return (
                                             <tr
                                                 key={job.id}
-                                                className={`hover:bg-gray-50 transition-colors ${job.priority === 'high' ? 'bg-red-50/30' : ''
+                                                ref={job.id === focusJobId ? focusRowRef : undefined}
+                                                className={`transition-colors ${job.id === focusJobId
+                                                    ? 'bg-amber-100 ring-2 ring-inset ring-amber-400'
+                                                    : job.priority === 'high' ? 'bg-red-50/30 hover:bg-gray-50' : 'hover:bg-gray-50'
                                                     }`}
                                             >
                                                 <td className="px-6 py-4">
