@@ -722,10 +722,18 @@ export const DISPATCH_MODE_FIELDS: Record<DispatchMode, {
   driver: boolean;
   receivedBy: boolean;
 }> = {
+  // Exactly the matrix Satish marked up on the three dispatch screenshots.
+  // Vehicle No is deliberately OFF everywhere: he struck it out on Client
+  // Collect, Courier AND Transport, and asked for local transport to carry the
+  // driver's name and phone only. A courier or transport company answers for
+  // the consignment through its LR number, not through a lorry registration
+  // nobody here writes down; a local driver has no LR, so the driver IS the
+  // record. An earlier version of this table left vehicle on for Transport and
+  // Local Transport, which is not what was agreed.
   collect:         { label: 'Client Collect',  receipt: false, transporter: false, tracking: false, vehicle: false, driver: false, receivedBy: true  },
   courier:         { label: 'Courier',         receipt: true,  transporter: true,  tracking: true,  vehicle: false, driver: false, receivedBy: false },
-  transport:       { label: 'Transport',       receipt: true,  transporter: true,  tracking: true,  vehicle: true,  driver: false, receivedBy: false },
-  local_transport: { label: 'Local Transport', receipt: false, transporter: false, tracking: false, vehicle: true,  driver: true,  receivedBy: false },
+  transport:       { label: 'Transport',       receipt: true,  transporter: true,  tracking: true,  vehicle: false, driver: false, receivedBy: false },
+  local_transport: { label: 'Local Transport', receipt: false, transporter: false, tracking: false, vehicle: false, driver: true,  receivedBy: false },
 };
 
 /** Why an overdue job is late. Explains the delay — does not excuse it. */

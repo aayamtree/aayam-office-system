@@ -638,7 +638,11 @@ export default function DispatchPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Packages pairs with Vehicle No when that field is shown; on its
+                  own it takes the full width rather than leaving a hole. No mode
+                  asks for a vehicle today — the field stays wired up so turning
+                  it back on for one mode is a one-word change. */}
+              <div className={modeFields.vehicle ? 'grid grid-cols-2 gap-3' : ''}>
                 {modeFields.vehicle && (
                   <div>
                     <label className="block text-sm font-medium mb-1">Vehicle No</label>

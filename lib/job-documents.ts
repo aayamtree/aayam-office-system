@@ -47,19 +47,24 @@ function matches(kind: DocKind, name: string): boolean {
  * Pull the documents of one kind off a job, newest first, with exact
  * duplicates removed.
  *
- * Duplicates are real: the same PDF showed up twice on PO-2407001
+ * Duplicates are real: the same PDF shows up twice on PO-2407001
  * because the upload handler appends to jobs.files[] with no identity
- * check, so a double-tap or a re-upload of the same file leaves two
- * rows pointing at the same object. We de-dupe on URL for display —
- * two genuinely different revisions have different storage paths and
- * are both kept.
+ * check, so a re-upload of the same file leaves two entries.
+ *
+ * De-duping on URL alone was not enough — each upload gets its own
+ * timestamped storage path, so the same file uploaded twice has two
+ * different URLs and both rows survived. We match on NAME + SIZE
+ * instead, which is what "the same document" means to the dispatcher
+ * looking at the list, and keep the newest.
+ *
+ * A genuine revision almost always differs in size; if it somehow does
+ * not, the newest is the one that should be checked anyway.
  */
 export function getJobDocs(job: DispatchDocsJob | null | undefined, kind: DocKind): JobDoc[] {
   const files = job?.files;
   if (!Array.isArray(files)) return [];
 
   const out: JobDoc[] = [];
-  const seen = new Set<string>();
 
   for (const f of files) {
     const rawName = typeof f?.name === 'string' ? f.name : '';
@@ -73,9 +78,6 @@ export function getJobDocs(job: DispatchDocsJob | null | undefined, kind: DocKin
     const thisKind: DocKind | null = isEway ? 'eway' : isInvoice ? 'invoice' : null;
     if (thisKind !== kind) continue;
 
-    if (seen.has(url)) continue;
-    seen.add(url);
-
     out.push({
       kind,
       name: rawName.replace(LABEL_PATTERNS[kind], '').trim() || rawName,
@@ -85,7 +87,16 @@ export function getJobDocs(job: DispatchDocsJob | null | undefined, kind: DocKin
     });
   }
 
-  return out.sort((a, b) => String(b.uploaded_at || '').localeCompare(String(a.uploaded_at || '')));
+  // Newest first, then keep one row per document.
+  out.sort((a, b) => String(b.uploaded_at || '').localeCompare(String(a.uploaded_at || '')));
+
+  const seen = new Set<string>();
+  return out.filter((d) => {
+    const identity = `${d.name.toLowerCase()}|${d.size ?? ''}`;
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
 }
 
 export interface DispatchPaperwork {
