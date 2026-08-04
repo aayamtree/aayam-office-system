@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-04T13:39:56.468Z",
-  "filesScanned": 430,
+  "generatedAt": "2026-08-04T13:54:53.341Z",
+  "filesScanned": 431,
   "queriesSeen": 614,
   "wildcardQueries": 95,
   "writesSeen": 245,
@@ -1610,6 +1610,23 @@
         }
       ]
     },
+    "dispatch_contacts": {
+      "columns": [
+        "id",
+        "kind",
+        "last_used_at",
+        "name",
+        "phone",
+        "times_used"
+      ],
+      "relations": [],
+      "sites": [
+        {
+          "file": "components/dispatch/DispatchContactInput.tsx",
+          "line": 47
+        }
+      ]
+    },
     "dispatches": {
       "columns": [
         "actual_delivery",
@@ -2732,12 +2749,12 @@
           },
           "dispatch_mode": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 265,
+            "line": 247,
             "verb": "update"
           },
           "dispatch_receipt_url": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 265,
+            "line": 247,
             "verb": "update"
           },
           "drive_file_status": {
@@ -2841,7 +2858,7 @@
           },
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 265,
+            "line": 247,
             "verb": "update"
           },
           {
@@ -4857,7 +4874,7 @@
         "columns": {
           "checklist": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "design_file_url": {
@@ -4867,22 +4884,22 @@
           },
           "job_id": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "notes": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "performed_by": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "performed_by_name": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "photos": {
@@ -4897,12 +4914,12 @@
           },
           "qc_type": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "result": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           "skip_reason": {
@@ -4915,7 +4932,7 @@
         "sites": [
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 271,
+            "line": 253,
             "verb": "insert"
           },
           {
@@ -5532,10 +5549,6 @@
       "relations": [],
       "sites": [
         {
-          "file": "app/admin/dispatch/page.tsx",
-          "line": 123
-        },
-        {
           "file": "app/admin/finance/banking/page.tsx",
           "line": 103
         },
@@ -5554,6 +5567,10 @@
         {
           "file": "app/admin/print-runs/page.tsx",
           "line": 208
+        },
+        {
+          "file": "components/banking/CategoryModal.tsx",
+          "line": 293
         }
       ]
     },

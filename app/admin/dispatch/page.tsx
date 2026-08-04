@@ -14,13 +14,7 @@ import { DISPATCH_MODE_FIELDS, type DispatchMode } from '@/types/database';
 import ActionButton from '@/components/ActionButton';
 import LoadError from '@/components/LoadError';
 import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
-
-// ─── Transporter vendor ──────────────────────────────────────
-interface TransporterVendor {
-  id: string;
-  name: string;
-  company?: string;
-}
+import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
@@ -81,9 +75,6 @@ export default function DispatchPage() {
     focusCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [focusJobId, jobsLoading, jobs]);
 
-  // Transporters
-  const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
-
   // Dispatch modal
   const [showDispatchModal, setShowDispatchModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -116,18 +107,9 @@ export default function DispatchPage() {
 
   const loading = jobsLoading || dispatchesLoading;
 
-  // Fetch transporters on mount
-  useEffect(() => {
-    const fetchTransporters = async () => {
-      const { data } = await supabase
-        .from('vendors')
-        .select('id, name, company')
-        .or('category.ilike.%transport%,category.ilike.%courier%,category.ilike.%logistic%')
-        .order('name');
-      setTransporters(data || []);
-    };
-    fetchTransporters();
-  }, []);
+  // (The old vendors lookup that fed this form is gone: there were no
+  //  transport or courier vendors, and DispatchContactInput now offers the
+  //  names actually used on past dispatches instead.)
 
   // ─── Derived Data ─────────────────────────────────────────
   const materialReceived = jobs.filter(j => j.current_stage === 'material_received');
@@ -281,6 +263,9 @@ export default function DispatchPage() {
         console.warn('Could not save dispatch QC record:', err);
       }
 
+      // The DB trigger has just remembered this courier / driver; drop the
+      // cached list so the next dispatch offers it straight away.
+      invalidateContactCache();
       setShowDispatchModal(false);
       toast.info('Order marked as Dispatched!');
     } catch (err: any) {
@@ -608,23 +593,20 @@ export default function DispatchPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {modeFields.transporter && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Transporter</label>
-                      {transporters.length > 0 ? (
-                        <select
-                          value={dispatchForm.transporter_name}
-                          onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md text-sm"
-                        >
-                          <option value="">Self / Manual</option>
-                          {transporters.map(t => (
-                            <option key={t.id} value={t.name}>{t.name}{t.company ? ` (${t.company})` : ''}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input type="text" placeholder="e.g. DTDC, Self"
-                          value={dispatchForm.transporter_name} onChange={e => setDispatchForm({ ...dispatchForm, transporter_name: e.target.value })}
-                          className="w-full px-3 py-2 border rounded-md text-sm" />
-                      )}
+                      <label className="block text-sm font-medium mb-1">
+                        {dispatchForm.dispatch_mode === 'courier' ? 'Courier' : 'Transporter'}
+                      </label>
+                      {/* Always typeable, always showing what was used before.
+                          This used to be a <select> whenever any transport
+                          vendor existed — so adding the first vendor would have
+                          removed the ability to enter a courier that wasn't on
+                          the list, mid-dispatch, with no way round it. */}
+                      <DispatchContactInput
+                        kind={dispatchForm.dispatch_mode === 'courier' ? 'courier' : 'transport'}
+                        value={dispatchForm.transporter_name}
+                        onChange={name => setDispatchForm(f => ({ ...f, transporter_name: name }))}
+                        placeholder="e.g. DTDC, Self"
+                      />
                     </div>
                   )}
                   {modeFields.tracking && (
@@ -667,9 +649,20 @@ export default function DispatchPage() {
                     <label className="block text-sm font-medium mb-1">
                       Driver Name<span className="text-red-500"> *</span>
                     </label>
-                    <input type="text" placeholder="Who is driving"
-                      value={dispatchForm.driver_name} onChange={e => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                    {/* Picking a driver used before fills in his phone, so the
+                        number is right without anyone remembering it. */}
+                    <DispatchContactInput
+                      kind="local_driver"
+                      value={dispatchForm.driver_name}
+                      onChange={name => setDispatchForm(f => ({ ...f, driver_name: name }))}
+                      onPick={c => setDispatchForm(f => ({
+                        ...f,
+                        driver_name: c.name,
+                        // Never wipe a number already typed for this trip.
+                        driver_phone: c.phone || f.driver_phone,
+                      }))}
+                      placeholder="Who is driving"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Driver Phone</label>
