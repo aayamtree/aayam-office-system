@@ -8,7 +8,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown } from 'lucide-react';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark } from 'lucide-react';
 
 // Zoho sends ~250 fields per document; these are the ones worth showing.
 interface ZohoLineItem {
@@ -20,6 +20,29 @@ interface ZohoLineItem {
   item_total?: number;
   tax_name?: string;
   tax_percentage?: number;
+}
+
+interface ZohoTxn {
+  id: string;
+  zoho_transaction_id: string;
+  txn_date: string | null;
+  amount: number | null;
+  debit_or_credit: string | null;
+  transaction_type: string | null;
+  status: string | null;
+  is_categorized: boolean | null;
+  description: string | null;
+  reference_number: string | null;
+  payee: string | null;
+  account_name: string | null;
+  offset_account_name: string | null;
+}
+
+interface SyncRun {
+  ran_at: string;
+  ok: boolean;
+  fetched: number | null;
+  message: string | null;
 }
 
 interface ZohoDoc {
@@ -55,24 +78,43 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function ZohoDocumentsPage() {
   const [docs, setDocs] = useState<ZohoDoc[]>([]);
+  const [txns, setTxns] = useState<ZohoTxn[]>([]);
+  const [lastSync, setLastSync] = useState<SyncRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'invoice' | 'estimate'>('invoice');
+  const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank'>('invoice');
   const [openRow, setOpenRow] = useState<string | null>(null);
 
   const fetchDocs = async () => {
     setLoading(true);
     setError(null);
-    const { data, error: qError } = await supabase
-      .from('zoho_documents')
-      .select('id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, sub_total, tax_total, total, balance, line_items, last_synced_at')
-      .order('doc_date', { ascending: false })
-      .limit(500);
-    if (qError) {
-      setError(qError.message);
-    } else {
-      setDocs((data as ZohoDoc[]) || []);
-    }
+    const [docsRes, txnRes, runRes] = await Promise.all([
+      supabase
+        .from('zoho_documents')
+        .select('id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, sub_total, tax_total, total, balance, line_items, last_synced_at')
+        .order('doc_date', { ascending: false })
+        .limit(500),
+      supabase
+        .from('zoho_bank_transactions')
+        .select('id, zoho_transaction_id, txn_date, amount, debit_or_credit, transaction_type, status, is_categorized, description, reference_number, payee, account_name, offset_account_name')
+        .order('txn_date', { ascending: false })
+        .limit(500),
+      supabase
+        .from('zoho_sync_runs')
+        .select('ran_at, ok, fetched, message')
+        .eq('kind', 'bank')
+        .order('ran_at', { ascending: false })
+        .limit(1),
+    ]);
+
+    if (docsRes.error) setError(docsRes.error.message);
+    else setDocs((docsRes.data as ZohoDoc[]) || []);
+
+    // The bank tables only exist after the banking migration; a missing table
+    // must not blank out the invoices the page already showed fine.
+    if (!txnRes.error) setTxns((txnRes.data as ZohoTxn[]) || []);
+    if (!runRes.error) setLastSync(((runRes.data || [])[0] as SyncRun) || null);
+
     setLoading(false);
   };
 
@@ -84,6 +126,14 @@ export default function ZohoDocumentsPage() {
   const outstanding = docs
     .filter(d => d.doc_type === 'invoice' && (d.balance || 0) > 0)
     .reduce((sum, d) => sum + (d.balance || 0), 0);
+
+  const moneyIn = txns
+    .filter(t => t.debit_or_credit === 'credit')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const moneyOut = txns
+    .filter(t => t.debit_or_credit === 'debit')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const uncategorised = txns.filter(t => t.is_categorized === false).length;
 
   return (
     <div className="space-y-6">
@@ -102,22 +152,44 @@ export default function ZohoDocumentsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase">Invoices synced</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{invoiceCount}</p>
+      {tab === 'bank' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Money in (60 days)</p>
+            <p className="text-2xl font-bold text-green-600 mt-1">{inr(moneyIn)}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Money out (60 days)</p>
+            <p className="text-2xl font-bold text-red-600 mt-1">{inr(moneyOut)}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Not yet categorised</p>
+            <p className={`text-2xl font-bold mt-1 ${uncategorised > 0 ? 'text-amber-600' : 'text-gray-900'}`}>
+              {uncategorised}
+            </p>
+            {uncategorised > 0 && (
+              <p className="text-xs text-gray-500 mt-1">Categorise these in Zoho</p>
+            )}
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase">Quotes synced</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{estimateCount}</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Invoices synced</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{invoiceCount}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Quotes synced</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{estimateCount}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Outstanding (Zoho)</p>
+            <p className="text-2xl font-bold text-amber-600 mt-1">{inr(outstanding)}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 uppercase">Outstanding (Zoho)</p>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{inr(outstanding)}</p>
-        </div>
-      </div>
+      )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setTab('invoice')}
           className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md ${tab === 'invoice' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
@@ -130,6 +202,12 @@ export default function ZohoDocumentsPage() {
         >
           <FileText className="w-4 h-4" /> Quotes
         </button>
+        <button
+          onClick={() => setTab('bank')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md ${tab === 'bank' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
+        >
+          <Landmark className="w-4 h-4" /> Bank Feed
+        </button>
       </div>
 
       {error && (
@@ -138,6 +216,73 @@ export default function ZohoDocumentsPage() {
         </div>
       )}
 
+      {tab === 'bank' ? (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-gray-400">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          ) : txns.length === 0 ? (
+            <div className="text-center py-16 px-6">
+              <p className="text-gray-500 font-medium">No bank transactions yet</p>
+              <p className="text-sm text-gray-400 mt-2 max-w-lg mx-auto">
+                Once Zoho Books is connected, the HDFC feed syncs here twice a day —
+                with whatever category you gave each line in Zoho. Nothing to download or paste.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-200">
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Description</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Account</th>
+                    <th className="px-4 py-3 text-right">Out</th>
+                    <th className="px-4 py-3 text-right">In</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {txns.map(t => (
+                    <tr key={t.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                        {t.txn_date ? formatDate(t.txn_date) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-gray-900">{t.description || t.transaction_type || '—'}</span>
+                        {(t.payee || t.reference_number) && (
+                          <span className="block text-xs text-gray-500">
+                            {[t.payee, t.reference_number].filter(Boolean).join(' · ')}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {t.offset_account_name ? (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {t.offset_account_name}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                            uncategorised
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">{t.account_name || '—'}</td>
+                      <td className="px-4 py-3 text-right font-medium text-red-600">
+                        {t.debit_or_credit === 'debit' ? inr(t.amount) : ''}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-green-600">
+                        {t.debit_or_credit === 'credit' ? inr(t.amount) : ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
@@ -258,11 +403,25 @@ export default function ZohoDocumentsPage() {
           </div>
         )}
       </div>
+      )}
 
-      <p className="text-xs text-gray-400 flex items-center gap-1">
-        <ExternalLink className="w-3 h-3" />
-        To edit any document, open it in Zoho Books — changes sync back here automatically.
-      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+        <span className="flex items-center gap-1">
+          <ExternalLink className="w-3 h-3" />
+          {tab === 'bank'
+            ? 'Categorise transactions in Zoho — the category follows them here.'
+            : 'To edit any document, open it in Zoho Books — changes sync back here automatically.'}
+        </span>
+        {tab === 'bank' && (
+          <span className="ml-auto">
+            {lastSync
+              ? lastSync.ok
+                ? `Last sync ${new Date(lastSync.ran_at).toLocaleString('en-IN')} · ${lastSync.fetched ?? 0} lines`
+                : `Last sync FAILED ${new Date(lastSync.ran_at).toLocaleString('en-IN')}${lastSync.message ? ' — ' + lastSync.message : ''}`
+              : 'Never synced yet'}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

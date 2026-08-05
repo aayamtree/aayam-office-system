@@ -58,6 +58,14 @@
         {
             "path": "/api/cron/watchman",
             "schedule": "*/15 * * * *"
+        },
+        {
+            "path": "/api/cron/zoho-bank-sync",
+            "schedule": "30 4 * * *"
+        },
+        {
+            "path": "/api/cron/zoho-bank-sync",
+            "schedule": "30 12 * * *"
         }
     ]
 }
