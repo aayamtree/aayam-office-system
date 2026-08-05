@@ -26,6 +26,7 @@ import {
     getOrganizationId,
     zohoGet,
     logSyncRun,
+    dedupeBy,
 } from '@/lib/zoho-api';
 
 export const dynamic = 'force-dynamic';
@@ -45,15 +46,24 @@ function str(value: unknown): string | null {
     return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-/** Walk a paginated Books list endpoint to the end (bounded). */
+/**
+ * Walk a paginated Books list endpoint to the end (bounded).
+ *
+ * Stops early if a page contributes no ids we have not already seen. Without
+ * that guard, an endpoint that quietly ignores `page` while still reporting
+ * has_more_page would spin until the page cap, re-fetching the same rows —
+ * which is exactly the shape of the 4,624-row first run.
+ */
 async function fetchAll(
     accessToken: string,
     orgId: string,
     path: string,
     listKey: string,
+    idKey: string,
     params: Record<string, string>
 ): Promise<Record<string, unknown>[] | null> {
     const out: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
     let page = 1;
     let hasMore = true;
     while (hasMore && page <= 50) {
@@ -63,7 +73,18 @@ async function fetchAll(
             page: String(page),
         });
         if (!json) return null;
-        out.push(...(json[listKey] || []));
+        const batch: Record<string, unknown>[] = json[listKey] || [];
+
+        let fresh = 0;
+        for (const row of batch) {
+            const id = String(row[idKey] ?? '');
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            out.push(row);
+            fresh += 1;
+        }
+
+        if (batch.length === 0 || fresh === 0) break;
         hasMore = Boolean(json.page_context?.has_more_page);
         page += 1;
     }
@@ -103,7 +124,7 @@ export async function GET(request: NextRequest) {
         ['invoice', '/invoices', 'invoices', 'invoice_number', 'invoice_id', 'due_date'],
         ['estimate', '/estimates', 'estimates', 'estimate_number', 'estimate_id', 'expiry_date'],
     ] as const) {
-        const rows = await fetchAll(accessToken, orgId, path, listKey, { date_start: from });
+        const rows = await fetchAll(accessToken, orgId, path, listKey, idKey, { date_start: from });
         if (rows === null) {
             await logSyncRun(supabase, 'backfill', false, 0, `${listKey} list failed`);
             return NextResponse.json({ error: `Could not fetch ${listKey}` }, { status: 502 });
@@ -136,7 +157,9 @@ export async function GET(request: NextRequest) {
             // webhook already delivered would be a downgrade.
             const { error } = await supabase
                 .from('zoho_documents')
-                .upsert(mapped as object[], { onConflict: 'doc_type,zoho_id' });
+                .upsert(dedupeBy(mapped as Record<string, unknown>[], 'doc_type', 'zoho_id'), {
+                    onConflict: 'doc_type,zoho_id',
+                });
             if (error) {
                 await logSyncRun(supabase, 'backfill', false, mapped.length, error.message);
                 return NextResponse.json({ error: 'Store failed' }, { status: 500 });
@@ -146,9 +169,14 @@ export async function GET(request: NextRequest) {
     }
 
     // ---- Bank transactions ---------------------------------------------------
-    const txns = await fetchAll(accessToken, orgId, '/banktransactions', 'banktransactions', {
-        date_after: from,
-    });
+    const txns = await fetchAll(
+        accessToken,
+        orgId,
+        '/banktransactions',
+        'banktransactions',
+        'transaction_id',
+        { date_after: from }
+    );
     if (txns === null) {
         await logSyncRun(supabase, 'backfill', false, 0, 'banktransactions list failed');
         return NextResponse.json({ error: 'Could not fetch bank transactions' }, { status: 502 });
@@ -179,16 +207,21 @@ export async function GET(request: NextRequest) {
         })
         .filter(Boolean);
 
-    if (mappedTxns.length > 0) {
-        const { error } = await supabase
-            .from('zoho_bank_transactions')
-            .upsert(mappedTxns as object[], { onConflict: 'zoho_transaction_id' });
-        if (error) {
-            await logSyncRun(supabase, 'backfill', false, mappedTxns.length, error.message);
-            return NextResponse.json({ error: 'Store failed' }, { status: 500 });
+    const uniqueTxns = dedupeBy(mappedTxns as Record<string, unknown>[], 'zoho_transaction_id');
+    if (uniqueTxns.length > 0) {
+        // Chunked: one statement carrying thousands of rows is both slow and the
+        // kind of thing that trips statement limits on a bad day.
+        for (let i = 0; i < uniqueTxns.length; i += 500) {
+            const { error } = await supabase
+                .from('zoho_bank_transactions')
+                .upsert(uniqueTxns.slice(i, i + 500), { onConflict: 'zoho_transaction_id' });
+            if (error) {
+                await logSyncRun(supabase, 'backfill', false, uniqueTxns.length, error.message);
+                return NextResponse.json({ error: `Store failed: ${error.message}` }, { status: 500 });
+            }
         }
     }
-    result.banktransactions = mappedTxns.length;
+    result.banktransactions = uniqueTxns.length;
 
     // ---- Enrich documents that still have no line items ----------------------
     // One API call per document, so bounded per invocation. Re-run until

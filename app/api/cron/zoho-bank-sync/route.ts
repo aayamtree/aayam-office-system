@@ -26,6 +26,7 @@ import {
     getOrganizationId,
     zohoGet,
     logSyncRun,
+    dedupeBy,
 } from '@/lib/zoho-api';
 
 export const dynamic = 'force-dynamic';
@@ -122,16 +123,21 @@ export async function GET(request: NextRequest) {
         })
         .filter(Boolean);
 
-    if (mapped.length > 0) {
-        const { error } = await supabase
-            .from('zoho_bank_transactions')
-            .upsert(mapped as object[], { onConflict: 'zoho_transaction_id' });
-        if (error) {
-            await logSyncRun(supabase, 'bank', false, mapped.length, error.message);
-            return NextResponse.json({ error: 'Store failed' }, { status: 500 });
+    // Zoho repeats ids across pages and for both sides of a transfer; one upsert
+    // statement may not carry the same conflict key twice.
+    const unique = dedupeBy(mapped as Record<string, unknown>[], 'zoho_transaction_id');
+    if (unique.length > 0) {
+        for (let i = 0; i < unique.length; i += 500) {
+            const { error } = await supabase
+                .from('zoho_bank_transactions')
+                .upsert(unique.slice(i, i + 500), { onConflict: 'zoho_transaction_id' });
+            if (error) {
+                await logSyncRun(supabase, 'bank', false, unique.length, error.message);
+                return NextResponse.json({ error: `Store failed: ${error.message}` }, { status: 500 });
+            }
         }
     }
 
-    await logSyncRun(supabase, 'bank', true, mapped.length);
-    return NextResponse.json({ ok: true, fetched: mapped.length, since: dateAfter });
+    await logSyncRun(supabase, 'bank', true, unique.length);
+    return NextResponse.json({ ok: true, fetched: unique.length, since: dateAfter });
 }
