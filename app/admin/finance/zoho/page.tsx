@@ -8,7 +8,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History } from 'lucide-react';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History, PieChart } from 'lucide-react';
 
 // Zoho sends ~250 fields per document; these are the ones worth showing.
 interface ZohoLineItem {
@@ -109,7 +109,7 @@ export default function ZohoDocumentsPage() {
   const [lastSync, setLastSync] = useState<SyncRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank'>('invoice');
+  const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank' | 'category'>('invoice');
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillMsg, setBackfillMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -197,6 +197,23 @@ export default function ZohoDocumentsPage() {
     .filter(t => !isMoneyIn(t))
     .reduce((sum, t) => sum + (t.amount || 0), 0);
   const uncategorised = txns.filter(t => !categoryLabel(t).known).length;
+
+  // Where the money actually went, by Zoho's own category names. This is the
+  // view that removes a reason to open Zoho at all.
+  const byCategory = (() => {
+    const map = new Map<string, { inAmt: number; outAmt: number; n: number }>();
+    for (const t of txns) {
+      const key = categoryLabel(t).text;
+      const row = map.get(key) || { inAmt: 0, outAmt: 0, n: 0 };
+      if (isMoneyIn(t)) row.inAmt += t.amount || 0;
+      else row.outAmt += t.amount || 0;
+      row.n += 1;
+      map.set(key, row);
+    }
+    return Array.from(map.entries())
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => (b.outAmt + b.inAmt) - (a.outAmt + a.inAmt));
+  })();
 
   return (
     <div className="space-y-6">
@@ -288,6 +305,12 @@ export default function ZohoDocumentsPage() {
         >
           <Landmark className="w-4 h-4" /> Bank Feed
         </button>
+        <button
+          onClick={() => setTab('category')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md ${tab === 'category' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
+        >
+          <PieChart className="w-4 h-4" /> By Category
+        </button>
       </div>
 
       {error && (
@@ -296,7 +319,54 @@ export default function ZohoDocumentsPage() {
         </div>
       )}
 
-      {tab === 'bank' ? (
+      {tab === 'category' ? (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-gray-400">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          ) : byCategory.length === 0 ? (
+            <div className="text-center py-16 px-6">
+              <p className="text-gray-500 font-medium">Nothing to summarise yet</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-200">
+                    <th className="px-4 py-3">Category (as named in Zoho)</th>
+                    <th className="px-4 py-3 text-right">Entries</th>
+                    <th className="px-4 py-3 text-right">Out</th>
+                    <th className="px-4 py-3 text-right">In</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byCategory.map(c => (
+                    <tr key={c.name} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-900">{c.name}</td>
+                      <td className="px-4 py-3 text-right text-gray-500">{c.n}</td>
+                      <td className="px-4 py-3 text-right font-medium text-red-600">
+                        {c.outAmt > 0 ? inr(c.outAmt) : ''}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-green-600">
+                        {c.inAmt > 0 ? inr(c.inAmt) : ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-gray-300 font-semibold">
+                    <td className="px-4 py-3 text-gray-900">Total</td>
+                    <td className="px-4 py-3 text-right text-gray-500">{txns.length}</td>
+                    <td className="px-4 py-3 text-right text-red-600">{inr(moneyOut)}</td>
+                    <td className="px-4 py-3 text-right text-green-600">{inr(moneyIn)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : tab === 'bank' ? (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-gray-400">

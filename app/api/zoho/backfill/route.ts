@@ -231,6 +231,46 @@ export async function GET(request: NextRequest) {
     }
     result.banktransactions = uniqueTxns.length;
 
+    // ---- Chart of accounts ---------------------------------------------------
+    // These names ARE the expense categories now that Zoho owns bookkeeping.
+    // Not date-filtered: a chart of accounts is a list, not a history.
+    const accounts = await fetchAll(
+        accessToken,
+        orgId,
+        '/chartofaccounts',
+        'chartofaccounts',
+        'account_id',
+        {}
+    );
+    if (accounts) {
+        const mappedAccounts = dedupeBy(
+            accounts
+                .map((a) => {
+                    const id = str(a.account_id);
+                    if (!id) return null;
+                    return {
+                        zoho_account_id: id,
+                        account_name: str(a.account_name),
+                        account_type: str(a.account_type),
+                        account_code: str(a.account_code),
+                        description: str(a.description),
+                        is_active: typeof a.is_active === 'boolean' ? a.is_active : null,
+                        raw: a,
+                        last_synced_at: now,
+                    };
+                })
+                .filter(Boolean) as Record<string, unknown>[],
+            'zoho_account_id'
+        );
+        if (mappedAccounts.length > 0) {
+            const { error } = await supabase
+                .from('zoho_accounts')
+                .upsert(mappedAccounts, { onConflict: 'zoho_account_id' });
+            if (error) console.error('[zoho/backfill] accounts upsert failed:', error.message);
+            else result.chart_of_accounts = mappedAccounts.length;
+        }
+    }
+
     // ---- Enrich documents that still have no line items ----------------------
     // One API call per document, so bounded per invocation. Re-run until
     // `remaining` is 0.
