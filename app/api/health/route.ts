@@ -17,7 +17,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/api-auth';
-import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
+import { sendToChat } from '@/lib/telegram-groups';
+import { buildHealthMessage } from '@/lib/health-message';
 import {
     checkSchemaDrift, checkRpcs, checkConfigTables, checkCrons, checkDataLoss,
     checkWriteDrift, checkLedgerPosting, captureRowSnapshot, EXPECTED_CRONS, type Finding,
@@ -42,13 +43,22 @@ async function isPrivileged(request: NextRequest): Promise<boolean> {
 }
 
 /**
- * Telegram the admin group when the daily audit finds something wrong.
+ * Telegram the admin group with the result of the daily audit.
  *
  * The audit existed before this and ran every night at 3:45 AM, but its output
  * went into a Vercel log nobody opens. That is why a crashing Sales Reports page
  * survived undetected: the check that could have run wasn't reporting to a human.
  * Failures here are swallowed — a broken alert must not fail the health check
  * itself, which would be its own confusing outage.
+ *
+ * The WORDING lives in lib/health-message.ts, not here. The person reading this
+ * message runs a printing business; "99 column(s) the app selects no longer
+ * exist" told him nothing he could act on. The technical detail is still in the
+ * JSON below and on /admin/system-health, one tap away on the button.
+ *
+ * It now sends on clean days too. Silence and "the audit died" look identical
+ * from the outside, and a green message every morning is what makes the red one
+ * mean something.
  */
 async function alertAdmins(db: any, payload: any) {
     try {
@@ -63,33 +73,7 @@ async function alertAdmins(db: any, payload: any) {
         for (const a of admins || []) if (a.telegram_chat_id) targets.add(a.telegram_chat_id);
         if (!targets.size) return;
 
-        const lines = ['⚠️ <b>Daily health audit — issues found</b>', ''];
-        for (const reason of payload.degradedReasons) lines.push(`• ${escapeHtml(reason)}`);
-
-        if (payload.pageErrors?.top?.length) {
-            lines.push('', '<b>Crashing pages</b>');
-            for (const c of payload.pageErrors.top.slice(0, 5)) {
-                lines.push(`• <code>${escapeHtml(c.path)}</code> ×${c.count}`);
-                lines.push(`   ${escapeHtml(String(c.message).slice(0, 120))}`);
-            }
-        }
-
-        // The named detail is the difference between "something is wrong" and a
-        // message you can act on before opening a laptop. Capped at three lines
-        // per finding: a Telegram message long enough to scroll gets skimmed.
-        const detailed = (payload.findings as Finding[] || []).filter(f => f.detail?.length);
-        if (detailed.length) {
-            lines.push('', '<b>Detail</b>');
-            for (const f of detailed) {
-                lines.push(`<i>${escapeHtml(f.check)}</i>`);
-                for (const d of f.detail!.slice(0, 3)) lines.push(`• ${escapeHtml(d)}`);
-                if (f.detail!.length > 3) lines.push(`• …and ${f.detail!.length - 3} more`);
-            }
-        }
-
-        lines.push('', `DB ${escapeHtml(payload.database?.responseTime || '?')}`);
-
-        const text = lines.join('\n');
+        const text = buildHealthMessage(payload);
         for (const chatId of Array.from(targets)) {
             await sendToChat(chatId, text, '/admin/system-health');
         }
@@ -351,7 +335,10 @@ export async function GET(request: NextRequest) {
         const isCron = !!process.env.CRON_SECRET &&
             request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
         if (isCron) {
-            if (degradedReasons.length) await alertAdmins(db, payload);
+            // Every day, not only bad days: a green message each morning is the
+            // only thing that proves the audit itself is still alive, and it is
+            // what gives the red message its weight.
+            await alertAdmins(db, payload);
             // Record our own run last, so tomorrow's check can tell "the audit
             // is clean" apart from "the audit stopped running" — which look
             // identical from the outside and are the opposite of each other.
