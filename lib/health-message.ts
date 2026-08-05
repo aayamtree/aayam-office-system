@@ -275,21 +275,43 @@ function toItems(payload: HealthMessageInput): Item[] {
 }
 
 /**
+ * What the audit found, already translated. Returned rather than rendered so
+ * the caller decides whether it becomes a Telegram message, a notice in the
+ * outbox, or a line on a page.
+ */
+export function summariseHealth(payload: HealthMessageInput) {
+    const items = toItems(payload);
+    const critical = items.filter(i => i.severity === 'critical');
+    const watch = items.filter(i => i.severity === 'warning');
+    return {
+        critical,
+        watch,
+        light: critical.length ? '🔴' : watch.length ? '🟠' : '🟢',
+        verdict: critical.length
+            ? 'Needs your attention'
+            : watch.length
+                ? 'Working, with a few things to watch'
+                : 'All good',
+        /**
+         * Stable identity for "this exact set of problems". Two mornings with
+         * the same faults produce the same key, so the outbox's unique index
+         * suppresses the second one and Satish is asked once, not daily.
+         */
+        dedupeKey: 'health:' + Array.from(new Set(
+            (payload.findings || [])
+                .filter(f => f.severity === 'critical')
+                .map(f => f.check),
+        )).sort().join(','),
+    };
+}
+
+/**
  * The whole message. Deliberately short: verdict, what is broken and what that
  * costs, what is fine, one instruction. No column names, no table names, no
  * check ids — those are on the System Health page behind the button.
  */
 export function buildHealthMessage(payload: HealthMessageInput): string {
-    const items = toItems(payload);
-    const bad = items.filter(i => i.severity === 'critical');
-    const watch = items.filter(i => i.severity === 'warning');
-
-    const light = bad.length ? '🔴' : watch.length ? '🟠' : '🟢';
-    const verdict = bad.length
-        ? 'Needs your attention'
-        : watch.length
-            ? 'Working, with a few things to watch'
-            : 'All good';
+    const { critical: bad, watch, light, verdict } = summariseHealth(payload);
 
     const lines: string[] = [
         `${light} <b>Aayam System — Daily Check</b>`,
@@ -345,4 +367,28 @@ export function buildHealthMessage(payload: HealthMessageInput): string {
     }
 
     return lines.join('\n');
+}
+
+/**
+ * The same news as plain text, for the watchman outbox.
+ *
+ * The outbox escapes and formats its own messages, so anything written into a
+ * notice body must carry no markup. Kept beside the HTML version on purpose:
+ * if the wording is improved in one place, the other is right there.
+ *
+ * Only the critical items appear. This is the message that interrupts Satish's
+ * morning uninvited, and warnings — things that are not broken but could not be
+ * verified — do not earn an interruption. They stay in the weekly summary.
+ */
+export function healthNoticeBody(payload: HealthMessageInput): string {
+    const { critical } = summariseHealth(payload);
+    if (!critical.length) return '';
+
+    const parts: string[] = [
+        `The daily check on ${todayInIndia()} found ${critical.length} thing${critical.length === 1 ? '' : 's'} wrong.`,
+        '',
+    ];
+    for (const i of critical) parts.push(`• ${i.title}`, `  ${i.effect}`, '');
+    parts.push('Nothing has been changed. Tell Claude to go ahead and it will fix what it can and ask you about the rest.');
+    return parts.join('\n');
 }

@@ -17,8 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/api-auth';
-import { sendToChat } from '@/lib/telegram-groups';
-import { buildHealthMessage } from '@/lib/health-message';
+import { healthNoticeBody, summariseHealth } from '@/lib/health-message';
 import {
     checkSchemaDrift, checkRpcs, checkConfigTables, checkCrons, checkDataLoss,
     checkWriteDrift, checkLedgerPosting, captureRowSnapshot, EXPECTED_CRONS, type Finding,
@@ -43,39 +42,44 @@ async function isPrivileged(request: NextRequest): Promise<boolean> {
 }
 
 /**
- * Telegram the admin group with the result of the daily audit.
+ * Put the audit's verdict in the watchman outbox — do NOT Telegram from here.
  *
- * The audit existed before this and ran every night at 3:45 AM, but its output
- * went into a Vercel log nobody opens. That is why a crashing Sales Reports page
- * survived undetected: the check that could have run wasn't reporting to a human.
- * Failures here are swallowed — a broken alert must not fail the health check
+ * WHY THIS STOPPED SENDING DIRECTLY (2026-08-05)
+ * Satish asked Claude to watch the app for him and interrupt only when a human
+ * decision is genuinely needed. Two independent things messaging him about the
+ * same fault — this route at 9:15 and Claude at 9:07 — is how a person learns to
+ * swipe the notification away. So there is now exactly one outbox
+ * (watchman_notices) and one postman (/api/cron/watchman), and this route is
+ * simply another writer into it.
+ *
+ * The dedupe key is the set of failing checks. If Claude already opened a notice
+ * about the same set this morning, the unique index rejects this insert and
+ * Satish is asked once. If Claude never ran, this insert goes through — which
+ * makes this route the backstop for a dead watchman, on top of the heartbeat
+ * check in the dispatcher.
+ *
+ * Warnings never queue anything. Only critical findings interrupt a working day.
+ * Failures here are swallowed: a broken alert must not fail the health check
  * itself, which would be its own confusing outage.
- *
- * The WORDING lives in lib/health-message.ts, not here. The person reading this
- * message runs a printing business; "99 column(s) the app selects no longer
- * exist" told him nothing he could act on. The technical detail is still in the
- * JSON below and on /admin/system-health, one tap away on the button.
- *
- * It now sends on clean days too. Silence and "the audit died" look identical
- * from the outside, and a green message every morning is what makes the red one
- * mean something.
  */
-async function alertAdmins(db: any, payload: any) {
+async function queueHealthNotice(db: any, payload: any) {
     try {
-        const [{ data: groups }, { data: admins }] = await Promise.all([
-            db.from('telegram_groups').select('chat_id').eq('is_active', true).eq('department', 'admin'),
-            db.from('profiles').select('telegram_chat_id').eq('role', 'admin').eq('is_active', true)
-                .not('telegram_chat_id', 'is', null),
-        ]);
+        const body = healthNoticeBody(payload);
+        if (!body) return; // nothing critical — say nothing
 
-        const targets = new Set<string>();
-        for (const g of groups || []) if (g.chat_id) targets.add(g.chat_id);
-        for (const a of admins || []) if (a.telegram_chat_id) targets.add(a.telegram_chat_id);
-        if (!targets.size) return;
+        const { dedupeKey } = summariseHealth(payload);
+        const { error } = await db.from('watchman_notices').insert({
+            kind: 'alert',
+            dedupe_key: dedupeKey,
+            title: 'The daily check found something wrong',
+            body,
+            app_path: '/admin/system-health',
+        });
 
-        const text = buildHealthMessage(payload);
-        for (const chatId of Array.from(targets)) {
-            await sendToChat(chatId, text, '/admin/system-health');
+        // 23505 = unique violation = an identical open notice already exists.
+        // That is the system working, not a failure.
+        if (error && error.code !== '23505') {
+            console.error('[health] could not queue notice:', error.message);
         }
     } catch (e: any) {
         console.error('[health] admin alert failed:', e?.message || e);
@@ -335,10 +339,10 @@ export async function GET(request: NextRequest) {
         const isCron = !!process.env.CRON_SECRET &&
             request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
         if (isCron) {
-            // Every day, not only bad days: a green message each morning is the
-            // only thing that proves the audit itself is still alive, and it is
-            // what gives the red message its weight.
-            await alertAdmins(db, payload);
+            // Queues only when something is genuinely broken, and only if the
+            // watchman has not already raised the same thing. Claude owns the
+            // conversation with Satish now; this is the backstop.
+            await queueHealthNotice(db, payload);
             // Record our own run last, so tomorrow's check can tell "the audit
             // is clean" apart from "the audit stopped running" — which look
             // identical from the outside and are the opposite of each other.
