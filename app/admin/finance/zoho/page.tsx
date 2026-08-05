@@ -65,6 +65,33 @@ interface ZohoDoc {
 const inr = (n: number | null) =>
   n === null ? '—' : '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
+/**
+ * Zoho reports direction from the BANK ACCOUNT's point of view, in accounting
+ * terms: money arriving DEBITS the bank asset, money leaving CREDITS it. That is
+ * the opposite of how a bank statement reads to a customer, and getting it
+ * backwards showed crores of customer receipts as money going out.
+ * Verified against real data: expense/vendor_payment = credit, customer_payment
+ * /deposit/other_income = debit.
+ */
+const isMoneyIn = (t: ZohoTxn) => t.debit_or_credit === 'debit';
+
+/**
+ * What did this money DO. For expenses Zoho gives the offset account (the
+ * category Satish picked). Payments matched to an invoice or bill have no
+ * offset account — their meaning is the transaction type itself, so fall back
+ * to that rather than calling a matched customer payment "uncategorised".
+ */
+function categoryLabel(t: ZohoTxn): { text: string; known: boolean } {
+  if (t.offset_account_name) return { text: t.offset_account_name, known: true };
+  if (t.is_categorized && t.transaction_type) {
+    return {
+      text: t.transaction_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      known: true,
+    };
+  }
+  return { text: 'uncategorised', known: false };
+}
+
 const STATUS_STYLES: Record<string, string> = {
   paid: 'bg-green-100 text-green-700',
   sent: 'bg-blue-100 text-blue-700',
@@ -164,12 +191,12 @@ export default function ZohoDocumentsPage() {
     .reduce((sum, d) => sum + (d.balance || 0), 0);
 
   const moneyIn = txns
-    .filter(t => t.debit_or_credit === 'credit')
+    .filter(isMoneyIn)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
   const moneyOut = txns
-    .filter(t => t.debit_or_credit === 'debit')
+    .filter(t => !isMoneyIn(t))
     .reduce((sum, t) => sum + (t.amount || 0), 0);
-  const uncategorised = txns.filter(t => t.is_categorized === false).length;
+  const uncategorised = txns.filter(t => !categoryLabel(t).known).length;
 
   return (
     <div className="space-y-6">
@@ -311,22 +338,23 @@ export default function ZohoDocumentsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {t.offset_account_name ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                            {t.offset_account_name}
-                          </span>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
-                            uncategorised
-                          </span>
-                        )}
+                        {(() => {
+                          const cat = categoryLabel(t);
+                          return (
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cat.known ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-700'}`}
+                            >
+                              {cat.text}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-gray-500">{t.account_name || '—'}</td>
                       <td className="px-4 py-3 text-right font-medium text-red-600">
-                        {t.debit_or_credit === 'debit' ? inr(t.amount) : ''}
+                        {!isMoneyIn(t) ? inr(t.amount) : ''}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-green-600">
-                        {t.debit_or_credit === 'credit' ? inr(t.amount) : ''}
+                        {isMoneyIn(t) ? inr(t.amount) : ''}
                       </td>
                     </tr>
                   ))}

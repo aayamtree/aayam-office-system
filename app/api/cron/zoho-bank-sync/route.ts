@@ -79,9 +79,13 @@ export async function GET(request: NextRequest) {
     let page = 1;
     let hasMore = true;
 
+    // Zoho ignored `date_after` here and returned a decade of history, so the
+    // window is enforced in code below and pagination stops once a page brings
+    // nothing new — otherwise this runs twice a day re-reading ten years.
+    const seenIds = new Set<string>();
     while (hasMore && page <= 20) {
         const json = await zohoGet(accessToken, orgId, '/banktransactions', {
-            date_after: dateAfter,
+            date_start: dateAfter,
             per_page: '200',
             page: String(page),
         });
@@ -89,8 +93,20 @@ export async function GET(request: NextRequest) {
             await logSyncRun(supabase, 'bank', false, rows.length, `Fetch failed on page ${page}`);
             return NextResponse.json({ error: 'Zoho fetch failed' }, { status: 502 });
         }
-        const batch = json.banktransactions || [];
-        rows.push(...batch);
+        const batch: Record<string, unknown>[] = json.banktransactions || [];
+
+        let fresh = 0;
+        for (const row of batch) {
+            const id = str(row.transaction_id);
+            if (!id || seenIds.has(id)) continue;
+            seenIds.add(id);
+            const d = str(row.date);
+            if (d && d < dateAfter) continue;
+            rows.push(row);
+            fresh += 1;
+        }
+
+        if (batch.length === 0 || fresh === 0) break;
         hasMore = Boolean(json.page_context?.has_more_page);
         page += 1;
     }

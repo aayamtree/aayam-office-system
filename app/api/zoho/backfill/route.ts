@@ -169,15 +169,23 @@ export async function GET(request: NextRequest) {
     }
 
     // ---- Bank transactions ---------------------------------------------------
-    const txns = await fetchAll(
+    // NOTE: /banktransactions ignored `date_after` — the first run came back with
+    // everything from 2016. `date_start` is the parameter the other endpoints
+    // honour, but the date is ALSO enforced below rather than trusted, because a
+    // silently ignored filter is not something to find out about twice.
+    const txnsRaw = await fetchAll(
         accessToken,
         orgId,
         '/banktransactions',
         'banktransactions',
         'transaction_id',
-        { date_after: from }
+        { date_start: from }
     );
-    if (txns === null) {
+    const txns = txnsRaw?.filter((t) => {
+        const d = str(t.date);
+        return !d || d >= from;
+    });
+    if (!txns) {
         await logSyncRun(supabase, 'backfill', false, 0, 'banktransactions list failed');
         return NextResponse.json({ error: 'Could not fetch bank transactions' }, { status: 502 });
     }
