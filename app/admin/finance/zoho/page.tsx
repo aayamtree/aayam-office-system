@@ -8,7 +8,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark } from 'lucide-react';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History } from 'lucide-react';
 
 // Zoho sends ~250 fields per document; these are the ones worth showing.
 interface ZohoLineItem {
@@ -84,6 +84,8 @@ export default function ZohoDocumentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank'>('invoice');
   const [openRow, setOpenRow] = useState<string | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMsg, setBackfillMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const fetchDocs = async () => {
     setLoading(true);
@@ -120,6 +122,40 @@ export default function ZohoDocumentsPage() {
 
   useEffect(() => { fetchDocs(); }, []);
 
+  // One-off historical pull. Chunked server-side (line items cost one call each),
+  // so keep calling until it reports nothing remaining.
+  const runBackfill = async () => {
+    setBackfilling(true);
+    setBackfillMsg(null);
+    try {
+      let rounds = 0;
+      let last: Record<string, unknown> | null = null;
+      while (rounds < 15) {
+        const res = await fetch('/api/zoho/backfill', { cache: 'no-store' });
+        const json = await res.json();
+        if (!res.ok) {
+          setBackfillMsg({ ok: false, text: json?.error || 'Backfill failed.' });
+          setBackfilling(false);
+          return;
+        }
+        last = json;
+        rounds += 1;
+        if (!json.remaining_without_line_items) break;
+      }
+      const inv = Number(last?.invoices ?? 0);
+      const est = Number(last?.estimates ?? 0);
+      const bank = Number(last?.banktransactions ?? 0);
+      setBackfillMsg({
+        ok: true,
+        text: `Fetched from ${last?.from}: ${inv} invoices, ${est} quotes, ${bank} bank transactions. ${last?.note ?? ''}`,
+      });
+      await fetchDocs();
+    } catch {
+      setBackfillMsg({ ok: false, text: 'Could not reach the server.' });
+    }
+    setBackfilling(false);
+  };
+
   const shown = docs.filter(d => d.doc_type === tab);
   const invoiceCount = docs.filter(d => d.doc_type === 'invoice').length;
   const estimateCount = docs.filter(d => d.doc_type === 'estimate').length;
@@ -144,13 +180,30 @@ export default function ZohoDocumentsPage() {
             Invoices &amp; quotes made in Zoho, mirrored here automatically. Zoho is the source of truth.
           </p>
         </div>
-        <button
-          onClick={fetchDocs}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={runBackfill}
+            disabled={backfilling}
+            title="One-off: pull this financial year's invoices, quotes and bank lines from Zoho"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-50"
+          >
+            {backfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
+            {backfilling ? 'Fetching…' : 'Fetch this FY from Zoho'}
+          </button>
+          <button
+            onClick={fetchDocs}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
+        </div>
       </div>
+
+      {backfillMsg && (
+        <div className={`text-sm rounded-md p-4 border ${backfillMsg.ok ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-700'}`}>
+          {backfillMsg.text}
+        </div>
+      )}
 
       {tab === 'bank' ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
