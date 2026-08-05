@@ -26,10 +26,11 @@ import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import LoadError from '@/components/LoadError';
 
 export default function InvoicesPage() {
   const { settings: companySettings } = useCompanySettings();
-  const { invoices, loading: invoicesLoading, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
+  const { invoices, loading: invoicesLoading, error: invoicesError, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients, refetch: refetchClients } = useClients();
   const { bankAccounts } = useBankAccounts();
   const { cashAccounts } = useCashAccounts();
@@ -868,6 +869,12 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6">
+      {/* An empty invoice list reads as "nothing outstanding". If that is a
+          failed query rather than the truth, money goes uncollected and the
+          totals on this page are wrong. */}
+      {invoicesError && (
+        <LoadError variant="inline" what="invoices" error={invoicesError} onRetry={() => refetchInvoices?.()} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -1541,6 +1548,8 @@ export default function InvoicesPage() {
                       <div key={idx} className="flex justify-between items-start text-sm pb-3 border-b border-gray-100 last:border-0 last:pb-0">
                         <div>
                           <p className="font-medium text-gray-900">{item.description}</p>
+                          {item.item_specs && <p className="text-xs text-gray-500">{item.item_specs}</p>}
+                          {item.item_notes && <p className="text-xs text-gray-600">{item.item_notes}</p>}
                           <p className="text-gray-500">{item.quantity} x {formatCurrency(item.rate)}</p>
                         </div>
                         <p className="font-semibold text-gray-900">{formatCurrency(item.amount)}</p>

@@ -8,7 +8,7 @@ import { Document, Page, Text, View, StyleSheet, Font, PDFDownloadLink, pdf } fr
 // Styles
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 32,
     fontSize: 10,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
@@ -17,8 +17,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
-    paddingBottom: 20,
+    marginBottom: 14,
+    paddingBottom: 10,
     borderBottom: '2px solid #000000',
   },
   companySection: {
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   infoSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 25,
+    marginBottom: 14,
   },
   infoBox: {
     width: '48%',
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 10,
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   clientName: {
     fontSize: 12,
@@ -75,20 +75,20 @@ const styles = StyleSheet.create({
   },
   // Table
   table: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#000000',
     color: '#ffffff',
-    padding: 10,
+    padding: 7,
     fontWeight: 'bold',
     fontSize: 9,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottom: '1px solid #E5E7EB',
-    padding: 10,
+    padding: 7,
     fontSize: 9,
   },
   tableRowAlt: {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   totalsSection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginBottom: 25,
+    marginBottom: 12,
   },
   totalsBox: {
     width: '45%',
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 8,
+    padding: 5,
     borderBottom: '1px solid #E5E7EB',
   },
   totalLabel: {
@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   grandTotalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
+    padding: 8,
     backgroundColor: '#000000',
-    marginTop: 5,
+    marginTop: 4,
   },
   grandTotalLabel: {
     fontSize: 12,
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
   // Amount in words
   amountWords: {
     backgroundColor: '#F3F4F6',
-    padding: 10,
-    marginBottom: 20,
+    padding: 8,
+    marginBottom: 12,
     borderRadius: 4,
   },
   amountWordsLabel: {
@@ -160,11 +160,11 @@ const styles = StyleSheet.create({
   // Bank Details
   bankSection: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   bankBox: {
     width: '50%',
-    padding: 15,
+    padding: 10,
     backgroundColor: '#F9FAFB',
     borderRadius: 4,
   },
@@ -172,9 +172,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 6,
     borderBottom: '1px solid #E5E7EB',
-    paddingBottom: 5,
+    paddingBottom: 4,
   },
   bankDetail: {
     fontSize: 9,
@@ -196,26 +196,24 @@ const styles = StyleSheet.create({
     color: '#000000',
     lineHeight: 1.5,
   },
-  // Footer
+  // Footer — flows after content (NOT absolute) so it can never overlap
   footer: {
-    position: 'absolute',
-    bottom: 40,
-    left: 40,
-    right: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 15,
-    borderTop: '1px solid #E5E7EB',
+    alignItems: 'flex-end',
+    marginTop: 6,
   },
   signatureBox: {
+    width: 160,
     textAlign: 'right',
   },
   signatureLine: {
-    marginTop: 30,
-    paddingTop: 5,
+    marginTop: 24,
+    paddingTop: 4,
     borderTop: '1px solid #1F2937',
     fontSize: 9,
     color: '#000000',
+    textAlign: 'right',
   },
   footerText: {
     fontSize: 8,
@@ -483,7 +481,8 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
         <Text style={styles.amountWordsText}>{numberToWords(data.grandTotal)}</Text>
       </View>
 
-      {/* Bank Details & Terms */}
+      {/* Bank Details & Terms + Footer — kept together, flows after content */}
+      <View wrap={false}>
       <View style={styles.bankSection}>
         <View style={styles.bankBox}>
           <Text style={styles.bankTitle}>Bank Details</Text>
@@ -513,8 +512,9 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
         </Text>
         <View style={styles.signatureBox}>
           <Text style={styles.signatureLine}>Authorized Signatory</Text>
-          <Text style={{ fontSize: 10, fontWeight: 'bold', marginTop: 5 }}>{data.companyName}</Text>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', marginTop: 4, textAlign: 'right' }}>{data.companyName}</Text>
         </View>
+      </View>
       </View>
     </Page>
   </Document>
