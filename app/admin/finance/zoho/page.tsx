@@ -5,10 +5,22 @@
 // Zoho is the source of truth (it holds the HDFC bank feed). This page is a
 // read-only mirror fed by /api/zoho/webhook; nothing here edits Zoho.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink } from 'lucide-react';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown } from 'lucide-react';
+
+// Zoho sends ~250 fields per document; these are the ones worth showing.
+interface ZohoLineItem {
+  name?: string;
+  description?: string;
+  hsn_or_sac?: string;
+  quantity?: number;
+  rate?: number;
+  item_total?: number;
+  tax_name?: string;
+  tax_percentage?: number;
+}
 
 interface ZohoDoc {
   id: string;
@@ -19,8 +31,11 @@ interface ZohoDoc {
   doc_date: string | null;
   due_date: string | null;
   status: string | null;
+  sub_total: number | null;
+  tax_total: number | null;
   total: number | null;
   balance: number | null;
+  line_items: ZohoLineItem[] | null;
   last_synced_at: string;
 }
 
@@ -43,13 +58,14 @@ export default function ZohoDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'invoice' | 'estimate'>('invoice');
+  const [openRow, setOpenRow] = useState<string | null>(null);
 
   const fetchDocs = async () => {
     setLoading(true);
     setError(null);
     const { data, error: qError } = await supabase
       .from('zoho_documents')
-      .select('id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, total, balance, last_synced_at')
+      .select('id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, sub_total, tax_total, total, balance, line_items, last_synced_at')
       .order('doc_date', { ascending: false })
       .limit(500);
     if (qError) {
@@ -140,6 +156,7 @@ export default function ZohoDocumentsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-200">
+                  <th className="px-2 py-3 w-8"></th>
                   <th className="px-4 py-3">Number</th>
                   <th className="px-4 py-3">Customer</th>
                   <th className="px-4 py-3">Date</th>
@@ -150,8 +167,18 @@ export default function ZohoDocumentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {shown.map(doc => (
-                  <tr key={doc.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                {shown.map(doc => {
+                  const open = openRow === doc.id;
+                  const items = Array.isArray(doc.line_items) ? doc.line_items : [];
+                  return (
+                  <Fragment key={doc.id}>
+                  <tr
+                    onClick={() => setOpenRow(open ? null : doc.id)}
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-2 py-3 text-gray-400">
+                      {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{doc.doc_number || doc.zoho_id}</td>
                     <td className="px-4 py-3 text-gray-700">{doc.customer_name || '—'}</td>
                     <td className="px-4 py-3 text-gray-500">{doc.doc_date ? formatDate(doc.doc_date) : '—'}</td>
@@ -170,7 +197,62 @@ export default function ZohoDocumentsPage() {
                       </td>
                     )}
                   </tr>
-                ))}
+                  {open && (
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <td colSpan={tab === 'invoice' ? 8 : 7} className="px-6 py-4">
+                        {items.length === 0 ? (
+                          <p className="text-sm text-gray-500">No line items in this document.</p>
+                        ) : (
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="text-left text-gray-500 uppercase">
+                                <th className="py-2 pr-4">Item</th>
+                                <th className="py-2 pr-4">HSN/SAC</th>
+                                <th className="py-2 pr-4 text-right">Qty</th>
+                                <th className="py-2 pr-4 text-right">Rate</th>
+                                <th className="py-2 pr-4">Tax</th>
+                                <th className="py-2 text-right">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {items.map((item, i) => (
+                                <tr key={i} className="border-t border-gray-200">
+                                  <td className="py-2 pr-4">
+                                    <span className="font-medium text-gray-900">{item.name || '—'}</span>
+                                    {item.description && (
+                                      <span className="block text-gray-500">{item.description}</span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-4 text-gray-600">{item.hsn_or_sac || '—'}</td>
+                                  <td className="py-2 pr-4 text-right text-gray-600">
+                                    {item.quantity?.toLocaleString('en-IN') ?? '—'}
+                                  </td>
+                                  <td className="py-2 pr-4 text-right text-gray-600">{inr(item.rate ?? null)}</td>
+                                  <td className="py-2 pr-4 text-gray-600">
+                                    {item.tax_name ? `${item.tax_name} ${item.tax_percentage ?? ''}%` : '—'}
+                                  </td>
+                                  <td className="py-2 text-right font-medium text-gray-900">
+                                    {inr(item.item_total ?? null)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                        <div className="flex flex-wrap gap-x-8 gap-y-1 mt-4 pt-3 border-t border-gray-200 text-xs">
+                          <span className="text-gray-500">Subtotal <span className="text-gray-900 font-medium ml-1">{inr(doc.sub_total)}</span></span>
+                          <span className="text-gray-500">Tax <span className="text-gray-900 font-medium ml-1">{inr(doc.tax_total)}</span></span>
+                          <span className="text-gray-500">Total <span className="text-gray-900 font-semibold ml-1">{inr(doc.total)}</span></span>
+                          <span className="text-gray-400 ml-auto">
+                            Synced {new Date(doc.last_synced_at).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
