@@ -34,6 +34,7 @@ interface ZohoTxn {
   description: string | null;
   reference_number: string | null;
   payee: string | null;
+  account_id: string | null;
   account_name: string | null;
   offset_account_name: string | null;
 }
@@ -215,7 +216,7 @@ export default function ZohoDocumentsPage() {
         .limit(500),
       supabase
         .from('zoho_bank_transactions')
-        .select('id, zoho_transaction_id, txn_date, amount, debit_or_credit, transaction_type, status, is_categorized, description, reference_number, payee, account_name, offset_account_name')
+        .select('id, zoho_transaction_id, txn_date, amount, debit_or_credit, transaction_type, status, is_categorized, description, reference_number, payee, account_id, account_name, offset_account_name')
         .order('txn_date', { ascending: false })
         .limit(500),
       supabase
@@ -599,6 +600,17 @@ export default function ZohoDocumentsPage() {
                                       }
                                 }
                               />
+                              {/* Always offer the certain route. Whatever the API
+                                  does, the record is one click away in Zoho. */}
+                              <a
+                                href={`https://books.zoho.com/app/633786605#/banking/${t.account_id ?? ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-blue-700 hover:underline"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Open this account in Zoho Books
+                              </a>
                               {txnDetail?._error && (
                                 <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-amber-700">
                                   Zoho&apos;s extra detail (matched invoice, received via) could not be

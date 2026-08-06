@@ -70,9 +70,13 @@ export async function GET(
         .maybeSingle();
 
     const type = row?.transaction_type || '';
+    // The LIST call is deliberately included as a probe. If /customerpayments/{id}
+    // returns 401 but /customerpayments (list) succeeds, the permission is fine
+    // and the ID is wrong; if BOTH 401, the scope really is missing. Six wrong
+    // guesses in, one decisive test beats a seventh guess.
     const candidates: string[] =
         type === 'customer_payment'
-            ? [`/customerpayments/${id}`, `/banktransactions/${id}`]
+            ? [`/customerpayments/${id}`, `/customerpayments`, `/banktransactions/${id}`]
             : type === 'vendor_payment'
               ? [`/vendorpayments/${id}`, `/banktransactions/${id}`]
               : type === 'expense' || type === 'card_payment'
@@ -97,6 +101,10 @@ export async function GET(
                 ? String((json as Record<string, unknown>).message ?? '')
                 : '';
         attempts.push({ path, status: res.status, message: message || undefined });
+
+        // The bare list probe is for diagnosis only — never treat some other
+        // customer's payment as this row's detail.
+        if (path === '/customerpayments') continue;
 
         const found = findTransaction(json);
         if (found) {
