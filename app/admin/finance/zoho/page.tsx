@@ -112,6 +112,83 @@ const STATUS_STYLES: Record<string, string> = {
   invoiced: 'bg-green-100 text-green-700',
 };
 
+/**
+ * The panel Zoho shows on the right of a bank transaction: who it was, how it
+ * arrived, and — the part that actually matters — which invoice or bill it was
+ * matched against. None of this is in the list response, so it arrives from
+ * /api/zoho/transaction/[id] when a row is opened.
+ *
+ * Written defensively: Zoho's field names have surprised me repeatedly, so
+ * anything missing is simply not rendered rather than showing "undefined".
+ */
+function TxnDetail({ detail }: { detail: Record<string, unknown> }) {
+  const s = (k: string) => {
+    const v = detail[k];
+    return typeof v === 'string' && v.trim() ? v.trim() : typeof v === 'number' ? String(v) : null;
+  };
+  // Zoho names this list differently across transaction types.
+  const matched =
+    (detail.invoices as Record<string, unknown>[] | undefined) ||
+    (detail.bills as Record<string, unknown>[] | undefined) ||
+    (detail.matched_transactions as Record<string, unknown>[] | undefined) ||
+    [];
+
+  const facts: [string, string | null][] = [
+    ['Type', s('transaction_type_formatted') || s('transaction_type')],
+    ['Customer / Payee', s('customer_name') || s('vendor_name') || s('payee')],
+    ['Received via', s('payment_mode') || s('received_via')],
+    ['Reference #', s('reference_number')],
+    ['Bank charges', s('bank_charges')],
+    ['Account', s('account_name')],
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-2 text-xs">
+        {facts.filter(([, v]) => v).map(([label, value]) => (
+          <div key={label}>
+            <span className="block text-gray-500 uppercase">{label}</span>
+            <span className="text-gray-900">{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {matched.length > 0 && (
+        <div className="pt-3 border-t border-gray-200">
+          <p className="text-xs text-gray-500 uppercase mb-2">Matched against</p>
+          <table className="text-xs">
+            <tbody>
+              {matched.map((m, i) => (
+                <tr key={i}>
+                  <td className="pr-6 py-1 font-medium text-gray-900">
+                    {String(m.invoice_number || m.bill_number || m.entity_number || m.transaction_id || '—')}
+                  </td>
+                  <td className="pr-6 py-1 text-gray-500">
+                    {m.date ? formatDate(String(m.date)) : ''}
+                  </td>
+                  <td className="py-1 text-gray-900">
+                    {m.amount_applied !== undefined
+                      ? inr(Number(m.amount_applied))
+                      : m.total !== undefined
+                        ? inr(Number(m.total))
+                        : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {s('description') && (
+        <p className="pt-3 border-t border-gray-200 text-xs text-gray-500 break-all">
+          {s('description')}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ZohoDocumentsPage() {
   const [docs, setDocs] = useState<ZohoDoc[]>([]);
   const [txns, setTxns] = useState<ZohoTxn[]>([]);
@@ -122,6 +199,9 @@ export default function ZohoDocumentsPage() {
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
   const [syncingAccounts, setSyncingAccounts] = useState(false);
+  const [openTxn, setOpenTxn] = useState<string | null>(null);
+  const [txnDetail, setTxnDetail] = useState<Record<string, unknown> | null>(null);
+  const [txnLoading, setTxnLoading] = useState(false);
   const [backfillMsg, setBackfillMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const fetchDocs = async () => {
@@ -197,6 +277,23 @@ export default function ZohoDocumentsPage() {
       });
     }
     setBackfilling(false);
+  };
+
+  // The list endpoint has no invoice match, no "received via", no bank charges.
+  // Those cost one Zoho call each, so we only make it when a row is opened.
+  const openTransaction = async (txnId: string) => {
+    if (openTxn === txnId) { setOpenTxn(null); setTxnDetail(null); return; }
+    setOpenTxn(txnId);
+    setTxnDetail(null);
+    setTxnLoading(true);
+    try {
+      const res = await fetch(`/api/zoho/transaction/${txnId}`, { cache: 'no-store' });
+      const json = await res.json();
+      setTxnDetail(res.ok ? json.transaction : { _error: json?.error || 'Could not load detail.' });
+    } catch {
+      setTxnDetail({ _error: 'Could not reach Zoho for the detail.' });
+    }
+    setTxnLoading(false);
   };
 
   // Categories are a small, separate job — deliberately not part of the backfill.
@@ -441,7 +538,10 @@ export default function ZohoDocumentsPage() {
                 </thead>
                 <tbody>
                   {txns.map(t => (
-                    <tr key={t.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                    <Fragment key={t.id}>
+                    <tr
+                      onClick={() => openTransaction(t.zoho_transaction_id)}
+                      className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {t.txn_date ? formatDate(t.txn_date) : '—'}
                       </td>
@@ -473,6 +573,22 @@ export default function ZohoDocumentsPage() {
                         {isMoneyIn(t) ? inr(t.amount) : ''}
                       </td>
                     </tr>
+                    {openTxn === t.zoho_transaction_id && (
+                      <tr className="border-b border-gray-100 bg-gray-50">
+                        <td colSpan={6} className="px-6 py-4">
+                          {txnLoading ? (
+                            <span className="inline-flex items-center gap-2 text-sm text-gray-500">
+                              <Loader2 className="w-4 h-4 animate-spin" /> Asking Zoho for the detail…
+                            </span>
+                          ) : txnDetail?._error ? (
+                            <span className="text-sm text-red-600">{String(txnDetail._error)}</span>
+                          ) : txnDetail ? (
+                            <TxnDetail detail={txnDetail} />
+                          ) : null}
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

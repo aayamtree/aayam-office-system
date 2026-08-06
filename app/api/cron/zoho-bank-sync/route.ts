@@ -112,6 +112,32 @@ export async function GET(request: NextRequest) {
         page += 1;
     }
 
+    // ---- The genuinely unhandled lines ---------------------------------------
+    // /banktransactions only returns what is already IN the books. Statement
+    // lines nobody has dealt with sit in a separate endpoint — which is why the
+    // app once claimed 57 uncategorised while Zoho's own screen said 12.
+    // Those 12 are the ones that actually want Satish's attention.
+    const bankAccountIds = Array.from(
+        new Set(rows.map((t) => str(t.account_id)).filter(Boolean) as string[])
+    );
+
+    for (const accountId of bankAccountIds) {
+        const json = await zohoGet(accessToken, orgId, '/banktransactions/uncategorized', {
+            account_id: accountId,
+            per_page: '200',
+        });
+        if (!json) continue; // never let this optional extra fail the whole sync
+        const batch: Record<string, unknown>[] = json.banktransactions || [];
+        for (const row of batch) {
+            const id = str(row.transaction_id);
+            if (!id || seenIds.has(id)) continue;
+            seenIds.add(id);
+            // Force the status: this endpoint does not always set one, and the
+            // whole point of these rows is that they are NOT settled.
+            rows.push({ ...row, status: 'uncategorized', account_id: row.account_id ?? accountId });
+        }
+    }
+
     const now = new Date().toISOString();
     const mapped = rows
         .map((t) => {
