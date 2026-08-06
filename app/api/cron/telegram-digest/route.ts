@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
-import { sendToChat, escapeHtml, TelegramDepartment } from '@/lib/telegram-groups';
+import { sendToChat, escapeHtml, mentionStaff, TelegramDepartment } from '@/lib/telegram-groups';
 import { withCronLog } from '@/lib/cron-log';
 import {
   getPendingPayments,
@@ -72,19 +72,8 @@ function todayLabel(): string {
   });
 }
 
-/**
- * @mention for a staff member inside a group message.
- * Linked staff → real Telegram mention (notifies them).
- * Username known → @username. Otherwise bold name.
- */
-function mention(p: Staff): string {
-  const name = p.full_name || 'Staff';
-  if (p.telegram_chat_id) {
-    return `<a href="tg://user?id=${p.telegram_chat_id}">${escapeHtml(name)}</a>`;
-  }
-  if (p.telegram_username) return `@${escapeHtml(p.telegram_username)}`;
-  return `<b>${escapeHtml(name)}</b>`;
-}
+/** @mention for a staff member — shared with the stage alerts. */
+const mention = (p: Staff): string => mentionStaff(p);
 
 function jobLine(j: DigestJob): string {
   return `  • <b>${escapeHtml(j.job_number || '?')}</b> ${escapeHtml(j.project_name || '')} — <i>${escapeHtml(getStageName(j.current_stage))}</i>`;

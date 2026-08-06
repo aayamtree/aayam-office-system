@@ -66,6 +66,34 @@ export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** The bits of a profile needed to address someone in a group message. */
+export interface MentionableStaff {
+  full_name: string | null;
+  telegram_chat_id: string | null;
+  telegram_username: string | null;
+}
+
+/**
+ * Name a staff member inside a group message, as loudly as the data allows.
+ *
+ * A group with 18 people and no name on the message is a message nobody reads,
+ * so we always say who it's for — but only a LINKED account produces an actual
+ * notification on their phone:
+ *   linked (telegram_chat_id) → tg://user mention, real ping
+ *   username known           → @username, pings if they're in the group
+ *   neither                  → bold name, visible but silent
+ * Nothing to change in the message code as staff link themselves; each one
+ * upgrades from bold text to a real ping the moment they scan the profile QR.
+ */
+export function mentionStaff(p: MentionableStaff | null | undefined): string {
+  const name = p?.full_name?.trim() || 'Staff';
+  if (p?.telegram_chat_id) {
+    return `<a href="tg://user?id=${p.telegram_chat_id}">${escapeHtml(name)}</a>`;
+  }
+  if (p?.telegram_username) return `@${escapeHtml(p.telegram_username)}`;
+  return `<b>${escapeHtml(name)}</b>`;
+}
+
 export interface SendResult {
   ok: boolean;
   /** Telegram's own description, e.g. "chat not found", "bot was kicked". */

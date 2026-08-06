@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
-import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, sendToChatResult } from '@/lib/telegram-groups';
+import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, mentionStaff, sendToChatResult } from '@/lib/telegram-groups';
 import { rateLimit } from '@/lib/rate-limit';
 
 /**
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     // 1. DB truth — never trust the payload's stage
     const { data: job } = await service
       .from('jobs')
-      .select('id, job_number, project_name, current_stage, quantity, clients(name, company)')
+      .select('id, job_number, project_name, current_stage, quantity, designer_id, clients(name, company)')
       .eq('id', jobId)
       .single();
     if (!job?.current_stage) return NextResponse.json({ skipped: 'job not found' });
@@ -83,10 +83,36 @@ export async function POST(req: NextRequest) {
     const client = Array.isArray(job.clients) ? job.clients[0] : job.clients;
     const clientName = client?.company || client?.name || '—';
     const emoji = STAGE_EMOJI[stage] || '🔔';
+
+    // Who is this for? A message to an 18-person group with no name on it is a
+    // message everyone assumes is somebody else's. Design jobs carry a designer,
+    // so address them by name; print/dispatch have no per-person assignment.
+    let assigneeLine = '';
+    let assigneePlain = '';
+    if (department === 'design') {
+      let designer: { full_name: string | null; telegram_chat_id: string | null; telegram_username: string | null } | null = null;
+      if (job.designer_id) {
+        const { data } = await service
+          .from('profiles')
+          .select('full_name, telegram_chat_id, telegram_username')
+          .eq('id', job.designer_id)
+          .maybeSingle();
+        designer = data;
+      }
+      if (designer) {
+        assigneeLine = `\n👉 For ${mentionStaff(designer)}`;
+        assigneePlain = `\n👉 For ${designer.full_name?.trim() || 'Staff'}`;
+      } else {
+        assigneeLine = `\n⚠️ <b>Unassigned</b> — who can take this?`;
+        assigneePlain = `\n⚠️ Unassigned — who can take this?`;
+      }
+    }
+
     const msg =
       `${emoji} <b>${escapeHtml(job.job_number || 'Job')}</b> → <b>${escapeHtml(getStageName(stage))}</b>\n` +
       `${escapeHtml(job.project_name || '')}\n` +
-      `👤 ${escapeHtml(clientName)}${job.quantity ? ` · Qty ${job.quantity}` : ''}`;
+      `👤 ${escapeHtml(clientName)}${job.quantity ? ` · Qty ${job.quantity}` : ''}` +
+      assigneeLine;
 
     // 5. Send to Telegram group(s), if any are mapped
     const targeted = (groups || []).length;
@@ -114,7 +140,8 @@ export async function POST(req: NextRequest) {
       const plain =
         `${emoji} ${job.job_number || 'Job'} → ${getStageName(stage)}\n` +
         `${job.project_name || ''}\n` +
-        `👤 ${clientName}${job.quantity ? ` · Qty ${job.quantity}` : ''}\n` +
+        `👤 ${clientName}${job.quantity ? ` · Qty ${job.quantity}` : ''}` +
+        `${assigneePlain}\n` +
         `https://aayam-office-system.vercel.app/admin/jobs/${job.id}`;
       const { error: mirrorErr } = await service.from('chat_messages').insert({
         channel_id: channel.id,
