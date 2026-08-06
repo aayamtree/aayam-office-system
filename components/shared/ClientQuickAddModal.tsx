@@ -334,7 +334,9 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess, initia
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 justify-end pt-4 border-t">
+                    {/* Sticky: the duplicate-warning banner grows the form and used to
+                        push Add Client below the fold, which reads as "nothing happened". */}
+                    <div className="sticky bottom-0 -mx-6 -mb-6 flex justify-end gap-3 border-t bg-white px-6 py-4">
                         <button
                             type="button"
                             onClick={onClose}

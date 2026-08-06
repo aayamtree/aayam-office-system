@@ -18,6 +18,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronsUpDown, Search, UserPlus } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useClients } from '@/lib/hooks';
@@ -74,6 +75,13 @@ export default function ClientSelect({
 
     const searchRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
+
+    // The quick-add modal contains its own <form>. This component is used INSIDE
+    // page forms, and a <form> nested in a <form> makes the browser fire a native
+    // submit on the OUTER form — the page reloads and nothing is saved. So the
+    // modal must be portalled to document.body, outside every form.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
     const allClients = useMemo(() => {
         const rows: any[] = [...(clients || [])];
@@ -152,19 +160,23 @@ export default function ClientSelect({
 
     return (
         <>
-            {required && (
-                <input
-                    tabIndex={-1}
-                    aria-hidden
-                    required
-                    name={name}
-                    value={value || ''}
-                    onChange={() => { }}
-                    className="sr-only absolute h-0 w-0 opacity-0"
-                />
-            )}
+            <div className="relative">
+                {required && (
+                    <input
+                        tabIndex={-1}
+                        aria-hidden
+                        required
+                        name={name}
+                        value={value || ''}
+                        onChange={() => { }}
+                        /* 1px and transparent, but deliberately NOT sr-only/zero-size:
+                           Chrome refuses to report validity on an unfocusable control
+                           and then blocks the whole form submit with no message. */
+                        className="pointer-events-none absolute bottom-0 left-4 h-px w-px opacity-0"
+                    />
+                )}
 
-            <Popover open={open} onOpenChange={o => !disabled && setOpen(o)}>
+                <Popover open={open} onOpenChange={o => !disabled && setOpen(o)}>
                 <PopoverTrigger asChild>
                     <button
                         type="button"
@@ -260,20 +272,24 @@ export default function ClientSelect({
                             Client missing? Ask an admin to add it.
                         </p>
                     )}
-                </PopoverContent>
-            </Popover>
+                    </PopoverContent>
+                </Popover>
+            </div>
 
-            <ClientQuickAddModal
-                isOpen={showQuickAdd}
-                initialName={pendingName}
-                onClose={() => setShowQuickAdd(false)}
-                onSuccess={(clientId, client) => {
-                    if (client) setJustAdded(client);
-                    onChange(clientId);
-                    onClientCreated?.(client);
-                    refetch();
-                }}
-            />
+            {mounted && createPortal(
+                <ClientQuickAddModal
+                    isOpen={showQuickAdd}
+                    initialName={pendingName}
+                    onClose={() => setShowQuickAdd(false)}
+                    onSuccess={(clientId, client) => {
+                        if (client) setJustAdded(client);
+                        onChange(clientId);
+                        onClientCreated?.(client);
+                        refetch();
+                    }}
+                />,
+                document.body
+            )}
         </>
     );
 }
