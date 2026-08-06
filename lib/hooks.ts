@@ -78,8 +78,21 @@ export function useSupabaseQuery<T>(
 
     const { data: result, error: queryError } = await query;
     if (queryError) {
-      console.warn(`[useSupabaseQuery] ${tableName} error:`, queryError.message);
-      return [] as unknown as T[];
+      // THROW, do not return [].
+      //
+      // This used to `console.warn` and return an empty array, which meant the
+      // hook translated every failure into "there are no rows". SWR's `error`
+      // was therefore never set, so no page using this hook could tell a broken
+      // query from an empty table even if it checked — and 35 call sites use it.
+      // That single line was the deepest cause of the recurring "page looks
+      // empty but is actually broken" faults, beneath all the individual pages
+      // that swallow their own errors.
+      //
+      // Safe to change: `fallbackData: []` below means `data` is still `[]` on
+      // failure, so every page that ignores `error` behaves exactly as it did.
+      // The only difference is that pages which DO check `error` now get one.
+      // `onErrorRetry` is already a no-op, so throwing cannot cause a retry storm.
+      throw new Error(`${tableName}: ${queryError.message}`);
     }
     return (result as unknown as T[]) || [];
   };
@@ -157,7 +170,9 @@ export function useClients() {
   const { data, loading, error, refetch } = useSupabaseQuery<Client>('clients', {
     filter,
     orderBy: { column: 'created_at', ascending: false },
-    limit: 100 // Reduced from 200 for better performance
+    // 76 clients as of Aug 2026. A limit that silently cuts the list off is how
+    // pickers "lose" a client and someone creates a duplicate — keep headroom.
+    limit: 500
   });
 
   const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'outstanding_balance'>) => {

@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
-import { useClients, useDesigners, useProductCategories } from '@/lib/hooks';
+import { useDesigners, useProductCategories } from '@/lib/hooks';
 import { getProjectTypeCode } from '@/lib/job-workflow';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -33,13 +33,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { DesignerStatusPills } from '@/components/shared/DesignerStatusPills';
+import ClientSelect from '@/components/shared/ClientSelect';
 
 
 export default function NewProjectPage() {
     const router = useRouter();
     const { data: session } = useSession();
     const { profile } = useAuth();
-    const { clients } = useClients();
     const { designers } = useDesigners();
     const { categories: productCategories, createCategory } = useProductCategories();
     const [creating, setCreating] = useState(false);
@@ -521,22 +521,11 @@ export default function NewProjectPage() {
                                 <Label className="text-sm font-semibold">
                                     Client <span className="text-destructive">*</span>
                                 </Label>
-                                <Select
+                                <ClientSelect
                                     required
                                     value={formData.clientId}
-                                    onValueChange={(val) => setFormData(prev => ({ ...prev, clientId: val }))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Client" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {clients?.map((c: any) => (
-                                            <SelectItem key={c.id} value={c.id}>
-                                                {c.company || c.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onChange={(val) => setFormData(prev => ({ ...prev, clientId: val }))}
+                                />
                             </div>
 
                             <div className="space-y-2">

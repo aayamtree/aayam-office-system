@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from '@/lib/toast';
-import { X, Loader2, UserPlus } from 'lucide-react';
+import { X, Loader2, UserPlus, AlertTriangle } from 'lucide-react';
 import { useClients } from '@/lib/hooks';
 
 interface ClientQuickAddModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess?: (clientId: string) => void;
+    /** Receives the new client's id, plus the full row when available. */
+    onSuccess?: (clientId: string, client?: any) => void;
+    /** Prefills company + name, e.g. whatever was typed in ClientSelect's search box. */
+    initialName?: string;
 }
 
-export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: ClientQuickAddModalProps) {
-    const { createClient } = useClients();
+export default function ClientQuickAddModal({ isOpen, onClose, onSuccess, initialName }: ClientQuickAddModalProps) {
+    const { createClient, clients } = useClients();
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -33,6 +36,39 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [isOpen, onClose]);
+
+    // ── Start clean every time it opens, prefilled with the searched text ──
+    useEffect(() => {
+        if (!isOpen) return;
+        const seed = (initialName || '').trim();
+        setFormData({
+            name: seed, company: seed, phone: '', email: '', city: '',
+            state: 'Gujarat', gstin: '', address: '', brand_name: ''
+        });
+    }, [isOpen, initialName]);
+
+    // ── Duplicate guard ──
+    // A duplicate client splits that client's jobs, invoices and payment history
+    // in two, and nothing in the app will tell you it happened. So look before
+    // we create: match loosely on name/company, exactly on phone digits.
+    const loose = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const digits = (s: string) => (s || '').replace(/\D/g, '').slice(-10);
+
+    const possibleDuplicates = useMemo(() => {
+        const typed = loose(formData.company) || loose(formData.name);
+        const typedPhone = digits(formData.phone);
+        if (typed.length < 3 && typedPhone.length < 10) return [];
+        return (clients || []).filter((c: any) => {
+            const co = loose(c.company);
+            const nm = loose(c.name);
+            const phoneHit = typedPhone.length === 10 && digits(c.phone) === typedPhone;
+            const nameHit =
+                typed.length >= 3 &&
+                ((co && (co.includes(typed) || typed.includes(co))) ||
+                    (nm && (nm.includes(typed) || typed.includes(nm))));
+            return phoneHit || nameHit;
+        }).slice(0, 4);
+    }, [clients, formData.company, formData.name, formData.phone]);
 
     if (!isOpen) return null;
 
@@ -79,7 +115,7 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
                         } catch { /* non-fatal */ }
                     }
                 }
-                onSuccess?.(clientId);
+                onSuccess?.(clientId, newClient.data);
             }
             onClose();
 
@@ -123,6 +159,39 @@ export default function ClientQuickAddModal({ isOpen, onClose, onSuccess }: Clie
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {possibleDuplicates.length > 0 && (
+                        <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+                                <AlertTriangle size={16} />
+                                This client may already exist
+                            </div>
+                            <p className="mt-1 text-xs text-amber-800">
+                                Adding a second copy splits their jobs, invoices and payments across two records.
+                            </p>
+                            <div className="mt-2 space-y-1">
+                                {possibleDuplicates.map((c: any) => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onSuccess?.(c.id, c);
+                                            onClose();
+                                        }}
+                                        className="flex w-full items-center justify-between gap-2 rounded border border-amber-200 bg-white px-3 py-2 text-left text-sm hover:bg-amber-100"
+                                    >
+                                        <span className="min-w-0">
+                                            <span className="block truncate font-medium">{c.company || c.name}</span>
+                                            <span className="block truncate text-xs text-gray-500">
+                                                {[c.company ? c.name : null, c.phone, c.city].filter(Boolean).join(' · ')}
+                                            </span>
+                                        </span>
+                                        <span className="shrink-0 text-xs font-semibold text-amber-900">Use this</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2 md:gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Name *</label>
