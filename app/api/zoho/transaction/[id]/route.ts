@@ -57,41 +57,62 @@ export async function GET(
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) return NextResponse.json({ error: 'Could not read the organisation.' }, { status: 502 });
 
-    // Fetched directly rather than through zohoGet() so the HTTP status and
-    // Zoho's own message survive to the error response.
-    const url = `${ZOHO_API}/banktransactions/${id}?organization_id=${orgId}`;
-    const res = await fetch(url, {
-        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
-    });
+    // WHICH ENDPOINT HOLDS THE DETAIL DEPENDS ON WHAT THE LINE *IS*.
+    // /banktransactions/{id} answered "Transaction does not exist" for a matched
+    // receipt, because Zoho does not keep it as a bank transaction at all — it
+    // is a CUSTOMER PAYMENT, and that record is where the invoice number lives.
+    // Rather than bet on one path again, try the ones that fit this row's type
+    // and report every attempt if they all miss.
+    const { data: row } = await supabase
+        .from('zoho_bank_transactions')
+        .select('transaction_type')
+        .eq('zoho_transaction_id', id)
+        .maybeSingle();
 
-    let json: unknown = null;
-    let bodyText = '';
-    try {
-        bodyText = await res.text();
-        json = JSON.parse(bodyText);
-    } catch {
-        // leave json null; bodyText carries whatever came back
+    const type = row?.transaction_type || '';
+    const candidates: string[] =
+        type === 'customer_payment'
+            ? [`/customerpayments/${id}`, `/banktransactions/${id}`]
+            : type === 'vendor_payment'
+              ? [`/vendorpayments/${id}`, `/banktransactions/${id}`]
+              : type === 'expense' || type === 'card_payment'
+                ? [`/expenses/${id}`, `/banktransactions/${id}`]
+                : [`/banktransactions/${id}`, `/customerpayments/${id}`, `/expenses/${id}`];
+
+    let txn: Record<string, unknown> | null = null;
+    const attempts: { path: string; status: number; message?: string }[] = [];
+
+    for (const path of candidates) {
+        const res = await fetch(`${ZOHO_API}${path}?organization_id=${orgId}`, {
+            headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+        });
+        let json: unknown = null;
+        try {
+            json = JSON.parse(await res.text());
+        } catch {
+            /* non-JSON body */
+        }
+        const message =
+            json && typeof json === 'object'
+                ? String((json as Record<string, unknown>).message ?? '')
+                : '';
+        attempts.push({ path, status: res.status, message: message || undefined });
+
+        const found = findTransaction(json);
+        if (found) {
+            txn = found;
+            break;
+        }
     }
 
-    const txn = findTransaction(json);
-
     if (!txn) {
-        const zohoMessage =
-            (json && typeof json === 'object' && (json as Record<string, unknown>).message) || null;
-        const keys = json && typeof json === 'object' ? Object.keys(json as object) : [];
-        console.error('[zoho/transaction] no entity found', {
-            httpStatus: res.status,
-            zohoMessage,
-            keys,
-        });
+        console.error('[zoho/transaction] every endpoint missed', { id, type, attempts });
         return NextResponse.json(
             {
-                error: zohoMessage
-                    ? `Zoho said: ${zohoMessage}`
-                    : `Zoho replied ${res.status} with no transaction in it.`,
-                // Kept so the next surprise is diagnosable from the screen rather
-                // than from a log nobody will read.
-                diagnostic: { httpStatus: res.status, keys, sample: bodyText.slice(0, 300) },
+                error:
+                    `Zoho has no record for this ${type || 'transaction'} at any of the ` +
+                    `endpoints tried: ${attempts.map((a) => `${a.path} → ${a.status} ${a.message || ''}`).join('; ')}`,
+                diagnostic: { transaction_type: type, attempts },
             },
             { status: 502 }
         );
