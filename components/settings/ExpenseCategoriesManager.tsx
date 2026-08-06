@@ -10,6 +10,10 @@ interface ExpenseCategory {
     id: string;
     name: string;
     is_active: boolean;
+    // 'zoho' = mirrored from Zoho Books; renaming it here would be undone on the
+    // next sync, and would break the shared naming that lets bank (Zoho) and
+    // cash/UPI (app) spending be reported together.
+    source?: string | null;
 }
 
 export default function ExpenseCategoriesManager() {
@@ -24,7 +28,7 @@ export default function ExpenseCategoriesManager() {
         setLoading(true);
         const { data } = await supabase
             .from('expense_categories')
-            .select('id, name, is_active')
+            .select('id, name, is_active, source')
             .order('name', { ascending: true });
         if (data) setCategories(data);
         setLoading(false);
@@ -53,6 +57,12 @@ export default function ExpenseCategoriesManager() {
     };
 
     const handleDelete = async (cat: ExpenseCategory) => {
+        // Deleting a Zoho-sourced category is pointless — the next sync recreates
+        // it — so say so rather than letting it silently reappear tomorrow.
+        if (cat.source === 'zoho') {
+            toast.error(`"${cat.name}" comes from Zoho. Remove it in Zoho Books, or just switch it off here.`);
+            return;
+        }
         const { confirmed } = await confirm({
             title: 'Delete Category',
             message: `Delete "${cat.name}"? Existing expenses using this category won't be affected.`,
@@ -125,6 +135,14 @@ export default function ExpenseCategoriesManager() {
                     <div key={cat.id} className={`flex items-center gap-3 px-3 py-2.5 ${!cat.is_active ? 'opacity-50 bg-gray-50' : 'bg-white'}`}>
                         <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                         <span className="text-sm font-medium text-gray-800">{cat.name}</span>
+                        {cat.source === 'zoho' && (
+                            <span
+                                className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200"
+                                title="Comes from Zoho Books — edit it there, not here"
+                            >
+                                Zoho
+                            </span>
+                        )}
                         {!cat.is_active && (
                             <span className="text-xs text-gray-400 italic">(hidden)</span>
                         )}

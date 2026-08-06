@@ -268,6 +268,34 @@ export async function GET(request: NextRequest) {
                 .upsert(mappedAccounts, { onConflict: 'zoho_account_id' });
             if (error) console.error('[zoho/backfill] accounts upsert failed:', error.message);
             else result.chart_of_accounts = mappedAccounts.length;
+
+            // Mirror the expense/income accounts into expense_categories so the
+            // app can tag CASH and UPI spending with the same names Zoho uses —
+            // those never touch the HDFC feed, so Zoho cannot categorise them.
+            //
+            // Bank/cash/credit-card accounts are skipped: they are ACCOUNTS, not
+            // categories, and would pollute the picker.
+            const categoryTypes = ['expense', 'other_expense', 'cost_of_goods_sold', 'income', 'other_income'];
+            const asCategories = mappedAccounts
+                .filter((a) => categoryTypes.includes(String(a.account_type || '')))
+                .map((a) => ({
+                    zoho_account_id: a.zoho_account_id,
+                    name: a.account_name,
+                    description: a.description,
+                    is_active: a.is_active ?? true,
+                    source: 'zoho',
+                }));
+
+            if (asCategories.length > 0) {
+                // onConflict on zoho_account_id: re-running updates the name if
+                // Satish renamed it in Zoho, and never duplicates. App-created
+                // categories have a null zoho_account_id and are untouched.
+                const { error: catError } = await supabase
+                    .from('expense_categories')
+                    .upsert(asCategories, { onConflict: 'zoho_account_id' });
+                if (catError) console.error('[zoho/backfill] category sync failed:', catError.message);
+                else result.categories_from_zoho = asCategories.length;
+            }
         }
     }
 
