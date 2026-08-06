@@ -27,6 +27,7 @@ import {
     zohoGet,
     logSyncRun,
     dedupeBy,
+    isSettled,
 } from '@/lib/zoho-api';
 
 export const dynamic = 'force-dynamic';
@@ -123,8 +124,8 @@ export async function GET(request: NextRequest) {
                 debit_or_credit: str(t.debit_or_credit),
                 transaction_type: str(t.transaction_type),
                 status: str(t.status),
-                is_categorized:
-                    typeof t.is_categorized === 'boolean' ? t.is_categorized : str(t.status) === 'categorized',
+                // 'matched' and 'manually_added' are settled too — see isSettled().
+                is_categorized: isSettled(t.status),
                 description: str(t.description),
                 reference_number: str(t.reference_number),
                 payee: str(t.payee) || str(t.customer_name) || str(t.vendor_name),

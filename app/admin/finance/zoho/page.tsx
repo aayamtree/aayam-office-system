@@ -83,6 +83,15 @@ const isMoneyIn = (t: ZohoTxn) => t.debit_or_credit === 'debit';
  */
 function categoryLabel(t: ZohoTxn): { text: string; known: boolean } {
   if (t.offset_account_name) return { text: t.offset_account_name, known: true };
+  // 'matched' means Zoho reconciled it against an invoice or bill — the most
+  // complete state there is. Calling that "uncategorised" (as this did) turned
+  // 43 settled receipts into a false alarm about unmatched money.
+  if (t.status === 'matched') {
+    return { text: 'Matched to invoice', known: true };
+  }
+  if (t.status === 'manually_added') {
+    return { text: 'Manually added', known: true };
+  }
   if (t.is_categorized && t.transaction_type) {
     return {
       text: t.transaction_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
