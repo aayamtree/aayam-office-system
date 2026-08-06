@@ -134,13 +134,18 @@ function TxnDetail({ detail }: { detail: Record<string, unknown> }) {
     (detail.matched_transactions as Record<string, unknown>[] | undefined) ||
     [];
 
+  // A customer payment names things differently from a bank transaction:
+  // payment_mode rather than received_via, amount rather than total, and the
+  // invoice link lives in invoices[] as invoice_number + amount_applied.
   const facts: [string, string | null][] = [
-    ['Type', s('transaction_type_formatted') || s('transaction_type')],
+    ['Type', s('transaction_type_formatted') || s('transaction_type') || s('payment_type')],
     ['Customer / Payee', s('customer_name') || s('vendor_name') || s('payee')],
     ['Received via', s('payment_mode') || s('received_via')],
+    ['Amount', s('amount') ? inr(Number(detail.amount)) : null],
+    ['Date', s('date') ? formatDate(String(detail.date)) : null],
     ['Reference #', s('reference_number')],
     ['Bank charges', s('bank_charges')],
-    ['Account', s('account_name')],
+    ['Account', s('account_name') || s('deposit_to_account_name')],
   ];
 
   return (

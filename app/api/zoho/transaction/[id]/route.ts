@@ -20,12 +20,28 @@ import { zohoServiceClient, getAccessToken, getOrganizationId, ZOHO_API } from '
 
 export const dynamic = 'force-dynamic';
 
-/** Find the entity anywhere in the response without knowing its key name. */
+/**
+ * Find the entity anywhere in the response without knowing its key name.
+ *
+ * A customer payment is NOT shaped like a bank transaction: it carries
+ * payment_id and an invoices[] array, no transaction_id at all. Recognising
+ * only transaction_id meant Zoho answered "200 success" and this still reported
+ * failure — the request was right and the reader was wrong.
+ */
+const ENTITY_MARKERS = [
+    'transaction_id',
+    'transaction_type',
+    'payment_id',
+    'expense_id',
+    'invoice_id',
+    'bill_id',
+];
+
 function findTransaction(payload: unknown): Record<string, unknown> | null {
     if (!payload || typeof payload !== 'object') return null;
     const obj = payload as Record<string, unknown>;
 
-    if (obj.transaction_id || obj.transaction_type) return obj;
+    if (ENTITY_MARKERS.some((k) => obj[k])) return obj;
 
     for (const value of Object.values(obj)) {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
