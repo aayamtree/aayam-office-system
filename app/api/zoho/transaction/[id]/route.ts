@@ -2,19 +2,39 @@
 //
 // WHY ON DEMAND
 // Zoho's /banktransactions LIST gives date, payee, amount, reference and status
-// — but not the things Satish actually wanted to see: which invoice a receipt
-// was matched to, how it was received, any bank charges. Those only come from
-// the per-transaction endpoint, one call each.
+// — but not which invoice a receipt was matched to, how it was received, or any
+// bank charges. Those only come from the per-transaction endpoint.
 //
-// Fetching them for all 227 transactions up front would be 227 calls for data
-// nobody has asked to look at. So this runs when a row is clicked, and the
-// result is cached back into the row's raw column so a second look is free.
+// WHY THIS ROUTE DIAGNOSES ITSELF
+// Five separate assumptions about Zoho's API have now turned out wrong (the date
+// filter, debit/credit direction, duplicate ids, settled statuses, and this
+// route's own response shape). So rather than guessing the wrapper key a sixth
+// time, it tries the plausible ones, then falls back to hunting the payload for
+// an object carrying a transaction_id — and if it still cannot find one, it
+// reports the HTTP status and the keys Zoho actually sent, instead of the
+// useless "Zoho had no detail for this transaction."
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/api-auth';
-import { zohoServiceClient, getAccessToken, getOrganizationId, zohoGet } from '@/lib/zoho-api';
+import { zohoServiceClient, getAccessToken, getOrganizationId, ZOHO_API } from '@/lib/zoho-api';
 
 export const dynamic = 'force-dynamic';
+
+/** Find the entity anywhere in the response without knowing its key name. */
+function findTransaction(payload: unknown): Record<string, unknown> | null {
+    if (!payload || typeof payload !== 'object') return null;
+    const obj = payload as Record<string, unknown>;
+
+    if (obj.transaction_id || obj.transaction_type) return obj;
+
+    for (const value of Object.values(obj)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            const hit = findTransaction(value);
+            if (hit) return hit;
+        }
+    }
+    return null;
+}
 
 export async function GET(
     _request: NextRequest,
@@ -32,20 +52,51 @@ export async function GET(
     if (!supabase) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
 
     const accessToken = await getAccessToken(supabase);
-    if (!accessToken) {
-        return NextResponse.json({ error: 'Zoho is not connected.' }, { status: 409 });
-    }
+    if (!accessToken) return NextResponse.json({ error: 'Zoho is not connected.' }, { status: 409 });
+
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) return NextResponse.json({ error: 'Could not read the organisation.' }, { status: 502 });
 
-    const json = await zohoGet(accessToken, orgId, `/banktransactions/${id}`);
-    const txn = json?.banktransaction || json?.bank_transaction;
-    if (!txn) {
-        return NextResponse.json({ error: 'Zoho had no detail for this transaction.' }, { status: 404 });
+    // Fetched directly rather than through zohoGet() so the HTTP status and
+    // Zoho's own message survive to the error response.
+    const url = `${ZOHO_API}/banktransactions/${id}?organization_id=${orgId}`;
+    const res = await fetch(url, {
+        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    });
+
+    let json: unknown = null;
+    let bodyText = '';
+    try {
+        bodyText = await res.text();
+        json = JSON.parse(bodyText);
+    } catch {
+        // leave json null; bodyText carries whatever came back
     }
 
-    // Keep the richer copy — a second click costs nothing, and if Zoho is ever
-    // unreachable the detail we already saw is still there.
+    const txn = findTransaction(json);
+
+    if (!txn) {
+        const zohoMessage =
+            (json && typeof json === 'object' && (json as Record<string, unknown>).message) || null;
+        const keys = json && typeof json === 'object' ? Object.keys(json as object) : [];
+        console.error('[zoho/transaction] no entity found', {
+            httpStatus: res.status,
+            zohoMessage,
+            keys,
+        });
+        return NextResponse.json(
+            {
+                error: zohoMessage
+                    ? `Zoho said: ${zohoMessage}`
+                    : `Zoho replied ${res.status} with no transaction in it.`,
+                // Kept so the next surprise is diagnosable from the screen rather
+                // than from a log nobody will read.
+                diagnostic: { httpStatus: res.status, keys, sample: bodyText.slice(0, 300) },
+            },
+            { status: 502 }
+        );
+    }
+
     await supabase
         .from('zoho_bank_transactions')
         .update({ raw: txn })

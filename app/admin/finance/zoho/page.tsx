@@ -289,9 +289,12 @@ export default function ZohoDocumentsPage() {
     try {
       const res = await fetch(`/api/zoho/transaction/${txnId}`, { cache: 'no-store' });
       const json = await res.json();
-      setTxnDetail(res.ok ? json.transaction : { _error: json?.error || 'Could not load detail.' });
+      // A failed enrichment must not leave a blank row. We already hold the
+      // payee, reference, description and type from the list sync — show those
+      // and say plainly that the extra detail could not be loaded.
+      setTxnDetail(res.ok ? json.transaction : { _error: json?.error || 'Could not load the extra detail.' });
     } catch {
-      setTxnDetail({ _error: 'Could not reach Zoho for the detail.' });
+      setTxnDetail({ _error: 'Could not reach the server for the extra detail.' });
     }
     setTxnLoading(false);
   };
@@ -580,11 +583,30 @@ export default function ZohoDocumentsPage() {
                             <span className="inline-flex items-center gap-2 text-sm text-gray-500">
                               <Loader2 className="w-4 h-4 animate-spin" /> Asking Zoho for the detail…
                             </span>
-                          ) : txnDetail?._error ? (
-                            <span className="text-sm text-red-600">{String(txnDetail._error)}</span>
-                          ) : txnDetail ? (
-                            <TxnDetail detail={txnDetail} />
-                          ) : null}
+                          ) : (
+                            <>
+                              {/* Always show what the sync already gave us. */}
+                              <TxnDetail
+                                detail={
+                                  txnDetail && !txnDetail._error
+                                    ? txnDetail
+                                    : {
+                                        transaction_type: t.transaction_type,
+                                        payee: t.payee,
+                                        reference_number: t.reference_number,
+                                        account_name: t.account_name,
+                                        description: t.description,
+                                      }
+                                }
+                              />
+                              {txnDetail?._error && (
+                                <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-amber-700">
+                                  Zoho&apos;s extra detail (matched invoice, received via) could not be
+                                  loaded — {String(txnDetail._error)}
+                                </p>
+                              )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     )}
