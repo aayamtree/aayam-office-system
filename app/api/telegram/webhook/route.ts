@@ -118,6 +118,24 @@ export async function POST(req: NextRequest) {
               .maybeSingle();
             senderProfileId = senderProfile?.id || null;
           }
+          // The sender is in the group but not in profiles — so their Telegram
+          // id is the one thing missing before the app can @mention and DM them.
+          // Park it for one-tap admin confirmation instead of discarding it.
+          // Not auto-matched on name on purpose: a near-miss would silently send
+          // one designer's job alerts to another.
+          if (fromId && !senderProfileId && !message.from?.is_bot) {
+            const { error: candErr } = await supabaseAdmin.rpc('fn_touch_link_candidate', {
+              p_chat_id: fromId,
+              p_username: message.from?.username || null,
+              p_first_name:
+                [message.from?.first_name, message.from?.last_name].filter(Boolean).join(' ') || null,
+              p_group_chat_id: String(message.chat.id),
+              p_department: existing.department,
+            });
+            // Never let this break the mirror — it is a convenience, not the job.
+            if (candErr) console.error('[telegram] link candidate not recorded:', candErr.message);
+          }
+
           const senderLabel = message.from?.first_name || 'Telegram user';
           await supabaseAdmin.from('chat_messages').insert({
             channel_id: channel.id,

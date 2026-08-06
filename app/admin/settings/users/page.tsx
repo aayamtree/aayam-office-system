@@ -5,6 +5,15 @@ import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { Pencil, Send, CheckCircle2, XCircle, Copy } from 'lucide-react';
 
+interface LinkCandidate {
+  telegram_chat_id: string;
+  telegram_username: string | null;
+  first_name: string | null;
+  last_department: string | null;
+  message_count: number;
+  last_seen_at: string;
+}
+
 interface Profile {
   id: string;
   email: string;
@@ -34,6 +43,45 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => { fetchProfiles(); }, []);
+
+  // ── Telegram users seen in the department groups but not yet matched ──
+  // A bot cannot message anyone by phone number; their Telegram id is the only
+  // usable handle, and it arrives free every time they type in a group. The
+  // webhook parks those ids; here an admin attaches each to the right person.
+  const [candidates, setCandidates] = useState<LinkCandidate[]>([]);
+  const [pick, setPick] = useState<Record<string, string>>({});
+  const [busyCandidate, setBusyCandidate] = useState<string | null>(null);
+
+  const fetchCandidates = async () => {
+    const res = await fetch('/api/telegram/link-candidates');
+    if (!res.ok) return;
+    const json = await res.json();
+    setCandidates(json.data || []);
+  };
+
+  useEffect(() => { fetchCandidates(); }, []);
+
+  const resolveCandidate = async (chatId: string, action: 'link' | 'ignore') => {
+    const profileId = pick[chatId];
+    if (action === 'link' && !profileId) {
+      toast.error('Choose which staff member this is first');
+      return;
+    }
+    setBusyCandidate(chatId);
+    const res = await fetch('/api/telegram/link-candidates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_chat_id: chatId, action, profile_id: profileId }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json?.error || 'Could not update');
+    } else {
+      toast.success(action === 'link' ? 'Linked — they will be @mentioned from now on' : 'Dismissed');
+      await Promise.all([fetchCandidates(), fetchProfiles()]);
+    }
+    setBusyCandidate(null);
+  };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdating(userId);
@@ -89,6 +137,8 @@ export default function UserManagementPage() {
 
   const roles = ['admin', 'marketing', 'designer', 'dispatch', 'finance', 'cmyk', 'user'];
 
+  const unlinked = profiles.filter(p => !p.telegram_chat_id && p.is_active);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -100,6 +150,68 @@ export default function UserManagementPage() {
           Note: To add a new user, ask them to Sign Up, then assign their role here.
         </div>
       </div>
+
+      {candidates.length > 0 && (
+        <div className="bg-white rounded-md border border-blue-200 overflow-hidden">
+          <div className="border-b border-blue-100 bg-blue-50 px-4 py-3">
+            <h2 className="font-semibold text-gray-900">Seen in your Telegram groups</h2>
+            <p className="text-sm text-gray-600">
+              These people are posting in a department group but aren&apos;t matched to a staff
+              account yet, so alerts can only show their name — not notify them. Tell the app who
+              each one is and they&apos;ll start getting real @mentions and their personal daily brief.
+            </p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {candidates.map(c => (
+              <div key={c.telegram_chat_id} className="flex flex-wrap items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-gray-900">
+                    {c.first_name || 'Telegram user'}
+                    {c.telegram_username && (
+                      <span className="ml-2 text-sm text-gray-500">@{c.telegram_username}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {c.message_count} message{c.message_count === 1 ? '' : 's'}
+                    {c.last_department ? ` in ${c.last_department}` : ''} · last seen{' '}
+                    {new Date(c.last_seen_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </div>
+                </div>
+
+                <select
+                  value={pick[c.telegram_chat_id] || ''}
+                  onChange={e => setPick(prev => ({ ...prev, [c.telegram_chat_id]: e.target.value }))}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">This is…</option>
+                  {unlinked.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.full_name || p.email} ({p.role})
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  disabled={busyCandidate === c.telegram_chat_id}
+                  onClick={() => resolveCandidate(c.telegram_chat_id, 'link')}
+                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {busyCandidate === c.telegram_chat_id ? 'Linking…' : 'Link'}
+                </button>
+                <button
+                  type="button"
+                  disabled={busyCandidate === c.telegram_chat_id}
+                  onClick={() => resolveCandidate(c.telegram_chat_id, 'ignore')}
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Not staff
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
