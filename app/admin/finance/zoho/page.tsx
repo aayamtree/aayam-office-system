@@ -607,14 +607,21 @@ export default function ZohoDocumentsPage() {
                               />
                               {/* Always offer the certain route. Whatever the API
                                   does, the record is one click away in Zoho. */}
+                              {/* URL copied from Zoho's own address bar rather than
+                                  invented: #/banking/transactions/details?account_id=…&amount=…
+                                  A guessed path (#/banking/{'{'}account_id{'}'}) gave "page not found". */}
                               <a
-                                href={`https://books.zoho.com/app/633786605#/banking/${t.account_id ?? ''}`}
+                                href={
+                                  t.account_id
+                                    ? `https://books.zoho.com/app/633786605#/banking/transactions/details?account_id=${t.account_id}&amount=${t.amount ?? ''}`
+                                    : 'https://books.zoho.com/app/633786605#/banking'
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-blue-700 hover:underline"
                               >
-                                <ExternalLink className="w-3 h-3" /> Open this account in Zoho Books
+                                <ExternalLink className="w-3 h-3" /> Open in Zoho Books
                               </a>
                               {txnDetail?._error && (
                                 <p className="mt-3 pt-3 border-t border-gray-200 text-xs text-amber-700">
