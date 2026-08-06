@@ -17,7 +17,6 @@ interface Profile {
 }
 
 
-import DesignersManager from '@/components/settings/DesignersManager';
 import ProductionSettings from './production/page';
 import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
 import VendorCategoriesManager from '@/components/settings/VendorCategoriesManager';
@@ -370,7 +369,22 @@ export default function UserManagementPage() {
           )}
         </>
       ) : activeTab === 'designers' ? (
-        <DesignersManager />
+        /* Designers and staff are the same `profiles` rows — this tab and Team
+           Management were two doors onto one table, so it was never clear which
+           owned what. Team Management is now the single people page. */
+        <div className="rounded-md border border-gray-200 bg-white p-8 text-center">
+          <h3 className="text-lg font-semibold text-gray-900">Designers now live in Team Management</h3>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600">
+            Designers were never a separate list — they are staff records with the designer role,
+            in the same table. Everything from this page (phone, skills, rate, salary, joining date)
+            is on the Team Management page, alongside role, access and Telegram, so there is one
+            place to look and one place to edit.
+          </p>
+          <a href="/admin/settings/users"
+            className="mt-5 inline-block rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800">
+            Open Team Management
+          </a>
+        </div>
       ) : activeTab === 'production' ? (
         <ProductionSettings />
       ) : activeTab === 'vendor-categories' ? (

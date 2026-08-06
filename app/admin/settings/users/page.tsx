@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { Pencil, Send, CheckCircle2, XCircle, Copy } from 'lucide-react';
@@ -25,7 +25,24 @@ interface Profile {
   telegram_username?: string | null;
   telegram_linked_at?: string | null;
   created_at?: string;
+  // HR fields — these used to be editable only in Settings → Designers
+  // Directory, which read the SAME profiles row. One table, two doors, and no
+  // way to tell which one owned what. They live here now.
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  skills?: string[] | null;
+  employment_type?: string | null;
+  hourly_rate?: number | null;
+  monthly_salary?: number | null;
+  joining_date?: string | null;
 }
+
+const EMPTY_EDIT = {
+  full_name: '', phone: '', city: '', state: '',
+  employment_type: 'full-time', hourly_rate: '', monthly_salary: '',
+  joining_date: '', skills: '',
+};
 
 export default function UserManagementPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -139,6 +156,76 @@ export default function UserManagementPage() {
 
   const unlinked = profiles.filter(p => !p.telegram_chat_id && p.is_active);
 
+  // ── Person editor (contact + employment) ──
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [edit, setEdit] = useState({ ...EMPTY_EDIT });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEditor = (p: Profile) => {
+    if (editingId === p.id) { setEditingId(null); return; }
+    setEditingId(p.id);
+    setEdit({
+      full_name: p.full_name || '',
+      phone: p.phone || '',
+      city: p.city || '',
+      state: p.state || '',
+      employment_type: p.employment_type || 'full-time',
+      hourly_rate: p.hourly_rate != null ? String(p.hourly_rate) : '',
+      monthly_salary: p.monthly_salary != null ? String(p.monthly_salary) : '',
+      joining_date: p.joining_date || '',
+      skills: (p.skills || []).join(', '),
+    });
+  };
+
+  const saveEditor = async (id: string) => {
+    setSavingEdit(true);
+    const { error } = await supabase.from('profiles').update({
+      full_name: edit.full_name.trim() || null,
+      phone: edit.phone.trim() || null,
+      city: edit.city.trim() || null,
+      state: edit.state.trim() || null,
+      employment_type: edit.employment_type || null,
+      // Empty box means "not set", not zero — a blank rate should never be
+      // saved as ₹0/hr and quietly used in costing.
+      hourly_rate: edit.hourly_rate.trim() === '' ? null : Number(edit.hourly_rate),
+      monthly_salary: edit.monthly_salary.trim() === '' ? null : Number(edit.monthly_salary),
+      joining_date: edit.joining_date || null,
+      skills: edit.skills.split(',').map(s => s.trim()).filter(Boolean),
+    }).eq('id', id);
+    if (error) toast.error('Could not save: ' + error.message);
+    else {
+      toast.success('Saved');
+      setEditingId(null);
+      await fetchProfiles();
+    }
+    setSavingEdit(false);
+  };
+
+  const toggleActive = async (p: Profile) => {
+    setUpdating(p.id);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: !p.is_active })
+      .eq('id', p.id);
+    if (error) toast.error('Could not update: ' + error.message);
+    else await fetchProfiles();
+    setUpdating(null);
+  };
+
+  // ── Filters ──
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+
+  const visible = profiles
+    .filter(p => p.full_name)
+    .filter(p => roleFilter === 'all' || p.role === roleFilter)
+    .filter(p => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return [p.full_name, p.email, p.phone, p.city, (p.skills || []).join(' ')]
+        .filter(Boolean).join(' ').toLowerCase().includes(q);
+    });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -213,6 +300,27 @@ export default function UserManagementPage() {
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search name, phone, city, skill…"
+          className="min-w-[240px] flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+        <select
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+        >
+          <option value="all">All roles ({profiles.filter(p => p.full_name).length})</option>
+          {roles.map(r => (
+            <option key={r} value={r}>
+              {r.charAt(0).toUpperCase() + r.slice(1)} ({profiles.filter(p => p.role === r && p.full_name).length})
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="bg-white rounded-md border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -222,13 +330,17 @@ export default function UserManagementPage() {
               <th className="p-4 font-semibold text-gray-700 text-center">Can Design</th>
               <th className="p-4 font-semibold text-gray-700">Telegram</th>
               <th className="p-4 font-semibold text-gray-700">Status</th>
+              <th className="p-4"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan={5} className="p-8 text-center">Loading team...</td></tr>
-            ) : profiles.filter(p => p.full_name).map((profile) => (
-              <tr key={profile.id} className="hover:bg-gray-50 transition-colors">
+              <tr><td colSpan={6} className="p-8 text-center">Loading team...</td></tr>
+            ) : visible.length === 0 ? (
+              <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nobody matches that.</td></tr>
+            ) : visible.map((profile) => (
+              <Fragment key={profile.id}>
+              <tr className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -297,12 +409,103 @@ export default function UserManagementPage() {
                   )}
                 </td>
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded-md text-xs font-bold
-                    ${profile.is_active ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'}`}>
+                  <button
+                    onClick={() => toggleActive(profile)}
+                    disabled={updating === profile.id}
+                    title={profile.is_active ? 'Suspend — hides them from pickers, keeps their history' : 'Reactivate'}
+                    className={`px-2 py-1 rounded-md text-xs font-bold disabled:opacity-50
+                      ${profile.is_active ? 'bg-gray-100 text-gray-900 hover:bg-gray-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
                     {profile.is_active ? 'Active' : 'Suspended'}
-                  </span>
+                  </button>
+                </td>
+                <td className="p-4 text-right">
+                  <button
+                    onClick={() => openEditor(profile)}
+                    className="inline-flex items-center gap-1 text-sm text-blue-700 hover:underline"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    {editingId === profile.id ? 'Close' : 'Details'}
+                  </button>
                 </td>
               </tr>
+
+              {editingId === profile.id && (
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="p-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Full name</span>
+                        <input value={edit.full_name} onChange={e => setEdit({ ...edit, full_name: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Phone</span>
+                        <input value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })}
+                          placeholder="+91 98765 43210"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Employment</span>
+                        <select value={edit.employment_type} onChange={e => setEdit({ ...edit, employment_type: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2">
+                          <option value="full-time">Full-time</option>
+                          <option value="part-time">Part-time</option>
+                          <option value="freelance">Freelance</option>
+                        </select>
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">City</span>
+                        <input value={edit.city} onChange={e => setEdit({ ...edit, city: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">State</span>
+                        <input value={edit.state} onChange={e => setEdit({ ...edit, state: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Joining date</span>
+                        <input type="date" value={edit.joining_date} onChange={e => setEdit({ ...edit, joining_date: e.target.value })}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Rate ₹/hr</span>
+                        <input type="number" min="0" value={edit.hourly_rate} onChange={e => setEdit({ ...edit, hourly_rate: e.target.value })}
+                          placeholder="not set"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Monthly salary ₹</span>
+                        <input type="number" min="0" value={edit.monthly_salary} onChange={e => setEdit({ ...edit, monthly_salary: e.target.value })}
+                          placeholder="not set"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                      </label>
+                      <label className="text-sm">
+                        <span className="mb-1 block font-medium text-gray-700">Skills</span>
+                        <input value={edit.skills} onChange={e => setEdit({ ...edit, skills: e.target.value })}
+                          placeholder="Packaging, Social Media, Logo Design"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2" />
+                        <span className="mt-1 block text-xs text-gray-500">Separate with commas</span>
+                      </label>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-3">
+                      <button onClick={() => saveEditor(profile.id)} disabled={savingEdit}
+                        className="rounded-md bg-gray-900 px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50">
+                        {savingEdit ? 'Saving…' : 'Save'}
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-white">
+                        Cancel
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        Role, access and Telegram are on the row above — same record, saved instantly.
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>
