@@ -260,6 +260,9 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin'],
     submenu: [
       { name: 'General', href: '/admin/settings' },
+      // Existed since the Telegram work but was never linked anywhere — the only
+      // way in was typing the URL. It owns roles, access and Telegram linking.
+      { name: 'Team Management', href: '/admin/settings/users' },
       { name: 'Company Info', href: '/admin/settings/company' },
       { name: 'Saved Items', href: '/admin/settings/items' },
       { name: 'Notifications', href: '/admin/settings/notifications' },
