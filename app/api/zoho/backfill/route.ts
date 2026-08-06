@@ -231,73 +231,9 @@ export async function GET(request: NextRequest) {
     }
     result.banktransactions = uniqueTxns.length;
 
-    // ---- Chart of accounts ---------------------------------------------------
-    // These names ARE the expense categories now that Zoho owns bookkeeping.
-    // Not date-filtered: a chart of accounts is a list, not a history.
-    const accounts = await fetchAll(
-        accessToken,
-        orgId,
-        '/chartofaccounts',
-        'chartofaccounts',
-        'account_id',
-        {}
-    );
-    if (accounts) {
-        const mappedAccounts = dedupeBy(
-            accounts
-                .map((a) => {
-                    const id = str(a.account_id);
-                    if (!id) return null;
-                    return {
-                        zoho_account_id: id,
-                        account_name: str(a.account_name),
-                        account_type: str(a.account_type),
-                        account_code: str(a.account_code),
-                        description: str(a.description),
-                        is_active: typeof a.is_active === 'boolean' ? a.is_active : null,
-                        raw: a,
-                        last_synced_at: now,
-                    };
-                })
-                .filter(Boolean) as Record<string, unknown>[],
-            'zoho_account_id'
-        );
-        if (mappedAccounts.length > 0) {
-            const { error } = await supabase
-                .from('zoho_accounts')
-                .upsert(mappedAccounts, { onConflict: 'zoho_account_id' });
-            if (error) console.error('[zoho/backfill] accounts upsert failed:', error.message);
-            else result.chart_of_accounts = mappedAccounts.length;
-
-            // Mirror the expense/income accounts into expense_categories so the
-            // app can tag CASH and UPI spending with the same names Zoho uses —
-            // those never touch the HDFC feed, so Zoho cannot categorise them.
-            //
-            // Bank/cash/credit-card accounts are skipped: they are ACCOUNTS, not
-            // categories, and would pollute the picker.
-            const categoryTypes = ['expense', 'other_expense', 'cost_of_goods_sold', 'income', 'other_income'];
-            const asCategories = mappedAccounts
-                .filter((a) => categoryTypes.includes(String(a.account_type || '')))
-                .map((a) => ({
-                    zoho_account_id: a.zoho_account_id,
-                    name: a.account_name,
-                    description: a.description,
-                    is_active: a.is_active ?? true,
-                    source: 'zoho',
-                }));
-
-            if (asCategories.length > 0) {
-                // onConflict on zoho_account_id: re-running updates the name if
-                // Satish renamed it in Zoho, and never duplicates. App-created
-                // categories have a null zoho_account_id and are untouched.
-                const { error: catError } = await supabase
-                    .from('expense_categories')
-                    .upsert(asCategories, { onConflict: 'zoho_account_id' });
-                if (catError) console.error('[zoho/backfill] category sync failed:', catError.message);
-                else result.categories_from_zoho = asCategories.length;
-            }
-        }
-    }
+    // Chart of accounts and the shared category list live in
+    // /api/zoho/sync-accounts. They were here once; bolting them onto this
+    // route pushed it past the 60s function limit and it died mid-run.
 
     // ---- Enrich documents that still have no line items ----------------------
     // One API call per document, so bounded per invocation. Re-run until

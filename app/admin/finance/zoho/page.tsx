@@ -8,7 +8,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History, PieChart } from 'lucide-react';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History, PieChart, Tag } from 'lucide-react';
 
 // Zoho sends ~250 fields per document; these are the ones worth showing.
 interface ZohoLineItem {
@@ -112,6 +112,7 @@ export default function ZohoDocumentsPage() {
   const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank' | 'category'>('invoice');
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
+  const [syncingAccounts, setSyncingAccounts] = useState(false);
   const [backfillMsg, setBackfillMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const fetchDocs = async () => {
@@ -178,9 +179,36 @@ export default function ZohoDocumentsPage() {
       });
       await fetchDocs();
     } catch {
-      setBackfillMsg({ ok: false, text: 'Could not reach the server.' });
+      // A thrown fetch here almost always means the function ran past its time
+      // limit and Vercel returned an HTML error page instead of JSON. Say that,
+      // rather than implying the network is down.
+      setBackfillMsg({
+        ok: false,
+        text: 'The fetch took too long and was cut off. Anything already pulled is saved — press it again to carry on from where it stopped.',
+      });
     }
     setBackfilling(false);
+  };
+
+  // Categories are a small, separate job — deliberately not part of the backfill.
+  const syncAccounts = async () => {
+    setSyncingAccounts(true);
+    setBackfillMsg(null);
+    try {
+      const res = await fetch('/api/zoho/sync-accounts', { cache: 'no-store' });
+      const json = await res.json();
+      if (!res.ok) {
+        setBackfillMsg({ ok: false, text: json?.error || 'Could not sync categories.' });
+      } else {
+        setBackfillMsg({
+          ok: true,
+          text: `${json.accounts_mirrored} accounts read from Zoho, ${json.categories_shared} now shared as categories in this app.`,
+        });
+      }
+    } catch {
+      setBackfillMsg({ ok: false, text: 'The category sync was cut off. Press it again.' });
+    }
+    setSyncingAccounts(false);
   };
 
   const shown = docs.filter(d => d.doc_type === tab);
@@ -233,6 +261,15 @@ export default function ZohoDocumentsPage() {
           >
             {backfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
             {backfilling ? 'Fetching…' : 'Fetch this FY from Zoho'}
+          </button>
+          <button
+            onClick={syncAccounts}
+            disabled={syncingAccounts}
+            title="Pull Zoho's chart of accounts and share it as this app's category list"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+          >
+            {syncingAccounts ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />}
+            {syncingAccounts ? 'Syncing…' : 'Sync categories'}
           </button>
           <button
             onClick={fetchDocs}
