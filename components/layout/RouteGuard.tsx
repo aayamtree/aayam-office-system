@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { hasCapabilityFor } from '@/lib/permissions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RBAC Route Map
@@ -33,7 +34,11 @@ const ROUTE_PERMISSIONS: { prefix: string; allowed: string[] }[] = [
     // Product Library — core roles
     { prefix: '/admin/library', allowed: ['admin', 'designer', 'marketing', 'finance'] },
     // Print Planner — admin, finance, cmyk (matches sidebar allowedRoles)
+    // PLUS anyone carrying profiles.can_plan_prints — see lib/permissions.ts.
+    // This lets one trusted designer own print setup without losing their
+    // designer role (and with it the whole Design Studio).
     { prefix: '/admin/print-planner', allowed: ['admin', 'finance', 'cmyk'] },
+    { prefix: '/admin/print-runs', allowed: ['admin', 'finance', 'cmyk'] },
     // CMYK Print — admin + cmyk
     { prefix: '/admin/cmyk-print', allowed: ['admin', 'cmyk', 'finance'] },
     // Reports — admin only
@@ -57,7 +62,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         // Check if current path matches any restricted route
         for (const { prefix, allowed } of ROUTE_PERMISSIONS) {
             if (pathname.startsWith(prefix)) {
-                if (!allowed.includes(role)) {
+                if (!allowed.includes(role) && !hasCapabilityFor(pathname, profile)) {
                     // Redirect to dashboard with a clear message
                     console.warn(`[RouteGuard] Role "${role}" not allowed on "${pathname}". Redirecting.`);
                     router.replace('/admin/dashboard?access=denied');
@@ -78,7 +83,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
         for (const { prefix, allowed } of ROUTE_PERMISSIONS) {
             if (pathname.startsWith(prefix)) {
                 // First matching rule wins — same logic as the useEffect above
-                if (!allowed.includes(role)) {
+                if (!allowed.includes(role) && !hasCapabilityFor(pathname, profile)) {
                     return (
                         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
                             <div className="text-6xl mb-4">🔒</div>

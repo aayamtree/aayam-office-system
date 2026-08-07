@@ -48,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
+import { hasCapabilityForHref } from '@/lib/permissions';
 
 interface MenuItem {
   name: string;
@@ -469,8 +470,10 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
   const filteredMenu = useMemo(() => menuItems.filter(item => {
     const userRole = profile?.role || 'admin';
     if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
-    return item.allowedRoles.includes(userRole);
-  }), [profile?.role]);
+    if (item.allowedRoles.includes(userRole)) return true;
+    // Per-user capability flags can unlock a section the role alone would hide.
+    return hasCapabilityForHref(item.href, profile);
+  }), [profile?.role, profile?.can_plan_prints, profile]);
 
   // Mobile translate: slide off-screen when closed, slide in when open
   const mobileTranslate = !isDesktop ? (isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full') : '';

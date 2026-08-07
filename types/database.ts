@@ -31,6 +31,10 @@ export interface Profile extends BaseEntity {
   avatar_url?: string;  // Google Drive photo link
   is_active: boolean;
   commission_rate?: number;
+  /** Appears in the Designer dropdown on jobs, regardless of role. */
+  can_design?: boolean;
+  /** Grants Print Planner + Print Runs on top of the role. See lib/permissions.ts. */
+  can_plan_prints?: boolean;
   telegram_chat_id?: string | null;
   telegram_username?: string | null;
   telegram_linked_at?: string | null;

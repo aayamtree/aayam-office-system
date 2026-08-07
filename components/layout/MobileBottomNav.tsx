@@ -9,6 +9,7 @@ import {
     User, ChevronUp, X, Check, GripVertical, LogOut, Plus, Share2
 } from 'lucide-react';
 import QuickAddSheet from './QuickAddSheet';
+import { hasCapabilityForHref } from '@/lib/permissions';
 
 interface NavItem {
     id: string;
@@ -59,8 +60,11 @@ export function MobileBottomNav() {
 
     const userRole = profile?.role || 'admin';
 
-    // Available items for this user's role
-    const availableItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(userRole));
+    // Available items for this user's role, plus anything unlocked by a
+    // per-user capability flag (e.g. a designer who owns print setup).
+    const availableItems = ALL_NAV_ITEMS.filter(
+        item => item.roles.includes(userRole) || hasCapabilityForHref(item.href, profile)
+    );
 
     // Load saved tabs or use role defaults
     useEffect(() => {

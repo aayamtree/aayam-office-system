@@ -21,6 +21,7 @@ interface Profile {
   role: 'admin' | 'marketing' | 'designer' | 'dispatch' | 'account' | 'finance' | 'cmyk' | 'user';
   is_active: boolean;
   can_design: boolean;
+  can_plan_prints: boolean;
   telegram_chat_id?: string | null;
   telegram_username?: string | null;
   telegram_linked_at?: string | null;
@@ -118,6 +119,23 @@ export default function UserManagementPage() {
       toast.error('Error updating: ' + error.message);
     } else {
       setProfiles(prev => prev.map(p => p.id === userId ? { ...p, can_design: !current } : p));
+    }
+    setUpdating(null);
+  };
+
+  // Print Setup — grants Print Planner + Print Runs WITHOUT changing the
+  // person's role, so a designer keeps the whole Design Studio.
+  const handleCanPlanPrintsToggle = async (userId: string, current: boolean) => {
+    setUpdating(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ can_plan_prints: !current })
+      .eq('id', userId);
+    if (error) {
+      toast.error('Error updating: ' + error.message);
+    } else {
+      setProfiles(prev => prev.map(p => p.id === userId ? { ...p, can_plan_prints: !current } : p));
+      toast.success(!current ? 'Print Planner access granted' : 'Print Planner access removed');
     }
     setUpdating(null);
   };
@@ -328,6 +346,7 @@ export default function UserManagementPage() {
               <th className="p-4 font-semibold text-gray-700">User</th>
               <th className="p-4 font-semibold text-gray-700">Role</th>
               <th className="p-4 font-semibold text-gray-700 text-center">Can Design</th>
+              <th className="p-4 font-semibold text-gray-700 text-center">Print Setup</th>
               <th className="p-4 font-semibold text-gray-700">Telegram</th>
               <th className="p-4 font-semibold text-gray-700">Status</th>
               <th className="p-4"></th>
@@ -378,6 +397,27 @@ export default function UserManagementPage() {
                         ${profile.can_design ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                   </button>
+                </td>
+                <td className="p-4 text-center">
+                  {profile.role === 'admin' ? (
+                    <span className="text-xs text-gray-400" title="Admins always have Print Planner access">
+                      always
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleCanPlanPrintsToggle(profile.id, profile.can_plan_prints)}
+                      disabled={updating === profile.id}
+                      title={profile.can_plan_prints ? 'Remove Print Planner access' : 'Give Print Planner + Print Runs access (role stays unchanged)'}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+                        ${profile.can_plan_prints ? 'bg-amber-600' : 'bg-gray-200'}
+                        ${updating === profile.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                          ${profile.can_plan_prints ? 'translate-x-6' : 'translate-x-1'}`}
+                      />
+                    </button>
+                  )}
                 </td>
                 <td className="p-4">
                   {profile.telegram_chat_id ? (
@@ -515,6 +555,12 @@ export default function UserManagementPage() {
         <p>
           <strong>Can Design</strong> — when enabled, this person appears in the Designer dropdown on jobs regardless of their role.
           Use this for admins like Eklavya or Satish who also do design work.
+        </p>
+        <p>
+          <strong>Print Setup</strong> — when enabled, this person gets Print Planner and Print Runs
+          <em> in addition to</em> whatever their role already allows. Their role does not change, so a designer
+          keeps the full Design Studio. Print setup decides the final print file — grant it deliberately,
+          one person at a time.
         </p>
         <p>
           <strong>Telegram Linking</strong> — Click &quot;Get Link&quot; to copy the Telegram linking URL. Send it to the staff member via WhatsApp.
