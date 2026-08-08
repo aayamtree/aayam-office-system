@@ -448,10 +448,16 @@ export default function ProjectNotesLog({ jobId, canWrite, isAdmin, currentStage
             if (mentionedUserIds.length > 0) {
                 sendMentionNotifications(mentionedUserIds, trimmed, `Job ${jobId.slice(0, 8).toUpperCase()}`);
             }
-        } catch {
-            // Sync failed — note stays in localStorage, will retry in 30s
-            // No error shown — user already sees the note, it will silently retry
-            markFailed(queued.localId, 'Initial sync failed');
+        } catch (e: any) {
+            // Sync failed — note stays in localStorage and retries in 30s, but
+            // SAY SO. Silence here is how every note between June and August was
+            // lost: RLS rejected the insert ("new row violates row-level security
+            // policy"), the note showed on screen, retried 5 times, then stopped.
+            // A note the database refused must never look like a saved note.
+            const msg = e?.message || 'Unknown error';
+            console.error('[notes] insert failed:', msg);
+            markFailed(queued.localId, msg);
+            toast.error(`Note NOT saved yet — ${msg}. It is kept on this device and will retry.`);
         } finally {
             setSaving(false);
         }
