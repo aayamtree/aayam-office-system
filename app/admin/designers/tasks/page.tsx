@@ -17,6 +17,7 @@ import {
   Loader2, Folder, GanttChart, Layout, Monitor, AlertTriangle, Palette, Printer, Lock, Bell, BarChart3, TrendingUp, Zap
 } from 'lucide-react';
 import ProjectNotesLog from '@/components/ProjectNotesLog';
+import DesignBriefEditor from '@/components/DesignBriefEditor';
 import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
@@ -416,6 +417,11 @@ export default function DesignerWorkspace() {
             deadline: job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '',
             rawDeadline: job.client_deadline,
             description: `Job Type: ${job.job_type || '-'}\nDetails: ${job.description || 'No description provided.'}`,
+            // RAW description, kept separate from the composed string above.
+            // The brief editor must write back to jobs.description only — save
+            // the composed string and the next render composes another
+            // "Job Type:" line on top of it.
+            rawDescription: job.description || '',
             feedback: [],
             files: Array.isArray(job.files) ? job.files : [],
             driveLink: (job as any).drive_link || '',
@@ -1359,15 +1365,23 @@ export default function DesignerWorkspace() {
                       return null;
                     })()}
 
-                    {/* 1. Brief / Description */}
-                    <section className="bg-white p-4 rounded-md border border-gray-100">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <FileText size={16} className="text-primary" /> Design Brief & Instructions
-                      </h4>
-                      <div className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap font-sans">
-                        {selectedTask.description}
-                      </div>
-                    </section>
+                    {/* 1. Brief / Description — editable, because the details of a
+                        job rarely all exist at the moment the order is created. */}
+                    <DesignBriefEditor
+                      jobId={selectedTask.realId}
+                      jobType={selectedTask.jobType}
+                      description={(selectedTask as any).rawDescription || ''}
+                      currentStage={selectedTask.is_on_hold ? 'printing' : (selectedTask.current_stage || 'new')}
+                      isAdmin={isAdmin}
+                      // Same match rule filteredTasks uses, including its fallback:
+                      // a designer with no `designers` row still matches on profile id.
+                      isAssignedDesigner={!!selectedTask.designerId && (
+                        myDesignerRecord
+                          ? selectedTask.designerId === myDesignerRecord.id
+                          : selectedTask.designerId === profile?.id
+                      )}
+                      onSaved={() => refetchJobs()}
+                    />
 
                     {/* 2. Assets & Assignment */}
                     <section className="bg-white p-4 rounded-md border border-gray-100 space-y-6">
