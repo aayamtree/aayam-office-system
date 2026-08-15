@@ -9,7 +9,8 @@ import {
   IndianRupee, Edit, Trash2, X,
   AlertCircle, AlertTriangle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
-  Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload
+  Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload,
+  ChevronLeft, ChevronRight, CheckCircle
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible,
@@ -26,7 +27,7 @@ import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import { useConfirm } from '@/components/ConfirmModal';
 import {
   getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType,
-  isJobClosed, isAwaitingPayment, isOnActiveBoard, isWorkFinished, RECENTLY_FINISHED_DAYS,
+  isJobClosed, isAwaitingPayment, isOnActiveBoard, isWorkFinished, finishedAt, RECENTLY_FINISHED_DAYS,
 } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
@@ -168,7 +169,9 @@ export default function JobsPage() {
     // dispatched_at / completed_date / updated_at drive the Active-vs-Closed split
     // below. Without them every finished job looks equally old and the board
     // cannot tell "delivered yesterday" from "delivered in June".
-    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, dispatched_at, completed_date, updated_at, client:clients(id, name, company)',
+    // created_at is what "opened this month" counts. JOB_SELECTS.LIST omits it,
+    // and a missing column here reads as zero rather than as an error.
+    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, created_at, dispatched_at, completed_date, updated_at, client:clients(id, name, company)',
     // Closed jobs are still fetched — they feed the counts and the Closed tab.
     // A truncated list here silently under-reports money owed, so keep headroom.
     limit: 2000,
@@ -254,6 +257,10 @@ export default function JobsPage() {
   };
 
   const [searchTerm, setSearchTerm] = useState('');
+  // Which month the stat cards describe. 0 = this month, -1 = last month, and so
+  // on; null = all time. "270 total jobs" was a number with no period attached —
+  // it only ever grows, so it cannot tell a busy month from a quiet one.
+  const [monthOffset, setMonthOffset] = useState<number | null>(0);
   // Which slice of the business are we looking at? The board defaults to live
   // work only — see lib/job-workflow.ts for why. Nothing is deleted or hidden:
   // every job is one tap away under Awaiting Payment, Closed or All.
@@ -368,11 +375,35 @@ export default function JobsPage() {
   const activeJobs = jobs.filter(j => !isWorkFinished(j as any) && j.current_stage !== 'cancelled').length;
   const awaitingPaymentJobs = jobs.filter(j => isAwaitingPayment(j as any));
   const closedJobs = jobs.filter(j => isJobClosed(j as any)).length;
-  const totalRevenue = jobs.reduce((sum, j) => sum + (j.amount_received || 0), 0);
   // Only money on work we have actually handed over is money we can chase.
   const pendingPayments = awaitingPaymentJobs.reduce(
     (sum, j) => sum + Math.max(0, (j.total_amount || 0) - (j.amount_received || 0)), 0
   );
+
+  // ── The period the stat cards describe ────────────────────────────────────
+  // A month has two sides and they answer different questions: what came IN
+  // (opened) and what went OUT (finished). Counting only one hides the gap
+  // between them, which is the thing worth watching.
+  const now = new Date();
+  const periodStart = monthOffset === null ? null : new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  const periodEnd = periodStart ? new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 1) : null;
+  const periodLabel = periodStart
+    ? periodStart.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+    : 'All time';
+
+  const inPeriod = (d: Date | null) => {
+    if (!periodStart || !periodEnd) return true; // all time
+    return !!d && d >= periodStart && d < periodEnd;
+  };
+
+  const openedJobs = jobs.filter(j => {
+    const d = (j as any).created_at ? new Date((j as any).created_at) : null;
+    return d && !Number.isNaN(d.getTime()) && inPeriod(d);
+  });
+  const finishedJobs = jobs.filter(j => isWorkFinished(j as any) && inPeriod(finishedAt(j as any)));
+  const sumBilled = (list: typeof jobs) => list.reduce((s, j) => s + (j.total_amount || 0), 0);
+  // Next month is not a period you can look at — don't offer an empty screen.
+  const canGoForward = monthOffset !== null && monthOffset < 0;
 
   const BOARD_TABS = [
     { id: 'active' as const, label: 'Active', count: jobs.filter(j => isOnActiveBoard(j as any)).length },
@@ -758,28 +789,62 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Stats Cards — Job Queue style */}
+      {/* Period picker. The old "Total Jobs 270" had no period at all — it only
+          ever grew, so a busy month and a dead one looked identical. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0"
+            aria-label="Previous month"
+            onClick={() => setMonthOffset(prev => (prev === null ? -1 : prev - 1))}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium text-gray-900 min-w-[120px] text-center">{periodLabel}</span>
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0"
+            aria-label="Next month" disabled={!canGoForward}
+            onClick={() => setMonthOffset(prev => (prev === null ? 0 : Math.min(0, prev + 1)))}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <Button
+          variant={monthOffset === null ? 'default' : 'outline'} size="sm" className="h-8 text-xs"
+          onClick={() => setMonthOffset(monthOffset === null ? 0 : null)}>
+          All time
+        </Button>
+      </div>
+
+      {/* Stats Cards. The first two describe the chosen period and have two
+          sides on purpose: what came IN and what went OUT. The last two are
+          "right now" regardless of period — money owed and work in hand do not
+          belong to a month, and labelling them 'now' stops them being misread. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
         <div className="bg-gray-900 border border-gray-800 rounded-md p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <Briefcase className="w-4 h-4 text-white" />
-            <span className="text-xs text-white font-medium">Total Jobs</span>
+            <span className="text-xs text-white font-medium">Opened</span>
           </div>
-          <p className="text-page-title text-white">{totalJobs}</p>
+          <p className="text-page-title text-white">{openedJobs.length}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5 truncate" title={formatCurrency(sumBilled(openedJobs))}>
+            {formatCurrency(sumBilled(openedJobs))} billed
+          </p>
+        </div>
+        <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
+          <div className="flex items-center gap-1 md:gap-2 mb-1">
+            <CheckCircle className="w-4 h-4 text-gray-900" />
+            <span className="text-xs text-gray-900 font-medium">Finished</span>
+          </div>
+          <p className="text-page-title text-gray-900">{finishedJobs.length}</p>
+          <p className="text-[11px] text-gray-500 mt-0.5 truncate" title={formatCurrency(sumBilled(finishedJobs))}>
+            {formatCurrency(sumBilled(finishedJobs))} billed
+          </p>
         </div>
         <div className="bg-muted border border-border rounded-md p-2 md:p-3">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <Layers className="w-4 h-4 text-foreground" />
-            <span className="text-xs text-foreground font-medium">Active</span>
+            <span className="text-xs text-foreground font-medium">In progress</span>
+            <span className="text-[10px] text-muted-foreground ml-auto">now</span>
           </div>
           <p className="text-page-title text-foreground">{activeJobs}</p>
-        </div>
-        <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
-          <div className="flex items-center gap-1 md:gap-2 mb-1">
-            <IndianRupee className="w-4 h-4 text-gray-900" />
-            <span className="text-xs text-gray-900 font-medium">Revenue</span>
-          </div>
-          <p className="text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>{formatCurrency(totalRevenue)}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">across all months</p>
         </div>
         {/* Delivered work that has not been paid for. Clicking through to the
             money screen matters now that these jobs no longer sit on the board. */}
@@ -787,7 +852,7 @@ export default function JobsPage() {
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <AlertCircle className="w-4 h-4 text-red-600" />
             <span className="text-xs text-red-600 font-medium">Awaiting Payment</span>
-            <ArrowRight className="w-3 h-3 text-red-400 ml-auto" />
+            <span className="text-[10px] text-red-400 ml-auto">now</span>
           </div>
           <p className="text-page-title text-red-700 truncate" title={formatCurrency(pendingPayments)}>{formatCurrency(pendingPayments)}</p>
           <p className="text-[11px] text-red-500 mt-0.5">{awaitingPaymentJobs.length} delivered, unpaid</p>
