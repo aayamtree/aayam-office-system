@@ -24,7 +24,10 @@ import VendorQuickAddModal from '@/components/shared/VendorQuickAddModal';
 import ProductCategoryQuickAdd from '@/components/shared/ProductCategoryQuickAdd';
 import JobTypeQuickAdd from '@/components/shared/JobTypeQuickAdd';
 import { useConfirm } from '@/components/ConfirmModal';
-import { getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType } from '@/lib/job-workflow';
+import {
+  getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType,
+  isJobClosed, isAwaitingPayment, isOnActiveBoard, isWorkFinished, RECENTLY_FINISHED_DAYS,
+} from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
 import JobStageQuickAdd from '@/components/shared/JobStageQuickAdd';
@@ -39,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
+import LoadError from '@/components/LoadError';
 
 // ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
@@ -160,9 +164,14 @@ export default function JobsPage() {
   // assignment fields the edit form pre-fills from (quote_per_piece, design_charge,
   // gst_rate, quantity, vendor_id, designer_id) — so opening a job and saving it
   // wrote those back as blank. The card also needs advance_* and files.
-  const { jobs, loading: jobsLoading, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs({
-    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, client:clients(id, name, company)',
-    limit: 500,
+  const { jobs, loading: jobsLoading, error: jobsError, createJob, updateJob, deleteJob, updateJobStage, refetch: refetchJobs } = useJobs({
+    // dispatched_at / completed_date / updated_at drive the Active-vs-Closed split
+    // below. Without them every finished job looks equally old and the board
+    // cannot tell "delivered yesterday" from "delivered in June".
+    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, dispatched_at, completed_date, updated_at, client:clients(id, name, company)',
+    // Closed jobs are still fetched — they feed the counts and the Closed tab.
+    // A truncated list here silently under-reports money owed, so keep headroom.
+    limit: 2000,
   });
   const { clients, createClient } = useClients();
   const { vendors, createVendor } = useVendors();
@@ -245,6 +254,14 @@ export default function JobsPage() {
   };
 
   const [searchTerm, setSearchTerm] = useState('');
+  // Which slice of the business are we looking at? The board defaults to live
+  // work only — see lib/job-workflow.ts for why. Nothing is deleted or hidden:
+  // every job is one tap away under Awaiting Payment, Closed or All.
+  const [boardFilter, setBoardFilter] = useState<'active' | 'awaiting_payment' | 'closed' | 'all'>(
+    // A deep link (?status=delivered, ?client=…) is someone hunting for a specific
+    // record, not browsing the board — so don't filter their result away.
+    searchParams.get('status') || searchParams.get('client') ? 'all' : 'active'
+  );
   const [stageFilter, setStageFilter] = useState(searchParams.get('status') || 'all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState(searchParams.get('client') || 'all');
@@ -346,11 +363,31 @@ export default function JobsPage() {
 
 
   const totalJobs = jobs.length;
-  const activeJobs = jobs.filter(j => !['delivered', 'cancelled'].includes(j.current_stage)).length;
+  // "Active" used to mean "not delivered", which counted 150 finished design jobs
+  // as live work. It now means what it says: work still in our hands.
+  const activeJobs = jobs.filter(j => !isWorkFinished(j as any) && j.current_stage !== 'cancelled').length;
+  const awaitingPaymentJobs = jobs.filter(j => isAwaitingPayment(j as any));
+  const closedJobs = jobs.filter(j => isJobClosed(j as any)).length;
   const totalRevenue = jobs.reduce((sum, j) => sum + (j.amount_received || 0), 0);
-  const pendingPayments = jobs.reduce((sum, j) => sum + ((j.total_amount || 0) - (j.amount_received || 0)), 0);
+  // Only money on work we have actually handed over is money we can chase.
+  const pendingPayments = awaitingPaymentJobs.reduce(
+    (sum, j) => sum + Math.max(0, (j.total_amount || 0) - (j.amount_received || 0)), 0
+  );
+
+  const BOARD_TABS = [
+    { id: 'active' as const, label: 'Active', count: jobs.filter(j => isOnActiveBoard(j as any)).length },
+    { id: 'awaiting_payment' as const, label: 'Awaiting Payment', count: awaitingPaymentJobs.length },
+    { id: 'closed' as const, label: 'Closed', count: closedJobs },
+    { id: 'all' as const, label: 'All', count: totalJobs },
+  ];
 
   const filteredJobs = jobs.filter(job => {
+    const matchesBoard =
+      boardFilter === 'all' ? true
+        : boardFilter === 'closed' ? isJobClosed(job as any)
+          : boardFilter === 'awaiting_payment' ? isAwaitingPayment(job as any)
+            : isOnActiveBoard(job as any);
+    if (!matchesBoard) return false;
     const clientName = (job.client as any)?.company || job.client?.name || '';
     const matchesSearch = (job.project_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (job.job_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -562,11 +599,15 @@ export default function JobsPage() {
       });
 
       // Re-fetch the job to get updated payment_status for commission check
-      const { data: updatedJob } = await supabase
+      const { data: updatedJob, error: updatedJobErr } = await supabase
         .from('jobs')
         .select('payment_status')
         .eq('id', selectedJob.id)
         .single();
+      // Commission eligibility is decided from this row. Failing quietly here
+      // meant the job was simply never marked eligible, and nobody would know
+      // to look — a silently unpaid commission is worse than a visible error.
+      if (updatedJobErr) throw updatedJobErr;
 
       if (updatedJob?.payment_status === 'paid') {
         await autoSetCommissionEligible(selectedJob.id);
@@ -692,11 +733,18 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-fade-in px-2 pb-10">
+      {/* Without this, a failed jobs fetch renders as "no orders" — which on
+          the main board reads as a quiet day rather than a broken screen. */}
+      {jobsError && (
+        <LoadError variant="inline" what="orders" error={jobsError} onRetry={() => refetchJobs?.()} />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 md:gap-4">
         <div>
           <h1 className="text-page-title text-gray-900 tracking-tight">Jobs</h1>
-          <p className="text-sm text-gray-500 mt-1">{activeJobs} active of {totalJobs} total jobs</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {activeJobs} in progress · {awaitingPaymentJobs.length} awaiting payment · {closedJobs} closed
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => exportToCSV(filteredJobs, JOB_COLUMNS, 'jobs_export')} title="Export as CSV">
@@ -733,13 +781,43 @@ export default function JobsPage() {
           </div>
           <p className="text-page-title text-gray-900 truncate" title={formatCurrency(totalRevenue)}>{formatCurrency(totalRevenue)}</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3">
+        {/* Delivered work that has not been paid for. Clicking through to the
+            money screen matters now that these jobs no longer sit on the board. */}
+        <Link href="/admin/finance/awaiting-payment" className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3 hover:bg-red-100 transition-colors block">
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <AlertCircle className="w-4 h-4 text-red-600" />
-            <span className="text-xs text-red-600 font-medium">Pending</span>
+            <span className="text-xs text-red-600 font-medium">Awaiting Payment</span>
+            <ArrowRight className="w-3 h-3 text-red-400 ml-auto" />
           </div>
           <p className="text-page-title text-red-700 truncate" title={formatCurrency(pendingPayments)}>{formatCurrency(pendingPayments)}</p>
-        </div>
+          <p className="text-[11px] text-red-500 mt-0.5">{awaitingPaymentJobs.length} delivered, unpaid</p>
+        </Link>
+      </div>
+
+      {/* Board view — Active is the default. A production board should show the
+          work in the building, not every job we have ever finished. */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-gray-200 pb-2">
+        {BOARD_TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setBoardFilter(tab.id)}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${boardFilter === tab.id
+              ? 'bg-gray-900 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
+            {tab.label}
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${boardFilter === tab.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+        <span className="text-xs text-gray-400 ml-1 hidden sm:inline">
+          {boardFilter === 'active' && `finished work drops off after ${RECENTLY_FINISHED_DAYS} days`}
+          {boardFilter === 'awaiting_payment' && 'work handed over, money not in'}
+          {boardFilter === 'closed' && 'done and paid — kept for search and reports'}
+        </span>
       </div>
 
 
@@ -818,9 +896,19 @@ export default function JobsPage() {
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-section text-gray-900 mb-2">No jobs found</h3>
+            <h3 className="text-section text-gray-900 mb-2">
+              {searchTerm ? 'No jobs found'
+                : boardFilter === 'active' ? 'Nothing in progress'
+                  : boardFilter === 'awaiting_payment' ? 'Everything delivered is paid for'
+                    : boardFilter === 'closed' ? 'No closed jobs yet'
+                      : 'No jobs found'}
+            </h3>
+            {/* An empty Active board with 200 jobs in the system is good news, not a
+                blank slate — don't tell the user to create their first job. */}
             <p className="text-gray-500 mb-3 md:mb-1.5 max-w-sm mx-auto">
-              {searchTerm ? 'Try adjusting your search terms or filters.' : 'Get started by creating your first job.'}
+              {searchTerm ? 'Try adjusting your search terms or filters.'
+                : totalJobs > 0 ? `Nothing here right now. ${totalJobs} jobs in total — check the other tabs above.`
+                  : 'Get started by creating your first job.'}
             </p>
             <Button onClick={handleAddNew}>
               <Plus />
@@ -844,6 +932,11 @@ export default function JobsPage() {
                       <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
                       <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
                       <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs text-gray-600 font-medium">{stageJobs.length}</span>
+                      {/* Say out loud that this column is a window, not a total —
+                          otherwise the count looks like the job disappeared. */}
+                      {boardFilter === 'active' && isWorkFinished({ current_stage: stage.id }) && (
+                        <span className="text-[10px] text-gray-400 font-normal">{RECENTLY_FINISHED_DAYS}d</span>
+                      )}
                     </div>
                   </div>
 

@@ -13,6 +13,9 @@ interface PayJob {
   project_name: string;
   client_deadline: string | null;
   total_amount: number | null;
+  amount_received: number;
+  /** What the client still owes — not the invoice value. */
+  balance: number;
   client_id: string | null;
   designer_id: string | null;
   client_name: string;
@@ -30,16 +33,26 @@ export default function AwaitingPaymentPage() {
     setLoading(true);
     setError(null);
     try {
-      // Delivered DESIGN jobs (file handed to client) that are billable and not yet paid.
+      // Design files handed to the client and not yet paid.
+      //
+      // Two things used to be wrong here. First it filtered on
+      // design_billing = 'billable', which is a label somebody sets by hand —
+      // so a billable job left unlabelled never appeared, and money went
+      // uncounted. Second it kept rows with a zero balance, which is every
+      // free job: a "waiting for payment" list nobody could ever clear.
+      //
+      // The balance is the only honest test. If they owe us nothing, it is
+      // settled, whatever the labels say.
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, job_number, project_name, client_deadline, total_amount, client_id, designer_id, payment_status, design_billing, current_stage')
+        .select('id, job_number, project_name, client_deadline, total_amount, amount_received, client_id, designer_id, payment_status, design_billing, current_stage')
         .eq('current_stage', 'file_sent_client')
-        .eq('design_billing', 'billable')
         .neq('payment_status', 'paid')
         .order('client_deadline', { ascending: true });
       if (error) throw error;
-      const rows = (data || []) as any[];
+      const rows = ((data || []) as any[]).filter(
+        r => (Number(r.total_amount) || 0) - (Number(r.amount_received) || 0) > 0
+      );
       if (rows.length === 0) { setJobs([]); return; }
 
       const clientIds = Array.from(new Set(rows.map(r => r.client_id).filter(Boolean)));
@@ -59,6 +72,8 @@ export default function AwaitingPaymentPage() {
         project_name: j.project_name,
         client_deadline: j.client_deadline,
         total_amount: j.total_amount,
+        amount_received: Number(j.amount_received) || 0,
+        balance: (Number(j.total_amount) || 0) - (Number(j.amount_received) || 0),
         client_id: j.client_id,
         designer_id: j.designer_id,
         client_name: j.client_id ? (clientMap[j.client_id] || '—') : '—',
@@ -96,11 +111,12 @@ export default function AwaitingPaymentPage() {
     }
   };
 
+  // The balance, not the invoice value — a job half paid is not fully outstanding.
   const outstanding = useMemo(
-    () => jobs.reduce((sum, j) => sum + (Number(j.total_amount) || 0), 0),
+    () => jobs.reduce((sum, j) => sum + j.balance, 0),
     [jobs]
   );
-  const withAmount = jobs.filter(j => Number(j.total_amount) > 0).length;
+  const partPaid = jobs.filter(j => j.amount_received > 0).length;
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -128,7 +144,7 @@ export default function AwaitingPaymentPage() {
             Design Files Sent
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Billable design jobs delivered to the client, waiting for payment. Mark paid to close.
+            Design files handed to the client with money still owed. Mark paid to close.
           </p>
         </div>
         <button
@@ -148,12 +164,12 @@ export default function AwaitingPaymentPage() {
           <p className="text-xs text-gray-500 mt-0.5">Jobs awaiting payment</p>
         </div>
         <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
-          <p className="text-2xl font-bold text-emerald-700">₹{outstanding.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-emerald-600 mt-0.5">Known outstanding ({withAmount} with amount)</p>
+          <p className="text-2xl font-bold text-emerald-700">₹{Math.round(outstanding).toLocaleString('en-IN')}</p>
+          <p className="text-xs text-emerald-600 mt-0.5">Still owed on design files</p>
         </div>
         <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
-          <p className="text-2xl font-bold text-amber-600">{jobs.length - withAmount}</p>
-          <p className="text-xs text-amber-600 mt-0.5">Amount not entered yet</p>
+          <p className="text-2xl font-bold text-amber-600">{partPaid}</p>
+          <p className="text-xs text-amber-600 mt-0.5">Part paid</p>
         </div>
       </div>
 
@@ -169,7 +185,7 @@ export default function AwaitingPaymentPage() {
             <CheckCircle2 className="w-7 h-7 text-green-500" />
           </div>
           <h2 className="text-lg font-semibold text-gray-800">All settled!</h2>
-          <p className="text-sm text-gray-500 mt-1">No billable design jobs are waiting on payment.</p>
+          <p className="text-sm text-gray-500 mt-1">No design files are waiting on payment.</p>
         </div>
       ) : (
         <div className="bg-white border rounded-lg overflow-hidden">
@@ -210,8 +226,8 @@ export default function AwaitingPaymentPage() {
                     type="number"
                     min="0"
                     inputMode="numeric"
-                    placeholder={job.total_amount ? String(job.total_amount) : 'amount'}
-                    value={amounts[job.id] ?? (job.total_amount ? String(job.total_amount) : '')}
+                    placeholder={job.balance ? String(job.balance) : 'amount'}
+                    value={amounts[job.id] ?? (job.balance ? String(job.balance) : '')}
                     onChange={(e) => setAmounts(prev => ({ ...prev, [job.id]: e.target.value }))}
                     className="w-28 text-sm border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                   />
@@ -236,7 +252,7 @@ export default function AwaitingPaymentPage() {
 
       <p className="text-xs text-gray-400 text-center">
         <IndianRupee className="inline w-3 h-3 mr-1" />
-        Non-billable design jobs close automatically when the file is sent. Only billable ones appear here.
+        Design jobs with nothing left to collect close automatically when the file is sent — only jobs with a balance appear here.
       </p>
     </div>
   );

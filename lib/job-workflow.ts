@@ -282,6 +282,94 @@ export function getStagesForJobType(
     return ordered;
 }
 
+// ─── When is a job DONE? ──────────────────────────────────────────────────────
+//
+// A job has two lives, and the board was only tracking one of them:
+//
+//   1. the WORK    — new → … → file sent to client / delivered
+//   2. the MONEY   — pending → paid
+//
+// Because only the work life had stages, a job that finished in June was still
+// sitting on the kanban in August. 248 of 270 cards were finished work. A board
+// you cannot read in one glance is a board nobody reads.
+//
+// So: a job leaves the board when the work is done AND the money is settled.
+// Finished-but-unpaid is not a production problem, it is a collection problem —
+// it belongs on the money screen, not in the production column.
+
+/** How long a finished job stays visible on the board before dropping into Closed. */
+export const RECENTLY_FINISHED_DAYS = 7;
+
+/** The shape any of the rules below need. Deliberately loose — every job list
+ *  in the app selects a different set of columns. */
+export interface JobCloseState {
+    current_stage?: string | null;
+    payment_status?: string | null;
+    total_amount?: number | null;
+    amount_received?: number | null;
+    dispatched_at?: string | null;
+    completed_date?: string | null;
+    updated_at?: string | null;
+}
+
+/** Nothing left to do in production. */
+export function isWorkFinished(job: JobCloseState): boolean {
+    return TERMINAL_STAGES.includes(job.current_stage || '');
+}
+
+/**
+ * Money settled. Paid outright, or nothing was owed in the first place —
+ * free/non-billable design work carries a zero balance and must not sit
+ * forever on a "waiting for payment" list that nobody can ever clear.
+ */
+export function isMoneySettled(job: JobCloseState): boolean {
+    if (job.payment_status === 'paid') return true;
+    const balance = (Number(job.total_amount) || 0) - (Number(job.amount_received) || 0);
+    return balance <= 0;
+}
+
+/** Closed = work done AND money settled. Cancelled is always closed. */
+export function isJobClosed(job: JobCloseState): boolean {
+    if (job.current_stage === 'cancelled') return true;
+    return isWorkFinished(job) && isMoneySettled(job);
+}
+
+/** Work delivered, money still out. A collection problem, not a production one. */
+export function isAwaitingPayment(job: JobCloseState): boolean {
+    if (job.current_stage === 'cancelled') return false;
+    return isWorkFinished(job) && !isMoneySettled(job);
+}
+
+/**
+ * The date the work finished. Prefer the trigger-stamped dispatch date, then the
+ * completion date, and only fall back to updated_at — which moves on any edit and
+ * would otherwise quietly resurrect an old job onto the board.
+ */
+export function finishedAt(job: JobCloseState): Date | null {
+    const iso = job.dispatched_at || job.completed_date || job.updated_at || null;
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Finished within the last N days — still worth a victory lap on the board. */
+export function isRecentlyFinished(job: JobCloseState, days = RECENTLY_FINISHED_DAYS): boolean {
+    const d = finishedAt(job);
+    if (!d) return false;
+    return (Date.now() - d.getTime()) <= days * 86_400_000;
+}
+
+/**
+ * Does this job belong on the live production board?
+ * Everything still in progress, plus anything finished in the last week so the
+ * board still shows work completing rather than jumping straight to empty.
+ */
+export function isOnActiveBoard(job: JobCloseState, days = RECENTLY_FINISHED_DAYS): boolean {
+    if (job.current_stage === 'cancelled') return false;
+    if (!isWorkFinished(job)) return true;
+    return isRecentlyFinished(job, days);
+}
+
 /** 1-based position + total count of a stage within its type's pipeline (for "Step 3 of 12"). */
 export function getStageProgress(
     jobType: string | undefined,
