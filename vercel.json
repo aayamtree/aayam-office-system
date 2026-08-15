@@ -49,7 +49,7 @@
         },
         {
             "path": "/api/cron/eod-report",
-            "schedule": "0 14 * * 1-6"
+            "schedule": "0 14 * * 6"
         },
         {
             "path": "/api/cron/weekly-scorecard",

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { sendToChat, escapeHtml } from '@/lib/telegram-groups';
-import { getEodSnapshot, getFinancialSnapshot, inr, STUCK_DAYS, type JobBrief, type InvoiceBrief } from '@/lib/eod-metrics';
+import { sendToChat, escapeHtml, APP_URL } from '@/lib/telegram-groups';
+import { getEodSnapshot, inr, STUCK_DAYS, type JobBrief } from '@/lib/eod-metrics';
+import { getReceivables, buildReceivablesBlock, type Receivables } from '@/lib/receivables';
 import { authorizeCron } from '@/lib/api-auth';
 import { withCronLog } from '@/lib/cron-log';
 
@@ -20,76 +21,77 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 
+/**
+ * Telegram truncates nothing for us — "…and 31 more" was dead plain text with
+ * no way to see the rest. Every truncated list now ends in a TAPPABLE link that
+ * opens the matching section of /admin/pulse, where the full list is rendered.
+ *
+ * `anchor` must match an element id in app/admin/pulse/PulseClient.tsx.
+ */
+function moreLink(total: number, shown: number, anchor: string): string {
+  if (total <= shown) return '';
+  const url = `${APP_URL}/admin/pulse#${anchor}`;
+  return `\n  <a href="${url}">…and ${total - shown} more — tap to see all ${total} →</a>`;
+}
+
 function jobLine(j: JobBrief, tail: string): string {
   return `  • <b>${escapeHtml(j.job_number || '?')}</b> ${escapeHtml((j.project_name || '').slice(0, 40))} — <i>${escapeHtml(j.stage_name)}</i>${tail}`;
 }
 
-function invoiceLine(inv: InvoiceBrief, showDays: boolean = false): string {
-  const client = inv.client_company || inv.client_name || 'Unknown';
-  const clientShort = escapeHtml(client.slice(0, 35));
-  const amount = inr(inv.total_amount);
-  const dayInfo = showDays && inv.days_overdue ? ` | <b>${inv.days_overdue}d overdue</b>` :
-                  showDays && inv.days_until_due ? ` | Due in ${inv.days_until_due}d` : '';
-  return `  • <b>${escapeHtml(inv.invoice_number)}</b> | ${clientShort} | ${amount}${dayInfo}`;
-}
-
-function buildFinancialSection(fin: Awaited<ReturnType<typeof getFinancialSnapshot>>): string[] {
+/**
+ * Money owed, from Zoho.
+ *
+ * This section used to read the `invoices` table and report
+ * "Outstanding: ₹33,040". That table holds 2 rows. Invoicing moved to Zoho
+ * long ago and this block never followed, so it reported ₹33,040 against a
+ * real position near ₹48 lakh — a wrong money figure presented with total
+ * confidence, which is worse than showing nothing.
+ *
+ * It now names CUSTOMERS rather than invoice numbers: 21 Medhini invoices
+ * are one phone call, not 21 lines.
+ */
+function buildFinancialSection(r: Receivables | null): string[] {
   const lines: string[] = [];
 
-  if (fin.overdue.length === 0 && fin.pending.length === 0 && fin.partial.length === 0) {
-    lines.push('💚 <b>All invoices up to date!</b>');
+  if (!r) {
+    // Never let a failed money query render as "all clear".
+    lines.push('');
+    lines.push('⚠️ <b>Money owed unavailable</b> — the Zoho figures could not be read.');
     return lines;
   }
 
-  lines.push('');
-  lines.push('<b>💰 INVOICE STATUS</b>');
-
-  // Overdue — high priority
-  if (fin.overdue.length) {
-    const list = fin.overdue.slice(0, 5).map(inv => invoiceLine(inv, true)).join('\n');
-    const more = fin.overdue.length > 5 ? `\n  …and ${fin.overdue.length - 5} more` : '';
+  if (!r.byCustomer.length) {
     lines.push('');
-    lines.push(`🔴 <b>OVERDUE — ${fin.overdue.length}</b>`);
-    lines.push(`${list}${more}`);
+    lines.push('💚 <b>Nothing outstanding — every invoice is paid.</b>');
+    return lines;
   }
 
-  // Pending — show 5 soonest due
-  if (fin.pending.length) {
-    const list = fin.pending.slice(0, 5).map(inv => invoiceLine(inv, true)).join('\n');
-    const more = fin.pending.length > 5 ? `\n  …and ${fin.pending.length - 5} more` : '';
+  const block = buildReceivablesBlock(r, {
+    limit: 8,
+    escape: escapeHtml,
+    moreUrl: `${APP_URL}/admin/finance/zoho`,
+  });
+  if (block) {
     lines.push('');
-    lines.push(`⏳ <b>PENDING — ${fin.pending.length}</b>`);
-    lines.push(`${list}${more}`);
+    lines.push(block);
   }
-
-  // Partial payments
-  if (fin.partial.length) {
-    const list = fin.partial.slice(0, 3).map(inv => invoiceLine(inv, false)).join('\n');
-    const more = fin.partial.length > 3 ? `\n  …and ${fin.partial.length - 3} more` : '';
-    lines.push('');
-    lines.push(`🟡 <b>PARTIAL — ${fin.partial.length}</b>`);
-    lines.push(`${list}${more}`);
-  }
-
-  // Summary
-  lines.push('');
-  lines.push(`Outstanding: <b>${inr(fin.totalOutstanding)}</b> | Pending: <b>${inr(fin.totalPending)}</b>`);
-
   return lines;
 }
 
-function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, fin: Awaited<ReturnType<typeof getFinancialSnapshot>>): string {
+function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, r: Receivables | null): string {
   const lines: string[] = [];
-  lines.push(`🌙 <b>EOD Report</b> — ${s.dateLabel}`);
+  // Weekly now, not daily. The daily version repeated the morning brief and
+  // added a "Collected today: ₹0" line that could only ever say zero, because
+  // payments_received has taken one row since 29 July — the money is in Zoho.
+  lines.push(`📋 <b>Week in review</b> — ${s.dateLabel}`);
   lines.push('');
   lines.push(`✅ Done: <b>${s.doneToday.length}</b>   🚚 Moved: <b>${s.movedToday}</b>   🆕 New: <b>${s.newToday}</b>`);
-  lines.push(`💰 Collected today: <b>${inr(s.collectedToday)}</b> (${s.paymentsToday} payment${s.paymentsToday !== 1 ? 's' : ''})`);
-  lines.push(`📊 Active jobs: <b>${s.activeJobs}</b>  •  Pending on them: <b>${inr(s.pendingActive)}</b>`);
+  lines.push(`📊 In progress: <b>${s.activeJobs}</b> job${s.activeJobs !== 1 ? 's' : ''}`);
 
   // Done list (short)
   if (s.doneToday.length) {
     const list = s.doneToday.slice(0, 6).map((j) => jobLine(j, '')).join('\n');
-    const more = s.doneToday.length > 6 ? `\n  …and ${s.doneToday.length - 6} more` : '';
+    const more = moreLink(s.doneToday.length, 6, 'done-today');
     lines.push('');
     lines.push(`✅ <b>Completed today</b>`);
     lines.push(`${list}${more}`);
@@ -98,7 +100,7 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, fin: Awaite
   // Stuck — the important one
   if (s.stuck.length) {
     const list = s.stuck.slice(0, 6).map((j) => jobLine(j, ` — <b>${j.days_idle}d idle</b>`)).join('\n');
-    const more = s.stuck.length > 6 ? `\n  …and ${s.stuck.length - 6} more` : '';
+    const more = moreLink(s.stuck.length, 6, 'stuck');
     lines.push('');
     lines.push(`⚠️ <b>Stuck (${STUCK_DAYS}+ days no movement) — ${s.stuck.length}</b>`);
     lines.push(`${list}${more}`);
@@ -107,7 +109,7 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, fin: Awaite
   // Job overdue
   if (s.overdue.length) {
     const list = s.overdue.slice(0, 6).map((j) => jobLine(j, ` — <b>${j.days_overdue}d over</b>`)).join('\n');
-    const more = s.overdue.length > 6 ? `\n  …and ${s.overdue.length - 6} more` : '';
+    const more = moreLink(s.overdue.length, 6, 'overdue');
     lines.push('');
     lines.push(`🔴 <b>Jobs Past deadline — ${s.overdue.length}</b>`);
     lines.push(`${list}${more}`);
@@ -118,8 +120,8 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, fin: Awaite
     lines.push('🟢 <b>No stuck or overdue jobs. Clean board!</b>');
   }
 
-  // Financial summary
-  lines.push(...buildFinancialSection(fin));
+  // Money owed — from Zoho, grouped by customer.
+  lines.push(...buildFinancialSection(r));
 
   return lines.join('\n');
 }
@@ -136,14 +138,19 @@ async function runJob(request: NextRequest) {
     { auth: { persistSession: false } }
   );
 
-  const [snapshot, financial] = await Promise.all([
+  // A failed money query must not take the whole review down, but it must be
+  // visible in the message rather than rendering as "nothing outstanding".
+  const [snapshot, receivables] = await Promise.all([
     getEodSnapshot(supabase),
-    getFinancialSnapshot(supabase),
+    getReceivables(supabase).catch((e) => {
+      console.error('[eod-report] receivables unavailable:', e);
+      return null;
+    }),
   ]);
-  const text = buildMessage(snapshot, financial);
+  const text = buildMessage(snapshot, receivables);
 
   if (isDebug) {
-    return NextResponse.json({ preview: text, snapshot, financial });
+    return NextResponse.json({ preview: text, snapshot, receivables });
   }
 
   // Recipients: admin department groups + linked admin staff DMs
@@ -170,7 +177,12 @@ async function runJob(request: NextRequest) {
     if (await sendToChat(chatId, text, '/admin/pulse')) sent++;
   }
 
-  return NextResponse.json({ sent, targets: targets.size, done: snapshot.doneToday.length, stuck: snapshot.stuck.length, overdue_invoices: financial.overdue.length, pending_invoices: financial.pending.length });
+  return NextResponse.json({
+    sent, targets: targets.size,
+    done: snapshot.doneToday.length, stuck: snapshot.stuck.length,
+    owed: receivables ? receivables.totalOwed : 'unavailable',
+    customers: receivables ? receivables.customerCount : 'unavailable',
+  });
 }
 
 // Every run of this cron is recorded in public.cron_runs (see lib/cron-log.ts).

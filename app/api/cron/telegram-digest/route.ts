@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
-import { sendToChat, escapeHtml, mentionStaff, TelegramDepartment } from '@/lib/telegram-groups';
+import { sendToChat, escapeHtml, mentionStaff, APP_URL, TelegramDepartment } from '@/lib/telegram-groups';
 import { withCronLog } from '@/lib/cron-log';
 import {
-  getPendingPayments,
-  buildPendingPaymentsBlock,
+  getReceivables,
+  buildReceivablesBlock,
   inr,
-  type PendingPaymentsSnapshot,
-} from '@/lib/pending-payments';
+  type Receivables,
+} from '@/lib/receivables';
 
 /**
  * Telegram Digest Cron — runs twice daily, Mon–Sat:
@@ -44,6 +44,8 @@ interface DigestJob {
   total_amount: number | null;
   amount_received: number | null;
   designer_id: string | null;
+  client_deadline?: string | null;
+  created_at?: string | null;
 }
 
 interface Staff {
@@ -139,40 +141,87 @@ function buildQueueGroupDigest(slot: Slot, department: 'print' | 'dispatch', job
   return `${header(slot, label)}\n<b>${mine.length}</b> job${mine.length !== 1 ? 's' : ''} in the queue:\n\n${listed}${more}`;
 }
 
+/**
+ * The owner's daily brief.
+ *
+ * The old version was a data dump: five headline numbers, three of them
+ * different kinds of "pending" that could not be told apart, then eight
+ * job-level payment lines — seven of which were the same customer's PO split
+ * into parts — and fifty more hidden behind "…and 50 more".
+ *
+ * Rewritten around what the message is FOR: what is in the building, who owes
+ * money, and what to do about it before lunch. Ten lines, one kind of number
+ * in each block, ending in something actionable.
+ *
+ * Money now comes from Zoho via lib/receivables.ts. The figure it replaces was
+ * reading a 2-row legacy table and reporting ₹33,040 against a real position
+ * near ₹48 lakh.
+ */
 function buildAdminGroupDigest(
   slot: Slot,
   jobs: DigestJob[],
   leadsDue: DigestLead[],
-  pendingPayments?: PendingPaymentsSnapshot | null,
-): string {
+  receivables?: Receivables | null,
+  stuck: DigestJob[] = [],
+  overdueJobs: DigestJob[] = [],
+): string | null {
+  // Morning only. Satish asked for one brief a day plus a fuller weekly review;
+  // an evening repeat of the same figures is what made these easy to ignore.
+  if (slot !== 'morning') return null;
+
   const counts: Record<string, number> = {};
   for (const dept of ['design', 'print', 'dispatch'] as const) {
     counts[dept] = jobs.filter((j) => DEPT_STAGES[dept].includes(j.current_stage)).length;
   }
-  const pending = jobs.reduce(
-    (sum, j) => sum + Math.max(0, (j.total_amount || 0) - (j.amount_received || 0)),
-    0
-  );
-  const title = slot === 'morning'
-    ? `👑 <b>Aayam Morning Digest</b> — ${todayLabel()}`
-    : `👑 <b>Aayam Evening Recap</b> — ${todayLabel()}`;
 
-  // Goods that have already left the building and are still unpaid.
-  // Deliberately separate from "pending on active jobs": that money is
-  // still ours to earn, this money is already owed.
-  const collections = pendingPayments
-    ? buildPendingPaymentsBlock(pendingPayments, { limit: 8, escape: escapeHtml })
+  const lines: string[] = [];
+  lines.push(`☀️ <b>${todayLabel()}</b>`);
+
+  // ── Work in the building ────────────────────────────────────────────────
+  lines.push('');
+  lines.push('<b>WORK</b>');
+  lines.push(`Design <b>${counts.design}</b> · Print <b>${counts.print}</b> · Dispatch <b>${counts.dispatch}</b>`);
+  const flags: string[] = [];
+  if (overdueJobs.length) flags.push(`<b>${overdueJobs.length}</b> past deadline`);
+  if (stuck.length) flags.push(`<b>${stuck.length}</b> stuck 3+ days`);
+  if (leadsDue.length) flags.push(`<b>${leadsDue.length}</b> lead follow-up${leadsDue.length !== 1 ? 's' : ''}`);
+  if (flags.length) lines.push(`⚠️ ${flags.join(' · ')}`);
+
+  // ── Money ───────────────────────────────────────────────────────────────
+  const money = receivables
+    ? buildReceivablesBlock(receivables, {
+      limit: 5,
+      escape: escapeHtml,
+      moreUrl: `${APP_URL}/admin/finance/zoho`,
+    })
     : null;
+  if (money) {
+    lines.push('');
+    lines.push(money);
+  } else if (!receivables) {
+    // Silence here would read as "nobody owes us anything". Say what broke.
+    lines.push('');
+    lines.push('⚠️ <b>Money owed unavailable</b> — the Zoho figures could not be read this morning.');
+  }
 
-  return (
-    `${title}\n\n` +
-    `🎨 Design queue: <b>${counts.design}</b>\n` +
-    `🖨️ Print queue: <b>${counts.print}</b>\n` +
-    `📦 Dispatch queue: <b>${counts.dispatch}</b>\n` +
-    `📞 Lead follow-ups due: <b>${leadsDue.length}</b>\n` +
-    `💰 Pending on active jobs: <b>${inr(pending)}</b>` +
-    (collections ? `\n\n${collections}` : '')
-  );
+  // ── What to do ──────────────────────────────────────────────────────────
+  // A brief that ends in numbers ends in nothing. Name the two calls.
+  const todo: string[] = [];
+  const worst = receivables?.byCustomer.find(c => c.isOverdue);
+  if (worst) {
+    todo.push(`Call <b>${escapeHtml(worst.customer)}</b> — ${inr(worst.owed)}, ${worst.daysOverdue}d overdue`);
+  }
+  const worstJob = overdueJobs[0] || stuck[0];
+  if (worstJob) {
+    todo.push(`<b>${escapeHtml(worstJob.job_number || '?')}</b> ${escapeHtml((worstJob.project_name || '').slice(0, 40))} — ${escapeHtml(getStageName(worstJob.current_stage))}`);
+  }
+  if (todo.length) {
+    lines.push('');
+    lines.push('<b>TODAY</b>');
+    for (const t of todo) lines.push(`• ${t}`);
+  }
+
+  return lines.join('\n');
 }
 
 /* ------------------------------------------------------------------ */
@@ -184,7 +233,9 @@ function buildPersonalBrief(
   p: Staff,
   jobs: DigestJob[],
   leadsDue: DigestLead[],
-  pendingPayments?: PendingPaymentsSnapshot | null,
+  receivables?: Receivables | null,
+  stuck: DigestJob[] = [],
+  overdueJobs: DigestJob[] = [],
 ): { text: string; appPath: string } | null {
   const name = (p.full_name || '').split(' ')[0] || 'there';
   const head = slot === 'morning'
@@ -237,10 +288,9 @@ function buildPersonalBrief(
   }
 
   if (p.role === 'admin' || p.role === 'accounts') {
-    return {
-      text: buildAdminGroupDigest(slot, jobs, leadsDue, pendingPayments),
-      appPath: '/admin/finance/awaiting-payment',
-    };
+    const text = buildAdminGroupDigest(slot, jobs, leadsDue, receivables, stuck, overdueJobs);
+    // Null on the evening slot — the owner's brief is morning-only now.
+    return text ? { text, appPath: '/admin/finance/zoho' } : null;
   }
 
   return null; // cmyk & others — no personal brief yet
@@ -277,7 +327,8 @@ async function runJob(request: NextRequest) {
       .not('department', 'is', null),
     service
       .from('jobs')
-      .select('id, job_number, project_name, current_stage, total_amount, amount_received, designer_id')
+      // client_deadline + created_at drive the stuck / past-deadline flags below.
+      .select('id, job_number, project_name, current_stage, total_amount, amount_received, designer_id, client_deadline, created_at')
       .eq('is_active', true)
       .not('current_stage', 'in', '(delivered,cancelled,file_sent_client)'),
     service
@@ -296,16 +347,42 @@ async function runJob(request: NextRequest) {
   const allStaff = (staff || []) as Staff[];
   const leadsDue = (leads || []) as DigestLead[];
 
-  // Dispatched-but-unpaid. Fetched separately because the jobs query above
-  // excludes `delivered` — exactly the rows where the money is oldest.
-  // A failure here must not take the whole brief down with it: a digest
-  // without the collections block is far better than no digest at all.
-  let pendingPayments: PendingPaymentsSnapshot | null = null;
+  // What customers owe, from Zoho. A failure here must not take the whole brief
+  // down with it — but it must not pass silently either, or an unreadable money
+  // query renders as "nobody owes us anything". null is reported in the message.
+  let receivables: Receivables | null = null;
   try {
-    pendingPayments = await getPendingPayments(service);
+    receivables = await getReceivables(service);
   } catch (err) {
-    console.error('[telegram-digest] pending payments block skipped:', err);
+    console.error('[telegram-digest] receivables unavailable:', err);
   }
+
+  // Stuck and past-deadline jobs, for the WORK line and the TODAY list.
+  // Idle time is measured from the last stage change, falling back to creation
+  // for a job that has never moved at all.
+  const { data: moves } = await service
+    .from('job_stage_history')
+    .select('job_id, created_at')
+    .order('created_at', { ascending: false });
+  const lastMove = new Map<string, string>();
+  for (const m of (moves || []) as { job_id: string; created_at: string }[]) {
+    if (!lastMove.has(m.job_id)) lastMove.set(m.job_id, m.created_at);
+  }
+  const DAY_MS = 86_400_000;
+  const stuckJobs: DigestJob[] = [];
+  const overdueJobs: DigestJob[] = [];
+  for (const j of allJobs) {
+    const last = lastMove.get(j.id) || (j as any).created_at;
+    if (last) {
+      const idle = Math.floor((Date.now() - new Date(last).getTime()) / DAY_MS);
+      if (idle >= 3) stuckJobs.push(j);
+    }
+    const dl = (j as any).client_deadline;
+    if (dl && new Date(dl).getTime() < Date.now()) overdueJobs.push(j);
+  }
+  // Worst first, so the TODAY line names the job that has waited longest.
+  overdueJobs.sort((a, b) =>
+    new Date((a as any).client_deadline).getTime() - new Date((b as any).client_deadline).getTime());
 
   // 1) Department group digests (per-person sections for design)
   let groupsSent = 0;
@@ -314,9 +391,9 @@ async function runJob(request: NextRequest) {
     let text: string | null = null;
     if (dept === 'design') text = buildDesignGroupDigest(slot, allJobs, allStaff);
     else if (dept === 'print' || dept === 'dispatch') text = buildQueueGroupDigest(slot, dept, allJobs);
-    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue, pendingPayments);
+    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue, receivables, stuckJobs, overdueJobs);
     if (!text) continue;
-    const appPath = dept === 'admin' ? '/admin/finance/awaiting-payment' : '/admin/jobs/queue';
+    const appPath = dept === 'admin' ? '/admin/finance/zoho' : '/admin/jobs/queue';
     if (await sendToChat(g.chat_id, text, appPath)) groupsSent++;
   }
 
@@ -324,7 +401,7 @@ async function runJob(request: NextRequest) {
   let dmsSent = 0;
   for (const p of allStaff) {
     if (!p.telegram_chat_id) continue;
-    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue, pendingPayments);
+    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue, receivables, stuckJobs, overdueJobs);
     if (!brief) continue;
     if (await sendToChat(p.telegram_chat_id, brief.text, brief.appPath)) dmsSent++;
   }
@@ -335,9 +412,14 @@ async function runJob(request: NextRequest) {
     dmsSent,
     linkedStaff: allStaff.filter((p) => p.telegram_chat_id).length,
     // Surfaced so the health audit can tell "nothing outstanding" apart from
-    // "the collections query silently failed again".
-    pendingPayments: pendingPayments
-      ? { count: pendingPayments.items.length, outstanding: pendingPayments.totalOutstanding }
+    // "the money query silently failed again".
+    receivables: receivables
+      ? {
+        customers: receivables.customerCount,
+        invoices: receivables.invoiceCount,
+        owed: receivables.totalOwed,
+        syncAgeDays: receivables.syncAgeDays,
+      }
       : 'unavailable',
   });
 }

@@ -364,19 +364,46 @@ export interface FinancialSnapshot {
   totalPending: number;
 }
 
+/**
+ * Reads ZOHO, not the `invoices` table.
+ *
+ * `invoices` holds 2 rows — invoicing moved to Zoho Books and this function
+ * never followed, so every screen and message built on it reported around
+ * ₹33,000 outstanding against a real position near ₹48 lakh. The shape below
+ * is unchanged so /admin/pulse keeps working; only the source moved.
+ *
+ * `void` and `draft` documents are excluded: one is cancelled (₹4.89L of it),
+ * the other has not been issued to anybody yet. Neither is money owed.
+ */
 export async function getFinancialSnapshot(supabase: SupabaseClient): Promise<FinancialSnapshot> {
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
 
-  const { data: invoices, error } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, total_amount, amount_paid, payment_status, due_date, created_at, client:clients(name, company)')
-    .order('created_at', { ascending: false });
+  const { data: docs, error } = await supabase
+    .from('zoho_documents')
+    .select('id, doc_number, customer_name, total, balance, status, due_date, doc_date')
+    .eq('doc_type', 'invoice')
+    .in('status', ['paid', 'overdue', 'sent', 'partially_paid'])
+    .order('doc_date', { ascending: false });
 
-  if (error || !invoices) {
+  if (error || !docs) {
     console.error('Financial snapshot fetch error:', error);
     return { overdue: [], pending: [], partial: [], paid: [], totalOutstanding: 0, totalPending: 0 };
   }
+
+  // Normalise Zoho's vocabulary onto the shape /admin/pulse already renders.
+  const invoices = docs.map((d: any) => {
+    const total = Number(d.total) || 0;
+    const balance = Number(d.balance) || 0;
+    const paidAmt = total - balance;
+    return {
+      invoice_number: d.doc_number || '',
+      total_amount: total,
+      amount_paid: paidAmt,
+      payment_status: balance <= 0 ? 'paid' : (paidAmt > 0 ? 'partial' : 'pending'),
+      due_date: d.due_date as string | null,
+      client: { name: d.customer_name || '', company: d.customer_name || '' },
+    };
+  });
 
   const overdue: InvoiceBrief[] = [];
   const pending: InvoiceBrief[] = [];
