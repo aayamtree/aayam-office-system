@@ -247,7 +247,8 @@ function TaskDetailCard({ tu }: { tu: any }) {
                                         {item.checked ? '✓' : '○'}
                                     </span>
                                     <span className={`text-[11px] ${item.checked ? 'text-gray-700' : 'text-gray-400'}`}>
-                                        {item.item}
+                                        {/* reports saved before the normalisation fix can carry {label,type,required} objects here */}
+                                        {typeof item.item === 'string' ? item.item : (item.item?.label || '')}
                                         {item.comment && <span className="text-gray-400 italic ml-1">— {item.comment}</span>}
                                     </span>
                                 </div>

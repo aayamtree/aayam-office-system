@@ -145,7 +145,8 @@ export default function ProductChecklistCard({
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                     <span className={`text-sm font-medium ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                                        {item.item}
+                                        {/* item.item can be a raw {label,type,required} object in reports saved before the normalisation fix — render its label, never the object */}
+                                        {typeof item.item === 'string' ? item.item : ((item.item as any)?.label || '')}
                                     </span>
                                     {item.comment && (
                                         <MessageSquare className="w-3 h-3 text-blue-500" />

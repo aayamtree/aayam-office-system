@@ -3235,14 +3235,21 @@ export function useDailyReports(userId?: string, dateFilter?: { start?: string; 
         return { data: [], error: null }; // Return empty instead of error
       }
 
-      // Convert items to checklist format
-      const items = data?.items || [];
-      const checklistItems = items.map((item: string, index: number) => ({
-        item,
-        checked: false,
-        comment: '',
-        order: index + 1
-      }));
+      // Convert items to checklist format.
+      // job_checklists.items may hold legacy strings OR objects
+      // { label, type, required } (the newer template format). Rendering the
+      // raw object crashed the EOD page with React error #31, so normalise to
+      // the label string here — same rule as the designer tasks page.
+      const raw = data?.items;
+      const items: any[] = Array.isArray(raw) ? raw : JSON.parse((raw as any) || '[]');
+      const checklistItems = items
+        .map((entry: any, index: number) => ({
+          item: typeof entry === 'string' ? entry : (entry?.label || ''),
+          checked: false,
+          comment: '',
+          order: index + 1
+        }))
+        .filter((ci: any) => ci.item);
 
       return { data: checklistItems, error: null };
     } catch (e: any) {
