@@ -130,8 +130,9 @@ export default function ProductChecklistCard({
                 {items.map((item, index) => (
                     <div key={index} className="hover:bg-gray-50 transition-colors">
                         <div className="p-3 flex items-start gap-3">
-                            {/* Checkbox */}
+                            {/* Checkbox — type="button" is required: this card renders inside the EOD <form>, and a button without a type defaults to type="submit", which submits the whole report on every tick */}
                             <button
+                                type="button"
                                 onClick={() => toggleItem(index)}
                                 className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${item.checked
                                     ? 'bg-blue-600 border-blue-600'
@@ -169,6 +170,7 @@ export default function ProductChecklistCard({
 
                             {/* Expand/Collapse Button */}
                             <button
+                                type="button"
                                 onClick={() => toggleExpand(index)}
                                 className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                                 title={expandedItems.has(index) ? 'Hide comment' : 'Add comment'}
