@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { sendTelegramNotification } from '@/lib/telegram-service';
+import { requireUser } from '@/lib/api-auth';
 
 /**
  * Sends a payment receipt to the client's linked Telegram chat.
@@ -8,6 +9,11 @@ import { sendTelegramNotification } from '@/lib/telegram-service';
  */
 export async function POST(req: NextRequest) {
   try {
+    // Service-role route (bypasses RLS) — must verify the caller is a
+    // logged-in staff member before sending anything to a client's Telegram.
+    const gate = await requireUser();
+    if (!gate.ok) return gate.response;
+
     const body = await req.json();
     const { clientId, receiptNumber, amount, date, invoiceNumber, mode, reference, balance } = body || {};
     if (!clientId || !amount) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+import { requireUser } from '@/lib/api-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -19,6 +20,11 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Only logged-in staff may broadcast push notifications. Without this,
+    // anyone who discovered the URL could notify every subscribed device.
+    const gate = await requireUser();
+    if (!gate.ok) return gate.response;
+
     if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
       return NextResponse.json({ error: 'VAPID keys not configured' }, { status: 500 });
     }
