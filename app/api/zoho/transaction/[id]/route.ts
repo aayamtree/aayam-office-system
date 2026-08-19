@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/api-auth';
-import { zohoServiceClient, getAccessToken, getOrganizationId, ZOHO_API } from '@/lib/zoho-api';
+import { zohoServiceClient, requestAccessToken, getOrganizationId, ZOHO_API } from '@/lib/zoho-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,8 +67,17 @@ export async function GET(
     const supabase = zohoServiceClient();
     if (!supabase) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
 
-    const accessToken = await getAccessToken(supabase);
-    if (!accessToken) return NextResponse.json({ error: 'Zoho is not connected.' }, { status: 409 });
+    const token = await requestAccessToken(supabase);
+    if (!token.ok) {
+        // 409 only when it really is disconnected. A rate limit or a wobble is
+        // 503 "come back later", because telling someone to re-authorise a
+        // working connection is how you get a re-authorise loop.
+        return NextResponse.json(
+            { error: token.message, reason: token.reason },
+            { status: token.reason === 'not_connected' ? 409 : 503 }
+        );
+    }
+    const accessToken = token.token;
 
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) return NextResponse.json({ error: 'Could not read the organisation.' }, { status: 502 });

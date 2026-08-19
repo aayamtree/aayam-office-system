@@ -22,7 +22,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authorizeCron } from '@/lib/api-auth';
 import {
     zohoServiceClient,
-    getAccessToken,
+    requestAccessToken,
     getOrganizationId,
     zohoGet,
     logSyncRun,
@@ -54,14 +54,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    const accessToken = await getAccessToken(supabase);
-    if (!accessToken) {
-        await logSyncRun(supabase, 'bank', false, 0, 'No access token — Zoho not connected');
+    const token = await requestAccessToken(supabase);
+    if (!token.ok) {
+        await logSyncRun(supabase, 'bank', false, 0, `${token.reason}: ${token.message}`);
         return NextResponse.json(
-            { error: 'Zoho is not connected. An admin should open /api/zoho/oauth/start.' },
-            { status: 409 }
+            { error: token.message, reason: token.reason },
+            { status: token.reason === 'not_connected' ? 409 : 503 }
         );
     }
+    const accessToken = token.token;
 
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) {

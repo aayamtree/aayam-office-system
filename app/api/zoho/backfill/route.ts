@@ -22,7 +22,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import {
     zohoServiceClient,
-    getAccessToken,
+    requestAccessToken,
     getOrganizationId,
     zohoGet,
     logSyncRun,
@@ -107,13 +107,17 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'from must be YYYY-MM-DD' }, { status: 400 });
     }
 
-    const accessToken = await getAccessToken(supabase);
-    if (!accessToken) {
+    const token = await requestAccessToken(supabase);
+    if (!token.ok) {
+        // 409 only when it really is disconnected. A rate limit or a wobble is
+        // 503 "come back later", because telling someone to re-authorise a
+        // working connection is how you get a re-authorise loop.
         return NextResponse.json(
-            { error: 'Zoho is not connected yet. Visit /api/zoho/oauth/start first.' },
-            { status: 409 }
+            { error: token.message, reason: token.reason },
+            { status: token.reason === 'not_connected' ? 409 : 503 }
         );
     }
+    const accessToken = token.token;
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) return NextResponse.json({ error: 'Could not read organisation' }, { status: 502 });
 

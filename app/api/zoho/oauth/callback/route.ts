@@ -11,6 +11,8 @@ import {
     zohoCredentials,
     zohoServiceClient,
     setConfig,
+    cacheAccessToken,
+    clearAccessToken,
     getAccessToken,
     getOrganizationId,
 } from '@/lib/zoho-api';
@@ -63,6 +65,19 @@ export async function GET(request: NextRequest) {
 
     await setConfig(supabase, 'refresh_token', json.refresh_token);
     await setConfig(supabase, 'connected_at', new Date().toISOString());
+
+    // THROW AWAY THE OLD ACCESS TOKEN. A token cached before this re-consent was
+    // minted under the previous permissions, and a Zoho call with a too-narrow
+    // token returns nothing rather than failing — so keeping it would silently
+    // undo the very re-authorisation the user just performed, for a whole hour.
+    await clearAccessToken(supabase);
+
+    // Zoho handed us an access token along with the refresh token. Keep it:
+    // spending one of the ~5-per-10-minutes token grants to re-fetch what we
+    // already hold is the waste the cache exists to prevent.
+    if (json.access_token) {
+        await cacheAccessToken(supabase, json.access_token as string, Number(json.expires_in));
+    }
 
     // Resolve and cache the organization id straight away, so the first cron run
     // does not fail on a missing id at 2am with nobody watching.

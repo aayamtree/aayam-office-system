@@ -32,7 +32,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authorizeCron } from '@/lib/api-auth';
 import {
     zohoServiceClient,
-    getAccessToken,
+    requestAccessToken,
     getOrganizationId,
     zohoGet,
     logSyncRun,
@@ -67,11 +67,17 @@ async function runJob(request: NextRequest) {
         return NextResponse.json({ error: 'Supabase service client unavailable' }, { status: 500 });
     }
 
-    const accessToken = await getAccessToken(supabase);
-    if (!accessToken) {
-        await logSyncRun(supabase, 'invoices', false, 0, 'no access token — reconnect Zoho');
-        return NextResponse.json({ error: 'Zoho not connected' }, { status: 502 });
+    const token = await requestAccessToken(supabase);
+    if (!token.ok) {
+        // The reason is logged, not just the failure: a rate-limited run and a
+        // dead connection need completely different responses from a human.
+        await logSyncRun(supabase, 'invoices', false, 0, `${token.reason}: ${token.message}`);
+        return NextResponse.json(
+            { error: token.message, reason: token.reason },
+            { status: token.reason === 'not_connected' ? 409 : 503 }
+        );
     }
+    const accessToken = token.token;
 
     const orgId = await getOrganizationId(supabase, accessToken);
     if (!orgId) {
