@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendToChat, escapeHtml, APP_URL } from '@/lib/telegram-groups';
 import { getEodSnapshot, inr, STUCK_DAYS, type JobBrief } from '@/lib/eod-metrics';
 import { getReceivables, buildReceivablesBlock, type Receivables } from '@/lib/receivables';
+import { getPayables, buildPayablesBlock, CASH_CAVEAT, type Payables } from '@/lib/payables';
 import { authorizeCron } from '@/lib/api-auth';
 import { withCronLog } from '@/lib/cron-log';
 
@@ -50,7 +51,7 @@ function jobLine(j: JobBrief, tail: string): string {
  * It now names CUSTOMERS rather than invoice numbers: 21 Medhini invoices
  * are one phone call, not 21 lines.
  */
-function buildFinancialSection(r: Receivables | null): string[] {
+function buildFinancialSection(r: Receivables | null, p: Payables | null = null): string[] {
   const lines: string[] = [];
 
   if (!r) {
@@ -75,10 +76,31 @@ function buildFinancialSection(r: Receivables | null): string[] {
     lines.push('');
     lines.push(block);
   }
+
+  // The weekly review is where the DETAIL belongs — the daily brief carries
+  // only the position. Long credit both ways is deliberate here (agri
+  // packaging, farmer earnings, a bad monsoon), so this lists vendors without
+  // treating age as an alarm.
+  if (p) {
+    const owing = buildPayablesBlock(p, {
+      limit: 8,
+      escape: escapeHtml,
+      moreUrl: `${APP_URL}/admin/finance/zoho`,
+    });
+    if (owing) {
+      lines.push('');
+      lines.push(owing);
+      const net = r.totalOwed - p.totalOwed;
+      lines.push(
+        `   <b>Net: ${inr(Math.abs(net))} more ${net >= 0 ? 'in than out' : 'out than in'}</b>`,
+      );
+      lines.push(`   <i>${CASH_CAVEAT}</i>`);
+    }
+  }
   return lines;
 }
 
-function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, r: Receivables | null): string {
+function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, r: Receivables | null, p: Payables | null = null): string {
   const lines: string[] = [];
   // Weekly now, not daily. The daily version repeated the morning brief and
   // added a "Collected today: ₹0" line that could only ever say zero, because
@@ -121,7 +143,7 @@ function buildMessage(s: Awaited<ReturnType<typeof getEodSnapshot>>, r: Receivab
   }
 
   // Money owed — from Zoho, grouped by customer.
-  lines.push(...buildFinancialSection(r));
+  lines.push(...buildFinancialSection(r, p));
 
   return lines.join('\n');
 }
@@ -140,17 +162,21 @@ async function runJob(request: NextRequest) {
 
   // A failed money query must not take the whole review down, but it must be
   // visible in the message rather than rendering as "nothing outstanding".
-  const [snapshot, receivables] = await Promise.all([
+  const [snapshot, receivables, payables] = await Promise.all([
     getEodSnapshot(supabase),
     getReceivables(supabase).catch((e) => {
       console.error('[eod-report] receivables unavailable:', e);
       return null;
     }),
+    getPayables(supabase).catch((e) => {
+      console.error('[eod-report] payables unavailable:', e);
+      return null;
+    }),
   ]);
-  const text = buildMessage(snapshot, receivables);
+  const text = buildMessage(snapshot, receivables, payables);
 
   if (isDebug) {
-    return NextResponse.json({ preview: text, snapshot, receivables });
+    return NextResponse.json({ preview: text, snapshot, receivables, payables });
   }
 
   // Recipients: admin department groups + linked admin staff DMs

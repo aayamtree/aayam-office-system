@@ -168,6 +168,19 @@ export async function getPayables(supabase: SupabaseClient): Promise<Payables> {
   };
 }
 
+/**
+ * Everything in this module counts Zoho only, and Zoho is not the whole story:
+ * CASH is handled in Vyapar, which has no API, so cash settled against an
+ * invoice or a bill never reaches these figures. Both sides are therefore
+ * OVERSTATED by however much cash has moved — an invoice paid in notes still
+ * reads as owed here.
+ *
+ * That is fine as long as it is said out loud. It stops being fine the moment
+ * a screen presents these as "the position". Until Vyapar's cash is entered in
+ * the app, every brief carries this line.
+ */
+export const CASH_CAVEAT = 'Zoho + bank only — cash kept in Vyapar is not counted, so both sides read high.';
+
 /** 🔴 over 60 days · 🟠 over 30 · 🟡 overdue at all · 🟢 not yet due. */
 export function billIcon(v: VendorDebt): string {
   if (!v.isOverdue) return '🟢';
@@ -195,6 +208,55 @@ export function ageingBuckets(p: Payables): { label: string; owed: number; vendo
     b.vendors += 1;
   }
   return buckets.map(({ label, owed, vendors }) => ({ label, owed, vendors }));
+}
+
+/**
+ * The DAILY line: where we stand, in one glance, without an opinion.
+ *
+ * Satish extends long credit to clients on purpose — this is agri packaging,
+ * the customers are farmers and dealers, and in a bad monsoon year carrying
+ * them is the business decision, not an oversight. He then carries his own
+ * suppliers for the same reason. So a brief that shouts OVERDUE every morning
+ * is a brief he stops reading by the second week.
+ *
+ * This block reports the POSITION and one risk: how much of what we owe sits
+ * with a single vendor. A supplier holding 70% of your payables is not really
+ * a supplier any more, and that is worth seeing every day even when — especially
+ * when — the ageing itself is deliberate.
+ */
+export function buildPositionBlock(
+  p: Payables,
+  owedToUs: number | null,
+  opts: { escape?: (s: string) => string; moreUrl?: string } = {},
+): string | null {
+  if (!p.byVendor.length) return null;
+  const esc = opts.escape ?? ((s: string) => s);
+
+  const lines = [`🧾 <b>We owe</b> — <b>${inr(p.totalOwed)}</b> · ${p.vendorCount} vendor${p.vendorCount !== 1 ? 's' : ''}`];
+
+  // Concentration, not ageing. The top vendor's share is the number that
+  // changes what you would do.
+  const top = p.byVendor[0];
+  if (top && p.totalOwed > 0) {
+    const share = Math.round((top.owed / p.totalOwed) * 100);
+    lines.push(`   <b>${esc(top.vendor)}</b> ${inr(top.owed)} · ${share}% of it`);
+  }
+
+  if (owedToUs !== null) {
+    const net = owedToUs - p.totalOwed;
+    lines.push(
+      `   In ${inr(owedToUs)} · Out ${inr(p.totalOwed)} · <b>${inr(Math.abs(net))} more ${net >= 0 ? 'in than out' : 'out than in'}</b>`,
+    );
+  }
+
+  const stale = p.syncAgeDays !== null && p.syncAgeDays >= 2
+    ? `\n⚠️ Zoho last synced ${p.syncAgeDays} days ago — this may be out of date.`
+    : '';
+
+  lines.push(`   <i>${CASH_CAVEAT}</i>`);
+
+  const body = lines.join('\n') + stale;
+  return opts.moreUrl ? `${body}\n   <a href="${opts.moreUrl}">See every bill →</a>` : body;
 }
 
 /**

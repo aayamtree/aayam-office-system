@@ -9,6 +9,7 @@ import {
   inr,
   type Receivables,
 } from '@/lib/receivables';
+import { getPayables, buildPositionBlock, type Payables } from '@/lib/payables';
 
 /**
  * Telegram Digest Cron — runs twice daily, Mon–Sat:
@@ -164,6 +165,7 @@ function buildAdminGroupDigest(
   receivables?: Receivables | null,
   stuck: DigestJob[] = [],
   overdueJobs: DigestJob[] = [],
+  payables?: Payables | null,
 ): string | null {
   // Morning only. Satish asked for one brief a day plus a fuller weekly review;
   // an evening repeat of the same figures is what made these easy to ignore.
@@ -204,6 +206,19 @@ function buildAdminGroupDigest(
     lines.push('⚠️ <b>Money owed unavailable</b> — the Zoho figures could not be read this morning.');
   }
 
+  // The other side of the same coin. Money owed to us without money we owe is
+  // half a position, and it is the flattering half.
+  if (payables) {
+    const owing = buildPositionBlock(payables, receivables ? receivables.totalOwed : null, {
+      escape: escapeHtml,
+      moreUrl: `${APP_URL}/admin/finance/zoho`,
+    });
+    if (owing) {
+      lines.push('');
+      lines.push(owing);
+    }
+  }
+
   // ── What to do ──────────────────────────────────────────────────────────
   // A brief that ends in numbers ends in nothing. Name the two calls.
   const todo: string[] = [];
@@ -236,6 +251,7 @@ function buildPersonalBrief(
   receivables?: Receivables | null,
   stuck: DigestJob[] = [],
   overdueJobs: DigestJob[] = [],
+  payables?: Payables | null,
 ): { text: string; appPath: string } | null {
   const name = (p.full_name || '').split(' ')[0] || 'there';
   const head = slot === 'morning'
@@ -288,7 +304,7 @@ function buildPersonalBrief(
   }
 
   if (p.role === 'admin' || p.role === 'accounts') {
-    const text = buildAdminGroupDigest(slot, jobs, leadsDue, receivables, stuck, overdueJobs);
+    const text = buildAdminGroupDigest(slot, jobs, leadsDue, receivables, stuck, overdueJobs, payables);
     // Null on the evening slot — the owner's brief is morning-only now.
     return text ? { text, appPath: '/admin/finance/zoho' } : null;
   }
@@ -357,6 +373,14 @@ async function runJob(request: NextRequest) {
     console.error('[telegram-digest] receivables unavailable:', err);
   }
 
+  // And what we owe. Same rule: a failure here loses one block, not the brief.
+  let payables: Payables | null = null;
+  try {
+    payables = await getPayables(service);
+  } catch (err) {
+    console.error('[telegram-digest] payables unavailable:', err);
+  }
+
   // Stuck and past-deadline jobs, for the WORK line and the TODAY list.
   // Idle time is measured from the last stage change, falling back to creation
   // for a job that has never moved at all.
@@ -391,7 +415,7 @@ async function runJob(request: NextRequest) {
     let text: string | null = null;
     if (dept === 'design') text = buildDesignGroupDigest(slot, allJobs, allStaff);
     else if (dept === 'print' || dept === 'dispatch') text = buildQueueGroupDigest(slot, dept, allJobs);
-    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue, receivables, stuckJobs, overdueJobs);
+    else if (dept === 'admin') text = buildAdminGroupDigest(slot, allJobs, leadsDue, receivables, stuckJobs, overdueJobs, payables);
     if (!text) continue;
     const appPath = dept === 'admin' ? '/admin/finance/zoho' : '/admin/jobs/queue';
     if (await sendToChat(g.chat_id, text, appPath)) groupsSent++;
@@ -401,7 +425,7 @@ async function runJob(request: NextRequest) {
   let dmsSent = 0;
   for (const p of allStaff) {
     if (!p.telegram_chat_id) continue;
-    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue, receivables, stuckJobs, overdueJobs);
+    const brief = buildPersonalBrief(slot, p, allJobs, leadsDue, receivables, stuckJobs, overdueJobs, payables);
     if (!brief) continue;
     if (await sendToChat(p.telegram_chat_id, brief.text, brief.appPath)) dmsSent++;
   }
