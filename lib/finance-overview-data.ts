@@ -1,4 +1,5 @@
 import { createServerSupabase } from '@/lib/supabase-server';
+import { isOwedBill } from '@/lib/payables';
 
 export interface FinanceOverviewData {
     // KPI totals (this month)
@@ -140,11 +141,17 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                 .lt('expense_date', endOfLastMonth)
                 .then(r => r), { data: [] } as any),
 
-            // Purchase bills pending
+            // Bills we still owe — from ZOHO, not the app's `purchase_bills`
+            // table. That table holds 5 rows and was reporting ₹32,209 payable
+            // while Zoho carried the real, largely overdue figure. Bills are
+            // created in Zoho only; this app mirrors them read-only.
+            // Statuses are excluded, not allowlisted: anything with a balance
+            // is owed unless it is provably a draft or void. See lib/payables.ts.
             safe(() => supabase
-                .from('purchase_bills')
-                .select('id, total_amount, payment_status')
-                .neq('payment_status', 'paid')
+                .from('zoho_documents')
+                .select('customer_name, balance, status')
+                .eq('doc_type', 'bill')
+                .gt('balance', 0)
                 .then(r => r), { data: [] } as any),
 
             // 6-month income data for chart — from verified bank inflows (ledger source of truth).
@@ -259,9 +266,10 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
         // Prefer ledger figure for this month's expenses; fall back to manual+bank if ledger empty
         const effectiveExpensesThisMonth = pnl.expenseThisMonth || expensesThisMonth;
 
-        // Purchase bills
-        const pendingBills = purchaseBillsRes.data || [];
-        const pendingBillsAmount = pendingBills.reduce((s: number, b: any) => s + (b.total_amount || 0), 0);
+        // Bills we owe (Zoho). `balance` is what is still outstanding — summing
+        // `total` would count money already paid as though it were still due.
+        const pendingBills = (purchaseBillsRes.data || []).filter((b: any) => isOwedBill(b.status));
+        const pendingBillsAmount = pendingBills.reduce((s: number, b: any) => s + (Number(b.balance) || 0), 0);
 
         // Overdue today
         const overdueToday = allInvoices.filter((inv: any) =>

@@ -1,6 +1,6 @@
 'use client';
 
-// /admin/finance/zoho — invoices & quotes synced from Zoho Books.
+// /admin/finance/zoho — invoices, quotes & vendor bills synced from Zoho Books.
 //
 // Zoho is the source of truth (it holds the HDFC bank feed). This page is a
 // read-only mirror fed by /api/zoho/webhook; nothing here edits Zoho.
@@ -8,7 +8,8 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
-import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History, PieChart, Tag } from 'lucide-react';
+import { isOwedBill } from '@/lib/payables';
+import { RefreshCw, Loader2, FileText, Receipt, ExternalLink, ChevronRight, ChevronDown, Landmark, History, PieChart, Tag, Wallet } from 'lucide-react';
 
 // Zoho sends ~250 fields per document; these are the ones worth showing.
 interface ZohoLineItem {
@@ -48,7 +49,7 @@ interface SyncRun {
 
 interface ZohoDoc {
   id: string;
-  doc_type: 'invoice' | 'estimate';
+  doc_type: 'invoice' | 'estimate' | 'bill';
   zoho_id: string;
   doc_number: string | null;
   customer_name: string | null;
@@ -108,6 +109,10 @@ const STATUS_STYLES: Record<string, string> = {
   overdue: 'bg-red-100 text-red-700',
   draft: 'bg-gray-100 text-gray-600',
   partially_paid: 'bg-yellow-100 text-yellow-700',
+  // Bill statuses. `open` is a bill received and not yet paid — the payables
+  // equivalent of `sent`. `void` is cancelled and owes nothing.
+  open: 'bg-blue-100 text-blue-700',
+  void: 'bg-gray-100 text-gray-500',
   accepted: 'bg-green-100 text-green-700',
   declined: 'bg-red-100 text-red-700',
   invoiced: 'bg-green-100 text-green-700',
@@ -201,7 +206,7 @@ export default function ZohoDocumentsPage() {
   const [lastSync, setLastSync] = useState<SyncRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'invoice' | 'estimate' | 'bank' | 'category'>('invoice');
+  const [tab, setTab] = useState<'invoice' | 'estimate' | 'bill' | 'bank' | 'category'>('invoice');
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
   const [syncingAccounts, setSyncingAccounts] = useState(false);
@@ -213,12 +218,27 @@ export default function ZohoDocumentsPage() {
   const fetchDocs = async () => {
     setLoading(true);
     setError(null);
-    const [docsRes, txnRes, runRes] = await Promise.all([
+    const DOC_COLUMNS =
+      'id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, sub_total, tax_total, total, balance, line_items, last_synced_at';
+
+    // Bills are fetched SEPARATELY, not as part of the same 500-row page.
+    // zoho_documents holds ~1,500 invoices going back to 2016; one combined
+    // query ordered by date would happily fill its limit with invoices and
+    // silently drop older bills — and a payables total that is missing rows
+    // looks exactly like a payables total that is small.
+    const [docsRes, billsRes, txnRes, runRes] = await Promise.all([
       supabase
         .from('zoho_documents')
-        .select('id, doc_type, zoho_id, doc_number, customer_name, doc_date, due_date, status, sub_total, tax_total, total, balance, line_items, last_synced_at')
+        .select(DOC_COLUMNS)
+        .in('doc_type', ['invoice', 'estimate'])
         .order('doc_date', { ascending: false })
         .limit(500),
+      supabase
+        .from('zoho_documents')
+        .select(DOC_COLUMNS)
+        .eq('doc_type', 'bill')
+        .order('doc_date', { ascending: false })
+        .limit(1000),
       supabase
         .from('zoho_bank_transactions')
         .select('id, zoho_transaction_id, txn_date, amount, debit_or_credit, transaction_type, status, is_categorized, description, reference_number, payee, account_id, account_name, offset_account_name')
@@ -233,7 +253,12 @@ export default function ZohoDocumentsPage() {
     ]);
 
     if (docsRes.error) setError(docsRes.error.message);
-    else setDocs((docsRes.data as ZohoDoc[]) || []);
+    else {
+      // A bills query that fails (before the column exists, say) must not blank
+      // out the invoices the page already showed fine.
+      const bills = billsRes.error ? [] : ((billsRes.data as ZohoDoc[]) || []);
+      setDocs([...((docsRes.data as ZohoDoc[]) || []), ...bills]);
+    }
 
     // The bank tables only exist after the banking migration; a missing table
     // must not blank out the invoices the page already showed fine.
@@ -267,10 +292,11 @@ export default function ZohoDocumentsPage() {
       }
       const inv = Number(last?.invoices ?? 0);
       const est = Number(last?.estimates ?? 0);
+      const bills = Number(last?.bills ?? 0);
       const bank = Number(last?.banktransactions ?? 0);
       setBackfillMsg({
         ok: true,
-        text: `Fetched from ${last?.from}: ${inv} invoices, ${est} quotes, ${bank} bank transactions. ${last?.note ?? ''}`,
+        text: `Fetched from ${last?.from}: ${inv} invoices, ${est} quotes, ${bills} bills, ${bank} bank transactions. ${last?.note ?? ''}`,
       });
       await fetchDocs();
     } catch {
@@ -333,6 +359,28 @@ export default function ZohoDocumentsPage() {
     .filter(d => d.doc_type === 'invoice' && (d.balance || 0) > 0)
     .reduce((sum, d) => sum + (d.balance || 0), 0);
 
+  // Payables. Excluded by status rather than allowlisted — a bill with money on
+  // it is owed unless it is provably a draft or void. Matches lib/payables.ts;
+  // if these two ever disagree, one of the money figures on this system is a lie.
+  const owedBills = docs.filter(
+    d => d.doc_type === 'bill' && (d.balance || 0) > 0 && isOwedBill(d.status)
+  );
+  const billCount = docs.filter(d => d.doc_type === 'bill').length;
+  const payable = owedBills.reduce((sum, d) => sum + (d.balance || 0), 0);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const overduePayable = owedBills
+    .filter(d => d.due_date && d.due_date < todayIso)
+    .reduce((sum, d) => sum + (d.balance || 0), 0);
+
+  // Zoho's field names have been wrong four times now (date_after ignored,
+  // debit meaning money in, duplicate ids, three settled statuses). If `balance`
+  // is not on the bills list response, every unpaid bill lands here with a null
+  // balance and the payable total reads a confident ₹0. Count that case and say
+  // so out loud rather than reporting nothing owed.
+  const billsMissingBalance = docs.filter(
+    d => d.doc_type === 'bill' && isOwedBill(d.status) && d.status !== 'paid' && d.balance === null
+  ).length;
+
   const moneyIn = txns
     .filter(isMoneyIn)
     .reduce((sum, t) => sum + (t.amount || 0), 0);
@@ -364,14 +412,14 @@ export default function ZohoDocumentsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Zoho Books</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Invoices &amp; quotes made in Zoho, mirrored here automatically. Zoho is the source of truth.
+            Invoices, quotes &amp; vendor bills made in Zoho, mirrored here automatically. Zoho is the source of truth.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={runBackfill}
             disabled={backfilling}
-            title="One-off: pull this financial year's invoices, quotes and bank lines from Zoho"
+            title="One-off: pull this financial year's invoices, quotes, bills and bank lines from Zoho"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-50"
           >
             {backfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <History className="w-4 h-4" />}
@@ -401,6 +449,13 @@ export default function ZohoDocumentsPage() {
         </div>
       )}
 
+      {tab === 'bill' && billsMissingBalance > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md p-4">
+          {billsMissingBalance} unpaid bill{billsMissingBalance !== 1 ? 's' : ''} came back from Zoho with no
+          balance, so the figure below is understated. Open one in Zoho and check what it still owes.
+        </div>
+      )}
+
       {tab === 'bank' ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -418,6 +473,27 @@ export default function ZohoDocumentsPage() {
             </p>
             {uncategorised > 0 && (
               <p className="text-xs text-gray-500 mt-1">Categorise these in Zoho</p>
+            )}
+          </div>
+        </div>
+      ) : tab === 'bill' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Bills synced</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{billCount}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">We owe (Zoho)</p>
+            <p className="text-2xl font-bold text-red-600 mt-1">{inr(payable)}</p>
+            <p className="text-xs text-gray-500 mt-1">{owedBills.length} unpaid bills</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 uppercase">Already overdue</p>
+            <p className={`text-2xl font-bold mt-1 ${overduePayable > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+              {inr(overduePayable)}
+            </p>
+            {overduePayable > 0 && (
+              <p className="text-xs text-gray-500 mt-1">Past the due date on the bill</p>
             )}
           </div>
         </div>
@@ -450,6 +526,12 @@ export default function ZohoDocumentsPage() {
           className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md ${tab === 'estimate' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
         >
           <FileText className="w-4 h-4" /> Quotes
+        </button>
+        <button
+          onClick={() => setTab('bill')}
+          className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md ${tab === 'bill' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'}`}
+        >
+          <Wallet className="w-4 h-4" /> Bills
         </button>
         <button
           onClick={() => setTab('bank')}
@@ -651,8 +733,9 @@ export default function ZohoDocumentsPage() {
           <div className="text-center py-16 px-6">
             <p className="text-gray-500 font-medium">Nothing synced yet</p>
             <p className="text-sm text-gray-400 mt-2 max-w-md mx-auto">
-              When you create or edit {tab === 'invoice' ? 'an invoice' : 'a quote'} in Zoho Books,
+              When you create or edit {tab === 'invoice' ? 'an invoice' : tab === 'bill' ? 'a vendor bill' : 'a quote'} in Zoho Books,
               it will appear here within a few seconds.
+              {tab === 'bill' && ' If nothing ever appears, the Bills workflow rule in Zoho has not been created yet — press "Fetch this FY from Zoho" to pull them in the meantime.'}
             </p>
           </div>
         ) : (
@@ -662,12 +745,12 @@ export default function ZohoDocumentsPage() {
                 <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-200">
                   <th className="px-2 py-3 w-8"></th>
                   <th className="px-4 py-3">Number</th>
-                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">{tab === 'bill' ? 'Vendor' : 'Customer'}</th>
                   <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">{tab === 'invoice' ? 'Due' : 'Expires'}</th>
+                  <th className="px-4 py-3">{tab === 'estimate' ? 'Expires' : 'Due'}</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Total</th>
-                  {tab === 'invoice' && <th className="px-4 py-3 text-right">Balance</th>}
+                  {tab !== 'estimate' && <th className="px-4 py-3 text-right">Balance</th>}
                 </tr>
               </thead>
               <tbody>
@@ -695,15 +778,15 @@ export default function ZohoDocumentsPage() {
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold text-gray-900">{inr(doc.total)}</td>
-                    {tab === 'invoice' && (
-                      <td className={`px-4 py-3 text-right font-semibold ${(doc.balance || 0) > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                    {tab !== 'estimate' && (
+                      <td className={`px-4 py-3 text-right font-semibold ${(doc.balance || 0) > 0 ? (tab === 'bill' ? 'text-red-600' : 'text-amber-600') : 'text-green-600'}`}>
                         {inr(doc.balance)}
                       </td>
                     )}
                   </tr>
                   {open && (
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <td colSpan={tab === 'invoice' ? 8 : 7} className="px-6 py-4">
+                      <td colSpan={tab === 'estimate' ? 7 : 8} className="px-6 py-4">
                         {items.length === 0 ? (
                           <p className="text-sm text-gray-500">No line items in this document.</p>
                         ) : (
@@ -769,7 +852,9 @@ export default function ZohoDocumentsPage() {
           <ExternalLink className="w-3 h-3" />
           {tab === 'bank'
             ? 'Categorise transactions in Zoho — the category follows them here.'
-            : 'To edit any document, open it in Zoho Books — changes sync back here automatically.'}
+            : tab === 'bill'
+              ? 'Enter vendor bills in Zoho Books only — they appear here, and the payables figure on Finance follows them.'
+              : 'To edit any document, open it in Zoho Books — changes sync back here automatically.'}
         </span>
         {tab === 'bank' && (
           <span className="ml-auto">

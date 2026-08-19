@@ -124,6 +124,11 @@ export async function GET(request: NextRequest) {
     for (const [docType, path, listKey, numberKey, idKey, dueKey] of [
         ['invoice', '/invoices', 'invoices', 'invoice_number', 'invoice_id', 'due_date'],
         ['estimate', '/estimates', 'estimates', 'estimate_number', 'estimate_id', 'expiry_date'],
+        // Bills are the money-out mirror of invoices and share the same shape,
+        // so they ride the same loop. The one difference is the party: Zoho
+        // calls it vendor_name here, and it is stored in customer_name because
+        // that column means "the other side of the document", not "a customer".
+        ['bill', '/bills', 'bills', 'bill_number', 'bill_id', 'due_date'],
     ] as const) {
         const rows = await fetchAll(accessToken, orgId, path, listKey, idKey, { date_start: from });
         if (rows === null) {
@@ -138,7 +143,7 @@ export async function GET(request: NextRequest) {
                     doc_type: docType,
                     zoho_id: zohoId,
                     doc_number: str(d[numberKey]),
-                    customer_name: str(d.customer_name),
+                    customer_name: str(d.customer_name) || str(d.vendor_name),
                     doc_date: str(d.date),
                     due_date: str(d[dueKey]),
                     status: str(d.status),
@@ -247,9 +252,10 @@ export async function GET(request: NextRequest) {
 
     let enriched = 0;
     for (const doc of needDetail || []) {
-        const path = doc.doc_type === 'invoice' ? `/invoices/${doc.zoho_id}` : `/estimates/${doc.zoho_id}`;
-        const json = await zohoGet(accessToken, orgId, path);
-        const entity = json?.invoice || json?.estimate;
+        const listPath =
+            doc.doc_type === 'invoice' ? 'invoices' : doc.doc_type === 'bill' ? 'bills' : 'estimates';
+        const json = await zohoGet(accessToken, orgId, `/${listPath}/${doc.zoho_id}`);
+        const entity = json?.invoice || json?.estimate || json?.bill;
         if (!entity) continue;
         await supabase
             .from('zoho_documents')
@@ -274,7 +280,7 @@ export async function GET(request: NextRequest) {
         supabase,
         'backfill',
         true,
-        Number(result.invoices || 0) + Number(result.estimates || 0) + mappedTxns.length,
+        Number(result.invoices || 0) + Number(result.estimates || 0) + Number(result.bills || 0) + mappedTxns.length,
         `from ${from}`
     );
 

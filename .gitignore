@@ -45,3 +45,7 @@ vapid.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local secret scratch — never commit
+ZOHO_WEBHOOK_URL.local.txt
+*.local.txt

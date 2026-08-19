@@ -1,4 +1,4 @@
-// POST /api/zoho/webhook — receive invoices & estimates from Zoho Books.
+// POST /api/zoho/webhook — receive invoices, estimates & bills from Zoho Books.
 //
 // WHY THIS EXISTS
 // Invoicing happens in Zoho Books because the HDFC bank feed lives there.
@@ -51,7 +51,7 @@ async function parseBody(request: NextRequest): Promise<Record<string, unknown> 
 }
 
 type Extracted = {
-    docType: 'invoice' | 'estimate';
+    docType: 'invoice' | 'estimate' | 'bill';
     zohoId: string;
     docNumber: string | null;
     customerName: string | null;
@@ -80,23 +80,29 @@ function extract(payload: Record<string, unknown>): Extracted | null {
     const wrapped =
         (payload.invoice as Record<string, unknown> | undefined) ||
         (payload.estimate as Record<string, unknown> | undefined) ||
+        (payload.bill as Record<string, unknown> | undefined) ||
         payload;
 
     const isInvoice = 'invoice_id' in wrapped || 'invoice_number' in wrapped;
     const isEstimate = 'estimate_id' in wrapped || 'estimate_number' in wrapped;
-    if (!isInvoice && !isEstimate) return null;
+    const isBill = 'bill_id' in wrapped || 'bill_number' in wrapped;
+    if (!isInvoice && !isEstimate && !isBill) return null;
 
-    const docType = isInvoice ? 'invoice' : 'estimate';
-    const zohoId = str(wrapped[isInvoice ? 'invoice_id' : 'estimate_id']);
+    const docType = isInvoice ? 'invoice' : isEstimate ? 'estimate' : 'bill';
+    const idKey = isInvoice ? 'invoice_id' : isEstimate ? 'estimate_id' : 'bill_id';
+    const numberKey = isInvoice ? 'invoice_number' : isEstimate ? 'estimate_number' : 'bill_number';
+    const zohoId = str(wrapped[idKey]);
     if (!zohoId) return null;
 
     return {
         docType,
         zohoId,
-        docNumber: str(wrapped[isInvoice ? 'invoice_number' : 'estimate_number']),
-        customerName: str(wrapped.customer_name),
+        docNumber: str(wrapped[numberKey]),
+        // A bill's other party is the vendor. Same column, same meaning:
+        // whoever is on the far side of the document.
+        customerName: str(wrapped.customer_name) || str(wrapped.vendor_name),
         docDate: str(wrapped.date),
-        dueDate: str(isInvoice ? wrapped.due_date : wrapped.expiry_date),
+        dueDate: str(isEstimate ? wrapped.expiry_date : wrapped.due_date),
         status: str(wrapped.status),
         subTotal: num(wrapped.sub_total),
         taxTotal: num(wrapped.tax_total),
@@ -134,8 +140,8 @@ export async function POST(request: NextRequest) {
 
     const doc = extract(payload);
     if (!doc) {
-        console.error('[zoho/webhook] no invoice/estimate found in payload:', Object.keys(payload));
-        return NextResponse.json({ error: 'No invoice or estimate in payload' }, { status: 422 });
+        console.error('[zoho/webhook] no invoice/estimate/bill found in payload:', Object.keys(payload));
+        return NextResponse.json({ error: 'No invoice, estimate or bill in payload' }, { status: 422 });
     }
 
     const { error } = await supabase
