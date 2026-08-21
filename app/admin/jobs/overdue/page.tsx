@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { getStageName, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
 import { toast } from '@/lib/toast';
 import { DELAY_REASONS, type DelayReason } from '@/types/database';
+import ProductBadge from '@/components/shared/ProductBadge';
 import {
   AlertTriangle, Clock, User, Building2,
   RefreshCw, Loader2, ArrowRight, ChevronDown, ChevronUp, X, Filter
@@ -19,6 +20,7 @@ interface OverdueJob {
   current_stage: string;
   priority: string;
   job_type: string | null;
+  product_category: string | null;
   designer_id: string | null;
   client_id: string | null;
   client_name: string;
@@ -111,7 +113,7 @@ export default function OverduePage() {
 
       const { data: jobData, error } = await supabase
         .from('jobs')
-        .select('id, job_number, project_name, client_deadline, current_stage, priority, job_type, designer_id, client_id, delay_reason, delay_note')
+        .select('id, job_number, project_name, client_deadline, current_stage, priority, job_type, product_category, designer_id, client_id, delay_reason, delay_note')
         .lt('client_deadline', today)
         .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
         .order('client_deadline', { ascending: true });
@@ -509,7 +511,10 @@ export default function OverduePage() {
                     className={`border-l-4 ${urgencyClass(job.days_overdue)} grid grid-cols-1 md:grid-cols-[1fr_1.4fr_0.9fr_115px_150px_95px_90px_48px] gap-2 md:gap-0 px-4 py-3 items-center hover:bg-black/[0.02] transition-colors`}
                   >
                     <div>
-                      <span className="font-mono text-xs font-bold text-gray-700">{job.job_number}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-gray-700">{job.job_number}</span>
+                        <ProductBadge category={job.product_category} />
+                      </div>
                       {job.job_type && (
                         <p className="text-[10px] text-gray-400 mt-0.5">{job.job_type}</p>
                       )}

@@ -9,6 +9,8 @@ import type { PrintRun, PrintRunJob, Job } from '@/types/database';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/ConfirmModal';
+import ProductBadge from '@/components/shared/ProductBadge';
+import { runProductCategory } from '@/lib/product-category';
 
 export default function PrintRunDetailPage() {
     const params = useParams();
@@ -54,6 +56,7 @@ export default function PrintRunDetailPage() {
             id,
             job_number,
             project_name,
+            product_category,
             quantity,
             client:clients(name,company)
           )
@@ -163,6 +166,7 @@ export default function PrintRunDetailPage() {
                                 <h1 className="text-page-title text-gray-900 flex items-center gap-3">
                                     <Printer className="text-primary" size={32} />
                                     {printRun.print_run_number}
+                                    <ProductBadge category={runProductCategory(printRunJobs.map((p: any) => ({ product_category: p.product_category || p.job?.product_category })))} size="sm" />
                                 </h1>
                                 <span className={`px-4 py-2 rounded-md text-sm font-bold border-2 ${getStatusColor(printRun.status)}`} style={{ textTransform: 'capitalize' }}>
                                     {printRun.status.replace(/_/g, ' ')}
@@ -279,6 +283,7 @@ export default function PrintRunDetailPage() {
                                                 >
                                                     {(prj.job as any)?.job_number || 'N/A'}
                                                 </Link>
+                                                <ProductBadge category={(prj as any).product_category || (prj.job as any)?.product_category} className="ml-2" />
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                                                 {prj.client_name || (prj.job as any)?.client?.company || (prj.job as any)?.client?.name || 'N/A'}
@@ -365,6 +370,7 @@ function AddJobsModal({
           id,
           job_number,
           project_name,
+          product_category,
           quantity,
           file_version,
           client:clients(name,company)
@@ -531,6 +537,7 @@ function AddJobsModal({
                                                             {job.job_number}
                                                         </span>
                                                         <span className="font-medium text-gray-900">{job.project_name}</span>
+                                                        <ProductBadge category={(job as any).product_category} />
                                                     </div>
 
                                                     <div className="text-sm text-gray-600 mb-3">

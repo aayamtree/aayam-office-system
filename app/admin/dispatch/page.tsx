@@ -15,6 +15,7 @@ import ActionButton from '@/components/ActionButton';
 import LoadError from '@/components/LoadError';
 import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
@@ -367,9 +368,7 @@ export default function DispatchPage() {
                   <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {(job as any).product_category && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
-                  )}
+                  <ProductBadge category={(job as any).product_category} />
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{job.job_type?.replace(/_/g, ' ')}</span>
                   {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
                 </div>
@@ -403,9 +402,7 @@ export default function DispatchPage() {
                   <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {(job as any).product_category && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
-                  )}
+                  <ProductBadge category={(job as any).product_category} />
                   {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
@@ -437,9 +434,7 @@ export default function DispatchPage() {
                   <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {(job as any).product_category && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{(job as any).product_category}</span>
-                  )}
+                  <ProductBadge category={(job as any).product_category} />
                   {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Qty: {job.quantity} &bull; Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>

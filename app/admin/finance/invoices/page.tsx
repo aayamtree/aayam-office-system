@@ -27,6 +27,7 @@ import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 import LoadError from '@/components/LoadError';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 export default function InvoicesPage() {
   const { settings: companySettings } = useCompanySettings();
@@ -921,7 +922,10 @@ export default function InvoicesPage() {
               {pendingInvoicingJobs.map((job: any) => (
                 <div key={job.id} className="min-w-[220px] bg-card border border-border border-l-4 border-l-amber-400 rounded-md flex flex-col justify-between hover:shadow-sm transition-shadow">
                   <div className="bg-amber-50/60 px-3 py-1.5 border-b border-border/50 rounded-tr-md flex items-center justify-between">
-                    <span className="text-[9px] font-mono text-muted-foreground">{job.job_number}</span>
+                    <span className="flex items-center gap-1 min-w-0">
+                      <span className="text-[9px] font-mono text-muted-foreground">{job.job_number}</span>
+                      <ProductBadge category={job.product_category} />
+                    </span>
                     <span className="text-[9px] font-bold text-amber-700">₹{job.total_amount}</span>
                   </div>
                   <div className="px-3 pt-1.5 pb-2.5">

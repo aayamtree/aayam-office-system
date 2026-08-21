@@ -34,6 +34,7 @@ import {
 import Link from 'next/link';
 import { DesignerStatusPills } from '@/components/shared/DesignerStatusPills';
 import ClientSelect from '@/components/shared/ClientSelect';
+import { normalizeProductCategory } from '@/lib/product-category';
 
 
 export default function NewProjectPage() {
@@ -288,7 +289,7 @@ export default function NewProjectPage() {
                 job_type: formData.jobType,
                 brand_id: formData.brandId || null,     // UUID FK to brands table
                 brand_name: formData.brandName || null,  // text copy for fast display
-                product_category: formData.productCategory || null,
+                product_category: normalizeProductCategory(formData.productCategory),
                 client_deadline: formData.deadline ? formData.deadline.toISOString().split('T')[0] : null,
                 priority: formData.priority,
                 drive_link: formData.driveLink || null,

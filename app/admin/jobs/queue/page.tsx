@@ -13,6 +13,7 @@ import { Job, JobStatus } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { getWorkflowForJobType, getNextStage, normalizeJobType } from '@/lib/job-workflow';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // ─── Type-driven Stage Flows ─────────────────────────────────────────────────
 // Single source of truth: lib/job-workflow.ts. Each job type is a filtered view
@@ -624,6 +625,7 @@ export default function JobQueuePage() {
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className={`${cfg.badgeText} opacity-60`}>{cfg.icon}</span>
                             <span className="text-xs font-bold text-foreground tracking-wide truncate">{job.job_number}</span>
+                            <ProductBadge category={(job as any).product_category} />
                           </div>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
                             {isUrgent && (
@@ -757,6 +759,7 @@ export default function JobQueuePage() {
               <div className={`${cfg.tintBg} px-4 py-3 border-b border-border flex items-center justify-between rounded-t-md border-l-4 ${cfg.borderColor}`}>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="font-bold text-foreground text-base">{selectedJob.job_number}</h2>
+                  <ProductBadge category={(selectedJob as any).product_category} size="sm" />
                   <span className={`text-[10px] px-2 py-0.5 rounded font-semibold uppercase ${cfg.badgeBg} ${cfg.badgeText}`}>
                     {stage.replace('_', ' ')}
                   </span>

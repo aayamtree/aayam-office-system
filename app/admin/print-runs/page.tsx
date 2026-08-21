@@ -6,6 +6,8 @@ import { syncRunJobsToStage, revertJobsToReadyToPrint } from '@/lib/print-run-sy
 import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
+import ProductBadge from '@/components/shared/ProductBadge';
+import { runProductCategory } from '@/lib/product-category';
 import {
     Printer, Package, Clock, CheckCircle, Truck, Search as SearchIcon,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
@@ -20,7 +22,8 @@ interface PrintRunJob {
     item_name: string;
     quantity_needed: number;
     ups_in_sheet: number;
-    job_type: string;
+    job_type: string;          // WORK type: Design + Printing / Print Only
+    product_category?: string | null; // PRODUCT type: Label / Pouch / Box
     job_number?: string;
     received_qty?: number;
 }
@@ -151,10 +154,13 @@ export default function PrintRunsPage() {
             const runIds = (runsData || []).map(r => r.id);
             let jobsData: any[] = [];
             if (runIds.length > 0) {
-                const { data: jd } = await supabase
+                const { data: jd, error: jdErr } = await supabase
                     .from('print_run_jobs')
-                    .select('*, jobs(job_number)')
+                    .select('*, jobs(job_number, product_category)')
                     .in('print_run_id', runIds);
+                // Without this, a failure here silently produced print runs with
+                // no jobs on them — a sheet that looks empty rather than broken.
+                if (jdErr) throw jdErr;
                 jobsData = jd || [];
             }
 
@@ -189,6 +195,8 @@ export default function PrintRunsPage() {
                     .map(j => ({
                         ...j,
                         job_number: j.jobs?.job_number || j.job_id?.slice(0, 8),
+                        // Snapshot first, live job second — old runs predate the column.
+                        product_category: j.product_category || j.jobs?.product_category || null,
                     })),
             }));
 
@@ -461,7 +469,11 @@ export default function PrintRunsPage() {
                             >
                                 {/* Light tinted top strip */}
                                 <div className={`${statusConf.tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
-                                    <span className="text-[10px] font-mono text-muted-foreground">{run.print_run_number}</span>
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-[10px] font-mono text-muted-foreground">{run.print_run_number}</span>
+                                        {/* What this sheet actually is — labels, pouches, boxes. */}
+                                        <ProductBadge category={runProductCategory(run.jobs)} size="sm" />
+                                    </span>
                                     <div className="flex items-center gap-1">
                                         {isOverdue && (
                                             <span className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded font-bold uppercase">Overdue</span>
@@ -570,7 +582,10 @@ export default function PrintRunsPage() {
                     <div className="bg-white rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className={`${(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).tintBg} px-4 py-3 flex items-center justify-between rounded-t-lg sticky top-0 border-b border-border/50`}>
                             <div>
-                                <h2 className="text-foreground font-bold text-base">{viewRun.print_run_number}</h2>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-foreground font-bold text-base">{viewRun.print_run_number}</h2>
+                                    <ProductBadge category={runProductCategory(viewRun.jobs)} size="sm" />
+                                </div>
                                 <p className="text-muted-foreground text-xs">{viewRun.vendor_name || 'No vendor'}</p>
                             </div>
                             <button onClick={() => setViewRun(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
@@ -643,6 +658,7 @@ export default function PrintRunsPage() {
                                         <div key={job.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-md">
                                             <div className="flex items-center gap-3">
                                                 <span className="font-mono text-xs font-bold text-gray-900">{job.job_number}</span>
+                                                <ProductBadge category={job.product_category} />
                                                 <span className="text-xs text-gray-600">{job.client_name}</span>
                                                 <span className="text-xs text-gray-400">{job.item_name}</span>
                                             </div>

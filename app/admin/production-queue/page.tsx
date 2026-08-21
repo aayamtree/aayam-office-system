@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { Job, ProductionSummary } from '@/types/database';
 import { ShareToChat } from '@/components/ShareToChat';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 export default function ProductionQueuePage() {
 
@@ -50,9 +51,13 @@ export default function ProductionQueuePage() {
     const fetchData = async () => {
         try {
             // Fetch production summary from database
-            const { data: summaryData } = await supabase
+            const { data: summaryData, error: summaryErr } = await supabase
                 .rpc('get_production_summary');
 
+            // A dropped or renamed RPC 404s and used to leave the summary tiles
+            // showing their previous values forever. Throw into the catch below
+            // so the failure is at least reported rather than frozen on screen.
+            if (summaryErr) throw summaryErr;
             if (summaryData) {
                 setSummary(summaryData);
             }
@@ -360,7 +365,7 @@ export default function ProductionQueuePage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-900">{job.project_name}</td>
                                                 <td className="px-6 py-4 text-xs text-gray-600">
-                                                    {job.product_category || '-'}
+                                                    <ProductBadge category={job.product_category} size="sm" /> {!job.product_category && '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">
                                                     {(job.designer as any)?.full_name || 'Unassigned'}

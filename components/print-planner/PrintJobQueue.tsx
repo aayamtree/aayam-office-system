@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { Package, Layers, ChevronLeft, ChevronRight, ScanLine, AlertTriangle, CheckCircle2, X } from 'lucide-react';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 interface PendingJob {
     id: string;
@@ -152,18 +153,6 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
         return matchesFilter && matchesSearch;
     });
 
-    const getJobTypeColor = (type: string) => {
-        const colors: Record<string, string> = {
-            STICKER: 'bg-gray-900 text-white',
-            POUCH: 'bg-gray-700 text-white',
-            BOX: 'bg-gray-500 text-white',
-            BANNER: 'bg-gray-300 text-gray-900',
-            FLEX: 'bg-gray-200 text-gray-800',
-            VINYL: 'bg-gray-800 text-white',
-            LABEL: 'bg-gray-400 text-white',
-        };
-        return colors[type] || 'bg-gray-100 text-gray-700';
-    };
 
     // "Added" = already in the selected list (show green ✓, button disabled but distinct style)
     const isAdded = (job: PendingJob) => disabledJobIds.has(job.id);
@@ -346,12 +335,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                     {job.job_number}
                                 </span>
 
-                                {/* Category badge */}
-                                {job.product_category && (
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${getJobTypeColor(job.product_category.toUpperCase())}`}>
-                                        {job.product_category}
-                                    </span>
-                                )}
+                                {/* Category badge — same colours as every other board */}
+                                <ProductBadge category={job.product_category} />
 
                                 {/* Urgency dot */}
                                 {job.urgency && job.urgency !== 'normal' && (

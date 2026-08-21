@@ -22,6 +22,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // Stages after the design is done — job has moved to print/production.
 // The design-billing tag is a designer effort signal, so we hide it here.
@@ -1116,16 +1117,7 @@ export default function DesignerWorkspace() {
                         const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
                         return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
                       })()}
-                      {(() => {
-                        const catMap: Record<string, { label: string; bg: string; text: string }> = {
-                          'box': { label: '📦 BOX', bg: 'bg-amber-100', text: 'text-amber-700' },
-                          'pouch': { label: '👝 POUCH', bg: 'bg-rose-100', text: 'text-rose-700' },
-                          'label': { label: '🏷️ LABEL', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-                          'sticker': { label: '⭐ STICKER', bg: 'bg-pink-100', text: 'text-pink-700' },
-                        };
-                        const c = catMap[task.productCategory?.toLowerCase()];
-                        return c ? <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${c.bg} ${c.text}`}>{c.label}</span> : null;
-                      })()}
+                      <ProductBadge category={task.productCategory} />
                       {/* Design billing tag — hidden once job moves to print */}
                       {!PRINT_STAGES.includes(task.current_stage || '') && (
                         <DesignBillingBadge jobId={task.realId} value={task.designBilling} confirmed={task.designBillingConfirmed} readOnly />

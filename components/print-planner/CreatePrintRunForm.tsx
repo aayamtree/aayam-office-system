@@ -11,7 +11,8 @@ interface ConfiguredJob {
     job_number: string;
     project_name: string;
     client_name: string;
-    job_type: string;
+    job_type: string;                 // WORK type: Design + Printing / Print Only
+    product_category?: string | null; // PRODUCT type: Label / Pouch / Box
     quantity?: number;
     quantity_needed: number;
     ups_in_sheet: number;
@@ -222,7 +223,10 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             item_name: job.project_name,
             quantity_needed: job.quantity_needed,
             ups_in_sheet: job.ups_in_sheet,
-            job_type: job.job_type
+            job_type: job.job_type,
+            // Snapshot what the sheet IS, not just what kind of work it is —
+            // job_type only ever says "Design + Printing".
+            product_category: job.product_category || null,
         }));
 
         const { error: jobsError } = await supabase

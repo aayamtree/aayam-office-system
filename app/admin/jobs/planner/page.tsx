@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
 import { Job } from '@/types/database';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // Mock Workflows for Prototype
 const WORKFLOWS = {
@@ -129,7 +130,10 @@ export default function PrintPlannerPage() {
             >
                 <div className="flex justify-between items-start">
                     <div>
-                        <span className="font-mono text-xs font-bold text-gray-500">{job.job_number}</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs font-bold text-gray-500">{job.job_number}</span>
+                            <ProductBadge category={(job as any).product_category} />
+                        </div>
                         <h4 className="font-semibold text-gray-800 text-sm leading-tight">{job.project_name}</h4>
                         <p className="text-xs text-gray-500 mt-1">{job.client?.company || job.client?.name}</p>
                     </div>

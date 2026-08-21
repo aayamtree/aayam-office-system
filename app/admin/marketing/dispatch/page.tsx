@@ -4,6 +4,7 @@ import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { getStageName } from '@/lib/job-workflow';
 import { Truck, CheckCircle } from 'lucide-react';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 export default function MarketingDispatchPage() {
   const { profile, user } = useAuth();
@@ -46,7 +47,12 @@ export default function MarketingDispatchPage() {
             ) : myDispatchedJobs.map(job => (
               <tr key={job.id} className="hover:bg-gray-50">
                 <td className="p-4 font-medium">{job.client?.company}</td>
-                <td className="p-4">{job.project_name}</td>
+                <td className="p-4">
+                  <span className="flex items-center gap-2">
+                    <span>{job.project_name}</span>
+                    <ProductBadge category={(job as any).product_category} />
+                  </span>
+                </td>
                 <td className="p-4">
                   <span className={`px-2 py-1 rounded-md text-xs font-bold capitalize 
                     ${job.current_stage === 'delivered' ? 'bg-gray-100 text-gray-900' : 'bg-muted text-foreground'}`}>

@@ -44,6 +44,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 import LoadError from '@/components/LoadError';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // ✅ ALL DROPDOWNS NOW DATABASE-DRIVEN - NO HARDCODED VALUES!
 
@@ -98,9 +99,7 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
         <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
         {(job as any).product_category && (
           <div className="flex items-center gap-1 mb-1.5 flex-wrap">
-            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-900 text-white tracking-wide">
-              {(job as any).product_category}
-            </span>
+            <ProductBadge category={(job as any).product_category} size="sm" />
           </div>
         )}
         <div className="flex items-center gap-1.5 mb-2">

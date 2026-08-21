@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { getStageName } from '@/lib/job-workflow';
+import ProductBadge from '@/components/shared/ProductBadge';
 import {
   CheckCircle2, Clock, AlertTriangle, Briefcase, ArrowRight,
   Loader2, Star, Users, Layers, Calendar, X,
@@ -128,7 +129,7 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
           .from('jobs')
           .select(`
             id, job_number, project_name, client_deadline, priority, current_stage,
-            job_type, quantity, total_amount, amount_received, payment_status,
+            job_type, product_category, quantity, total_amount, amount_received, payment_status,
             notes, order_date, client_approval, approval_date,
             print_ready, qc_status, completed_date,
             hold_reason, is_on_hold, file_version,
@@ -190,6 +191,7 @@ function JobDetailModal({ jobId, onClose }: { jobId: string; onClose: () => void
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-xs font-bold text-gray-500 tracking-wide">{job.job_number}</span>
+                    <ProductBadge category={(job as any).product_category} />
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase border ${sc.bg} ${sc.text} ${sc.border}`}>
                       {getStageName(job.current_stage)}
                     </span>

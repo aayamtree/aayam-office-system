@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getWorkflowForJobType, getStageName } from '@/lib/job-workflow';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // Friendly, customer-facing icons per stage id
 const STAGE_ICONS: Record<string, string> = {
@@ -16,7 +17,7 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
     // Fetch minimal job info for public display
     const { data: job, error } = await supabase
         .from('jobs')
-        .select('job_number, project_name, current_stage, client_deadline, updated_at, order_date, job_type')
+        .select('job_number, project_name, current_stage, client_deadline, updated_at, order_date, job_type, product_category')
         .eq('job_number', jobNumber)
         .single();
 
@@ -80,8 +81,11 @@ export default async function TrackJobPage({ params }: { params: Promise<{ jobNu
                 {/* Order Info Card */}
                 <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="font-mono text-sm px-3 py-1 bg-gray-100 rounded-md text-gray-700 font-medium">
-                            {job.job_number}
+                        <span className="flex items-center gap-2">
+                            <span className="font-mono text-sm px-3 py-1 bg-gray-100 rounded-md text-gray-700 font-medium">
+                                {job.job_number}
+                            </span>
+                            <ProductBadge category={(job as any).product_category} size="sm" />
                         </span>
                         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${job.current_stage === 'delivered' ? 'bg-green-100 text-green-700' :
                             job.current_stage === 'dispatched' ? 'bg-cyan-100 text-cyan-700' :

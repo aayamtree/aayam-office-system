@@ -576,6 +576,7 @@ export default function PrintPlannerPage() {
                                 project_name: j.project_name,
                                 client_name: j.client_name,
                                 job_type: j.job_type,
+                                product_category: j.product_category || null,
                                 quantity: j.quantity,
                                 quantity_needed: j.quantity_needed,
                                 ups_in_sheet: j.ups_in_sheet,

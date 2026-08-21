@@ -13,6 +13,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { Package } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
 import { logActivity } from '@/lib/logger';
+import ProductBadge from '@/components/shared/ProductBadge';
 
 // Fallback checkpoints if no DB checklists found
 const FALLBACK_PRE_PRINT = [
@@ -424,11 +425,7 @@ export default function QCCheckPage() {
                 <span className={`px-1.5 py-0.5 text-xs rounded-md border font-medium ${getStatusColor(job.current_stage)}`}>
                   {getStatusLabel(job.current_stage)}
                 </span>
-                {job.product_category && (
-                  <span className="px-1.5 py-0.5 text-xs rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-medium">
-                    {job.product_category}
-                  </span>
-                )}
+                <ProductBadge category={job.product_category} size="sm" />
               </div>
 
               {/* Middle: info */}
@@ -475,11 +472,10 @@ export default function QCCheckPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">{selectedJob.project_name}</p>
-                {selectedJob.product_category && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Product: {selectedJob.product_category} • Type: {selectedJob.job_type || 'N/A'}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <ProductBadge category={selectedJob.product_category} size="sm" />
+                  {selectedJob.job_type && <span className="text-xs text-gray-400">{selectedJob.job_type}</span>}
+                </div>
               </div>
               <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
                 <XCircle className="w-5 h-5 text-gray-500" />
