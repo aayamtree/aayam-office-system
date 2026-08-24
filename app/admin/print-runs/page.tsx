@@ -31,7 +31,7 @@ interface PrintRunJob {
 interface PrintRun {
     id: string;
     print_run_number: string;
-    status: 'planned' | 'at_printer' | 'printing_done' | 'dispatched';
+    status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched';
     notes: string | null;
     deadline: string | null;
     total_amount: number | null;
@@ -56,6 +56,9 @@ interface PrintRun {
     eway_bill_number: string | null;
     dispatch_date: string | null;
     invoice_reference: string | null;
+    // Dispatch paperwork, kept for later reference (GST / audit).
+    invoice_doc_url: string | null;
+    eway_doc_url: string | null;
 
     // Jobs
     jobs: PrintRunJob[];
@@ -72,13 +75,15 @@ const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
     planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', borderColor: 'border-l-amber-400', tintBg: 'bg-amber-50/60', dot: 'bg-amber-500' },
     at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', dot: 'bg-orange-500' },
     printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', dot: 'bg-blue-500' },
+    qc: { label: 'In QC', icon: ClipboardCheck, color: 'bg-cyan-100 text-cyan-800', borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', dot: 'bg-cyan-500' },
     dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', dot: 'bg-green-500' },
 };
 
 const NEXT_STATUS: Record<string, string | null> = {
     planned: 'at_printer',
     at_printer: 'printing_done',
-    printing_done: null, // handled via delivery modal
+    printing_done: null, // handled via delivery modal (warehouse -> qc, direct -> dispatched)
+    qc: 'dispatched',    // handled via dispatch modal
     dispatched: null,
 };
 
@@ -107,6 +112,13 @@ export default function PrintRunsPage() {
     const [viewRun, setViewRun] = useState<PrintRun | null>(null);
     const [deliveryModal, setDeliveryModal] = useState<PrintRun | null>(null);
     const [dispatchModal, setDispatchModal] = useState<PrintRun | null>(null);
+    const [docsModal, setDocsModal] = useState<PrintRun | null>(null);
+
+    // Dispatch paperwork (invoice + e-way bill). Shared by the dispatch modal
+    // and the later "Upload Docs" modal, so both routes record the same thing.
+    const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+    const [ewayFile, setEwayFile] = useState<File | null>(null);
+    const [uploadingDocs, setUploadingDocs] = useState(false);
 
     // Delivery modal state
     const [deliveryMode, setDeliveryMode] = useState<'warehouse' | 'direct_to_client'>('warehouse');
@@ -140,7 +152,7 @@ export default function PrintRunsPage() {
                     sheet_size_label, pulling_multiple,
                     paper_qty, paper_rate, paper_gst_percent, paper_total, paper_payment_status,
                     delivery_mode, delivery_address, transporter_name, eway_bill_number,
-                    dispatch_date, invoice_reference,
+                    dispatch_date, invoice_reference, invoice_doc_url, eway_doc_url,
                     vendors!print_runs_vendor_id_fkey(name),
                     machines(name),
                     sheet_sizes(size),
@@ -190,6 +202,8 @@ export default function PrintRunsPage() {
                 eway_bill_number: r.eway_bill_number,
                 dispatch_date: r.dispatch_date,
                 invoice_reference: r.invoice_reference,
+                invoice_doc_url: r.invoice_doc_url,
+                eway_doc_url: r.eway_doc_url,
                 jobs: jobsData
                     .filter(j => j.print_run_id === r.id)
                     .map(j => ({
@@ -240,6 +254,22 @@ export default function PrintRunsPage() {
         }
     };
 
+    // ─── Dispatch paperwork upload ──────────────────────────
+    // Invoice + e-way bill live in the `attachments` bucket (same one the
+    // Dispatch screen already uses for delivery receipts), and the public URL
+    // is stored on the run so it can be pulled up months later for GST/audit.
+    const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway') => {
+        const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
+        const path = `print-runs/${runId}/${kind}-${Date.now()}.${ext}`;
+        const { error } = await supabase.storage.from('attachments').upload(path, file);
+        if (error) throw error;
+        return supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl || null;
+    };
+
+    // A dispatched run with paperwork still missing — the chase list.
+    const needsDocs = (r: PrintRun) =>
+        r.status === 'dispatched' && (!r.invoice_doc_url || !r.eway_doc_url);
+
     // ─── Delivery Mode Handler ──────────────────────────────
     const handleDeliverySubmit = async () => {
         if (!deliveryModal) return;
@@ -271,9 +301,11 @@ export default function PrintRunsPage() {
                 console.warn('Could not save remote QC record:', err);
             }
         } else {
-            // Warehouse path — set status; updateStatus() syncs linked jobs to
-            // quality_check (delivery_mode = warehouse is written in the same update).
-            await updateStatus(deliveryModal.id, 'printing_done', data);
+            // Warehouse path — the run moves to its OWN `qc` status. It used to be
+            // re-written as 'printing_done', i.e. the status it already had, so the
+            // card never changed and a warehouse run could never reach dispatch.
+            // updateStatus() then syncs the linked jobs to quality_check.
+            await updateStatus(deliveryModal.id, 'qc', data);
         }
         setDeliveryModal(null);
         setDeliveryAddress('');
@@ -287,16 +319,63 @@ export default function PrintRunsPage() {
     // ─── Dispatch Handler ───────────────────────────────────
     const handleDispatchSubmit = async () => {
         if (!dispatchModal) return;
-        await updateStatus(dispatchModal.id, 'dispatched', {
-            transporter_name: transporterName,
-            eway_bill_number: ewayBill,
-            invoice_reference: invoiceRef,
-            dispatch_date: dispatchDate,
-        });
-        setDispatchModal(null);
-        setTransporterName('');
-        setEwayBill('');
-        setInvoiceRef('');
+        setUploadingDocs(true);
+        try {
+            const extra: Record<string, any> = {
+                transporter_name: transporterName,
+                eway_bill_number: ewayBill,
+                invoice_reference: invoiceRef,
+                dispatch_date: dispatchDate,
+            };
+            // Files are optional here — they can be attached later from the card.
+            if (invoiceFile) extra.invoice_doc_url = await uploadDoc(dispatchModal.id, invoiceFile, 'invoice');
+            if (ewayFile) extra.eway_doc_url = await uploadDoc(dispatchModal.id, ewayFile, 'eway');
+            await updateStatus(dispatchModal.id, 'dispatched', extra);
+            setDispatchModal(null);
+            setTransporterName('');
+            setEwayBill('');
+            setInvoiceRef('');
+            setInvoiceFile(null);
+            setEwayFile(null);
+        } catch (err: any) {
+            toast.error('Could not upload documents: ' + (err.message || 'Unknown error'));
+        } finally {
+            setUploadingDocs(false);
+        }
+    };
+
+    // ─── Late paperwork (dispatched, docs arrive afterwards) ─
+    const openDocsModal = (run: PrintRun) => {
+        setInvoiceRef(run.invoice_reference || '');
+        setEwayBill(run.eway_bill_number || '');
+        setInvoiceFile(null);
+        setEwayFile(null);
+        setDocsModal(run);
+    };
+
+    const handleDocsSubmit = async () => {
+        if (!docsModal) return;
+        setUploadingDocs(true);
+        try {
+            const patch: Record<string, any> = {
+                invoice_reference: invoiceRef || null,
+                eway_bill_number: ewayBill || null,
+                updated_at: new Date().toISOString(),
+            };
+            if (invoiceFile) patch.invoice_doc_url = await uploadDoc(docsModal.id, invoiceFile, 'invoice');
+            if (ewayFile) patch.eway_doc_url = await uploadDoc(docsModal.id, ewayFile, 'eway');
+            const { error } = await supabase.from('print_runs').update(patch).eq('id', docsModal.id);
+            if (error) throw error;
+            toast.success('Documents saved');
+            setDocsModal(null);
+            setInvoiceFile(null);
+            setEwayFile(null);
+            await fetchRuns();
+        } catch (err: any) {
+            toast.error('Could not save documents: ' + (err.message || 'Unknown error'));
+        } finally {
+            setUploadingDocs(false);
+        }
     };
 
     const deleteRun = async (runId: string) => {
@@ -324,6 +403,14 @@ export default function PrintRunsPage() {
         if (run.status === 'printing_done') {
             // Show delivery mode modal
             setDeliveryModal(run);
+        } else if (run.status === 'qc') {
+            // QC cleared at the warehouse → capture the dispatch paperwork.
+            setTransporterName(run.transporter_name || '');
+            setEwayBill(run.eway_bill_number || '');
+            setInvoiceRef(run.invoice_reference || '');
+            setInvoiceFile(null);
+            setEwayFile(null);
+            setDispatchModal(run);
         } else {
             const next = NEXT_STATUS[run.status];
             if (next) updateStatus(run.id, next);
@@ -334,15 +421,19 @@ export default function PrintRunsPage() {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const DONE_PRINTING = ['printing_done', 'qc', 'dispatched'];
     const overdueCount = runs.filter(r =>
         r.deadline &&
         new Date(r.deadline) < today &&
-        !['printing_done'].includes(r.status)
+        !DONE_PRINTING.includes(r.status)
     ).length;
 
-    const filteredRuns = filter === 'all' ? runs : filter === 'overdue'
-        ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !['printing_done'].includes(r.status))
-        : runs.filter(r => r.status === filter);
+    const filteredRuns = filter === 'all' ? runs
+        : filter === 'overdue'
+            ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !DONE_PRINTING.includes(r.status))
+            : filter === 'docs_pending'
+                ? runs.filter(needsDocs)
+                : runs.filter(r => r.status === filter);
 
     // ?job=<id> — arrived from ⌘K's "where does this appear" list. A job isn't a
     // row here, it's a line inside a run, so highlight the RUN that carries it.
@@ -354,6 +445,8 @@ export default function PrintRunsPage() {
         planned: runs.filter(r => r.status === 'planned').length,
         at_printer: runs.filter(r => r.status === 'at_printer').length,
         printing_done: runs.filter(r => r.status === 'printing_done').length,
+        qc: runs.filter(r => r.status === 'qc').length,
+        docs_pending: runs.filter(needsDocs).length,
     };
 
     const formatDate = (d: string | null) => {
@@ -363,6 +456,7 @@ export default function PrintRunsPage() {
 
     const getNextLabel = (status: string) => {
         if (status === 'printing_done') return 'Delivery →';
+        if (status === 'qc') return 'Dispatch →';
         const next = NEXT_STATUS[status];
         if (!next) return null;
         return STATUS_CONFIG[next as keyof typeof STATUS_CONFIG]?.label + ' →';
@@ -395,7 +489,7 @@ export default function PrintRunsPage() {
             </div>
 
             {/* Stat Cards — Job Queue style (4 col) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
                 <button
                     onClick={() => setFilter(filter === 'planned' ? 'all' : 'planned')}
                     className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'planned'
@@ -433,6 +527,18 @@ export default function PrintRunsPage() {
                     <p className={`text-page-title ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>{counts.printing_done}</p>
                 </button>
                 <button
+                    onClick={() => setFilter(filter === 'qc' ? 'all' : 'qc')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'qc'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-cyan-50 border-cyan-200'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <ClipboardCheck className={`w-4 h-4 ${filter === 'qc' ? 'text-white' : 'text-cyan-700'}`} />
+                        <span className={`text-xs font-medium ${filter === 'qc' ? 'text-white' : 'text-cyan-700'}`}>In QC</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'qc' ? 'text-white' : 'text-cyan-800'}`}>{counts.qc}</p>
+                </button>
+                <button
                     onClick={() => setFilter(filter === 'overdue' ? 'all' : 'overdue')}
                     className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'overdue'
                         ? 'bg-gray-900 border-gray-800'
@@ -443,6 +549,18 @@ export default function PrintRunsPage() {
                         <span className={`text-xs font-medium ${filter === 'overdue' ? 'text-white' : 'text-red-600'}`}>Overdue</span>
                     </div>
                     <p className={`text-page-title ${filter === 'overdue' ? 'text-white' : 'text-red-700'}`}>{overdueCount}</p>
+                </button>
+                <button
+                    onClick={() => setFilter(filter === 'docs_pending' ? 'all' : 'docs_pending')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'docs_pending'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-amber-50 border-amber-200'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <FileText className={`w-4 h-4 ${filter === 'docs_pending' ? 'text-white' : 'text-amber-600'}`} />
+                        <span className={`text-xs font-medium ${filter === 'docs_pending' ? 'text-white' : 'text-amber-700'}`}>Docs Pending</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'docs_pending' ? 'text-white' : 'text-amber-700'}`}>{counts.docs_pending}</p>
                 </button>
             </div>
 
@@ -480,6 +598,9 @@ export default function PrintRunsPage() {
                                         )}
                                         {run.delivery_mode === 'direct_to_client' && (
                                             <span className="text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded font-medium">Direct</span>
+                                        )}
+                                        {needsDocs(run) && (
+                                            <span className="text-[9px] px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-bold uppercase">Docs Pending</span>
                                         )}
                                         <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase ${statusConf.color}`}>
                                             {statusConf.label}
@@ -561,10 +682,21 @@ export default function PrintRunsPage() {
                                                 {nextLabel}
                                             </button>
                                         )}
-                                        {run.status === 'dispatched' && (
+                                        {run.status === 'dispatched' && !needsDocs(run) && (
                                             <span className="flex items-center gap-1 px-2.5 py-1.5 bg-green-50 text-green-700 rounded text-xs font-medium border border-green-200 opacity-80">
                                                 <CheckCircle className="w-3 h-3" /> Done
                                             </span>
+                                        )}
+                                        {needsDocs(run) && (
+                                            <button
+                                                onClick={() => openDocsModal(run)}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-xs font-medium hover:bg-amber-100 transition-colors"
+                                            >
+                                                <FileText className="w-3 h-3" />
+                                                {!run.invoice_doc_url && !run.eway_doc_url
+                                                    ? 'Upload Docs'
+                                                    : !run.invoice_doc_url ? 'Add Invoice' : 'Add E-way Bill'}
+                                            </button>
                                         )}
                                     </div>
                                 </div>
@@ -637,6 +769,29 @@ export default function PrintRunsPage() {
                                         {viewRun.invoice_reference && <div><span className="text-gray-400">Invoice:</span> <strong>{viewRun.invoice_reference}</strong></div>}
                                         {viewRun.dispatch_date && <div><span className="text-gray-400">Dispatched:</span> <strong>{formatDate(viewRun.dispatch_date)}</strong></div>}
                                     </div>
+                                    {viewRun.status === 'dispatched' && (
+                                        <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t border-gray-200">
+                                            {viewRun.invoice_doc_url ? (
+                                                <a href={viewRun.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded hover:border-gray-400">
+                                                    <FileText size={11} /> Invoice
+                                                </a>
+                                            ) : (
+                                                <span className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">Invoice missing</span>
+                                            )}
+                                            {viewRun.eway_doc_url ? (
+                                                <a href={viewRun.eway_doc_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded hover:border-gray-400">
+                                                    <FileText size={11} /> E-way Bill
+                                                </a>
+                                            ) : (
+                                                <span className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">E-way bill missing</span>
+                                            )}
+                                            {needsDocs(viewRun) && (
+                                                <button onClick={() => { setViewRun(null); openDocsModal(viewRun); }} className="ml-auto text-xs font-bold px-2.5 py-1 bg-gray-900 text-white rounded hover:bg-gray-800">
+                                                    Upload
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -859,6 +1014,29 @@ export default function PrintRunsPage() {
                                 </div>
                             </div>
 
+                            {/* Paperwork — stored for later reference (GST / audit) */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice File</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        onChange={e => setInvoiceFile(e.target.files?.[0] || null)}
+                                        className="w-full text-[11px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:bg-gray-100 file:text-gray-700"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill File</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        onChange={e => setEwayFile(e.target.files?.[0] || null)}
+                                        className="w-full text-[11px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:bg-gray-100 file:text-gray-700"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-gray-400 -mt-2">Optional now — the card keeps a Docs Pending flag until both are attached.</p>
+
                             {/* Dispatch Date */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Dispatch Date</label>
@@ -874,9 +1052,103 @@ export default function PrintRunsPage() {
                                 <button onClick={() => setDispatchModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
                                 <button
                                     onClick={handleDispatchSubmit}
-                                    className="px-6 py-2 bg-green-600 text-white text-sm font-bold rounded-md hover:bg-green-700"
+                                    disabled={uploadingDocs}
+                                    className="px-6 py-2 bg-green-600 text-white text-sm font-bold rounded-md hover:bg-green-700 disabled:opacity-50"
                                 >
-                                    <Truck className="inline w-4 h-4 mr-1" /> Dispatch →
+                                    <Truck className="inline w-4 h-4 mr-1" /> {uploadingDocs ? 'Saving...' : 'Dispatch →'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════ */}
+            {/* DOCUMENTS MODAL (paperwork that arrives after dispatch) */}
+            {/* ═══════════════════════════════════════════════════════ */}
+            {docsModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDocsModal(null)}>
+                    <div className="bg-white rounded-lg w-full max-w-md" onClick={e => e.stopPropagation()}>
+                        <div className="bg-amber-500 px-4 py-3 rounded-t-lg">
+                            <h2 className="text-white font-bold text-base">Dispatch Documents</h2>
+                            <p className="text-white/80 text-xs">
+                                {docsModal.print_run_number} · {docsModal.delivery_mode === 'direct_to_client' ? 'dispatched direct from printer' : 'dispatched from warehouse'}
+                            </p>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice Ref.</label>
+                                    <input
+                                        type="text"
+                                        value={invoiceRef}
+                                        onChange={e => setInvoiceRef(e.target.value)}
+                                        placeholder="INV-XXXXX"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-amber-300 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill No.</label>
+                                    <input
+                                        type="text"
+                                        value={ewayBill}
+                                        onChange={e => setEwayBill(e.target.value)}
+                                        placeholder="EWB-XXXXX"
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-amber-300 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice File</label>
+                                {docsModal.invoice_doc_url ? (
+                                    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
+                                        <a href={docsModal.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex items-center gap-1">
+                                            <FileText size={12} /> Already uploaded — open
+                                        </a>
+                                        <span className="text-[10px] text-green-600">✓</span>
+                                    </div>
+                                ) : (
+                                    <input
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        onChange={e => setInvoiceFile(e.target.files?.[0] || null)}
+                                        className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700"
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill File</label>
+                                {docsModal.eway_doc_url ? (
+                                    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
+                                        <a href={docsModal.eway_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex items-center gap-1">
+                                            <FileText size={12} /> Already uploaded — open
+                                        </a>
+                                        <span className="text-[10px] text-green-600">✓</span>
+                                    </div>
+                                ) : (
+                                    <input
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        onChange={e => setEwayFile(e.target.files?.[0] || null)}
+                                        className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-gray-100 file:text-gray-700"
+                                    />
+                                )}
+                            </div>
+
+                            <p className="text-[11px] text-gray-400">
+                                Attach whichever has arrived — the run keeps its Docs Pending flag until both are in.
+                            </p>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button onClick={() => setDocsModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
+                                <button
+                                    onClick={handleDocsSubmit}
+                                    disabled={uploadingDocs}
+                                    className="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-md hover:bg-gray-800 disabled:opacity-50"
+                                >
+                                    {uploadingDocs ? 'Saving...' : 'Save Documents'}
                                 </button>
                             </div>
                         </div>

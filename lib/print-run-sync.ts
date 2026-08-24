@@ -15,7 +15,8 @@
 // Mapping (handled server-side):
 //   planned        → (no change)
 //   at_printer      → printing            (sent to printer = In Print Process)
-//   printing_done   → material_received   (↳ warehouse delivery → quality_check)
+//   printing_done   → material_received
+//   qc              → quality_check       (warehouse delivery, awaiting dispatch QC)
 //   dispatched      → dispatched
 // =============================================================================
 

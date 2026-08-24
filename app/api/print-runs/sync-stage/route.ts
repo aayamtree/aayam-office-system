@@ -22,6 +22,7 @@ const PRINT_RUN_STAGE_MAP: Record<string, string | null> = {
     planned: null,                 // run still being assembled — leave jobs alone
     at_printer: 'printing',         // sent to printer → In Print Process
     printing_done: 'material_received',
+    qc: 'quality_check',            // warehouse delivery chosen → dispatch team QC
     dispatched: 'dispatched',
 };
 
@@ -73,6 +74,9 @@ export async function POST(request: NextRequest) {
     if (runErr || !run) return NextResponse.json({ error: 'Print run not found' }, { status: 404 });
 
     let targetStage = PRINT_RUN_STAGE_MAP[run.status] ?? null;
+    // Legacy rows: before the `qc` status existed, a warehouse delivery was left
+    // sitting on 'printing_done'. Keep honouring that shape for anything not yet
+    // migrated so an old run still lands its jobs in QC rather than the warehouse.
     if (run.status === 'printing_done' && run.delivery_mode === 'warehouse') {
         targetStage = 'quality_check';
     }
