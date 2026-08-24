@@ -1231,6 +1231,10 @@ export interface PrintRun extends BaseEntity {
   eway_bill_number?: string;
   dispatch_date?: string;
   invoice_reference?: string;
+  /** Uploaded invoice file (attachments bucket) — kept for GST / audit reference. */
+  invoice_doc_url?: string;
+  /** Uploaded e-way bill file (attachments bucket) — kept for GST / audit reference. */
+  eway_doc_url?: string;
 
   // QC
   qc_checklist?: Record<string, boolean>;

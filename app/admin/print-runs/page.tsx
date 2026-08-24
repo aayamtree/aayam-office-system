@@ -236,7 +236,10 @@ export default function PrintRunsPage() {
     useEffect(() => { fetchRuns(); fetchTransporters(); }, [fetchRuns]);
 
     // ─── Status Update ─────────────────────────────────────
-    const updateStatus = async (runId: string, newStatus: string, extraData?: Record<string, any>) => {
+    // Returns true only if the run actually moved — callers must not close their
+    // modal or clear their form on a false, or the operator loses their input and
+    // never learns the write failed.
+    const updateStatus = async (runId: string, newStatus: string, extraData?: Record<string, any>): Promise<boolean> => {
         setUpdating(runId);
         try {
             const { error } = await supabase
@@ -245,10 +248,15 @@ export default function PrintRunsPage() {
                 .eq('id', runId);
             if (error) throw error;
             // Keep the Jobs board in sync: push this run's status onto its jobs.
-            await syncRunJobsToStage(runId);
+            // A DB trigger (fn_sync_print_run_to_jobs) does this too, so a false
+            // here is a warning rather than a failure — but say so, don't hide it.
+            const synced = await syncRunJobsToStage(runId);
+            if (!synced) toast.warning('Run updated, but the job board may be stale — refresh to check.');
             await fetchRuns();
+            return true;
         } catch (err: any) {
             toast.error('Failed to update status: ' + (err.message || 'Unknown error'));
+            return false;
         } finally {
             setUpdating(null);
         }
@@ -259,7 +267,9 @@ export default function PrintRunsPage() {
     // Dispatch screen already uses for delivery receipts), and the public URL
     // is stored on the run so it can be pulled up months later for GST/audit.
     const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway') => {
-        const ext = (file.name.split('.').pop() || 'pdf').toLowerCase();
+        // "invoice" (no dot) would otherwise make the extension "invoice".
+        const dot = file.name.lastIndexOf('.');
+        const ext = (dot > 0 ? file.name.slice(dot + 1) : 'pdf').toLowerCase();
         const path = `print-runs/${runId}/${kind}-${Date.now()}.${ext}`;
         const { error } = await supabase.storage.from('attachments').upload(path, file);
         if (error) throw error;
@@ -269,6 +279,17 @@ export default function PrintRunsPage() {
     // A dispatched run with paperwork still missing — the chase list.
     const needsDocs = (r: PrintRun) =>
         r.status === 'dispatched' && (!r.invoice_doc_url || !r.eway_doc_url);
+
+    // Cancelling used to leave deliveryMode / address / skip-reason set, so the
+    // NEXT run opened in this modal inherited them — one Cancel on run A could
+    // send run B straight past QC with run A's address and waiver text.
+    const closeDeliveryModal = () => {
+        setDeliveryModal(null);
+        setDeliveryAddress('');
+        setDeliveryMode('warehouse');
+        setDirectPhotoUrl('');
+        setDirectSkipReason('');
+    };
 
     // ─── Delivery Mode Handler ──────────────────────────────
     const handleDeliverySubmit = async () => {
@@ -282,11 +303,14 @@ export default function PrintRunsPage() {
                 return;
             }
             data.delivery_address = deliveryAddress;
-            await updateStatus(deliveryModal.id, 'dispatched', data);
+            data.dispatch_date = new Date().toISOString().split('T')[0];
+            const ok = await updateStatus(deliveryModal.id, 'dispatched', data);
+            if (!ok) return; // keep the modal open with the operator's input intact
 
-            // Save remote QC record (photo + waiver)
+            // Save remote QC record (photo + waiver). This is the ONLY trace that
+            // physical QC was waived, so a silent failure here is not acceptable.
             try {
-                await supabase.from('qc_records').insert({
+                const { error: qcErr } = await supabase.from('qc_records').insert({
                     print_run_id: deliveryModal.id,
                     qc_type: 'remote',
                     checklist: {},
@@ -297,21 +321,21 @@ export default function PrintRunsPage() {
                     performed_by: profile?.id || null,
                     performed_by_name: profile?.full_name || 'Unknown',
                 });
-            } catch (err) {
-                console.warn('Could not save remote QC record:', err);
+                if (qcErr) throw qcErr;
+            } catch (err: any) {
+                // Supabase returns { error } rather than throwing, so this used to
+                // pass silently and the promised audit record never existed.
+                toast.warning('Dispatched, but the QC-waiver record did not save: ' + (err.message || 'Unknown error'));
             }
         } else {
             // Warehouse path — the run moves to its OWN `qc` status. It used to be
             // re-written as 'printing_done', i.e. the status it already had, so the
             // card never changed and a warehouse run could never reach dispatch.
             // updateStatus() then syncs the linked jobs to quality_check.
-            await updateStatus(deliveryModal.id, 'qc', data);
+            const ok = await updateStatus(deliveryModal.id, 'qc', data);
+            if (!ok) return;
         }
-        setDeliveryModal(null);
-        setDeliveryAddress('');
-        setDeliveryMode('warehouse');
-        setDirectPhotoUrl('');
-        setDirectSkipReason('');
+        closeDeliveryModal();
     };
 
 
@@ -330,7 +354,10 @@ export default function PrintRunsPage() {
             // Files are optional here — they can be attached later from the card.
             if (invoiceFile) extra.invoice_doc_url = await uploadDoc(dispatchModal.id, invoiceFile, 'invoice');
             if (ewayFile) extra.eway_doc_url = await uploadDoc(dispatchModal.id, ewayFile, 'eway');
-            await updateStatus(dispatchModal.id, 'dispatched', extra);
+            const ok = await updateStatus(dispatchModal.id, 'dispatched', extra);
+            // On a failed write the files are already in storage; keep the modal
+            // open so the operator isn't asked to re-key and re-attach everything.
+            if (!ok) return;
             setDispatchModal(null);
             setTransporterName('');
             setEwayBill('');
@@ -408,6 +435,7 @@ export default function PrintRunsPage() {
             setTransporterName(run.transporter_name || '');
             setEwayBill(run.eway_bill_number || '');
             setInvoiceRef(run.invoice_reference || '');
+            setDispatchDate(run.dispatch_date || new Date().toISOString().split('T')[0]);
             setInvoiceFile(null);
             setEwayFile(null);
             setDispatchModal(run);
@@ -576,7 +604,7 @@ export default function PrintRunsPage() {
                     {filteredRuns.map(run => {
                         const statusConf = STATUS_CONFIG[run.status] || DEFAULT_STATUS;
                         const isUpdating = updating === run.id;
-                        const isOverdue = run.deadline && new Date(run.deadline) < new Date() && run.status !== 'dispatched';
+                        const isOverdue = run.deadline && new Date(run.deadline) < new Date() && !DONE_PRINTING.includes(run.status);
                         const nextLabel = getNextLabel(run.status);
 
                         return (
@@ -858,7 +886,7 @@ export default function PrintRunsPage() {
             {/* DELIVERY MODE MODAL (after printing_done)             */}
             {/* ═══════════════════════════════════════════════════════ */}
             {deliveryModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDeliveryModal(null)}>
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeDeliveryModal}>
                     <div className="bg-white rounded-lg w-full max-w-md" onClick={e => e.stopPropagation()}>
                         <div className="bg-blue-600 px-4 py-3 rounded-t-lg">
                             <h2 className="text-white font-bold text-base">Printing Done — Delivery Mode</h2>
@@ -939,7 +967,7 @@ export default function PrintRunsPage() {
                             )}
 
                             <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={() => setDeliveryModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
+                                <button onClick={closeDeliveryModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
                                 <button
                                     onClick={handleDeliverySubmit}
                                     className="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-md hover:bg-gray-800"

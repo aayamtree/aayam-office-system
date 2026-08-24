@@ -18,6 +18,19 @@ import { createServerSupabase } from '@/lib/supabase-server';
 // =============================================================================
 
 // Print run status → the job stage it implies on the board.
+// Mirrors fn_print_run_stage_rank() in the database. A job that has already
+// moved further down the pipeline must never be dragged back — re-syncing a run
+// that is in `qc` would otherwise yank jobs the dispatch team already marked
+// `ready` back into the QC queue.
+const STAGE_RANK: Record<string, number> = {
+    new: 0, designing: 1, approval: 2, pre_print_qc: 3, print_file_ready: 4,
+    file_sent_client: 5, file_received: 6, file_check: 7, ready_to_print: 8,
+    printing: 9, material_received: 10, quality_check: 11, ready: 12,
+    dispatched: 13, delivered: 14, cancelled: 15,
+};
+const rank = (stage: string | null | undefined) =>
+    stage && stage in STAGE_RANK ? STAGE_RANK[stage] : -1;
+
 const PRINT_RUN_STAGE_MAP: Record<string, string | null> = {
     planned: null,                 // run still being assembled — leave jobs alone
     at_printer: 'printing',         // sent to printer → In Print Process
@@ -89,11 +102,24 @@ export async function POST(request: NextRequest) {
     const jobIds = (rows || []).map((r: any) => r.job_id).filter(Boolean);
     if (jobIds.length === 0) return NextResponse.json({ updated: [], stage: targetStage });
 
+    // Only move jobs that are BEHIND the target stage.
+    const { data: current } = await db
+        .from('jobs')
+        .select('id, current_stage')
+        .in('id', jobIds);
+    const targetRank = rank(targetStage);
+    const toMove = (current || [])
+        .filter((j: any) => rank(j.current_stage) < targetRank)
+        .map((j: any) => j.id);
+    if (toMove.length === 0) {
+        return NextResponse.json({ updated: [], skipped: jobIds, stage: targetStage });
+    }
+
     const { error: updErr } = await db
         .from('jobs')
         .update({ current_stage: targetStage, updated_at: new Date().toISOString() })
-        .in('id', jobIds);
+        .in('id', toMove);
     if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
 
-    return NextResponse.json({ updated: jobIds, stage: targetStage });
+    return NextResponse.json({ updated: toMove, stage: targetStage });
 }

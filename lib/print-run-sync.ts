@@ -24,16 +24,25 @@
  * Push a print run's current status onto every job linked to it.
  * Call AFTER updating the print_runs row (or after adding jobs).
  */
-export async function syncRunJobsToStage(printRunId: string): Promise<void> {
-    if (!printRunId) return;
+export async function syncRunJobsToStage(printRunId: string): Promise<boolean> {
+    if (!printRunId) return false;
     try {
-        await fetch('/api/print-runs/sync-stage', {
+        const res = await fetch('/api/print-runs/sync-stage', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'sync', printRunId }),
         });
+        // fetch() only rejects on a network-level failure, so a 401 from a lapsed
+        // session used to look exactly like success — the run's card moved on
+        // while its jobs stayed put. Report the status back to the caller.
+        if (!res.ok) {
+            console.warn('Stage sync rejected:', res.status, await res.text().catch(() => ''));
+            return false;
+        }
+        return true;
     } catch (err) {
         console.warn('Stage sync failed:', err);
+        return false;
     }
 }
 
