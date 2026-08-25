@@ -998,7 +998,7 @@ export default function PrintRunsPage() {
                                                             {new Date(h.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                                             {h.changed_by_name ? ` · ${h.changed_by_name}` : ''}
                                                         </p>
-                                                        {h.reason && <p className="text-[10px] text-amber-700 mt-0.5 italic">"{h.reason}"</p>}
+                                                        {h.reason && <p className="text-[10px] text-amber-700 mt-0.5 italic">&ldquo;{h.reason}&rdquo;</p>}
                                                     </div>
                                                 </div>
                                             );
