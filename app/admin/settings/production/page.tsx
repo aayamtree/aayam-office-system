@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/lib/toast';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 import {
     Plus, Trash2, Save, X, Edit2, Check, AlertCircle,
     ChevronDown, ToggleLeft, Type, Hash, AlignLeft, List
@@ -30,23 +30,42 @@ const ITEM_TYPES: { id: ChecklistItemType; label: string; icon: React.ReactNode;
     { id: 'dropdown', label: 'Dropdown', icon: <List size={14} />, desc: 'Select from options' },
 ];
 
-// Normalise legacy string[] → ChecklistItem[]
-function normalizeItems(raw: any[]): ChecklistItem[] {
-    return raw.map(i =>
-        typeof i === 'string'
-            ? { label: i, type: 'checkbox' as ChecklistItemType, required: false }
-            : i
-    );
+// Normalise legacy string[] → ChecklistItem[].
+//
+// Takes `unknown` rather than `any[]` on purpose. `items` is a jsonb column, so
+// the database is free to hand back an object, a string, or null — and the old
+// signature was a promise the caller could not keep. A `.map is not a function`
+// thrown here would take the whole page down; anything that is not an array of
+// usable items is treated as no items instead.
+function normalizeItems(raw: unknown): ChecklistItem[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .map(i =>
+            typeof i === 'string'
+                ? { label: i, type: 'checkbox' as ChecklistItemType, required: false }
+                : i
+        )
+        .filter((i): i is ChecklistItem => !!i && typeof i === 'object' && typeof i.label === 'string');
+}
+
+/** Parse the jsonb `items` column without letting bad data reach React. */
+function parseItems(raw: unknown): ChecklistItem[] {
+    if (typeof raw === 'string') {
+        try {
+            return normalizeItems(JSON.parse(raw));
+        } catch {
+            return [];
+        }
+    }
+    return normalizeItems(raw);
 }
 
 const blankItem = (): ChecklistItem => ({ label: '', type: 'checkbox', required: false, placeholder: '', options: [] });
 
 export default function ProductionSettings() {
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = createAuditedBrowserClient();
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [checklists, setChecklists] = useState<any[]>([]);
     const confirm = useConfirm();
 
@@ -59,19 +78,26 @@ export default function ProductionSettings() {
 
     const fetchChecklists = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         const { data, error } = await supabase
             .from('job_checklists')
             .select('*')
             .eq('category', activeCategory)
             .order('job_type');
-        if (error) console.error('Error fetching checklists:', error);
-        if (data) {
-            const parsed = data.map(d => ({
-                ...d,
-                items: normalizeItems(typeof d.items === 'string' ? JSON.parse(d.items) : (d.items || []))
-            }));
-            setChecklists(parsed);
+
+        // A failed query used to go to console.error and nothing else, so the
+        // page fell through to the "No Checklists Found" empty state. That makes
+        // a broken query look exactly like a correctly-empty table — which is
+        // how a real fault can sit here unnoticed for days. Show the error.
+        if (error) {
+            console.error('Error fetching checklists:', error);
+            setLoadError(error.message);
+            setChecklists([]);
+            setLoading(false);
+            return;
         }
+
+        setChecklists((data || []).map(d => ({ ...d, items: parseItems(d.items) })));
         setLoading(false);
     }, [activeCategory, supabase]);
 
@@ -80,7 +106,7 @@ export default function ProductionSettings() {
     // ── Editing helpers ──
     const handleStartEdit = (checklist: any) => {
         setEditingId(checklist.id);
-        setEditItems(normalizeItems(checklist.items || []));
+        setEditItems(parseItems(checklist.items));
         setExpandedType(null);
     };
 
@@ -168,7 +194,19 @@ export default function ProductionSettings() {
     };
 
     const deleteChecklist = async (id: string) => {
-        const { confirmed } = await confirm({ title: 'Delete Checklist', message: 'This will remove the checklist for this Job Type.', variant: 'danger', confirmLabel: 'Delete' });
+        // job_checklists was emptied once before by accident and dispatch QC
+        // silently fell back to a hardcoded list. This one is worth typing for.
+        const { confirmed } = await confirm({
+            title: 'Delete this checklist?',
+            message: 'This removes the checklist template for a whole job type, for everyone.',
+            consequences: [
+                'Every future job of this type loses its QC and pre-print checks.',
+                'The floor will not be told \u2014 the checks simply stop appearing.',
+            ],
+            variant: 'danger',
+            confirmLabel: 'Delete checklist',
+            requireExactInput: 'DELETE',
+        });
         if (!confirmed) return;
         const { error } = await supabase.from('job_checklists').delete().eq('id', id);
         if (!error) fetchChecklists();
@@ -236,6 +274,15 @@ export default function ProductionSettings() {
                 {loading ? (
                     <div className="flex items-center justify-center py-20 text-gray-400 gap-3">
                         <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
+                    </div>
+                ) : loadError ? (
+                    /* Distinct from the empty state on purpose: "we could not load
+                       this" and "there is nothing here" need different reactions. */
+                    <div className="text-center py-16 bg-red-50 rounded-md border border-red-200">
+                        <AlertCircle className="mx-auto h-10 w-10 text-red-400 mb-3" />
+                        <h3 className="text-lg font-medium text-red-800">Could not load checklists</h3>
+                        <p className="text-sm text-red-600 mt-1 px-6 break-words">{loadError}</p>
+                        <button onClick={fetchChecklists} className="mt-4 text-red-700 font-bold hover:underline">Try again</button>
                     </div>
                 ) : checklists.length === 0 ? (
                     <div className="text-center py-20 bg-gray-50 rounded-md border border-dashed border-gray-300">
@@ -380,7 +427,10 @@ export default function ProductionSettings() {
                                                 {checklist.items?.length || 0} checks defined
                                             </p>
                                             <ul className="space-y-2">
-                                                {(checklist.items as ChecklistItem[]).map((item, idx) => {
+                                                {/* parseItems() guarantees an array, but the cast used to
+                                                    assume one straight off a jsonb column — one malformed
+                                                    row would have thrown here and blanked the page. */}
+                                                {(checklist.items as ChecklistItem[] || []).map((item, idx) => {
                                                     const ti = typeInfo(item.type);
                                                     return (
                                                         <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">

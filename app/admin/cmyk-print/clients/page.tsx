@@ -61,10 +61,19 @@ export default function CMYKClientsPage() {
   };
 
   const handleDelete = async (c: CMYKClient) => {
+    // The old message said "past bills stay" and stopped there, which read as
+    // reassurance. Bills do survive — but cmyk_client_payments CASCADES, so
+    // every receipt recorded against this client is destroyed.
     const { confirmed } = await confirm({
-      title: 'Delete CMYK Client',
-      message: `Delete "${c.company || c.name}"? Their past bills stay, but lose the client link.`,
-      variant: 'danger', confirmLabel: 'Delete',
+      title: `Delete ${c.company || c.name}?`,
+      message: 'Their past bills stay in the system but lose the client link.',
+      consequences: [
+        'Every payment recorded against this client is deleted, not just unlinked.',
+        'Their outstanding balance can no longer be worked out from the receipts.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete client',
+      requireExactInput: 'DELETE',
     });
     if (!confirmed) return;
     const res = await deleteCMYKClient(c.id);

@@ -89,15 +89,22 @@ export async function DELETE(
   const existing: any[] = Array.isArray((job as any)?.[field]) ? (job as any)[field] : [];
   let updatedFiles: any[];
   let removed: any = null;
+  // Both branches remove exactly ONE entry, and a request that matches nothing
+  // is an error rather than a silent no-op that answers 200 — the caller shows
+  // the person "file removed" off the back of that answer.
+  let at = -1;
   if (typeof body.index === 'number') {
-    removed = existing[body.index] ?? null;
-    updatedFiles = existing.filter((_, i) => i !== body.index);
+    at = body.index;
   } else if (body.url) {
-    removed = existing.find((f) => f?.url === body.url) ?? null;
-    updatedFiles = existing.filter((f) => f?.url !== body.url);
+    at = existing.findIndex((f) => f?.url === body.url);
   } else {
     return NextResponse.json({ error: 'index or url is required' }, { status: 400 });
   }
+  if (at < 0 || at >= existing.length) {
+    return NextResponse.json({ error: 'That file is no longer on this job — it may already have been removed.' }, { status: 404 });
+  }
+  removed = existing[at] ?? null;
+  updatedFiles = existing.filter((_, i) => i !== at);
 
   const { data, error } = await supabase
     .from('jobs')

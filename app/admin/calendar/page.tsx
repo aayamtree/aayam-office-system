@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useConfirm } from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/auth-context';
 import { useCalendarEvents } from '@/lib/hooks';
 import { fetchCalendarBusinessData, CalendarItem } from '@/lib/calendar-data';
@@ -24,6 +25,17 @@ import {
 } from 'date-fns';
 
 export default function CalendarPage() {
+    const confirm = useConfirm();
+
+    // Both EventCards deleted on the first click with no dialog at all.
+    const askThenDeleteEvent = async (event: any) => {
+        const { confirmed } = await confirm({
+            title: 'Delete this event?',
+            message: event?.title || 'This calendar event is removed permanently.',
+            variant: 'danger', confirmLabel: 'Delete event',
+        });
+        if (confirmed) deleteEvent(event.id);
+    };
     const { profile } = useAuth();
     const router = useRouter();
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -296,7 +308,7 @@ export default function CalendarPage() {
                         ) : (
                             <div className="space-y-2">
                                 {selectedDayEvents.map(event => (
-                                    <EventCard key={event.id} event={event} onToggle={() => toggleComplete(event.id, event.status !== 'completed')} onDelete={() => deleteEvent(event.id)} />
+                                    <EventCard key={event.id} event={event} onToggle={() => toggleComplete(event.id, event.status !== 'completed')} onDelete={() => askThenDeleteEvent(event)} />
                                 ))}
                                 {selectedDayItems.filter(item => item.type !== 'event').map(item => (
                                     <div key={item.id} onClick={() => item.link && router.push(item.link)} className={`px-3 py-2 rounded-md text-xs cursor-pointer transition-colors hover:opacity-80 ${item.color}`}>
@@ -443,7 +455,7 @@ export default function CalendarPage() {
                                     key={event.id}
                                     event={event}
                                     onToggle={() => toggleComplete(event.id, event.status !== 'completed')}
-                                    onDelete={() => deleteEvent(event.id)}
+                                    onDelete={() => askThenDeleteEvent(event)}
                                 />
                             ))}
 

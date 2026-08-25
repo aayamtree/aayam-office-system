@@ -114,10 +114,24 @@ export default function BankAccountsPage() {
   };
 
   const handleDelete = async (id: string, currentBalance: number) => {
-    const message = currentBalance !== 0
-      ? 'This account has a non-zero balance. Are you sure you want to delete it? This might affect your reports.'
-      : 'Are you sure you want to delete this bank account?';
-    const { confirmed } = await confirm({ title: 'Delete Bank Account', message, variant: 'danger', confirmLabel: 'Delete' });
+    // Deleting an account CASCADES every statement line on it. The old message
+    // said it "might affect your reports" and never mentioned transactions at
+    // all — one misclick could erase most of the imported banking history.
+    const { confirmed } = await confirm({
+      title: 'Delete bank account',
+      message: 'Every bank statement line imported against this account is deleted with it. This cannot be undone.',
+      consequences: [
+        'All imported transactions for this account are permanently removed.',
+        'Ledger entries created from those transactions are left behind with nothing behind them, so the accounts stop reconciling.',
+        currentBalance !== 0
+          ? `This account still holds a balance of Rs ${Math.abs(currentBalance).toLocaleString('en-IN')}.`
+          : 'This account currently shows a zero balance.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete account',
+      requireExactInput: 'DELETE',
+    });
     if (!confirmed) return;
     await deleteBankAccount(id);
   };

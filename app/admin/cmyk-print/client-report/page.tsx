@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ConfirmModal';
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -17,6 +18,7 @@ import { toast } from '@/lib/toast';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function ReportInner() {
+  const confirm = useConfirm();
   const params = useSearchParams();
   const { cmykClients, loading: clientsLoading } = useCMYKClients();
   const { sales, loading: salesLoading } = usePOSSales();
@@ -138,7 +140,23 @@ function ReportInner() {
     toast.success(`Recorded ${fmt(amt)} → ${opt?.label || ''}`);
   };
 
-  const handleDeletePayment = async (id: string) => {
+  const handleDeletePayment = async (id: string, p?: any) => {
+    // This was a bare Remove button with no dialog at all — one click and a
+    // receipt was gone, silently changing the client's outstanding balance.
+    const { confirmed } = await confirm({
+      title: 'Delete this payment?',
+      message: p
+        ? `${fmt(Number(p.amount) || 0)} received on ${new Date(p.paid_on || p.created_at).toLocaleDateString('en-IN')}.`
+        : 'This receipt is removed permanently.',
+      consequences: [
+        'The receipt is deleted, not reversed — there is no record it ever existed.',
+        'This client\u2019s outstanding balance changes immediately.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete payment',
+      requireExactInput: 'DELETE',
+    });
+    if (!confirmed) return;
     const { error } = await deletePayment(id);
     if (error) toast.error(error);
   };
@@ -299,7 +317,7 @@ function ReportInner() {
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="font-semibold text-green-700">{fmt(Number(p.amount))}</span>
-                    <button onClick={() => handleDeletePayment(p.id)} className="text-gray-300 hover:text-red-500" title="Remove">
+                    <button onClick={() => handleDeletePayment(p.id, p)} className="text-gray-300 hover:text-red-500" title="Remove">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </span>

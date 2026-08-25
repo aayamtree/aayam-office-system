@@ -62,7 +62,18 @@ export default function BankingPage() {
         setShowAccountForm(false);
     };
     const handleDelete = async (id: string) => {
-        const { confirmed } = await confirm({ title: 'Delete Account', message: 'Delete this bank account? All linked transactions will also be removed.', variant: 'danger', confirmLabel: 'Delete' });
+        const { confirmed } = await confirm({
+            title: 'Delete bank account',
+            message: 'Every bank statement line imported against this account is deleted with it. This cannot be undone.',
+            consequences: [
+                'All imported transactions for this account are permanently removed.',
+                'Ledger entries built from those transactions are left with nothing behind them.',
+                'The only copy left is the weekly backup, which can be up to seven days old.',
+            ],
+            variant: 'danger',
+            confirmLabel: 'Delete account',
+            requireExactInput: 'DELETE',
+        });
         if (!confirmed) return;
         const { error } = await deleteBankAccount(id);
         if (error) toast.error(error); else toast.success('Account deleted.');
@@ -70,6 +81,25 @@ export default function BankingPage() {
     const handleSetDefault = async (id: string) => {
         await setDefaultAccount(id);
         toast.success('Default account updated.');
+    };
+
+    // This was a bare Trash icon wired straight to the delete — one click and
+    // an imported statement line was gone, with no dialog of any kind.
+    const handleDeleteTxn = async (txn: any) => {
+        const { confirmed } = await confirm({
+            title: 'Delete this transaction?',
+            message: `${txn.description || 'This statement line'} — Rs ${Math.abs(Number(txn.amount) || 0).toLocaleString('en-IN')} on ${txn.transaction_date || 'an unknown date'}.`,
+            consequences: [
+                'The imported statement line is removed permanently.',
+                'Any ledger entry created from it is left behind with nothing behind it.',
+                'To get it back you would have to import the statement again.',
+            ],
+            variant: 'danger',
+            confirmLabel: 'Delete transaction',
+            requireExactInput: 'DELETE',
+        });
+        if (!confirmed) return;
+        await deleteTransaction(txn.id);
     };
     const {
         transactions: bankTxns,
@@ -565,7 +595,7 @@ export default function BankingPage() {
 
                                             {/* Delete */}
                                             <button
-                                                onClick={() => deleteTransaction(txn.id)}
+                                                onClick={() => handleDeleteTxn(txn)}
                                                 className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors"
                                                 title="Delete Permanently"
                                             >

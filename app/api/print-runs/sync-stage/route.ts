@@ -70,14 +70,21 @@ export async function POST(request: NextRequest) {
     // ── REVERT ───────────────────────────────────────────────────────────────
     if (action === 'revert') {
         const jobIds: string[] = (body.jobIds || []).filter(Boolean);
-        if (jobIds.length === 0) return NextResponse.json({ updated: [] });
-        const { error } = await db
+        if (jobIds.length === 0) return NextResponse.json({ updated: [], requested: 0, moved: 0 });
+        // Report what actually moved, not what was asked for. The
+        // `current_stage = printing` filter is deliberate — a job already carried
+        // further along is left alone — so the count can legitimately be lower
+        // than the request, and the caller needs to know that before telling
+        // somebody their jobs are back on Ready to Print.
+        const { data: moved, error } = await db
             .from('jobs')
             .update({ current_stage: 'ready_to_print', updated_at: new Date().toISOString() })
             .in('id', jobIds)
-            .eq('current_stage', 'printing');
+            .eq('current_stage', 'printing')
+            .select('id');
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-        return NextResponse.json({ updated: jobIds });
+        const movedIds = (moved || []).map((r: any) => r.id);
+        return NextResponse.json({ updated: movedIds, requested: jobIds.length, moved: movedIds.length });
     }
 
     // ── SYNC ─────────────────────────────────────────────────────────────────

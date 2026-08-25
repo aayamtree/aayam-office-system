@@ -314,15 +314,29 @@ export default function ClientsPage() {
 
   const handleDelete = async (id: string) => {
     const clientName = clients.find(c => c.id === id)?.name || 'Unknown';
-    const { confirmed } = await confirm({ title: 'Delete Client', message: 'Delete this client?', variant: 'danger', confirmLabel: 'Delete' });
+    const { confirmed } = await confirm({
+      title: `Delete ${clientName}?`,
+      message: 'The client record and everything attached only to them are removed for good.',
+      consequences: [
+        'Their brands, delivery addresses and follow-ups are deleted with them.',
+        'If they have any work or money on record \u2014 a quotation, order, job, invoice, payment, dispatch, design project or task, or a bank entry \u2014 the delete is refused. That history protects itself.',
+        'A client that was converted from a lead can never be deleted, because the lead still points at them. Mark them inactive instead.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete client',
+      requireExactInput: 'DELETE',
+    });
     if (confirmed) {
-      try {
-        await deleteClient(id);
-        logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'DELETE', module: 'CRM', entityId: id, entityName: clientName, description: `Deleted Client: ${clientName}` });
-      } catch (error) {
-        console.error('Error:', error);
-        toast.error('Error deleting');
+      // deleteClient RETURNS its error instead of throwing, so the old catch
+      // block never ran: a refused delete said nothing and still wrote
+      // "Deleted Client" into the activity log.
+      const result = await deleteClient(id);
+      if (result?.error) {
+        toast.error('Cannot delete client: ' + result.error);
+        return;
       }
+      toast.success(`${clientName} deleted`);
+      logActivity({ userId: profile?.id || '', userName: profile?.full_name || 'Unknown', action: 'DELETE', module: 'CRM', entityId: id, entityName: clientName, description: `Deleted Client: ${clientName}` });
     }
   };
 
@@ -440,12 +454,30 @@ export default function ClientsPage() {
   };
 
   const removeShippingAddress = async (addr: any) => {
+    // A saved address was deleted on the first click, and the error was
+    // swallowed, so a failure looked exactly like a success.
     if (isEditing && selectedClient && !String(addr.id).startsWith('tmp_')) {
+      const { confirmed } = await confirm({
+        title: 'Remove this delivery address?',
+        message: [addr.label, addr.address, addr.city].filter(Boolean).join(' \u00b7 ') || 'This address is removed permanently.',
+        variant: 'danger', confirmLabel: 'Remove address',
+      });
+      if (!confirmed) return;
+      // fetch only rejects on a network fault, so a 500 from the API used to
+      // fall straight through and the address vanished from the screen anyway.
       try {
-        await fetch(`/api/clients/${selectedClient.id}/shipping-addresses`, {
+        const res = await fetch(`/api/clients/${selectedClient.id}/shipping-addresses`, {
           method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ addressId: addr.id }),
         });
-      } catch { /* non-fatal */ }
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          toast.error('Could not remove the address: ' + (j.error || res.statusText));
+          return;
+        }
+      } catch (e: any) {
+        toast.error('Could not remove the address: ' + (e?.message || 'network error'));
+        return;
+      }
     }
     setShippingAddresses(prev => prev.filter(x => x.id !== addr.id));
   };
@@ -798,14 +830,30 @@ export default function ClientsPage() {
                         <button
                           type="button"
                           onClick={async () => {
+                            const { confirmed } = await confirm({
+                              title: `Remove the brand ${b.name}?`,
+                              message: 'The brand is deleted permanently. Products already tagged with it keep their record but lose the brand.',
+                              variant: 'danger', confirmLabel: 'Remove brand',
+                            });
+                            if (!confirmed) return;
+                            // Same shape as the address remove: a failed DELETE
+                            // that answers 500 does not throw, so the chip used
+                            // to disappear from a brand that is still there.
                             try {
-                              await fetch(`/api/clients/${selectedClient.id}/brands`, {
+                              const res = await fetch(`/api/clients/${selectedClient.id}/brands`, {
                                 method: 'DELETE',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ brandId: b.id, name: b.name }),
                               });
+                              if (!res.ok) {
+                                const j = await res.json().catch(() => ({}));
+                                toast.error('Could not remove the brand: ' + (j.error || res.statusText));
+                                return;
+                              }
                               setEditingClientBrands(prev => prev.filter(x => x.id !== b.id));
-                            } catch { /* non-fatal */ }
+                            } catch (e: any) {
+                              toast.error('Could not remove the brand: ' + (e?.message || 'network error'));
+                            }
                           }}
                           className="text-gray-400 hover:text-red-500 transition-colors ml-0.5"
                           aria-label={`Remove brand ${b.name}`}

@@ -122,11 +122,26 @@ export default function CMYKExpensesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Expense', message: 'Delete this expense record?', variant: 'danger', confirmLabel: 'Delete' });
-    if (confirmed) {
-      await deleteExpense(id);
-      toast.success('Expense deleted');
-    }
+    // Money out of the business. Once it is gone the day's totals change and
+    // nothing records that it was ever there.
+    const { confirmed } = await confirm({
+      title: 'Delete this expense?',
+      message: 'The expense is removed for good.',
+      consequences: [
+        'The day\u2019s and month\u2019s CMYK expense totals change to match \u2014 anything already reported from them no longer agrees.',
+        'No record is kept of the deleted entry, its amount, or who removed it.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete expense',
+      requireExactInput: 'DELETE',
+    });
+    if (!confirmed) return;
+    // The hook returns its error; announcing success without reading it told
+    // people a record was gone while it was still sitting there.
+    const result = await deleteExpense(id);
+    if (result?.error) toast.error('Could not delete the expense: ' + result.error);
+    else toast.success('Expense deleted');
   };
 
   const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);

@@ -134,13 +134,23 @@ export default function PaperStockPage() {
   };
 
   const handleDelete = async (id: string) => {
+    // The stock item carries the cost per sheet every CMYK bill prices against.
     const { confirmed } = await confirm({
-      title: 'Delete Paper', message: 'Delete this paper stock item?', variant: 'danger', confirmLabel: 'Delete'
+      title: 'Delete this paper?',
+      message: 'The stock item is removed for good.',
+      consequences: [
+        'The sheet count and the cost per sheet go with it \u2014 stock value stops counting this paper.',
+        'Bills already made keep their price, but the paper they were priced from is no longer there to check against.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete paper',
+      requireExactInput: 'DELETE',
     });
-    if (confirmed) {
-      await deleteStockItem(id);
-      toast.success('Item deleted');
-    }
+    if (!confirmed) return;
+    const result = await deleteStockItem(id);
+    if (result?.error) toast.error('Could not delete the paper: ' + result.error);
+    else toast.success('Item deleted');
   };
 
   const getFinalSize = () => {

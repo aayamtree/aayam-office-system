@@ -89,12 +89,34 @@ export default function VendorsPage() {
 
   const handleDelete = async (id: string) => {
     const vendorName = vendors.find(v => v.id === id)?.name || 'Unknown';
-    const { confirmed } = await confirm({ title: 'Delete Vendor', message: 'Are you sure you want to delete this vendor?', variant: 'danger', confirmLabel: 'Delete' });
+    // A vendor is master data with money hanging off it. Bills, payments, jobs and
+    // print runs all block the delete at the database, so the delete only ever goes
+    // through for a vendor that looks unused — but bank and cash transactions are
+    // set to NULL instead of blocking, so those entries quietly lose their vendor
+    // and stop showing up in any vendor-wise spend report.
+    const { confirmed } = await confirm({
+      title: `Delete ${vendorName}?`,
+      message: 'The vendor record is removed for good.',
+      consequences: [
+        'Bank entries, cash entries and paper purchases paid to this vendor keep their amount but lose the vendor name \u2014 vendor-wise spend reports stop counting them.',
+        'If any bill, payment, job or print run still points at this vendor, the delete is refused. Make the vendor inactive instead.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete vendor',
+      requireExactInput: 'DELETE',
+    });
     if (confirmed) {
-      try {
-        await deleteVendor(id);
-        logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'DELETE', module: 'Finance', entityId: id, entityName: vendorName, description: `Deleted Vendor: ${vendorName}` });
-      } catch (error) { console.error('Error:', error); toast.error('Error deleting'); }
+      // deleteVendor RETURNS its error instead of throwing, so the old catch
+      // never ran: the refusal this dialog promises was silent, and the
+      // activity log recorded a deletion that had not happened.
+      const result = await deleteVendor(id);
+      if (result?.error) {
+        toast.error('Cannot delete vendor: ' + result.error);
+        return;
+      }
+      toast.success(`${vendorName} deleted`);
+      logActivity({ userId: session?.user?.id || '', userName: profile?.full_name || 'Unknown', action: 'DELETE', module: 'Finance', entityId: id, entityName: vendorName, description: `Deleted Vendor: ${vendorName}` });
     }
   };
 

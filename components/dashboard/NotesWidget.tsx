@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ConfirmModal';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useNotes } from '@/lib/hooks';
@@ -16,6 +17,7 @@ const colors = [
 ];
 
 export default function NotesWidget() {
+    const confirm = useConfirm();
     const { notes, loading, createNote, deleteNote, updateNote } = useNotes();
     const [isAdding, setIsAdding] = useState(false);
     const [newNoteContent, setNewNoteContent] = useState('');
@@ -175,7 +177,14 @@ export default function NotesWidget() {
                                     <Pin size={14} />
                                 </button>
                                 <button
-                                    onClick={() => deleteNote(note.id)}
+                                    onClick={async () => {
+                                        const { confirmed } = await confirm({
+                                            title: 'Delete this note?',
+                                            message: note.content?.slice(0, 140) || 'This note is removed permanently.',
+                                            variant: 'danger', confirmLabel: 'Delete note',
+                                        });
+                                        if (confirmed) deleteNote(note.id);
+                                    }}
                                     className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md transition-all flex items-center justify-center"
                                 >
                                     <Trash2 size={14} />

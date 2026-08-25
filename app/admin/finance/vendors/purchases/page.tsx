@@ -248,8 +248,21 @@ export default function VendorPurchasesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Purchase Bill', message: 'Delete this bill?', variant: 'danger', confirmLabel: 'Delete' });
-    if (confirmed) await deletePurchaseBill(id);
+    const { confirmed } = await confirm({
+      title: 'Delete this purchase bill?',
+      message: 'The bill is removed for good.',
+      consequences: [
+        'Any payments already applied to this bill are left with nothing to point at.',
+        'Paper purchases recorded against it keep their figures but lose the bill link.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete bill',
+      requireExactInput: 'DELETE',
+    });
+    if (!confirmed) return;
+    const result = await deletePurchaseBill(id);
+    if (result?.error) toast.error('Cannot delete bill: ' + result.error);
+    else toast.success('Bill deleted');
   };
 
   // ── Filters ──

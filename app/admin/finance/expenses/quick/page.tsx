@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Plus, Check, AlertCircle, Pencil, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Fallback list only used if the expense_categories table can't be loaded
 const FALLBACK_CATEGORIES = [
@@ -19,6 +20,7 @@ const FALLBACK_CATEGORIES = [
 ];
 
 export default function QuickExpensePage() {
+    const confirmDialog = useConfirm();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
@@ -152,7 +154,20 @@ export default function QuickExpensePage() {
     };
 
     const handleDelete = async (expense: any) => {
-        if (!confirm(`Delete this expense of ₹${expense.amount?.toLocaleString('en-IN')}?\nThe account balance and ledger entry will be reversed.`)) return;
+        // Was a native window.confirm on what is a full accounting reversal.
+        const { confirmed } = await confirmDialog({
+            title: 'Delete this expense?',
+            message: `Rs ${expense.amount?.toLocaleString('en-IN')} paid to ${expense.vendor_name || 'this vendor'}. This reverses the accounting, it does not just hide the row.`,
+            consequences: [
+                'The payment, its ledger entry and its bank or cash line are all removed.',
+                'The account balance is put back to what it was before.',
+                'If this payment settled a bill, that bill goes back to unpaid.',
+            ],
+            variant: 'danger',
+            confirmLabel: 'Delete expense',
+            requireExactInput: 'DELETE',
+        });
+        if (!confirmed) return;
         setError('');
         const { error: delError } = await supabase.rpc('fn_delete_expense', { p_payment_id: expense.id });
         if (delError) {

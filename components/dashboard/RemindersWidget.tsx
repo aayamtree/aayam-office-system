@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ConfirmModal';
 import { useState } from 'react';
 import { useReminders } from '@/lib/hooks';
 import { Plus, CheckCircle2, Circle, Trash2, Calendar, Loader2 } from 'lucide-react';
@@ -7,6 +8,17 @@ import { Reminder } from '@/types/database';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
 export default function RemindersWidget() {
+    const confirm = useConfirm();
+
+    // Both Trash buttons deleted on the first click with no dialog.
+    const askThenDelete = async (reminder: any) => {
+        const { confirmed } = await confirm({
+            title: 'Delete this reminder?',
+            message: reminder.title || 'This reminder is removed permanently.',
+            variant: 'danger', confirmLabel: 'Delete reminder',
+        });
+        if (confirmed) deleteReminder(reminder.id);
+    };
     const { reminders, loading, createReminder, updateReminder, deleteReminder } = useReminders();
     const [isAdding, setIsAdding] = useState(false);
     const [newTitle, setNewTitle] = useState('');
@@ -124,7 +136,7 @@ export default function RemindersWidget() {
                                 )}
                             </div>
                             <button
-                                onClick={() => deleteReminder(reminder.id)}
+                                onClick={() => askThenDelete(reminder)}
                                 className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all flex items-center justify-center flex-shrink-0"
                             >
                                 <Trash2 size={14} className="text-white" />
@@ -146,7 +158,7 @@ export default function RemindersWidget() {
                                         </button>
                                         <span className="text-sm text-gray-500 line-through flex-1 truncate">{reminder.title}</span>
                                         <button
-                                            onClick={() => deleteReminder(reminder.id)}
+                                            onClick={() => askThenDelete(reminder)}
                                             className="p-1.5 bg-red-600/90 hover:bg-red-700 rounded-md transition-all flex items-center justify-center flex-shrink-0"
                                         >
                                             <Trash2 size={14} className="text-white" />

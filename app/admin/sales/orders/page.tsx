@@ -279,7 +279,20 @@ export default function OrdersPage() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const { confirmed } = await confirm({ title: 'Delete Order', message: 'Are you sure you want to delete this order?', variant: 'danger', confirmLabel: 'Delete' });
+    // Same row as a job on the Jobs board — same cascade, same warning.
+    const { confirmed } = await confirm({
+      title: 'Delete this order?',
+      message: 'The order and everything recorded against it are removed for good.',
+      consequences: [
+        'Its full stage history goes too — there will be no record of who moved it or when.',
+        'Project notes, subtasks and checklists are removed with it.',
+        'If an invoice, dispatch, design task, purchase bill or sub-job still points at this order, the delete is refused — clear those first.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete order',
+      requireExactInput: 'DELETE',
+    });
     if (confirmed) {
       const result = await deleteJob(id);
       if (result?.error) {

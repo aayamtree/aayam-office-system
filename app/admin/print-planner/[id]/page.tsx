@@ -110,10 +110,16 @@ export default function PrintRunDetailPage() {
 
             if (error) throw error;
             // Pulled out of the run → send back to Ready to Print (only if still in printing).
-            await revertJobsToReadyToPrint([jobId]);
+            const reverted = await revertJobsToReadyToPrint([jobId]);
             fetchPrintRunDetails();
-        } catch (error) {
+            if (!reverted.ok) {
+                toast.error('Job removed from the sheet, but it was not sent back to Ready to Print. Check it on the Jobs board.');
+            } else {
+                toast.success('Job removed from the sheet');
+            }
+        } catch (error: any) {
             console.error('Error removing job:', error);
+            toast.error('Could not remove the job: ' + (error?.message || 'Unknown error'));
         }
     };
 

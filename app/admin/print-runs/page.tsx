@@ -426,21 +426,60 @@ export default function PrintRunsPage() {
     };
 
     const deleteRun = async (runId: string) => {
-        const { confirmed } = await confirm({ title: 'Delete Print Run', message: 'Delete this print run? This cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
+        const run = runs.find(r => r.id === runId);
+        const jobCount = run?.jobs?.length ?? 0;
+        // Only jobs still sitting at the printing stage are sent back to Ready to
+        // Print — that is what the revert endpoint is scoped to. A run already at
+        // QC or handed over leaves its jobs exactly where they are, so promising
+        // otherwise would be a lie the moment somebody deletes a finished sheet.
+        // Only `at_printer`. The revert endpoint matches jobs whose current_stage
+        // is still `printing`, and printing_done has already carried them on to
+        // material_received (or quality_check on a warehouse run), so a sheet at
+        // printing_done reverts nothing at all.
+        const jobsComeBack = run?.status === 'at_printer';
+        const { confirmed } = await confirm({
+            title: `Delete ${run?.print_run_number || 'this print run'}?`,
+            message: 'The sheet and its record are removed for good. The jobs on it survive.',
+            consequences: [
+                jobsComeBack
+                    ? `The job${jobCount === 1 ? '' : 's'} on this sheet that are still at the printing stage go back to Ready to Print; any already carried further along stay where they are.`
+                    : `The ${jobCount} job${jobCount === 1 ? '' : 's'} on this sheet stay at the stage they have already reached \u2014 deleting the sheet does not move them back.`,
+                'The run\u2019s stage history goes with it \u2014 no record of who moved it or when.',
+                'The only copy left is the weekly backup, which can be up to seven days old.',
+            ],
+            variant: 'danger',
+            confirmLabel: 'Delete print run',
+            requireExactInput: 'DELETE',
+        });
         if (!confirmed) return;
         try {
             // Grab linked jobs before deleting so we can send them back to Ready to Print.
-            const { data: linked } = await supabase
+            const { data: linked, error: linkErr } = await supabase
                 .from('print_run_jobs')
                 .select('job_id')
                 .eq('print_run_id', runId);
+            if (linkErr) throw new Error(linkErr.message);
             const jobIds = (linked || []).map(r => r.job_id).filter(Boolean);
-            await supabase.from('print_run_jobs').delete().eq('print_run_id', runId);
-            await supabase.from('print_runs').delete().eq('id', runId);
-            await revertJobsToReadyToPrint(jobIds);
+            // Delete the RUN only. print_run_jobs.print_run_id is ON DELETE
+            // CASCADE, so the join rows go with it in one statement. Clearing
+            // them first was the dangerous order: if the run delete then failed,
+            // every job was already stripped off a sheet that still existed —
+            // gone from the board and not back on Ready to Print either.
+            // supabase-js returns its errors rather than throwing, so read them.
+            const { error: runErr } = await supabase.from('print_runs').delete().eq('id', runId);
+            if (runErr) throw new Error(runErr.message);
+            const reverted = await revertJobsToReadyToPrint(jobIds);
             setViewRun(null);
             await fetchRuns();
+            if (!reverted.ok) {
+                toast.error('Print run deleted, but the jobs could not be sent back to Ready to Print. Check them on the Jobs board.');
+            } else if (reverted.moved > 0) {
+                toast.success(`Print run deleted. ${reverted.moved} job${reverted.moved === 1 ? '' : 's'} back on Ready to Print.`);
+            } else {
+                toast.success('Print run deleted');
+            }
         } catch (err: any) {
+            await fetchRuns();
             toast.error('Failed to delete print run: ' + (err.message || 'Unknown error'));
         }
     };
@@ -523,7 +562,10 @@ export default function PrintRunsPage() {
             // map cannot express: planned deliberately implies nothing, and the
             // rank guard never lowers a stage.
             if (prev === 'planned') {
-                await revertJobsToReadyToPrint((run.jobs || []).map(j => j.job_id).filter(Boolean));
+                const reverted = await revertJobsToReadyToPrint((run.jobs || []).map(j => j.job_id).filter(Boolean));
+                if (!reverted.ok) {
+                    toast.error('The run moved back, but its jobs were not released to Ready to Print. Check them on the Jobs board.');
+                }
             } else {
                 await syncRunJobsToStage(run.id);
             }

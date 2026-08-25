@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirm } from '@/components/ConfirmModal';
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Check, Loader2, User } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -47,6 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function JobSubtasks({ jobId, designers }: Props) {
+  const confirm = useConfirm();
   const [subtasks, setSubtasks]         = useState<Subtask[]>([]);
   const [loading, setLoading]           = useState(true);
   const [adding, setAdding]             = useState(false);
@@ -119,6 +121,14 @@ export default function JobSubtasks({ jobId, designers }: Props) {
   };
 
   const handleDelete = async (id: string) => {
+    // Was optimistic with no dialog: the row vanished on the first click.
+    const task = subtasks.find(s => s.id === id);
+    const { confirmed } = await confirm({
+      title: 'Delete this subtask?',
+      message: task?.title || 'This subtask is removed permanently.',
+      variant: 'danger', confirmLabel: 'Delete subtask',
+    });
+    if (!confirmed) return;
     setSubtasks(prev => prev.filter(s => s.id !== id));
     try {
       await fetch(`/api/jobs/subtasks/${id}`, { method: 'DELETE' });

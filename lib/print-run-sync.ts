@@ -51,16 +51,36 @@ export async function syncRunJobsToStage(printRunId: string): Promise<boolean> {
  * "Ready to Print" — but ONLY if it's still in `printing`, so we never drag a
  * job that has already moved further along backwards.
  */
-export async function revertJobsToReadyToPrint(jobIds: string[]): Promise<void> {
+export interface RevertOutcome {
+    /** false only when the request itself failed — not when zero jobs qualified. */
+    ok: boolean;
+    /** How many jobs were actually moved back. */
+    moved: number;
+    /** How many were asked about. */
+    requested: number;
+}
+
+export async function revertJobsToReadyToPrint(jobIds: string[]): Promise<RevertOutcome> {
     const ids = (jobIds || []).filter(Boolean);
-    if (ids.length === 0) return;
+    if (ids.length === 0) return { ok: true, moved: 0, requested: 0 };
     try {
-        await fetch('/api/print-runs/sync-stage', {
+        // fetch only rejects on a network fault. A 401 from a lapsed session or a
+        // 500 from the handler resolves like a success, so the status has to be
+        // read — otherwise the caller cheerfully reports the jobs were moved back
+        // when nothing happened, and only a console warning says otherwise.
+        const res = await fetch('/api/print-runs/sync-stage', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'revert', jobIds: ids }),
         });
+        if (!res.ok) {
+            console.warn('Stage revert refused:', res.status, res.statusText);
+            return { ok: false, moved: 0, requested: ids.length };
+        }
+        const json = await res.json().catch(() => ({}));
+        return { ok: true, moved: Number(json?.moved ?? 0), requested: ids.length };
     } catch (err) {
         console.warn('Stage revert failed:', err);
+        return { ok: false, moved: 0, requested: ids.length };
     }
 }

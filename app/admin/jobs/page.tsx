@@ -554,9 +554,32 @@ export default function JobsPage() {
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Job', message: 'Are you sure you want to delete this job?', variant: 'danger', confirmLabel: 'Delete' });
+    // Deleting a job cascades its ENTIRE stage history — the audit trail that
+    // says who moved it and when — plus its notes, subtasks and checklists.
+    // Invoices, dispatches and design tasks do NOT cascade: they block the
+    // delete outright, which is why that is stated as a refusal, not a loss.
+    // There is no soft delete anywhere in this app.
+    const { confirmed } = await confirm({
+      title: 'Delete this job?',
+      message: 'The job and everything recorded against it are removed for good.',
+      consequences: [
+        'Its full stage history goes too — there will be no record of who moved it or when.',
+        'Project notes, subtasks and checklists are removed with it.',
+        'If the job sits on a print sheet, it is taken off that sheet.',
+        'If an invoice, dispatch, design task, purchase bill or sub-job still points at this job, the delete is refused — clear those first.',
+        'The only copy left is the weekly backup, which can be up to seven days old.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete job',
+      requireExactInput: 'DELETE',
+    });
     if (!confirmed) return;
-    await deleteJob(id);
+    // deleteJob RETURNS its error, it never throws. Dropping the return value
+    // meant a refused delete looked exactly like a successful one: no toast, no
+    // row removed, nothing said.
+    const result = await deleteJob(id);
+    if (result?.error) toast.error('Cannot delete job: ' + result.error);
+    else toast.success('Job deleted');
   }, [confirm, deleteJob]);
 
   const handleStageChange = useCallback(async (jobId: string, newStage: string) => {

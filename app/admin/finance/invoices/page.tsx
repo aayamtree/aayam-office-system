@@ -26,10 +26,12 @@ import { Invoice, Client, InvoiceItem } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { logActivity } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
+import { useConfirm } from '@/components/ConfirmModal';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
 
 export default function InvoicesPage() {
+  const confirm = useConfirm();
   const { settings: companySettings } = useCompanySettings();
   const { invoices, loading: invoicesLoading, error: invoicesError, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients, refetch: refetchClients } = useClients();
@@ -769,7 +771,18 @@ export default function InvoicesPage() {
 
   // BUG-12: Delete invoice with confirmation
   const handleDeleteInvoice = async (inv: Invoice) => {
-    if (!window.confirm(`Delete invoice ${inv.invoice_number}? This action cannot be undone.`)) return;
+    const { confirmed } = await confirm({
+      title: `Delete invoice ${inv.invoice_number}?`,
+      message: 'The invoice and every line on it are removed for good.',
+      consequences: [
+        'All line items on this invoice go with it.',
+        'Nothing is archived — the only copy left is the weekly backup.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete invoice',
+      requireExactInput: 'DELETE',
+    });
+    if (!confirmed) return;
     const { error } = await supabase.from('invoices').delete().eq('id', inv.id);
     if (error) {
       toast.error('Cannot delete invoice: ' + error.message);

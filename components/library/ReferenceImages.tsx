@@ -4,10 +4,11 @@
 // separate from the print design file. Upload → Drive → stored on
 // products.reference_images. Any image can be set as the product's main image.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';
 import { uploadToDrive, findOrCreateFolder, getDrivePreviewUrl } from '@/lib/google-drive-upload';
 import { Image as ImageIcon, Upload, Loader2, X, Star } from 'lucide-react';
+import { useConfirm } from '@/components/ConfirmModal';
 
 const SHARED_DRIVE_ID = process.env.NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID || '0AFECdIXIxXjSUk9PVA';
 
@@ -23,6 +24,13 @@ interface Props {
 export default function ReferenceImages({ productId, productName, images, onChanged }: Props) {
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
+  // The list this component is handed can be refreshed while the confirm dialog
+  // is open (an upload finishing calls onChanged). Writing back a copy captured
+  // before the dialog would erase whatever landed in between, so the write is
+  // built from the newest list, not the one the click closed over.
+  const imagesRef = useRef(images);
+  useEffect(() => { imagesRef.current = images; });
 
   const patch = async (reference_images: RefImage[], extra?: Record<string, any>) => {
     const res = await fetch('/api/products', {
@@ -62,10 +70,38 @@ export default function ReferenceImages({ productId, productName, images, onChan
 
   const remove = async (idx: number) => {
     if (busy) return;
+    // Was a one-click delete: the X sat on the image hover overlay, so a stray
+    // click while scanning the gallery removed a reference photo with nothing
+    // asked and nothing to undo.
+    const target = images[idx];
+    if (!target) return;
+    const { confirmed } = await confirm({
+      title: 'Remove this reference image?',
+      message: target.name || 'The image is removed from this product.',
+      variant: 'danger',
+      confirmLabel: 'Remove image',
+    });
+    if (!confirmed) return;
+    // Resolve the image's position in the CURRENT list, not the captured one.
+    // Object identity first; a value match is the fallback, and it has to be
+    // unambiguous — a failed upload stores an empty url, so url+name alone can
+    // legitimately describe two rows, and removing both would be wrong.
+    const current = imagesRef.current;
+    let at = current.indexOf(target);
+    if (at < 0) {
+      const matches = current.reduce<number[]>((acc, im, i) => {
+        if (im.url === target.url && im.name === target.name) acc.push(i);
+        return acc;
+      }, []);
+      if (matches.length !== 1) {
+        toast.error('This image list has changed since you opened the dialog. Reload the product and try again.');
+        return;
+      }
+      at = matches[0];
+    }
     setBusy(true);
     try {
-      const next = images.filter((_, i) => i !== idx);
-      await patch(next);
+      await patch(current.filter((_, i) => i !== at));
       toast.success('Removed');
       onChanged();
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }

@@ -1426,18 +1426,45 @@ export default function DesignerWorkspace() {
                                       disabled={deletingFileIdx !== null}
                                       onClick={async () => {
                                         if (deletingFileIdx !== null) return;
+                                        // The X sits on the file row; it used to
+                                        // delete on the first click, optimistically,
+                                        // with no way back to the artwork.
+                                        const { confirmed } = await confirmDialog({
+                                          title: 'Remove this file?',
+                                          message: `${file.name || 'This file'} is removed from the job. The copy on Drive is not deleted, but the link from this job is gone.`,
+                                          variant: 'danger',
+                                          confirmLabel: 'Remove file',
+                                        });
+                                        if (!confirmed) return;
                                         setDeletingFileIdx(i);
                                         // Optimistic: drop the file from the UI immediately
                                         const prevFiles = selectedTask.files;
                                         const optimistic = prevFiles.filter((_: any, idx: number) => idx !== i);
                                         setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: optimistic } : t));
                                         try {
+                                          // Identify the file by url, not by its
+                                          // position. The dialog now sits open for
+                                          // as long as the person reads it, and an
+                                          // upload finishing in that gap shifts the
+                                          // array — deleting by index would then
+                                          // remove a different file than the one
+                                          // the dialog named. Index stays as the
+                                          // fallback for the odd file with no url.
                                           const res = await fetch(`/api/jobs/${selectedTask.realId}/files`, {
                                             method: 'DELETE',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ index: i }),
+                                            body: JSON.stringify(file?.url ? { url: file.url } : { index: i }),
                                           });
                                           const result = await res.json();
+                                          if (res.status === 404) {
+                                            // The file was already gone server-side.
+                                            // Putting it back on screen would be the
+                                            // one wrong answer here, so keep the
+                                            // removal and let the refetch settle it.
+                                            toast.success('That file was already removed');
+                                            refetchJobs();
+                                            return;
+                                          }
                                           if (!res.ok) {
                                             // Roll back on failure
                                             setTasks(prev => prev.map(t => t.realId === selectedTask.realId ? { ...t, files: prevFiles } : t));

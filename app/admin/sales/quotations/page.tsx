@@ -398,7 +398,17 @@ export default function QuotationsPage() {
   };
 
   const handleDelete = async (id: string, quoteNumber: string) => {
-    const { confirmed } = await confirm({ title: 'Delete Quotation', message: `Are you sure you want to delete Quotation ${quoteNumber}? This action cannot be undone.`, variant: 'danger', confirmLabel: 'Delete' });
+    const { confirmed } = await confirm({
+      title: `Delete quotation ${quoteNumber}?`,
+      message: 'The quotation and every line on it are removed for good.',
+      consequences: [
+        'All items priced on this quotation go with it.',
+        'Any follow-up or sales order raised from it keeps its own record but loses the link back.',
+      ],
+      variant: 'danger',
+      confirmLabel: 'Delete quotation',
+      requireExactInput: 'DELETE',
+    });
     if (confirmed) {
       await deleteQuotation(id);
     }
