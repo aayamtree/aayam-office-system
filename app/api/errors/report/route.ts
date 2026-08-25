@@ -74,7 +74,11 @@ export async function POST(request: NextRequest) {
             message,
             stack: clip(body?.stack, 4000),
             component: clip(body?.component, 4000),
-            source: body?.source === 'route-error' ? 'route-error' : 'boundary',
+            // 'query' comes from lib/query-failure.ts — a PostgREST request that
+            // failed without any page crashing. Those are the quiet ones, and the
+            // whole reason a broken page could look like an empty one, so they are
+            // recorded in the same place the daily audit already reads.
+            source: ['route-error', 'query'].includes(body?.source) ? body.source : 'boundary',
             user_id: gate.user.id,
             user_email: gate.user.email || null,
             user_agent: clip(request.headers.get('user-agent'), 300),

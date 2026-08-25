@@ -9,10 +9,11 @@ import {
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, JobStatus } from '@/types/database';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 import { Package } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
 import { logActivity } from '@/lib/logger';
+import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
 
 // Fallback checkpoints if no DB checklists found
@@ -44,14 +45,11 @@ interface ChecklistItem {
 export default function QCCheckPage() {
   const confirm = useConfirm();
   const { profile } = useAuth();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createAuditedBrowserClient();
 
   // quantity and notes are shown on the QC card and read by the QC form; neither
   // is in the default select, so both rendered empty.
-  const { jobs, loading, updateJobStage, updateJob } = useJobs({
+  const { jobs, loading, error: jobsError, updateJobStage, updateJob } = useJobs({
     select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }],
     limit: 500,
@@ -354,6 +352,12 @@ export default function QCCheckPage() {
 
   return (
     <div className="space-y-3 md:space-y-4 animate-fade-in">
+      {/* An empty QC list reads as "nothing to check" and the operator moves on.
+          If the fetch failed, jobs awaiting QC would be skipped entirely — so
+          this must announce itself rather than look like a clear queue. */}
+      {jobsError && (
+        <LoadError variant="inline" what="jobs awaiting QC" error={jobsError} />
+      )}
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/admin/dispatch" className="p-2 hover:bg-gray-100 rounded-md lg:hidden">

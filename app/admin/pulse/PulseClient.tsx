@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft, RefreshCw, CheckCircle2, TrendingUp, PlusCircle,
-  AlertTriangle, Clock, Wallet, Layers, Trophy,
+  AlertTriangle, Clock, Wallet, Layers, Trophy, ChevronDown, FileText,
 } from 'lucide-react';
-import type { EodSnapshot, WeeklyScorecard, JobBrief } from '@/lib/eod-metrics';
+import type { EodSnapshot, WeeklyScorecard, JobBrief, FinancialSnapshot, InvoiceBrief } from '@/lib/eod-metrics';
 
 const inr = (n: number) => '₹' + Math.round(n || 0).toLocaleString('en-IN');
 
@@ -53,35 +53,95 @@ function JobRow({ j, badge }: { j: JobBrief; badge?: string }) {
   );
 }
 
-function Panel({
-  title, icon, count, tone, children,
-}: {
-  title: string; icon: React.ReactNode; count: number;
-  tone: 'green' | 'amber' | 'red'; children: React.ReactNode;
-}) {
-  const head: Record<string, string> = {
-    green: 'text-emerald-700', amber: 'text-amber-700', red: 'text-red-700',
-  };
+function InvoiceRow({ inv }: { inv: InvoiceBrief }) {
+  const client = inv.client_company || inv.client_name || 'Unknown';
+  const badge = inv.days_overdue
+    ? `${inv.days_overdue}d overdue`
+    : inv.days_until_due != null
+    ? `due in ${inv.days_until_due}d`
+    : '';
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className={`flex items-center gap-2 font-semibold mb-2 ${head[tone]}`}>
-        {icon}{title}<span className="ml-auto text-sm bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">{count}</span>
+    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-transparent hover:bg-slate-50 hover:border-slate-200 transition">
+      <div className="min-w-0">
+        <span className="font-semibold text-slate-800">{inv.invoice_number}</span>
+        <span className="text-slate-500 ml-2 truncate">{client}</span>
       </div>
-      {count === 0
-        ? <div className="text-sm text-slate-400 py-4 text-center">Nothing here — all clear.</div>
-        : <div className="space-y-0.5">{children}</div>}
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-sm text-slate-700">{inr(inv.total_amount)}</span>
+        {badge && <span className="text-xs font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-0.5">{badge}</span>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A list section with a stable id anchor. The Telegram EOD report links straight
+ * to these ids, so a section that the link points at auto-expands to show every
+ * row — the whole reason this page exists is that "…and 31 more" was a dead end.
+ */
+function Panel<T>({
+  id, title, icon, tone, items, render, preview = 12, openAll,
+}: {
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+  tone: 'green' | 'amber' | 'red' | 'slate';
+  items: T[];
+  render: (item: T, i: number) => React.ReactNode;
+  preview?: number;
+  openAll?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const showAll = expanded || !!openAll;
+  const head: Record<string, string> = {
+    green: 'text-emerald-700', amber: 'text-amber-700', red: 'text-red-700', slate: 'text-slate-700',
+  };
+  const visible = showAll ? items : items.slice(0, preview);
+  const hidden = items.length - visible.length;
+
+  return (
+    <div id={id} className="rounded-xl border border-slate-200 bg-white p-4 scroll-mt-4">
+      <div className={`flex items-center gap-2 font-semibold mb-2 ${head[tone]}`}>
+        {icon}{title}
+        <span className="ml-auto text-sm bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">{items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <div className="text-sm text-slate-400 py-4 text-center">Nothing here — all clear.</div>
+      ) : (
+        <>
+          <div className="space-y-0.5">{visible.map(render)}</div>
+          {hidden > 0 && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg py-2"
+            >
+              <ChevronDown size={15} /> Show all {items.length} ({hidden} more)
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
 export default function PulseClient({
-  snapshot, weekly,
+  snapshot, weekly, financial,
 }: {
-  snapshot: EodSnapshot; weekly: WeeklyScorecard;
+  snapshot: EodSnapshot; weekly: WeeklyScorecard; financial: FinancialSnapshot;
 }) {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const s = snapshot;
+  const fin = financial;
+
+  // Arriving from a Telegram "…and N more" link: open that section fully.
+  const [target, setTarget] = useState<string>('');
+  useEffect(() => {
+    const apply = () => setTarget(window.location.hash.replace('#', ''));
+    apply();
+    window.addEventListener('hashchange', apply);
+    return () => window.removeEventListener('hashchange', apply);
+  }, []);
 
   const refresh = () => {
     setRefreshing(true);
@@ -122,18 +182,81 @@ export default function PulseClient({
 
       {/* Exception panels */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <Panel title="Stuck — no movement" icon={<AlertTriangle size={16} />} count={s.stuck.length} tone="amber">
-          {s.stuck.slice(0, 12).map((j) => <JobRow key={j.id} j={j} badge={`${j.days_idle}d idle`} />)}
-        </Panel>
-        <Panel title="Past deadline" icon={<Clock size={16} />} count={s.overdue.length} tone="red">
-          {s.overdue.slice(0, 12).map((j) => <JobRow key={j.id} j={j} badge={`${j.days_overdue}d over`} />)}
-        </Panel>
+        <Panel
+          id="stuck"
+          title="Stuck — no movement"
+          icon={<AlertTriangle size={16} />}
+          tone="amber"
+          items={s.stuck}
+          openAll={target === 'stuck'}
+          render={(j) => <JobRow key={j.id} j={j} badge={`${j.days_idle}d idle`} />}
+        />
+        <Panel
+          id="overdue"
+          title="Past deadline"
+          icon={<Clock size={16} />}
+          tone="red"
+          items={s.overdue}
+          openAll={target === 'overdue'}
+          render={(j) => <JobRow key={j.id} j={j} badge={`${j.days_overdue}d over`} />}
+        />
       </div>
 
       <div className="mb-6">
-        <Panel title="Completed today" icon={<CheckCircle2 size={16} />} count={s.doneToday.length} tone="green">
-          {s.doneToday.slice(0, 20).map((j) => <JobRow key={j.id} j={j} />)}
-        </Panel>
+        <Panel
+          id="done-today"
+          title="Completed today"
+          icon={<CheckCircle2 size={16} />}
+          tone="green"
+          items={s.doneToday}
+          preview={20}
+          openAll={target === 'done-today'}
+          render={(j) => <JobRow key={j.id} j={j} />}
+        />
+      </div>
+
+      {/* Invoices — the other half of the 7:30 PM Telegram report */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 font-semibold text-slate-800 mb-3">
+          <FileText size={16} /> Invoice status
+          <span className="ml-auto text-sm text-slate-500">
+            Outstanding <b className="text-slate-800">{inr(fin.totalOutstanding)}</b>
+            <span className="mx-2 text-slate-300">|</span>
+            Pending <b className="text-slate-800">{inr(fin.totalPending)}</b>
+          </span>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Panel
+            id="inv-overdue"
+            title="Overdue"
+            icon={<AlertTriangle size={16} />}
+            tone="red"
+            items={fin.overdue}
+            preview={8}
+            openAll={target === 'inv-overdue'}
+            render={(inv) => <InvoiceRow key={inv.invoice_number} inv={inv} />}
+          />
+          <Panel
+            id="inv-pending"
+            title="Pending"
+            icon={<Clock size={16} />}
+            tone="amber"
+            items={fin.pending}
+            preview={8}
+            openAll={target === 'inv-pending'}
+            render={(inv) => <InvoiceRow key={inv.invoice_number} inv={inv} />}
+          />
+          <Panel
+            id="inv-partial"
+            title="Part paid"
+            icon={<Wallet size={16} />}
+            tone="slate"
+            items={fin.partial}
+            preview={8}
+            openAll={target === 'inv-partial'}
+            render={(inv) => <InvoiceRow key={inv.invoice_number} inv={inv} />}
+          />
+        </div>
       </div>
 
       {/* Weekly scorecard */}

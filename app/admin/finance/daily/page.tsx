@@ -6,6 +6,7 @@ import { RefreshCw, TrendingUp, Wallet, Building2, ArrowDownRight, ArrowUpRight 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import LoadError from '@/components/LoadError';
 
 export default function DailyFinancePage() {
     const [loading, setLoading] = useState(true);
@@ -13,15 +14,26 @@ export default function DailyFinancePage() {
     const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [todayPayments, setTodayPayments] = useState<any[]>([]);
     const [todayExpenses, setTodayExpenses] = useState<any[]>([]);
+    const [loadError, setLoadError] = useState<unknown>(null);
 
     const loadData = async () => {
         setLoading(true);
+        setLoadError(null);
         try {
-            const { data: banks } = await supabase.from('bank_accounts').select('*').eq('is_active', true);
-            const { data: cash } = await supabase.from('cash_accounts').select('*').eq('is_active', true);
+            // Each error is now checked and thrown. Previously all four were
+            // dropped, so a failed fetch left this page showing ₹0 balances and
+            // an empty day — indistinguishable from a genuinely quiet morning.
+            // On the screen used to read the cash position, that is the most
+            // expensive possible way to be wrong.
+            const { data: banks, error: banksErr } = await supabase.from('bank_accounts').select('*').eq('is_active', true);
+            if (banksErr) throw banksErr;
+            const { data: cash, error: cashErr } = await supabase.from('cash_accounts').select('*').eq('is_active', true);
+            if (cashErr) throw cashErr;
             const today = new Date().toISOString().split('T')[0];
-            const { data: payments } = await supabase.from('payments_received').select('*, clients(name, company)').eq('payment_date', today);
-            const { data: vendorPays } = await supabase.from('vendor_payments').select('*, vendors(name, company)').eq('payment_date', today);
+            const { data: payments, error: payErr } = await supabase.from('payments_received').select('*, clients(name, company)').eq('payment_date', today);
+            if (payErr) throw payErr;
+            const { data: vendorPays, error: vendErr } = await supabase.from('vendor_payments').select('*, vendors(name, company)').eq('payment_date', today);
+            if (vendErr) throw vendErr;
 
             setBankAccounts(banks || []);
             setCashAccounts(cash || []);
@@ -29,6 +41,11 @@ export default function DailyFinancePage() {
             setTodayExpenses(vendorPays || []);
         } catch (error) {
             console.error('Error loading data:', error);
+            setLoadError(error);
+            setBankAccounts([]);
+            setCashAccounts([]);
+            setTodayPayments([]);
+            setTodayExpenses([]);
         } finally {
             setLoading(false);
         }
@@ -45,6 +62,12 @@ export default function DailyFinancePage() {
 
     return (
         <div className="space-y-4">
+            {/* Shown above the figures, not instead of them: the totals below are
+                computed from whatever loaded, so if anything failed they are wrong
+                and the reader has to know that before acting on them. */}
+            {loadError !== null && (
+                <LoadError variant="inline" what="today's cash position" error={loadError} onRetry={loadData} />
+            )}
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import LoadError from '@/components/LoadError';
 import { getStageName } from '@/lib/job-workflow';
 import ProductBadge from '@/components/shared/ProductBadge';
 import {
@@ -400,6 +401,7 @@ function DesignerWork({ userId, onJobClick }: { userId: string; onJobClick: (id:
   const [jobs, setJobs]         = useState<MyJob[]>([]);
   const [subtasks, setSubtasks] = useState<MySubtask[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [jobsError, setJobsError] = useState<unknown>(null);
 
   useEffect(() => {
     (async () => {
@@ -413,10 +415,13 @@ function DesignerWork({ userId, onJobClick }: { userId: string; onJobClick: (id:
             .order('client_deadline', { ascending: true, nullsFirst: false }),
           fetch('/api/jobs/my-subtasks').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
         ]);
+        if (jobsRes.error) throw jobsRes.error;
         setJobs((jobsRes.data || []) as any[]);
         setSubtasks(subtasksRes.data || []);
-      } catch {
-        // silent
+      } catch (e) {
+        // Same reasoning as the leads section: an empty task list is a signal to
+        // stop working, and must never be shown because a query failed.
+        setJobsError(e);
       } finally {
         setLoading(false);
       }
@@ -441,6 +446,9 @@ function DesignerWork({ userId, onJobClick }: { userId: string; onJobClick: (id:
 
   return (
     <div className="space-y-6">
+      {jobsError !== null && (
+        <LoadError variant="inline" what="your jobs" error={jobsError} />
+      )}
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="Active Jobs" value={jobs.length} icon={<Briefcase size={16} />} color="blue" />
         <StatCard label="Overdue" value={overdue.length} icon={<AlertTriangle size={16} />} color={overdue.length > 0 ? 'red' : 'gray'} />
@@ -561,17 +569,21 @@ function AdminWork({ onJobClick }: { onJobClick: (id: string) => void }) {
 function MarketingWork({ userId }: { userId: string }) {
   const [leads, setLeads]     = useState<MyLead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('leads')
           .select('id, company, name, next_follow_up, status')
           .eq('assigned_to', userId)
           .not('status', 'in', '("converted","lost","closed")')
           .order('next_follow_up', { ascending: true, nullsFirst: false })
           .limit(30);
+        // An empty "my work" list reads as "nothing assigned to me", which is a
+        // reason to stop working. It must never be shown for a failed query.
+        if (error) throw error;
         setLeads((data || []).map((l: any) => ({
           id: l.id,
           company_name: l.company || l.name || 'Unknown',
@@ -579,8 +591,11 @@ function MarketingWork({ userId }: { userId: string }) {
           follow_up_date: l.next_follow_up ? String(l.next_follow_up).slice(0, 10) : null,
           status: l.status,
         })) as any[]);
-      } catch {
-        // silent
+      } catch (e) {
+        // Was `catch { /* silent */ }`. On "My Work" a silent failure renders
+        // "0 leads, 0 follow-ups due" — which a marketing person reads as a
+        // clear day and acts on. It has to say it could not load instead.
+        setLoadError(e);
       } finally {
         setLoading(false);
       }
@@ -596,6 +611,9 @@ function MarketingWork({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
+      {loadError !== null && (
+        <LoadError variant="inline" what="your leads" error={loadError} />
+      )}
       <div className="grid grid-cols-3 gap-3">
         <StatCard label="My Leads" value={leads.length} icon={<Users size={16} />} color="blue" />
         <StatCard label="Follow-up Today" value={dueToday.length} icon={<Star size={16} />} color={dueToday.length > 0 ? 'amber' : 'gray'} />

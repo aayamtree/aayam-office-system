@@ -5,12 +5,9 @@ import Link from 'next/link';
 import { Bell, ArrowRight, Activity, CheckSquare, Package, Upload, ArrowRightLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 
-const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createAuditedBrowserClient();
 
 // DB stores UTC in a `timestamp without time zone` column, so the string
 // arrives with no timezone marker. Treat it as UTC by appending 'Z'.

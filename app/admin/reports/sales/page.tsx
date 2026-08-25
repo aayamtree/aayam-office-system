@@ -4,13 +4,10 @@ import { useState, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { ArrowLeft, Download, Filter, TrendingUp, Users, Package, IndianRupee, CheckCircle, Clock } from 'lucide-react';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 import useSWR from 'swr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createAuditedBrowserClient();
 
 function usePaymentsReceivedDirect() {
   return useSWR('pr_direct_sales', async () => {

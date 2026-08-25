@@ -3,13 +3,10 @@
 import { useState } from 'react';
 import { Search, Loader2, Upload, FileText, RotateCcw, CheckSquare, Package, MessageSquare, PlusCircle, DollarSign, Bell, LogIn, ChevronDown, Printer } from 'lucide-react';
 import { useActivityLogs } from '@/lib/hooks';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 import useSWR from 'swr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createAuditedBrowserClient();
 
 // ─── Event type detection ─────────────────────────────────────────────────────
 type EventType = 'file_upload' | 'print_file' | 'stage_change' | 'checklist' | 'qc' | 'payment' | 'note' | 'job_created' | 'login' | 'notification' | 'other';

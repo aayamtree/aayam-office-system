@@ -41,8 +41,15 @@ export default function PaymentsPageNew() {
 
     // Fetch clients and vendors
     const fetchParties = async () => {
-        const { data: clientsData } = await supabase.from('clients').select('id, name, company');
-        const { data: vendorsData } = await supabase.from('vendors').select('id, name, company');
+        // These feed the client/vendor pickers on the payment form. If they
+        // fail silently the dropdowns are simply empty, and the person recording
+        // a payment concludes the party "isn't in the system" and creates a
+        // duplicate. Surface it instead.
+        const { data: clientsData, error: clientsErr } = await supabase.from('clients').select('id, name, company');
+        const { data: vendorsData, error: vendorsErr } = await supabase.from('vendors').select('id, name, company');
+        if (clientsErr || vendorsErr) {
+            toast.error('Could not load clients/vendors: ' + ((clientsErr || vendorsErr)!.message));
+        }
         setClients(clientsData || []);
         setVendors(vendorsData || []);
     };

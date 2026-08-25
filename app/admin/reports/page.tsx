@@ -6,13 +6,10 @@ import { BarChart3, TrendingUp, Truck, FileText, Download, Loader2, Search, Prin
 import { useDashboardStats, useClients, useJobs, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
 import { useState } from 'react';
 import { exportToCSV } from '@/lib/csv-export';
-import { createBrowserClient } from '@supabase/ssr';
+import { createAuditedBrowserClient } from '@/lib/supabase';
 import useSWR from 'swr';
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createAuditedBrowserClient();
 
 // Direct payments_received query (bypasses unreliable RPC)
 function usePaymentsReceivedDirect() {

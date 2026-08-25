@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-04T13:54:53.341Z",
-  "filesScanned": 431,
-  "queriesSeen": 614,
+  "generatedAt": "2026-08-24T14:13:51.751Z",
+  "filesScanned": 451,
+  "queriesSeen": 631,
   "wildcardQueries": 95,
-  "writesSeen": 245,
+  "writesSeen": 269,
   "tables": {
     "activity_logs": {
       "columns": [
@@ -25,7 +25,7 @@
         "columns": {
           "action": {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 87,
+            "line": 90,
             "verb": "insert"
           },
           "description": {
@@ -35,7 +35,7 @@
           },
           "details": {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 87,
+            "line": 90,
             "verb": "insert"
           },
           "entity_id": {
@@ -60,7 +60,7 @@
           },
           "module": {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 87,
+            "line": 90,
             "verb": "insert"
           },
           "user_id": {
@@ -84,12 +84,12 @@
         "sites": [
           {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 87,
+            "line": 90,
             "verb": "insert"
           },
           {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 461,
+            "line": 467,
             "verb": "insert"
           },
           {
@@ -125,7 +125,7 @@
         },
         {
           "file": "lib/hooks.ts",
-          "line": 2663
+          "line": 2665
         }
       ]
     },
@@ -231,7 +231,7 @@
           },
           "is_default": {
             "file": "lib/hooks.ts",
-            "line": 1002,
+            "line": 1004,
             "verb": "update"
           },
           "name": {
@@ -248,7 +248,7 @@
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 975,
+            "line": 977,
             "verb": "insert"
           }
         ],
@@ -270,17 +270,17 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 975,
+            "line": 977,
             "verb": "insert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 1002,
+            "line": 1004,
             "verb": "update"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 1005,
+            "line": 1007,
             "verb": "update"
           }
         ]
@@ -561,7 +561,7 @@
           },
           "target_user_id": {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 421,
+            "line": 422,
             "verb": "insert"
           }
         },
@@ -579,22 +579,22 @@
           },
           {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 411,
+            "line": 412,
             "verb": "insert"
           },
           {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 421,
+            "line": 422,
             "verb": "insert"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 592,
+            "line": 599,
             "verb": "insert"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 678,
+            "line": 685,
             "verb": "insert"
           }
         ]
@@ -895,7 +895,7 @@
       "sites": [
         {
           "file": "app/api/telegram/notify-stage/route.ts",
-          "line": 96
+          "line": 122
         },
         {
           "file": "app/api/telegram/webhook/route.ts",
@@ -903,7 +903,7 @@
         },
         {
           "file": "app/api/telegram/webhook/route.ts",
-          "line": 249
+          "line": 267
         },
         {
           "file": "components/ChatPanel.tsx",
@@ -931,12 +931,12 @@
         "columns": {
           "channel_id": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 107,
+            "line": 134,
             "verb": "insert"
           },
           "content": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 107,
+            "line": 134,
             "verb": "insert"
           },
           "mentioned_user_ids": {
@@ -946,7 +946,7 @@
           },
           "sender_id": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 107,
+            "line": 134,
             "verb": "insert"
           }
         },
@@ -954,17 +954,17 @@
         "sites": [
           {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 107,
+            "line": 134,
             "verb": "insert"
           },
           {
             "file": "app/api/telegram/webhook/route.ts",
-            "line": 122,
+            "line": 140,
             "verb": "insert"
           },
           {
             "file": "app/api/telegram/webhook/route.ts",
-            "line": 256,
+            "line": 274,
             "verb": "insert"
           },
           {
@@ -1016,12 +1016,12 @@
         "columns": {
           "assigned_marketing_user_id": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "assigned_to": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "brand_name": {
@@ -1031,52 +1031,52 @@
           },
           "company": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "created_by": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "email": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "is_active": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "name": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "notes": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "outstanding_balance": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "phone": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "source": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "source_lead_id": {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           },
           "telegram_chat_id": {
@@ -1119,12 +1119,12 @@
           },
           {
             "file": "app/api/telegram/webhook/route.ts",
-            "line": 149,
+            "line": 167,
             "verb": "update"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 905,
+            "line": 907,
             "verb": "insert"
           }
         ]
@@ -1132,7 +1132,7 @@
       "sites": [
         {
           "file": "app/admin/finance/awaiting-payment/page.tsx",
-          "line": 48
+          "line": 61
         },
         {
           "file": "app/admin/finance/banking/page.tsx",
@@ -1152,7 +1152,7 @@
         },
         {
           "file": "app/admin/jobs/overdue/page.tsx",
-          "line": 133
+          "line": 135
         }
       ]
     },
@@ -1167,21 +1167,21 @@
         "columns": {
           "updated_at": {
             "file": "lib/hooks.ts",
-            "line": 1100,
+            "line": 1102,
             "verb": "update"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1100,
+            "line": 1102,
             "verb": "update"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 1100,
+            "line": 1102,
             "verb": "update"
           }
         ]
@@ -1200,21 +1200,21 @@
         "columns": {
           "updated_at": {
             "file": "lib/hooks.ts",
-            "line": 260,
+            "line": 262,
             "verb": "update"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 260,
+            "line": 262,
             "verb": "update"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 260,
+            "line": 262,
             "verb": "update"
           }
         ]
@@ -1232,17 +1232,17 @@
         "columns": {
           "amount_paid": {
             "file": "lib/hooks.ts",
-            "line": 2019,
+            "line": 2021,
             "verb": "update"
           },
           "payment_status": {
             "file": "lib/hooks.ts",
-            "line": 2019,
+            "line": 2021,
             "verb": "update"
           },
           "updated_at": {
             "file": "lib/hooks.ts",
-            "line": 2019,
+            "line": 2021,
             "verb": "update"
           }
         },
@@ -1250,7 +1250,7 @@
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 2019,
+            "line": 2021,
             "verb": "update"
           }
         ]
@@ -1304,6 +1304,10 @@
       },
       "sites": [
         {
+          "file": "app/api/cron/watchman/route.ts",
+          "line": 175
+        },
+        {
           "file": "lib/health-checks.ts",
           "line": 418
         }
@@ -1320,57 +1324,57 @@
         "columns": {
           "admin_comment": {
             "file": "lib/hooks.ts",
-            "line": 3141,
+            "line": 3143,
             "verb": "update"
           },
           "admin_rated_at": {
             "file": "lib/hooks.ts",
-            "line": 3141,
+            "line": 3143,
             "verb": "update"
           },
           "admin_rated_by": {
             "file": "lib/hooks.ts",
-            "line": 3141,
+            "line": 3143,
             "verb": "update"
           },
           "admin_rating": {
             "file": "lib/hooks.ts",
-            "line": 3141,
+            "line": 3143,
             "verb": "update"
           },
           "blockers": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "overall_notes": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "report_date": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "submitted_at": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "tomorrow_plan": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "user_id": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           "work_hours": {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           }
         },
@@ -1378,12 +1382,12 @@
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 2955,
+            "line": 2957,
             "verb": "upsert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 3141,
+            "line": 3143,
             "verb": "update"
           }
         ]
@@ -1395,11 +1399,11 @@
         },
         {
           "file": "lib/hooks.ts",
-          "line": 2901
+          "line": 2903
         },
         {
           "file": "lib/hooks.ts",
-          "line": 3198
+          "line": 3200
         }
       ]
     },
@@ -1426,21 +1430,21 @@
         "columns": {
           "task_number": {
             "file": "lib/hooks.ts",
-            "line": 1180,
+            "line": 1182,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1180,
+            "line": 1182,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 1180,
+            "line": 1182,
             "verb": "insert"
           }
         ]
@@ -1647,21 +1651,21 @@
         "columns": {
           "dispatch_number": {
             "file": "lib/hooks.ts",
-            "line": 1305,
+            "line": 1307,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1305,
+            "line": 1307,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 1305,
+            "line": 1307,
             "verb": "insert"
           }
         ]
@@ -1685,7 +1689,8 @@
       "columns": [
         "id",
         "is_active",
-        "name"
+        "name",
+        "source"
       ],
       "relations": [],
       "writes": {
@@ -1697,13 +1702,18 @@
           },
           "is_active": {
             "file": "components/settings/ExpenseCategoriesManager.tsx",
-            "line": 44,
+            "line": 48,
             "verb": "insert"
           },
           "name": {
             "file": "components/settings/ExpenseCategoriesManager.tsx",
-            "line": 44,
+            "line": 48,
             "verb": "insert"
+          },
+          "onConflict": {
+            "file": "app/api/zoho/sync-accounts/route.ts",
+            "line": 141,
+            "verb": "upsert"
           },
           "parent_id": {
             "file": "lib/categorization-hooks.ts",
@@ -1714,13 +1724,18 @@
         "spreads": [],
         "sites": [
           {
+            "file": "app/api/zoho/sync-accounts/route.ts",
+            "line": 141,
+            "verb": "upsert"
+          },
+          {
             "file": "components/settings/ExpenseCategoriesManager.tsx",
-            "line": 44,
+            "line": 48,
             "verb": "insert"
           },
           {
             "file": "components/settings/ExpenseCategoriesManager.tsx",
-            "line": 72,
+            "line": 82,
             "verb": "update"
           },
           {
@@ -1746,7 +1761,7 @@
         },
         {
           "file": "components/settings/ExpenseCategoriesManager.tsx",
-          "line": 26
+          "line": 30
         }
       ]
     },
@@ -1759,21 +1774,21 @@
         "columns": {
           "expense_number": {
             "file": "lib/hooks.ts",
-            "line": 2282,
+            "line": 2284,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 2282,
+            "line": 2284,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 2282,
+            "line": 2284,
             "verb": "insert"
           }
         ]
@@ -1781,11 +1796,11 @@
       "sites": [
         {
           "file": "lib/finance-overview-data.ts",
-          "line": 130
+          "line": 131
         },
         {
           "file": "lib/finance-overview-data.ts",
-          "line": 137
+          "line": 138
         }
       ]
     },
@@ -1827,7 +1842,7 @@
           },
           "quotation_id": {
             "file": "lib/hooks.ts",
-            "line": 2387,
+            "line": 2389,
             "verb": "update"
           },
           "status": {
@@ -1845,7 +1860,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2387,
+            "line": 2389,
             "verb": "update"
           }
         ]
@@ -2039,52 +2054,52 @@
         "columns": {
           "amount": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "description": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "gst_rate": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "hsn_code": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "invoice_id": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "item_notes": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "item_specs": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "job_id": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "quantity": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           },
           "rate": {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           }
         },
@@ -2092,7 +2107,7 @@
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 804,
+            "line": 806,
             "verb": "insert"
           }
         ]
@@ -2130,7 +2145,7 @@
           },
           "invoice_number": {
             "file": "lib/hooks.ts",
-            "line": 772,
+            "line": 774,
             "verb": "insert"
           },
           "payment_status": {
@@ -2142,7 +2157,7 @@
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 772,
+            "line": 774,
             "verb": "insert"
           }
         ],
@@ -2159,7 +2174,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 772,
+            "line": 774,
             "verb": "insert"
           }
         ]
@@ -2179,7 +2194,7 @@
         },
         {
           "file": "app/api/health/route.ts",
-          "line": 150
+          "line": 126
         },
         {
           "file": "components/banking/CategoryModal.tsx",
@@ -2234,19 +2249,19 @@
       "sites": [
         {
           "file": "app/admin/designers/tasks/page.tsx",
-          "line": 281
+          "line": 283
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 95
+          "line": 96
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 101
+          "line": 102
         },
         {
           "file": "lib/hooks.ts",
-          "line": 3225
+          "line": 3227
         }
       ]
     },
@@ -2257,27 +2272,27 @@
         "columns": {
           "content": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           },
           "job_id": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           },
           "source": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           },
           "tag": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           },
           "user_id": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           }
         },
@@ -2285,12 +2300,17 @@
         "sites": [
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1302,
+            "line": 1300,
             "verb": "insert"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1319,
+            "line": 1317,
+            "verb": "insert"
+          },
+          {
+            "file": "components/DesignBriefEditor.tsx",
+            "line": 73,
             "verb": "insert"
           },
           {
@@ -2339,22 +2359,22 @@
           },
           "from_stage": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1303,
+            "line": 1301,
             "verb": "insert"
           },
           "job_id": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1303,
+            "line": 1301,
             "verb": "insert"
           },
           "notes": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1303,
+            "line": 1301,
             "verb": "insert"
           },
           "to_stage": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1303,
+            "line": 1301,
             "verb": "insert"
           }
         },
@@ -2362,12 +2382,12 @@
         "sites": [
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1303,
+            "line": 1301,
             "verb": "insert"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1320,
+            "line": 1318,
             "verb": "insert"
           },
           {
@@ -2396,6 +2416,10 @@
         {
           "file": "app/admin/jobs/[id]/page.tsx",
           "line": 178
+        },
+        {
+          "file": "app/api/cron/telegram-digest/route.ts",
+          "line": 362
         },
         {
           "file": "lib/eod-metrics.ts",
@@ -2674,12 +2698,12 @@
           },
           "calendar_event_id": {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 390,
+            "line": 391,
             "verb": "update"
           },
           "calendar_event_link": {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 390,
+            "line": 391,
             "verb": "update"
           },
           "client_approval": {
@@ -2689,42 +2713,47 @@
           },
           "commission_amount": {
             "file": "lib/hooks.ts",
-            "line": 3407,
+            "line": 3416,
             "verb": "update"
           },
           "commission_paid_at": {
             "file": "lib/hooks.ts",
-            "line": 3419,
+            "line": 3428,
             "verb": "update"
           },
           "commission_percentage": {
             "file": "lib/hooks.ts",
-            "line": 3407,
+            "line": 3416,
             "verb": "update"
           },
           "commission_status": {
             "file": "lib/hooks.ts",
-            "line": 3407,
+            "line": 3416,
             "verb": "update"
           },
           "commission_user_id": {
             "file": "lib/hooks.ts",
-            "line": 3455,
+            "line": 3464,
             "verb": "update"
           },
           "current_stage": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1293,
+            "line": 1291,
             "verb": "update"
           },
           "delay_reason": {
             "file": "app/admin/jobs/overdue/page.tsx",
-            "line": 97,
+            "line": 99,
             "verb": "update"
           },
           "delay_reason_at": {
             "file": "app/admin/jobs/overdue/page.tsx",
-            "line": 97,
+            "line": 99,
+            "verb": "update"
+          },
+          "description": {
+            "file": "components/DesignBriefEditor.tsx",
+            "line": 60,
             "verb": "update"
           },
           "design_billing": {
@@ -2749,12 +2778,12 @@
           },
           "dispatch_mode": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 247,
+            "line": 248,
             "verb": "update"
           },
           "dispatch_receipt_url": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 247,
+            "line": 248,
             "verb": "update"
           },
           "drive_file_status": {
@@ -2769,17 +2798,17 @@
           },
           "drive_link": {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 370,
+            "line": 371,
             "verb": "update"
           },
           "files": {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 370,
+            "line": 371,
             "verb": "update"
           },
           "hold_reason": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1293,
+            "line": 1291,
             "verb": "update"
           },
           "invoice_requested_at": {
@@ -2794,7 +2823,7 @@
           },
           "is_on_hold": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1293,
+            "line": 1291,
             "verb": "update"
           },
           "library_skip_reason": {
@@ -2809,7 +2838,7 @@
           },
           "pre_hold_stage": {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1293,
+            "line": 1291,
             "verb": "update"
           },
           "print_ready": {
@@ -2824,7 +2853,7 @@
           },
           "updated_at": {
             "file": "app/admin/jobs/page.tsx",
-            "line": 509,
+            "line": 575,
             "verb": "update"
           }
         },
@@ -2838,27 +2867,27 @@
         "sites": [
           {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 370,
+            "line": 371,
             "verb": "update"
           },
           {
             "file": "app/admin/designers/new-project/page.tsx",
-            "line": 390,
+            "line": 391,
             "verb": "update"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1293,
+            "line": 1291,
             "verb": "update"
           },
           {
             "file": "app/admin/designers/tasks/page.tsx",
-            "line": 1317,
+            "line": 1315,
             "verb": "update"
           },
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 247,
+            "line": 248,
             "verb": "update"
           },
           {
@@ -2875,11 +2904,11 @@
         },
         {
           "file": "app/admin/designers/new-project/page.tsx",
-          "line": 101
+          "line": 102
         },
         {
           "file": "app/admin/finance/awaiting-payment/page.tsx",
-          "line": 35
+          "line": 47
         },
         {
           "file": "app/admin/jobs/dossier/page.tsx",
@@ -2887,11 +2916,11 @@
         },
         {
           "file": "app/admin/jobs/overdue/page.tsx",
-          "line": 113
+          "line": 115
         },
         {
           "file": "app/admin/jobs/page.tsx",
-          "line": 567
+          "line": 633
         }
       ]
     },
@@ -3005,7 +3034,7 @@
           },
           "converted_to_client_id": {
             "file": "lib/hooks.ts",
-            "line": 928,
+            "line": 930,
             "verb": "update"
           },
           "created_by": {
@@ -3015,7 +3044,7 @@
           },
           "lead_number": {
             "file": "lib/hooks.ts",
-            "line": 860,
+            "line": 862,
             "verb": "insert"
           },
           "name": {
@@ -3042,7 +3071,7 @@
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 860,
+            "line": 862,
             "verb": "insert"
           }
         ],
@@ -3054,12 +3083,12 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 860,
+            "line": 862,
             "verb": "insert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 928,
+            "line": 930,
             "verb": "update"
           }
         ]
@@ -3067,15 +3096,15 @@
       "sites": [
         {
           "file": "app/admin/my-work/page.tsx",
-          "line": 576
+          "line": 578
         },
         {
           "file": "app/api/cron/telegram-digest/route.ts",
-          "line": 284
+          "line": 329
         },
         {
           "file": "app/api/health/route.ts",
-          "line": 149
+          "line": 125
         },
         {
           "file": "components/calendar/DailyBriefingModal.tsx",
@@ -3265,19 +3294,19 @@
           },
           "user_id": {
             "file": "lib/hooks.ts",
-            "line": 2044,
+            "line": 2046,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 2044,
+            "line": 2046,
             "verb": "insert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2165,
+            "line": 2167,
             "verb": "update"
           }
         ],
@@ -3289,12 +3318,12 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2044,
+            "line": 2046,
             "verb": "insert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2165,
+            "line": 2167,
             "verb": "update"
           }
         ]
@@ -3485,7 +3514,7 @@
       "sites": [
         {
           "file": "app/api/health/route.ts",
-          "line": 223
+          "line": 199
         }
       ]
     },
@@ -3538,7 +3567,7 @@
           },
           "cash_account_id": {
             "file": "lib/hooks.ts",
-            "line": 2556,
+            "line": 2558,
             "verb": "insert"
           },
           "client_id": {
@@ -3606,7 +3635,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2556,
+            "line": 2558,
             "verb": "insert"
           }
         ]
@@ -3614,7 +3643,7 @@
       "sites": [
         {
           "file": "app/admin/finance/invoices/page.tsx",
-          "line": 128
+          "line": 129
         },
         {
           "file": "app/admin/reports/finance/page.tsx",
@@ -3645,21 +3674,21 @@
         "columns": {
           "sale_id": {
             "file": "lib/hooks.ts",
-            "line": 1751,
+            "line": 1753,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1751,
+            "line": 1753,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 1751,
+            "line": 1753,
             "verb": "insert"
           }
         ]
@@ -3711,14 +3740,14 @@
           },
           "sale_number": {
             "file": "lib/hooks.ts",
-            "line": 1741,
+            "line": 1743,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1741,
+            "line": 1743,
             "verb": "insert"
           }
         ],
@@ -3730,7 +3759,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 1741,
+            "line": 1743,
             "verb": "insert"
           }
         ]
@@ -3764,15 +3793,15 @@
       "sites": [
         {
           "file": "app/admin/print-planner/[id]/page.tsx",
-          "line": 380
+          "line": 386
         },
         {
           "file": "app/admin/print-runs/page.tsx",
-          "line": 303
+          "line": 414
         },
         {
           "file": "app/api/print-runs/sync-stage/route.ts",
-          "line": 82
+          "line": 99
         },
         {
           "file": "lib/record-locations.ts",
@@ -3788,7 +3817,9 @@
         "delivery_mode",
         "dispatch_date",
         "eway_bill_number",
+        "eway_doc_url",
         "id",
+        "invoice_doc_url",
         "invoice_reference",
         "notes",
         "paper_gst_percent",
@@ -3812,31 +3843,31 @@
         "columns": {
           "status": {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 76,
+            "line": 79,
             "verb": "update"
           },
           "updated_at": {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 224,
+            "line": 246,
             "verb": "update"
           }
         },
         "spreads": [
           {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 224,
+            "line": 246,
             "verb": "update"
           }
         ],
         "sites": [
           {
             "file": "app/admin/print-planner/[id]/page.tsx",
-            "line": 76,
+            "line": 79,
             "verb": "update"
           },
           {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 224,
+            "line": 246,
             "verb": "update"
           }
         ]
@@ -3844,15 +3875,15 @@
       "sites": [
         {
           "file": "app/admin/print-runs/page.tsx",
-          "line": 134
+          "line": 149
         },
         {
           "file": "app/api/print-runs/sync-stage/route.ts",
-          "line": 69
+          "line": 83
         },
         {
           "file": "components/print-planner/CreatePrintRunForm.tsx",
-          "line": 147
+          "line": 148
         },
         {
           "file": "lib/calendar-data.ts",
@@ -4028,7 +4059,7 @@
           },
           "type": {
             "file": "lib/hooks.ts",
-            "line": 707,
+            "line": 709,
             "verb": "insert"
           }
         },
@@ -4051,12 +4082,12 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 707,
+            "line": 709,
             "verb": "insert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 738,
+            "line": 740,
             "verb": "insert"
           }
         ]
@@ -4068,7 +4099,7 @@
         },
         {
           "file": "components/print-planner/PrintJobQueue.tsx",
-          "line": 58
+          "line": 59
         }
       ]
     },
@@ -4541,7 +4572,22 @@
           },
           "can_design": {
             "file": "app/admin/settings/users/page.tsx",
-            "line": 49,
+            "line": 115,
+            "verb": "update"
+          },
+          "can_plan_prints": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 131,
+            "verb": "update"
+          },
+          "city": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
+            "verb": "update"
+          },
+          "employment_type": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
             "verb": "update"
           },
           "full_name": {
@@ -4549,14 +4595,29 @@
             "line": 53,
             "verb": "update"
           },
+          "hourly_rate": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
+            "verb": "update"
+          },
           "is_active": {
-            "file": "app/admin/designers/page.tsx",
-            "line": 246,
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 225,
+            "verb": "update"
+          },
+          "joining_date": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
             "verb": "update"
           },
           "last_login_at": {
             "file": "lib/activity-logger.ts",
             "line": 95,
+            "verb": "update"
+          },
+          "monthly_salary": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
             "verb": "update"
           },
           "phone": {
@@ -4566,7 +4627,17 @@
           },
           "role": {
             "file": "app/admin/settings/page.tsx",
-            "line": 64,
+            "line": 63,
+            "verb": "update"
+          },
+          "skills": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
+            "verb": "update"
+          },
+          "state": {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 200,
             "verb": "update"
           },
           "telegram_chat_id": {
@@ -4588,13 +4659,8 @@
         "spreads": [],
         "sites": [
           {
-            "file": "app/admin/designers/page.tsx",
-            "line": 246,
-            "verb": "update"
-          },
-          {
             "file": "app/admin/settings/page.tsx",
-            "line": 64,
+            "line": 63,
             "verb": "update"
           },
           {
@@ -4609,12 +4675,17 @@
           },
           {
             "file": "app/admin/settings/users/page.tsx",
-            "line": 40,
+            "line": 106,
             "verb": "update"
           },
           {
             "file": "app/admin/settings/users/page.tsx",
-            "line": 49,
+            "line": 115,
+            "verb": "update"
+          },
+          {
+            "file": "app/admin/settings/users/page.tsx",
+            "line": 131,
             "verb": "update"
           }
         ]
@@ -4630,15 +4701,15 @@
         },
         {
           "file": "app/admin/eod-report/admin-view/page.tsx",
-          "line": 845
+          "line": 846
         },
         {
           "file": "app/admin/finance/awaiting-payment/page.tsx",
-          "line": 49
+          "line": 62
         },
         {
           "file": "app/admin/jobs/overdue/page.tsx",
-          "line": 136
+          "line": 138
         },
         {
           "file": "app/admin/marketing/dashboard/page.tsx",
@@ -4751,7 +4822,7 @@
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 1246,
+            "line": 1248,
             "verb": "insert"
           }
         ],
@@ -4768,7 +4839,7 @@
           },
           {
             "file": "components/print-planner/CreatePrintRunForm.tsx",
-            "line": 186,
+            "line": 187,
             "verb": "insert"
           },
           {
@@ -4783,7 +4854,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 1246,
+            "line": 1248,
             "verb": "insert"
           }
         ]
@@ -4874,57 +4945,57 @@
         "columns": {
           "checklist": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "design_file_url": {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 271,
+            "line": 272,
             "verb": "insert"
           },
           "job_id": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "notes": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "performed_by": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "performed_by_name": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "photos": {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 254,
+            "line": 313,
             "verb": "insert"
           },
           "print_run_id": {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 254,
+            "line": 313,
             "verb": "insert"
           },
           "qc_type": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "result": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           "skip_reason": {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 254,
+            "line": 313,
             "verb": "insert"
           }
         },
@@ -4932,22 +5003,22 @@
         "sites": [
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 253,
+            "line": 254,
             "verb": "insert"
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 271,
+            "line": 272,
             "verb": "insert"
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 333,
+            "line": 334,
             "verb": "insert"
           },
           {
             "file": "app/admin/print-runs/page.tsx",
-            "line": 254,
+            "line": 313,
             "verb": "insert"
           }
         ]
@@ -4955,7 +5026,7 @@
       "sites": [
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 214
+          "line": 215
         },
         {
           "file": "lib/record-locations.ts",
@@ -4998,21 +5069,21 @@
         "columns": {
           "user_id": {
             "file": "lib/hooks.ts",
-            "line": 2223,
+            "line": 2225,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 2223,
+            "line": 2225,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 2223,
+            "line": 2225,
             "verb": "insert"
           }
         ]
@@ -5026,31 +5097,31 @@
         "columns": {
           "report_id": {
             "file": "lib/hooks.ts",
-            "line": 2975,
+            "line": 2977,
             "verb": "upsert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 2975,
+            "line": 2977,
             "verb": "upsert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2988,
+            "line": 2990,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 2975,
+            "line": 2977,
             "verb": "upsert"
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2988,
+            "line": 2990,
             "verb": "insert"
           }
         ]
@@ -5064,21 +5135,21 @@
         "columns": {
           "so_number": {
             "file": "lib/hooks.ts",
-            "line": 454,
+            "line": 456,
             "verb": "insert"
           }
         },
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 454,
+            "line": 456,
             "verb": "insert"
           }
         ],
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 454,
+            "line": 456,
             "verb": "insert"
           }
         ]
@@ -5119,17 +5190,17 @@
         "columns": {
           "remark": {
             "file": "lib/hooks.ts",
-            "line": 1213,
+            "line": 1215,
             "verb": "insert"
           },
           "task_id": {
             "file": "lib/hooks.ts",
-            "line": 1213,
+            "line": 1215,
             "verb": "insert"
           },
           "user_id": {
             "file": "lib/hooks.ts",
-            "line": 1213,
+            "line": 1215,
             "verb": "insert"
           }
         },
@@ -5137,7 +5208,7 @@
         "sites": [
           {
             "file": "lib/hooks.ts",
-            "line": 1213,
+            "line": 1215,
             "verb": "insert"
           }
         ]
@@ -5201,19 +5272,19 @@
       "sites": [
         {
           "file": "app/api/cron/eod-report/route.ts",
-          "line": 143
+          "line": 159
         },
         {
           "file": "app/api/cron/telegram-digest/route.ts",
-          "line": 269
+          "line": 313
+        },
+        {
+          "file": "app/api/cron/watchman/route.ts",
+          "line": 74
         },
         {
           "file": "app/api/cron/weekly-scorecard/route.ts",
           "line": 66
-        },
-        {
-          "file": "app/api/health/route.ts",
-          "line": 48
         },
         {
           "file": "app/api/telegram/notify-stage/route.ts",
@@ -5222,6 +5293,45 @@
         {
           "file": "app/api/telegram/send/route.ts",
           "line": 80
+        }
+      ]
+    },
+    "telegram_link_candidates": {
+      "columns": [
+        "telegram_username"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "linked_profile_id": {
+            "file": "app/api/telegram/link-candidates/route.ts",
+            "line": 85,
+            "verb": "update"
+          },
+          "status": {
+            "file": "app/api/telegram/link-candidates/route.ts",
+            "line": 48,
+            "verb": "update"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "app/api/telegram/link-candidates/route.ts",
+            "line": 48,
+            "verb": "update"
+          },
+          {
+            "file": "app/api/telegram/link-candidates/route.ts",
+            "line": 85,
+            "verb": "update"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/api/telegram/link-candidates/route.ts",
+          "line": 60
         }
       ]
     },
@@ -5238,32 +5348,32 @@
         "columns": {
           "groups_targeted": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           },
           "job_id": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           },
           "last_error": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           },
           "mirrored": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           },
           "stage": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           },
           "telegram_sent": {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           }
         },
@@ -5271,7 +5381,7 @@
         "sites": [
           {
             "file": "app/api/telegram/notify-stage/route.ts",
-            "line": 123,
+            "line": 150,
             "verb": "insert"
           }
         ]
@@ -5279,7 +5389,7 @@
       "sites": [
         {
           "file": "app/api/health/route.ts",
-          "line": 192
+          "line": 168
         },
         {
           "file": "app/api/telegram/notify-stage/route.ts",
@@ -5336,7 +5446,7 @@
           },
           "updated_at": {
             "file": "lib/hooks.ts",
-            "line": 2789,
+            "line": 2791,
             "verb": "update"
           },
           "user_id": {
@@ -5353,7 +5463,7 @@
         "spreads": [
           {
             "file": "lib/hooks.ts",
-            "line": 2789,
+            "line": 2791,
             "verb": "update"
           }
         ],
@@ -5370,7 +5480,7 @@
           },
           {
             "file": "lib/hooks.ts",
-            "line": 2789,
+            "line": 2791,
             "verb": "update"
           }
         ]
@@ -5566,11 +5676,105 @@
         },
         {
           "file": "app/admin/print-runs/page.tsx",
-          "line": 208
+          "line": 227
         },
         {
           "file": "components/banking/CategoryModal.tsx",
           "line": 293
+        }
+      ]
+    },
+    "watchman_notices": {
+      "columns": [
+        "app_path",
+        "attempts",
+        "body",
+        "id",
+        "kind",
+        "title"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "app_path": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          },
+          "attempts": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 131,
+            "verb": "update"
+          },
+          "body": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          },
+          "dedupe_key": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          },
+          "kind": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          },
+          "last_error": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 131,
+            "verb": "update"
+          },
+          "sent_at": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 146,
+            "verb": "update"
+          },
+          "status": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 146,
+            "verb": "update"
+          },
+          "title": {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 131,
+            "verb": "update"
+          },
+          {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 146,
+            "verb": "update"
+          },
+          {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 155,
+            "verb": "update"
+          },
+          {
+            "file": "app/api/cron/watchman/route.ts",
+            "line": 188,
+            "verb": "insert"
+          },
+          {
+            "file": "app/api/health/route.ts",
+            "line": 51,
+            "verb": "insert"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/api/cron/watchman/route.ts",
+          "line": 115
         }
       ]
     },
@@ -5632,12 +5836,329 @@
           "line": 45
         }
       ]
+    },
+    "zoho_accounts": {
+      "columns": [],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "onConflict": {
+            "file": "app/api/zoho/sync-accounts/route.ts",
+            "line": 118,
+            "verb": "upsert"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "app/api/zoho/sync-accounts/route.ts",
+            "line": 118,
+            "verb": "upsert"
+          }
+        ]
+      },
+      "sites": []
+    },
+    "zoho_bank_transactions": {
+      "columns": [
+        "account_id",
+        "account_name",
+        "amount",
+        "debit_or_credit",
+        "description",
+        "id",
+        "is_categorized",
+        "offset_account_name",
+        "payee",
+        "reference_number",
+        "status",
+        "transaction_type",
+        "txn_date",
+        "zoho_transaction_id"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "onConflict": {
+            "file": "app/api/cron/zoho-bank-sync/route.ts",
+            "line": 176,
+            "verb": "upsert"
+          },
+          "raw": {
+            "file": "app/api/zoho/transaction/[id]/route.ts",
+            "line": 148,
+            "verb": "update"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "app/api/cron/zoho-bank-sync/route.ts",
+            "line": 176,
+            "verb": "upsert"
+          },
+          {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 227,
+            "verb": "upsert"
+          },
+          {
+            "file": "app/api/zoho/transaction/[id]/route.ts",
+            "line": 148,
+            "verb": "update"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/admin/finance/zoho/page.tsx",
+          "line": 223
+        },
+        {
+          "file": "app/api/zoho/transaction/[id]/route.ts",
+          "line": 85
+        }
+      ]
+    },
+    "zoho_documents": {
+      "columns": [
+        "balance",
+        "customer_name",
+        "doc_date",
+        "doc_number",
+        "doc_type",
+        "due_date",
+        "id",
+        "last_synced_at",
+        "status",
+        "total",
+        "zoho_id"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "balance": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "currency": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "customer_name": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "doc_date": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "doc_number": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "doc_type": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "due_date": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "last_synced_at": {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 258,
+            "verb": "update"
+          },
+          "line_items": {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 258,
+            "verb": "update"
+          },
+          "onConflict": {
+            "file": "app/api/cron/zoho-invoice-sync/route.ts",
+            "line": 153,
+            "verb": "upsert"
+          },
+          "raw": {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 258,
+            "verb": "update"
+          },
+          "status": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "sub_total": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "tax_total": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "total": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          },
+          "zoho_id": {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "app/api/cron/zoho-invoice-sync/route.ts",
+            "line": 153,
+            "verb": "upsert"
+          },
+          {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 162,
+            "verb": "upsert"
+          },
+          {
+            "file": "app/api/zoho/backfill/route.ts",
+            "line": 258,
+            "verb": "update"
+          },
+          {
+            "file": "app/api/zoho/webhook/route.ts",
+            "line": 148,
+            "verb": "upsert"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/api/zoho/backfill/route.ts",
+          "line": 245
+        },
+        {
+          "file": "app/api/zoho/backfill/route.ts",
+          "line": 265
+        },
+        {
+          "file": "lib/eod-metrics.ts",
+          "line": 357
+        },
+        {
+          "file": "lib/finance-overview-data.ts",
+          "line": 151
+        },
+        {
+          "file": "lib/payables.ts",
+          "line": 76
+        },
+        {
+          "file": "lib/receivables.ts",
+          "line": 75
+        }
+      ]
+    },
+    "zoho_sync_config": {
+      "columns": [
+        "value"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "key": {
+            "file": "lib/zoho-api.ts",
+            "line": 24,
+            "verb": "upsert"
+          },
+          "value": {
+            "file": "lib/zoho-api.ts",
+            "line": 24,
+            "verb": "upsert"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "lib/zoho-api.ts",
+            "line": 24,
+            "verb": "upsert"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/api/zoho/webhook/route.ts",
+          "line": 126
+        },
+        {
+          "file": "lib/zoho-api.ts",
+          "line": 15
+        }
+      ]
+    },
+    "zoho_sync_runs": {
+      "columns": [
+        "fetched",
+        "message",
+        "ok",
+        "ran_at"
+      ],
+      "relations": [],
+      "writes": {
+        "columns": {
+          "fetched": {
+            "file": "lib/zoho-api.ts",
+            "line": 208,
+            "verb": "insert"
+          },
+          "kind": {
+            "file": "lib/zoho-api.ts",
+            "line": 208,
+            "verb": "insert"
+          },
+          "message": {
+            "file": "lib/zoho-api.ts",
+            "line": 208,
+            "verb": "insert"
+          },
+          "ok": {
+            "file": "lib/zoho-api.ts",
+            "line": 208,
+            "verb": "insert"
+          }
+        },
+        "spreads": [],
+        "sites": [
+          {
+            "file": "lib/zoho-api.ts",
+            "line": 208,
+            "verb": "insert"
+          }
+        ]
+      },
+      "sites": [
+        {
+          "file": "app/admin/finance/zoho/page.tsx",
+          "line": 228
+        }
+      ]
     }
   },
   "rpcs": {
     "complete_cmyk_print_job": {
       "file": "lib/hooks.ts",
-      "line": 1962
+      "line": 1964
     },
     "fn_backup_tables": {
       "file": "app/api/cron/backup/route.ts",
@@ -5657,7 +6178,7 @@
     },
     "fn_finance_overview_pnl": {
       "file": "lib/finance-overview-data.ts",
-      "line": 194
+      "line": 201
     },
     "fn_finance_period_review": {
       "file": "app/admin/finance/review/page.tsx",
@@ -5681,7 +6202,7 @@
     },
     "fn_record_invoice_payment": {
       "file": "app/admin/finance/invoices/page.tsx",
-      "line": 206
+      "line": 207
     },
     "fn_row_count_regressions": {
       "file": "lib/health-checks.ts",
@@ -5694,6 +6215,10 @@
     "fn_table_row_counts": {
       "file": "lib/health-checks.ts",
       "line": 314
+    },
+    "fn_touch_link_candidate": {
+      "file": "app/api/telegram/webhook/route.ts",
+      "line": 127
     },
     "fn_update_expense": {
       "file": "app/admin/finance/expenses/quick/page.tsx",
@@ -5713,23 +6238,23 @@
     },
     "get_cmyk_monthly_overview": {
       "file": "lib/hooks.ts",
-      "line": 1926
+      "line": 1928
     },
     "get_next_number": {
       "file": "app/admin/designers/new-project/page.tsx",
-      "line": 277
+      "line": 278
     },
     "get_production_summary": {
       "file": "app/admin/production-queue/page.tsx",
-      "line": 54
+      "line": 55
     },
     "get_system_health": {
       "file": "app/api/health/route.ts",
-      "line": 164
+      "line": 140
     },
     "increment_job_amount_received": {
       "file": "app/admin/jobs/page.tsx",
-      "line": 560
+      "line": 626
     },
     "mark_all_notifications_read": {
       "file": "components/NotificationBell.tsx",
@@ -5749,7 +6274,7 @@
     },
     "record_paper_purchase": {
       "file": "lib/hooks.ts",
-      "line": 1999
+      "line": 2001
     },
     "record_payment_received": {
       "file": "app/admin/finance/payments/page.tsx",

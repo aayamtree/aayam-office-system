@@ -4,10 +4,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, getActiveCredential, refreshDriveToken } from '@/lib/google-drive-server';
+import { withCronLog } from '@/lib/cron-log';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest) {
     // Protect with CRON_SECRET so only Vercel cron (or authorized callers) can trigger.
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
@@ -44,4 +45,12 @@ export async function GET(request: NextRequest) {
         console.error('❌ Cron: Error:', error);
         return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
     }
+}
+
+// Every run of this cron is recorded in public.cron_runs (see lib/cron-log.ts).
+// Vercel knows whether the schedule fired, but that lives in a dashboard nobody
+// opens; the daily audit needs the fact inside the database so it can alert when
+// this job silently stops running.
+export async function GET(request: NextRequest) {
+    return withCronLog('refresh-drive-token', () => runJob(request));
 }

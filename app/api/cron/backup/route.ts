@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getServiceAccountToken } from '@/lib/google-service-account';
+import { withCronLog } from '@/lib/cron-log';
 
 /**
  * Weekly DB Backup Cron
@@ -87,7 +88,7 @@ async function pruneOldBackups(token: string, folderId: string) {
     }
 }
 
-export async function GET(request: NextRequest) {
+async function runJob(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -152,4 +153,12 @@ export async function GET(request: NextRequest) {
     } catch (e: any) {
         return NextResponse.json({ error: e?.message || 'Backup failed' }, { status: 500 });
     }
+}
+
+// Every run of this cron is recorded in public.cron_runs (see lib/cron-log.ts).
+// Vercel knows whether the schedule fired, but that lives in a dashboard nobody
+// opens; the daily audit needs the fact inside the database so it can alert when
+// this job silently stops running.
+export async function GET(request: NextRequest) {
+    return withCronLog('backup', () => runJob(request));
 }
