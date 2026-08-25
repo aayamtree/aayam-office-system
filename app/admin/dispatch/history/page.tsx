@@ -75,11 +75,18 @@ export default function DispatchHistoryPage() {
     const fetchPrintRuns = async () => {
       setPrintRunsLoading(true);
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('print_runs')
           .select('*, vendor:vendors!print_runs_vendor_id_fkey(name, company), print_run_jobs(*, job:jobs(job_number, client:clients(company, name, phone)))')
-          .eq('status', 'dispatched')
+          // A warehouse run's terminal state is `handed_over`; only a
+          // direct-to-client run ever reaches `dispatched`. Filtering on
+          // 'dispatched' alone emptied this tab permanently.
+          .in('status', ['handed_over', 'dispatched'])
           .order('updated_at', { ascending: false });
+        // Thrown, not ignored: the catch below already tells the user. Without
+        // this a failure showed an empty dispatch history, which reads as
+        // "nothing was ever dispatched".
+        if (error) throw error;
         setPrintRuns(data || []);
       } catch (err: any) {
         toast.error('Failed to load print run history: ' + (err.message || 'Unknown error'));

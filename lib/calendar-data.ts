@@ -116,7 +116,10 @@ export async function fetchCalendarBusinessData(
             .select('id, print_run_number, deadline, status')
             .gte('deadline', startDate)
             .lte('deadline', endDate)
-            .neq('status', 'delivered')
+            // Was .neq('status','delivered') — a value print_runs_status_check has
+    // never allowed, so it excluded nothing and finished runs kept showing as
+    // live deadline items on everyone's calendar.
+    .not('status', 'in', '("handed_over","dispatched")')
         : null;
 
     // ── 6. Leads → Admin + Marketing only ───────────────────────────────────

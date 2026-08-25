@@ -9,9 +9,10 @@ import { toast } from '@/lib/toast';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { runProductCategory } from '@/lib/product-category';
 import {
-    Printer, Package, Clock, CheckCircle, Truck, Search as SearchIcon,
+    Printer, Clock, CheckCircle, Truck,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
-    ClipboardCheck, Send, MapPin, FileText, AlertTriangle, Building2, Camera
+    ClipboardCheck, MapPin, FileText, AlertTriangle, Building2, Camera,
+    PackageCheck, History, Undo2
 } from 'lucide-react';
 
 // ─── Interfaces ────────────────────────────────────────────
@@ -31,7 +32,7 @@ interface PrintRunJob {
 interface PrintRun {
     id: string;
     print_run_number: string;
-    status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched';
+    status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'handed_over' | 'dispatched';
     notes: string | null;
     deadline: string | null;
     total_amount: number | null;
@@ -64,9 +65,14 @@ interface PrintRun {
     jobs: PrintRunJob[];
 }
 
-interface TransporterVendor {
+interface StatusEvent {
     id: string;
-    name: string;
+    from_status: string | null;
+    to_status: string;
+    is_rollback: boolean;
+    reason: string | null;
+    changed_by_name: string | null;
+    created_at: string;
 }
 
 // ─── Status Config ─────────────────────────────────────────
@@ -76,15 +82,44 @@ const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
     at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', dot: 'bg-orange-500' },
     printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', dot: 'bg-blue-500' },
     qc: { label: 'In QC', icon: ClipboardCheck, color: 'bg-cyan-100 text-cyan-800', borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', dot: 'bg-cyan-500' },
+    handed_over: { label: 'Handed Over', icon: PackageCheck, color: 'bg-stone-200 text-stone-700', borderColor: 'border-l-stone-400', tintBg: 'bg-stone-50', dot: 'bg-stone-500' },
     dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', dot: 'bg-green-500' },
 };
 
+// A print run is a MANUFACTURING unit — one sheet, one machine, one printer.
+// A dispatch is a DESTINATION unit — one client, one address, one e-way bill.
+// 20 of 28 runs carry more than one client, so a run can never BE a dispatch:
+// PP-00026's sheet goes to Maharashtra, Uttar Pradesh AND Bengal. The run's life
+// therefore ends at `handed_over` and each client's consignment is dispatched
+// per job on the Dispatch board, which already keys its records by job + client.
+//
+// `dispatched` survives for one case only: direct-to-client, where the printer
+// ships and the run genuinely IS the shipment. That path is restricted to
+// single-client runs (see handleDeliverySubmit) so one e-way bill is honest.
 const NEXT_STATUS: Record<string, string | null> = {
     planned: 'at_printer',
     at_printer: 'printing_done',
-    printing_done: null, // handled via delivery modal (warehouse -> qc, direct -> dispatched)
-    qc: 'dispatched',    // handled via dispatch modal
-    dispatched: null,
+    printing_done: null,   // delivery modal: warehouse -> qc, direct -> dispatched
+    qc: 'handed_over',
+    handed_over: null,     // terminal — the Dispatch board owns it from here
+    dispatched: null,      // terminal — direct-to-client only
+};
+
+// Terminal states: the run is off the production floor and off the active board.
+const ARCHIVED = ['handed_over', 'dispatched'];
+
+// Rollback is ONE step, never a free jump: a mis-click is undone, a history is
+// not rewritten. Every move back is written to print_run_status_history with a
+// reason, and the jobs are deliberately NOT dragged backwards with it — the
+// sync route's rank guard refuses to lower a job's stage, so if the dispatch
+// team has already moved on, their work survives the correction.
+const PREV_STATUS: Record<string, string | null> = {
+    planned: null,
+    at_printer: 'planned',
+    printing_done: 'at_printer',
+    qc: 'printing_done',
+    handed_over: 'qc',
+    dispatched: 'printing_done', // direct-to-client jumped from printing_done
 };
 
 // QC items fetched dynamically from Production Settings (job_checklists table)
@@ -111,8 +146,16 @@ export default function PrintRunsPage() {
     // Modals
     const [viewRun, setViewRun] = useState<PrintRun | null>(null);
     const [deliveryModal, setDeliveryModal] = useState<PrintRun | null>(null);
-    const [dispatchModal, setDispatchModal] = useState<PrintRun | null>(null);
+
     const [docsModal, setDocsModal] = useState<PrintRun | null>(null);
+
+    // Moving a run BACKWARDS is a correction, not a normal step: the page is
+    // open to anyone with can_plan_prints, which is not the same as admin.
+    const isAdmin = profile?.role === 'admin';
+
+    // Stage history for whichever run is open in the View modal.
+    const [history, setHistory] = useState<StatusEvent[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     // Dispatch paperwork (invoice + e-way bill). Shared by the dispatch modal
     // and the later "Upload Docs" modal, so both routes record the same thing.
@@ -127,16 +170,13 @@ export default function PrintRunsPage() {
     const [directSkipReason, setDirectSkipReason] = useState('');
 
     // Dispatch modal state
-    const [transporterName, setTransporterName] = useState('');
     const [ewayBill, setEwayBill] = useState('');
     const [invoiceRef, setInvoiceRef] = useState('');
-    const [dispatchDate, setDispatchDate] = useState(new Date().toISOString().split('T')[0]);
 
 
     const [receivedQtys, setReceivedQtys] = useState<Record<string, number>>({});
 
     // Transporters
-    const [transporters, setTransporters] = useState<TransporterVendor[]>([]);
 
     // Dynamic QC checklist items from Production Settings
 
@@ -222,18 +262,10 @@ export default function PrintRunsPage() {
         }
     }, []);
 
-    const fetchTransporters = async () => {
-        const { data } = await supabase
-            .from('vendors')
-            .select('id, name')
-            .eq('is_active', true)
-            .ilike('category', '%transporter%');
-        setTransporters(data || []);
-    };
 
 
 
-    useEffect(() => { fetchRuns(); fetchTransporters(); }, [fetchRuns]);
+    useEffect(() => { fetchRuns(); }, [fetchRuns]);
 
     // ─── Status Update ─────────────────────────────────────
     // Returns true only if the run actually moved — callers must not close their
@@ -280,6 +312,18 @@ export default function PrintRunsPage() {
     const needsDocs = (r: PrintRun) =>
         r.status === 'dispatched' && (!r.invoice_doc_url || !r.eway_doc_url);
 
+    // How many different clients ride on this one sheet. One invoice and one
+    // e-way bill cannot cover three destinations, so this decides whether the
+    // run may ship direct from the printer at all.
+    const clientCount = (r: PrintRun) => {
+        const names = (r.jobs || []).map(j => (j.client_name || '').trim());
+        // A blank name is an UNKNOWN client, not the same client as its
+        // neighbour. Dropping blanks would let a 2-client sheet with one missing
+        // name read as single-client and slip past the direct-to-client guard.
+        if (names.some(n => !n)) return Math.max(2, new Set(names.filter(Boolean)).size + 1);
+        return new Set(names).size;
+    };
+
     // Cancelling used to leave deliveryMode / address / skip-reason set, so the
     // NEXT run opened in this modal inherited them — one Cancel on run A could
     // send run B straight past QC with run A's address and waiver text.
@@ -298,6 +342,15 @@ export default function PrintRunsPage() {
             delivery_mode: deliveryMode,
         };
         if (deliveryMode === 'direct_to_client') {
+            // Shipping direct records ONE address, ONE invoice and ONE e-way bill
+            // on the run. That is only honest when the whole sheet goes to one
+            // client; a 3-client sheet is 3 consignments and must go through the
+            // Dispatch board, which keys its paperwork per job + client.
+            const n = clientCount(deliveryModal);
+            if (n > 1) {
+                toast.error(`${deliveryModal.print_run_number} carries ${n} clients — that is ${n} consignments with ${n} e-way bills. Send it to the warehouse and dispatch each client separately.`);
+                return;
+            }
             if (!directSkipReason.trim()) {
                 toast.error('Please enter a reason for skipping physical QC.');
                 return;
@@ -336,39 +389,6 @@ export default function PrintRunsPage() {
             if (!ok) return;
         }
         closeDeliveryModal();
-    };
-
-
-
-    // ─── Dispatch Handler ───────────────────────────────────
-    const handleDispatchSubmit = async () => {
-        if (!dispatchModal) return;
-        setUploadingDocs(true);
-        try {
-            const extra: Record<string, any> = {
-                transporter_name: transporterName,
-                eway_bill_number: ewayBill,
-                invoice_reference: invoiceRef,
-                dispatch_date: dispatchDate,
-            };
-            // Files are optional here — they can be attached later from the card.
-            if (invoiceFile) extra.invoice_doc_url = await uploadDoc(dispatchModal.id, invoiceFile, 'invoice');
-            if (ewayFile) extra.eway_doc_url = await uploadDoc(dispatchModal.id, ewayFile, 'eway');
-            const ok = await updateStatus(dispatchModal.id, 'dispatched', extra);
-            // On a failed write the files are already in storage; keep the modal
-            // open so the operator isn't asked to re-key and re-attach everything.
-            if (!ok) return;
-            setDispatchModal(null);
-            setTransporterName('');
-            setEwayBill('');
-            setInvoiceRef('');
-            setInvoiceFile(null);
-            setEwayFile(null);
-        } catch (err: any) {
-            toast.error('Could not upload documents: ' + (err.message || 'Unknown error'));
-        } finally {
-            setUploadingDocs(false);
-        }
     };
 
     // ─── Late paperwork (dispatched, docs arrive afterwards) ─
@@ -425,20 +445,124 @@ export default function PrintRunsPage() {
         }
     };
 
+    // ─── Stage history ──────────────────────────────────────
+    const historyReqRef = useRef<string | null>(null);
+    const fetchHistory = useCallback(async (runId: string) => {
+        // Open run A then run B quickly and A's slower response would land under
+        // B's header, looking authoritative. Last request opened wins.
+        historyReqRef.current = runId;
+        setHistoryLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('print_run_status_history')
+                .select('id, from_status, to_status, is_rollback, reason, changed_by_name, created_at, profiles!print_run_status_history_changed_by_fkey(full_name)')
+                .eq('print_run_id', runId)
+                .order('created_at', { ascending: true });
+            if (error) throw error;
+            if (historyReqRef.current !== runId) return;
+            setHistory((data || []).map((r: any) => ({
+                ...r,
+                // The DB trigger records auth.uid() but cannot resolve a name,
+                // so fall back to the joined profile.
+                changed_by_name: r.changed_by_name || r.profiles?.full_name || null,
+            })));
+        } catch (err: any) {
+            if (historyReqRef.current !== runId) return;
+            toast.error('Could not load stage history: ' + (err.message || 'Unknown error'));
+            setHistory([]);
+        } finally {
+            if (historyReqRef.current === runId) setHistoryLoading(false);
+        }
+    }, []);
+
+    const openRun = (run: PrintRun) => {
+        setViewRun(run);
+        setHistory([]);
+        fetchHistory(run.id);
+    };
+
+    // ─── Roll back one stage ────────────────────────────────
+    // One atomic server-side move (fn_rollback_print_run): it re-checks the
+    // step against the run's CURRENT status under a row lock, clears the
+    // dispatch facts when leaving `dispatched`, and stamps the reason onto the
+    // history row the trigger just wrote. Doing that from the browser meant
+    // patching "the newest row", which under two operators could brand someone
+    // else's forward move as a rollback.
+    const rollBack = async (run: PrintRun) => {
+        const prev = PREV_STATUS[run.status];
+        if (!prev) return;
+        if (!isAdmin) {
+            toast.error('Only an admin can move a run back a stage.');
+            return;
+        }
+        const prevLabel = (STATUS_CONFIG[prev] || DEFAULT_STATUS).label;
+        const leavingDispatch = run.status === 'dispatched';
+        const { confirmed, inputValue } = await confirm({
+            title: `Move back to ${prevLabel}?`,
+            message: `${run.print_run_number} goes from ${(STATUS_CONFIG[run.status] || DEFAULT_STATUS).label} back to ${prevLabel}, recorded with your name.`
+                + ' Jobs the dispatch team has already moved further along stay where they are — only the run moves, so check the Jobs board afterwards.'
+                + (leavingDispatch ? ' The transporter, e-way bill, invoice and uploaded documents on this run are cleared, because that dispatch is being undone.' : ''),
+            confirmLabel: `Move back to ${prevLabel}`,
+            variant: 'warning',
+            showInput: true,
+            inputRequired: true,
+            inputPlaceholder: 'Why is this being moved back?',
+        });
+        if (!confirmed) return;
+
+        setUpdating(run.id);
+        try {
+            const { error } = await supabase.rpc('fn_rollback_print_run', {
+                p_run_id: run.id,
+                p_to_status: prev,
+                p_reason: inputValue || '',
+            });
+            if (error) throw error;
+
+            // Undoing "At Printer" must also release the jobs, which the stage
+            // map cannot express: planned deliberately implies nothing, and the
+            // rank guard never lowers a stage.
+            if (prev === 'planned') {
+                await revertJobsToReadyToPrint((run.jobs || []).map(j => j.job_id).filter(Boolean));
+            } else {
+                await syncRunJobsToStage(run.id);
+            }
+            await fetchRuns();
+            toast.success(`${run.print_run_number} moved back to ${prevLabel}.`);
+        } catch (err: any) {
+            toast.error('Could not move it back: ' + (err.message || 'Unknown error'));
+        } finally {
+            setUpdating(null);
+            setViewRun(null);
+            setHistory([]);
+        }
+    };
+
+    // ─── Hand over to Dispatch ──────────────────────────────
+    // The sheet has been cut; there is no sheet any more, only parcels. The run
+    // closes here and each client's consignment is dispatched on the Dispatch
+    // board, which is keyed per job + client and already holds the transporter,
+    // e-way bill, invoice and delivery receipt.
+    const handOver = async (run: PrintRun) => {
+        const n = clientCount(run);
+        const { confirmed } = await confirm({
+            title: 'Hand over to Dispatch',
+            message: n > 1
+                ? `${run.print_run_number} carries ${n} clients, so it ships as ${n} separate consignments. Handing over closes this run and archives it — the ${run.jobs.length} jobs continue on the Dispatch board, where each client gets its own transporter, e-way bill and invoice.`
+                : `Handing over closes ${run.print_run_number} and archives it. Its ${run.jobs.length} job${run.jobs.length !== 1 ? 's' : ''} continue on the Dispatch board, where the consignment paperwork is recorded.`,
+            confirmLabel: 'Hand over →',
+        });
+        if (!confirmed) return;
+        await updateStatus(run.id, 'handed_over');
+    };
+
     // ─── Handle next step button click ──────────────────────
     const handleNextStep = (run: PrintRun) => {
         if (run.status === 'printing_done') {
             // Show delivery mode modal
             setDeliveryModal(run);
         } else if (run.status === 'qc') {
-            // QC cleared at the warehouse → capture the dispatch paperwork.
-            setTransporterName(run.transporter_name || '');
-            setEwayBill(run.eway_bill_number || '');
-            setInvoiceRef(run.invoice_reference || '');
-            setDispatchDate(run.dispatch_date || new Date().toISOString().split('T')[0]);
-            setInvoiceFile(null);
-            setEwayFile(null);
-            setDispatchModal(run);
+            handOver(run);
         } else {
             const next = NEXT_STATUS[run.status];
             if (next) updateStatus(run.id, next);
@@ -449,19 +573,25 @@ export default function PrintRunsPage() {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const DONE_PRINTING = ['printing_done', 'qc', 'dispatched'];
+    const DONE_PRINTING = ['printing_done', 'qc', ...ARCHIVED];
     const overdueCount = runs.filter(r =>
         r.deadline &&
         new Date(r.deadline) < today &&
         !DONE_PRINTING.includes(r.status)
     ).length;
 
-    const filteredRuns = filter === 'all' ? runs
+    // 'all' means all ACTIVE work. A handed-over run is history: it would
+    // otherwise pile up here exactly like the 270-card job board did.
+    const filteredRuns = filter === 'all' ? runs.filter(r => !ARCHIVED.includes(r.status))
         : filter === 'overdue'
             ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !DONE_PRINTING.includes(r.status))
             : filter === 'docs_pending'
                 ? runs.filter(needsDocs)
-                : runs.filter(r => r.status === filter);
+                // Both terminal states, so a fully-papered direct dispatch stays
+                // reachable — otherwise it could be viewed from nowhere at all.
+                : filter === 'closed'
+                    ? runs.filter(r => ARCHIVED.includes(r.status))
+                    : runs.filter(r => r.status === filter);
 
     // ?job=<id> — arrived from ⌘K's "where does this appear" list. A job isn't a
     // row here, it's a line inside a run, so highlight the RUN that carries it.
@@ -469,12 +599,12 @@ export default function PrintRunsPage() {
         ? runs.find(r => r.jobs?.some(j => j.job_id === focusJobId))?.id ?? null
         : null;
     const counts: Record<string, number> = {
-        all: runs.length,
         planned: runs.filter(r => r.status === 'planned').length,
         at_printer: runs.filter(r => r.status === 'at_printer').length,
         printing_done: runs.filter(r => r.status === 'printing_done').length,
         qc: runs.filter(r => r.status === 'qc').length,
         docs_pending: runs.filter(needsDocs).length,
+        closed: runs.filter(r => ARCHIVED.includes(r.status)).length,
     };
 
     const formatDate = (d: string | null) => {
@@ -484,7 +614,7 @@ export default function PrintRunsPage() {
 
     const getNextLabel = (status: string) => {
         if (status === 'printing_done') return 'Delivery →';
-        if (status === 'qc') return 'Dispatch →';
+        if (status === 'qc') return 'Hand to Dispatch →';
         const next = NEXT_STATUS[status];
         if (!next) return null;
         return STATUS_CONFIG[next as keyof typeof STATUS_CONFIG]?.label + ' →';
@@ -516,8 +646,8 @@ export default function PrintRunsPage() {
                 </button>
             </div>
 
-            {/* Stat Cards — Job Queue style (4 col) */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+            {/* Stat Cards — Job Queue style */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
                 <button
                     onClick={() => setFilter(filter === 'planned' ? 'all' : 'planned')}
                     className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'planned'
@@ -577,6 +707,18 @@ export default function PrintRunsPage() {
                         <span className={`text-xs font-medium ${filter === 'overdue' ? 'text-white' : 'text-red-600'}`}>Overdue</span>
                     </div>
                     <p className={`text-page-title ${filter === 'overdue' ? 'text-white' : 'text-red-700'}`}>{overdueCount}</p>
+                </button>
+                <button
+                    onClick={() => setFilter(filter === 'closed' ? 'all' : 'closed')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'closed'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-muted border-border'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <PackageCheck className={`w-4 h-4 ${filter === 'closed' ? 'text-white' : 'text-foreground'}`} />
+                        <span className={`text-xs font-medium ${filter === 'closed' ? 'text-white' : 'text-foreground'}`}>Closed</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'closed' ? 'text-white' : 'text-foreground'}`}>{counts.closed}</p>
                 </button>
                 <button
                     onClick={() => setFilter(filter === 'docs_pending' ? 'all' : 'docs_pending')}
@@ -690,7 +832,7 @@ export default function PrintRunsPage() {
                                     {/* Actions */}
                                     <div className="flex gap-1.5 flex-wrap pt-0.5">
                                         <button
-                                            onClick={() => setViewRun(run)}
+                                            onClick={() => openRun(run)}
                                             className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors"
                                         >
                                             <Eye className="w-3 h-3" /> View
@@ -825,6 +967,46 @@ export default function PrintRunsPage() {
 
 
 
+                            {/* Stage history — every move, who made it, when */}
+                            <div>
+                                <p className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1.5">
+                                    <History size={12} /> Stage History
+                                </p>
+                                {historyLoading ? (
+                                    <p className="text-xs text-gray-400">Loading…</p>
+                                ) : history.length === 0 ? (
+                                    <p className="text-xs text-gray-400">
+                                        Nothing recorded yet — stage history starts from 25 Aug 2026.
+                                        This run reached <strong>{(STATUS_CONFIG[viewRun.status] || DEFAULT_STATUS).label}</strong> before that.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-0">
+                                        {history.map((h, i) => {
+                                            const conf = STATUS_CONFIG[h.to_status] || DEFAULT_STATUS;
+                                            return (
+                                                <div key={h.id} className="flex gap-2.5">
+                                                    <div className="flex flex-col items-center">
+                                                        <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${h.is_rollback ? 'bg-amber-500' : conf.dot}`} />
+                                                        {i < history.length - 1 && <span className="w-px flex-1 bg-gray-200 my-0.5" />}
+                                                    </div>
+                                                    <div className="pb-3 min-w-0">
+                                                        <p className="text-xs font-medium text-gray-900">
+                                                            {h.is_rollback && <span className="text-amber-600 font-bold">↶ moved back to </span>}
+                                                            {conf.label}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400">
+                                                            {new Date(h.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                            {h.changed_by_name ? ` · ${h.changed_by_name}` : ''}
+                                                        </p>
+                                                        {h.reason && <p className="text-[10px] text-amber-700 mt-0.5 italic">"{h.reason}"</p>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Notes */}
                             {viewRun.notes && (
                                 <div className="bg-gray-50 rounded-md p-3">
@@ -865,6 +1047,16 @@ export default function PrintRunsPage() {
                                     <Trash2 size={13} /> Delete
                                 </button>
                                 <div className="flex gap-2">
+                                    {PREV_STATUS[viewRun.status] && (
+                                        <button
+                                            onClick={() => rollBack(viewRun)}
+                                            disabled={updating === viewRun.id}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 border border-amber-200 bg-amber-50 rounded-md hover:bg-amber-100 disabled:opacity-50"
+                                            title={`Move back to ${(STATUS_CONFIG[PREV_STATUS[viewRun.status] as string] || DEFAULT_STATUS).label}`}
+                                        >
+                                            <Undo2 size={13} /> Move back
+                                        </button>
+                                    )}
 
                                     {getNextLabel(viewRun.status) && (
                                         <button
@@ -981,115 +1173,6 @@ export default function PrintRunsPage() {
             )}
 
 
-
-            {/* ═══════════════════════════════════════════════════════ */}
-            {/* DISPATCH MODAL (from QC → dispatched)                  */}
-            {/* ═══════════════════════════════════════════════════════ */}
-            {dispatchModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDispatchModal(null)}>
-                    <div className="bg-white rounded-lg w-full max-w-md" onClick={e => e.stopPropagation()}>
-                        <div className="bg-green-600 px-4 py-3 rounded-t-lg">
-                            <h2 className="text-white font-bold text-base">Dispatch Details</h2>
-                            <p className="text-white/70 text-xs">{dispatchModal.print_run_number}</p>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            {/* Transporter */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Transporter</label>
-                                {transporters.length > 0 ? (
-                                    <select
-                                        value={transporterName}
-                                        onChange={e => setTransporterName(e.target.value)}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-green-400 outline-none"
-                                    >
-                                        <option value="">Select transporter...</option>
-                                        {transporters.map(t => (
-                                            <option key={t.id} value={t.name}>{t.name}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type="text"
-                                        value={transporterName}
-                                        onChange={e => setTransporterName(e.target.value)}
-                                        placeholder="Enter transporter name"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-green-400 outline-none"
-                                    />
-                                )}
-                            </div>
-
-                            {/* E-way bill & Invoice */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill No.</label>
-                                    <input
-                                        type="text"
-                                        value={ewayBill}
-                                        onChange={e => setEwayBill(e.target.value)}
-                                        placeholder="EWB-XXXXX"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-green-400 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice Ref.</label>
-                                    <input
-                                        type="text"
-                                        value={invoiceRef}
-                                        onChange={e => setInvoiceRef(e.target.value)}
-                                        placeholder="INV-XXXXX"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-green-400 outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Paperwork — stored for later reference (GST / audit) */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice File</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        onChange={e => setInvoiceFile(e.target.files?.[0] || null)}
-                                        className="w-full text-[11px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:bg-gray-100 file:text-gray-700"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill File</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*,application/pdf"
-                                        onChange={e => setEwayFile(e.target.files?.[0] || null)}
-                                        className="w-full text-[11px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:bg-gray-100 file:text-gray-700"
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-[11px] text-gray-400 -mt-2">Optional now — the card keeps a Docs Pending flag until both are attached.</p>
-
-                            {/* Dispatch Date */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Dispatch Date</label>
-                                <input
-                                    type="date"
-                                    value={dispatchDate}
-                                    onChange={e => setDispatchDate(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-green-400 outline-none"
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={() => setDispatchModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
-                                <button
-                                    onClick={handleDispatchSubmit}
-                                    disabled={uploadingDocs}
-                                    className="px-6 py-2 bg-green-600 text-white text-sm font-bold rounded-md hover:bg-green-700 disabled:opacity-50"
-                                >
-                                    <Truck className="inline w-4 h-4 mr-1" /> {uploadingDocs ? 'Saving...' : 'Dispatch →'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* ═══════════════════════════════════════════════════════ */}
             {/* DOCUMENTS MODAL (paperwork that arrives after dispatch) */}

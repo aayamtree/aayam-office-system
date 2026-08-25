@@ -36,6 +36,11 @@ const PRINT_RUN_STAGE_MAP: Record<string, string | null> = {
     at_printer: 'printing',         // sent to printer → In Print Process
     printing_done: 'material_received',
     qc: 'quality_check',            // warehouse delivery chosen → dispatch team QC
+    // The dispatch team owns the material once it is handed over; the rank guard
+    // leaves anything already further along untouched. Mapping this to null also
+    // dropped every handed-over run out of fn_system_health_check's stale-stage
+    // alert — precisely where drift would hide.
+    handed_over: 'quality_check',
     dispatched: 'dispatched',
 };
 

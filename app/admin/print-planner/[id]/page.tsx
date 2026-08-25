@@ -73,7 +73,7 @@ export default function PrintRunDetailPage() {
         }
     };
 
-    const updateStatus = async (newStatus: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'dispatched') => {
+    const updateStatus = async (newStatus: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'handed_over' | 'dispatched') => {
         try {
             const { error } = await supabase
                 .from('print_runs')
@@ -142,6 +142,7 @@ export default function PrintRunDetailPage() {
             case 'at_printer': return 'bg-orange-100 text-orange-800 border-orange-300';
             case 'printing_done': return 'bg-blue-100 text-blue-800 border-blue-300';
             case 'qc': return 'bg-purple-100 text-purple-800 border-purple-300';
+            case 'handed_over': return 'bg-stone-200 text-stone-700 border-stone-300';
             case 'dispatched': return 'bg-green-100 text-green-800 border-green-300';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
