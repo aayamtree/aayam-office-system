@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
     ArrowLeft, Package, FileText, ClipboardCheck, Clock, Upload,
     CheckCircle, XCircle, AlertTriangle, User, Calendar, Loader2,
-    Download, Truck, IndianRupee, TrendingUp, TrendingDown
+    Download, Truck, IndianRupee, TrendingUp, TrendingDown, Route, Link2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -82,6 +82,8 @@ export default function JobDetailPage() {
     const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalExpense, setTotalExpense] = useState(0);
+    // The paper life of the order: quote → job → sheet → dispatch → invoice.
+    const [trail, setTrail] = useState<any | null>(null);
 
     // Invoice / E-Way Bill form
     const [invoiceRef, setInvoiceRef] = useState('');
@@ -193,6 +195,12 @@ export default function JobDetailPage() {
             user_id: h.changed_by,
             profiles: { full_name: h.changed_by_name, role: h.changed_by_role },
         }));
+
+        // Load the order trail alongside the activity. Activity says what
+        // HAPPENED; the trail says which DOCUMENTS the order passed through —
+        // the part that was untraceable until the invoice link existed.
+        supabase.rpc('fn_job_order_trail', { p_job_id: jobId })
+            .then(({ data, error }) => { if (!error) setTrail(data); });
 
         setActivityLogs(
             [...((logRes.data as ActivityLog[]) || []), ...stageEntries]
@@ -594,6 +602,69 @@ export default function JobDetailPage() {
                             </a>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {/* Order Trail — the documents, in the order they happened */}
+            {trail?.job?.number && (trail.quote || trail.print_run || trail.dispatched?.at || trail.invoice) && (
+                <div className="bg-white border border-gray-100 rounded-md p-4">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                        <Route className="w-4 h-4" />
+                        Order Trail
+                    </h3>
+                    <div className="space-y-0">
+                        {([
+                            ['Quotation', trail.quote?.number, trail.quote?.at, null],
+                            ['Job opened', trail.job?.number, trail.job?.at,
+                                [trail.job?.product, trail.job?.type].filter(Boolean).join(' · ')],
+                            ['Printed on sheet', trail.print_run?.number, trail.print_run?.at,
+                                trail.print_run ? [
+                                    trail.print_run.vendor,
+                                    trail.print_run.sheet_mates > 0
+                                        ? `shared with ${trail.print_run.sheet_mates} other job${trail.print_run.sheet_mates === 1 ? '' : 's'}`
+                                        : 'alone on the sheet',
+                                ].filter(Boolean).join(' · ') : null],
+                            ['Left the floor', trail.dispatched?.at ? 'dispatched' : null, trail.dispatched?.at, null],
+                            ['Consignment', trail.dispatch_record?.number, trail.dispatch_record?.at,
+                                trail.dispatch_record?.transporter],
+                            ['Invoice', trail.invoice?.number, trail.invoice?.at,
+                                trail.invoice ? [
+                                    trail.invoice.total ? '₹' + Number(trail.invoice.total).toLocaleString('en-IN') : null,
+                                    trail.invoice.status,
+                                    Number(trail.invoice.balance) > 0 ? '₹' + Number(trail.invoice.balance).toLocaleString('en-IN') + ' still owed' : 'settled',
+                                ].filter(Boolean).join(' · ') : null],
+                        ] as [string, string | null | undefined, string | null | undefined, string | null | undefined][])
+                            .map(([label, value, at, detail], i) => (
+                                <div key={label} className="flex gap-3 py-2">
+                                    <div className="flex flex-col items-center">
+                                        <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${value ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                                        {i < 5 && <span className="w-px flex-1 bg-gray-200 my-0.5" />}
+                                    </div>
+                                    <div className="min-w-0 pb-1">
+                                        <p className="text-xs text-gray-400">{label}</p>
+                                        {value ? (
+                                            <>
+                                                <p className="text-sm font-semibold text-gray-900 font-mono">{value}</p>
+                                                <p className="text-[10px] text-gray-500">
+                                                    {at ? new Date(at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                                                    {detail ? ` · ${detail}` : ''}
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm text-gray-300">not recorded</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                    {!trail.invoice && trail.dispatched?.at && (
+                        <Link
+                            href="/admin/finance/invoice-matching"
+                            className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:underline"
+                        >
+                            <Link2 size={11} /> This job has shipped but no invoice is linked — match it
+                        </Link>
+                    )}
                 </div>
             )}
 

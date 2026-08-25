@@ -157,6 +157,7 @@ const menuItems: MenuItem[] = [
       { name: '💰 Awaiting Payment', href: '/admin/finance/awaiting-payment' },
       { name: 'Invoices', href: '/admin/finance/invoices' },
       { name: 'Zoho Books', href: '/admin/finance/zoho' },
+      { name: 'Invoice Matching', href: '/admin/finance/invoice-matching' },
       { name: 'Payments', href: '/admin/finance/payments' },
       { name: '⚡ Quick Expense', href: '/admin/finance/expenses/quick' },
       { name: 'Expense Categories', href: '/admin/finance/expense-categories', adminOnly: true },

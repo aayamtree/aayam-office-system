@@ -172,5 +172,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Store failed' }, { status: 500 });
     }
 
+    // A newly arrived invoice may be the one a dispatched job has been waiting
+    // for. Propose the link now rather than waiting for the twice-daily cron.
+    // Failure here must never turn a stored document into a webhook error.
+    if (doc.docType === 'invoice') {
+        const { error: matchErr } = await supabase.rpc('fn_suggest_job_invoice_links');
+        if (matchErr) console.error('[zoho/webhook] match failed:', matchErr.message);
+    }
+
     return NextResponse.json({ ok: true, doc_type: doc.docType, number: doc.docNumber });
 }

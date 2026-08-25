@@ -172,9 +172,25 @@ async function runJob(request: NextRequest) {
         return NextResponse.json({ error: failures.join(' | ') }, { status: 500 });
     }
 
+    // An invoice is raised AFTER dispatch, once the floor reports the final
+    // counts, so a job can sit waiting days for its bill. The matcher therefore
+    // cannot run "at dispatch" — it runs every time new invoices land.
+    // It only ever proposes; a person confirms.
+    let matched: number | null = null;
+    try {
+        const { data, error } = await supabase.rpc('fn_suggest_job_invoice_links');
+        if (error) throw error;
+        matched = data?.[0]?.suggested ?? 0;
+    } catch (err: any) {
+        // Never fail the sync over the matcher — the money figures matter more.
+        console.error('[zoho-invoice-sync:match]', err?.message || err);
+        failures.push(`match: ${err?.message || 'unknown error'}`);
+    }
+
     return NextResponse.json({
         ok: true,
         ...summary,
+        ...(matched !== null ? { invoice_matches_suggested: matched } : {}),
         ...(failures.length ? { partial_failure: failures } : {}),
     });
 }
