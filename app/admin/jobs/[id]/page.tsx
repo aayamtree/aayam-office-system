@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { normalizeJobType, getStageName, getStageColor } from '@/lib/job-workflow';
 import { hasInvoiceAttached } from '@/lib/invoice-status';
+import { getPackagingDisplay } from '@/lib/packing-display';
 import ActionButton from '@/components/ActionButton';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -35,12 +36,14 @@ interface JobDetail {
     notes?: string;
     files: { name: string; url: string; type: string; size: number; uploaded_at: string }[];
     packing_info?: {
-        verified_qty: number;
-        package_type: string;
-        package_count: number;
-        approx_weight_kg: number;
-        packing_notes: string;
+        verified_qty?: number;
+        package_type?: string;
+        package_count?: number;
+        approx_weight_kg?: number;
+        packing_notes?: string;
     };
+    package_id?: string | null;
+    package?: { package_type?: string; package_count?: number; approx_weight_kg?: number; notes?: string; consignment_no?: string } | null;
     client?: { company?: string; name?: string; phone?: string; email?: string };
     vendor?: { name?: string; company?: string };
     invoices?: { id: string; invoice_number: string; total_amount: number; status: string }[];
@@ -123,7 +126,7 @@ export default function JobDetailPage() {
         let jobData: any = null;
         const { data, error } = await supabase
             .from('jobs')
-            .select('*, client:clients(company, name, phone, email), vendor:vendors(name, company), invoices(id, invoice_number, total_amount, payment_status)')
+            .select('*, package:packages(package_type, package_count, approx_weight_kg, notes, consignment_no), client:clients(company, name, phone, email), vendor:vendors(name, company), invoices(id, invoice_number, total_amount, payment_status)')
             .eq('id', jobId)
             .single();
 
@@ -320,6 +323,7 @@ export default function JobDetailPage() {
     const jobTypeNorm = normalizeJobType(job.job_type);
     const isDesignOnly = jobTypeNorm === 'design_only';
     const isPrintJob = jobTypeNorm === 'print_only' || jobTypeNorm === 'design_print';
+    const packaging = getPackagingDisplay(job as any);
 
     return (
         <div className="max-w-4xl space-y-4 animate-fade-in pb-12">
@@ -493,31 +497,40 @@ export default function JobDetailPage() {
                 </ActionButton>
             </div>
 
-            {/* Packing Details — print jobs only (design-only has no physical packing) */}
-            {isPrintJob && job.packing_info && (
+            {/* Packing Details — print jobs only (design-only has no physical packing).
+                Verified Qty comes from QC; box type/count/weight now come from
+                the Pack step (getPackagingDisplay falls back to legacy
+                packing_info for jobs QC'd before Pack existed). */}
+            {isPrintJob && (job.packing_info?.verified_qty != null || packaging) && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-4">
                     <h3 className="text-sm font-semibold text-green-900 flex items-center gap-2 mb-3">
                         <Package className="w-4 h-4" />
-                        Packing Details (from QC)
+                        Packing Details
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                            <p className="text-xs text-green-700">Verified Qty</p>
-                            <p className="text-sm font-semibold text-green-900">{job.packing_info.verified_qty}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-green-700">Packages</p>
-                            <p className="text-sm font-semibold text-green-900">{job.packing_info.package_count} {job.packing_info.package_type}(s)</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-green-700">Approx Weight</p>
-                            <p className="text-sm font-semibold text-green-900">~{job.packing_info.approx_weight_kg} kg</p>
-                        </div>
-                        {job.packing_info.packing_notes && (
+                        {job.packing_info?.verified_qty != null && (
                             <div>
-                                <p className="text-xs text-green-700">Notes</p>
-                                <p className="text-sm text-green-900">{job.packing_info.packing_notes}</p>
+                                <p className="text-xs text-green-700">Verified Qty</p>
+                                <p className="text-sm font-semibold text-green-900">{job.packing_info.verified_qty}</p>
                             </div>
+                        )}
+                        {packaging && (
+                            <>
+                                <div>
+                                    <p className="text-xs text-green-700">Packages</p>
+                                    <p className="text-sm font-semibold text-green-900">{packaging.packageCount} {packaging.packageType}(s)</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-green-700">Approx Weight</p>
+                                    <p className="text-sm font-semibold text-green-900">{packaging.approxWeightKg ? `~${packaging.approxWeightKg} kg` : '—'}</p>
+                                </div>
+                                {packaging.notes && (
+                                    <div>
+                                        <p className="text-xs text-green-700">Notes</p>
+                                        <p className="text-sm text-green-900">{packaging.notes}</p>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                     {latestQC && (

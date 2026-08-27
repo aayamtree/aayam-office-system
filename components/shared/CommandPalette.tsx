@@ -77,7 +77,8 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'Finance Guide',         subtitle: 'Finance reference guide',          href: '/admin/finance/guide' },
     // Dispatch
     { title: 'Dispatch Command Center', subtitle: 'Dispatch overview',              href: '/admin/dispatch' },
-    { title: 'QC & Packing',          subtitle: 'Quality check & packing',          href: '/admin/dispatch/qc-check' },
+    { title: 'QC',                    subtitle: 'Quality check',                    href: '/admin/dispatch/qc-check' },
+    { title: 'Pack',                  subtitle: 'Box QC-passed jobs together',      href: '/admin/dispatch/pack' },
     { title: 'Delivery History',      subtitle: 'Past deliveries',                  href: '/admin/dispatch/history' },
     { title: 'Transporters',          subtitle: 'Transporter list',                 href: '/admin/dispatch/transporters' },
     { title: 'Dispatch Guide',        subtitle: 'Dispatch reference guide',         href: '/admin/dispatch/guide' },

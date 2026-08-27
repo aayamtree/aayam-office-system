@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Package, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { getPackagingDisplay } from '@/lib/packing-display';
 import Link from 'next/link';
 
 interface PendingInvoiceJob {
@@ -13,12 +14,14 @@ interface PendingInvoiceJob {
     client_deadline?: string;
     updated_at?: string;
     packing_info?: {
-        verified_qty: number;
-        package_type: string;
-        package_count: number;
-        approx_weight_kg: number;
-        packing_notes: string;
+        verified_qty?: number;
+        package_type?: string;
+        package_count?: number;
+        approx_weight_kg?: number;
+        packing_notes?: string;
     };
+    package_id?: string | null;
+    package?: { package_type?: string; package_count?: number; approx_weight_kg?: number; notes?: string; consignment_no?: string } | null;
     client?: { company?: string; name?: string };
     invoices?: { id: string }[];
 }
@@ -31,7 +34,7 @@ export default function InvoicePendingWidget() {
         const fetchPendingJobs = async () => {
             const { data } = await supabase
                 .from('jobs')
-                .select('id, job_number, project_name, quantity, client_deadline, updated_at, packing_info, client:clients(company, name), invoices(id)')
+                .select('id, job_number, project_name, quantity, client_deadline, updated_at, packing_info, package_id, package:packages(package_type, package_count, approx_weight_kg, notes, consignment_no), client:clients(company, name), invoices(id)')
                 .eq('current_stage', 'ready')
                 .order('updated_at', { ascending: false });
 
@@ -106,17 +109,23 @@ export default function InvoicePendingWidget() {
                             <span className="text-gray-600">
                                 Qty: <span className="font-medium text-gray-900">{job.packing_info?.verified_qty || job.quantity}</span>
                             </span>
-                            {job.packing_info && (
-                                <>
-                                    <span className="text-green-700 font-medium flex items-center gap-1">
-                                        <Package className="w-3 h-3" />
-                                        {job.packing_info.package_count} {job.packing_info.package_type}(s)
-                                    </span>
-                                    <span className="text-gray-600">
-                                        ~{job.packing_info.approx_weight_kg} kg
-                                    </span>
-                                </>
-                            )}
+                            {(() => {
+                                const packaging = getPackagingDisplay(job as any);
+                                if (!packaging) return null;
+                                return (
+                                    <>
+                                        <span className="text-green-700 font-medium flex items-center gap-1">
+                                            <Package className="w-3 h-3" />
+                                            {packaging.packageCount} {packaging.packageType}(s)
+                                        </span>
+                                        {packaging.approxWeightKg != null && (
+                                            <span className="text-gray-600">
+                                                ~{packaging.approxWeightKg} kg
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     </Link>
                 ))}

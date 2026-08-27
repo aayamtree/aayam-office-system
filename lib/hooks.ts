@@ -1354,16 +1354,19 @@ export function useDispatches() {
   // stay 'ready'; the caller and the qty-aware DB trigger decide per job.
   // Rows that fail (e.g. the invoice-required trigger) are reported per
   // job; rows already inserted stand — they are real dispatches.
+  // consignment_no is now decided at the PACK step (lib/packages.ts,
+  // fn_next_consignment_no) — a package already has one before dispatch ever
+  // sees it. The one exception is the single-job "Dispatch Now" shortcut,
+  // whose caller mints a package (and its consignment_no) inline just before
+  // calling this.
   const createDispatchGroup = async (
     shared: Omit<Dispatch, 'id' | 'created_at' | 'updated_at' | 'dispatch_number' | 'client' | 'job' | 'job_id' | 'dispatched_qty' | 'consignment_no'>,
-    items: { job_id: string; dispatched_qty: number | null }[]
+    items: { job_id: string; dispatched_qty: number | null }[],
+    consignment_no: string
   ): Promise<{ consignment_no: string; created: string[]; failed: { job_id: string; error: string }[] }> => {
     if (!isSupabaseConfigured()) {
-      return { consignment_no: '', created: [], failed: items.map(i => ({ job_id: i.job_id, error: 'Database not configured' })) };
+      return { consignment_no, created: [], failed: items.map(i => ({ job_id: i.job_id, error: 'Database not configured' })) };
     }
-
-    const { data: cn } = await supabase.rpc('fn_next_consignment_no');
-    const consignment_no = (cn as string) || `CN-${Date.now()}`;
 
     const created: string[] = [];
     const failed: { job_id: string; error: string }[] = [];

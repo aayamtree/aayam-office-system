@@ -16,6 +16,7 @@ import LoadError from '@/components/LoadError';
 import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { createPackage } from '@/lib/packages';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
@@ -24,7 +25,7 @@ export default function DispatchPage() {
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
     // We fetch both so "Invoice ready" reflects reality either way.
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes), invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true },
     // useJobs defaults to 50, but 150+ jobs can sit in these stages at once —
@@ -86,21 +87,13 @@ export default function DispatchPage() {
   const [selectedJobs, setSelectedJobs] = useState<Job[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Card-level selection for "dispatch together". One box = one client, so
-  // once the first job is ticked, other clients' cards grey out.
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Selection hygiene: jobs leave Ready from other screens/tabs while their
-  // ids sit in this state — prune to what is actually on the board, so a job
-  // that bounces back later cannot resurrect a stale (possibly cross-client)
-  // selection.
-  useEffect(() => {
-    setSelectedIds(prev => {
-      const readyIds = new Set(jobs.filter(j => j.current_stage === 'ready').map(j => j.id));
-      const next = new Set(Array.from(prev).filter(id => readyIds.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [jobs]);
+  // Package context for the modal — set when dispatching an already-packed
+  // group (box type/count/consignment number were decided at Pack time and
+  // are read-only here); null for the ad-hoc single-job "Dispatch Now"
+  // shortcut, which mints a package-of-one right before dispatching.
+  const [activePackage, setActivePackage] = useState<{
+    id: string; consignment_no: string; package_type: string; package_count: number; approx_weight_kg?: number | null;
+  } | null>(null);
 
   // Per-job quantity to dispatch (kept as string — it feeds an input).
   // Prefilled with the remaining quantity so the common case — ship
@@ -146,6 +139,11 @@ export default function DispatchPage() {
   const materialReceived = jobs.filter(j => j.current_stage === 'material_received');
   const pendingQC = jobs.filter(j => j.current_stage === 'quality_check');
   const readyToDispatch = jobs.filter(j => j.current_stage === 'ready');
+  // Packing now happens on its own screen before Dispatch — split Ready
+  // jobs into what's still waiting to be boxed vs what's already packed
+  // and grouped under a package (one card per package, not per job).
+  const awaitingPacking = readyToDispatch.filter(j => !(j as any).package_id);
+  const packedJobs = readyToDispatch.filter(j => (j as any).package_id);
 
   // Quantity already shipped per job (from earlier partial dispatches).
   // A row with NULL dispatched_qty was a FULL dispatch — that job has left
@@ -169,9 +167,26 @@ export default function DispatchPage() {
     return Math.max(q - (shippedByJob[job.id] || 0), 0);
   };
 
-  const selectedReadyJobs = readyToDispatch.filter(j => selectedIds.has(j.id));
-  const anchorClientId = selectedReadyJobs[0]?.client_id;
-  const anchorClientName = selectedReadyJobs[0]?.client?.company || selectedReadyJobs[0]?.client?.name || '';
+  // One card per package, not per job — mirrors the recentGroups pattern
+  // below for dispatches.
+  const packedGroups = useMemo(() => {
+    const order: string[] = [];
+    const byKey = new Map<string, Job[]>();
+    for (const j of packedJobs) {
+      const key = (j as any).package_id as string;
+      if (!byKey.has(key)) { byKey.set(key, []); order.push(key); }
+      byKey.get(key)!.push(j);
+    }
+    return order.map(key => {
+      const groupJobs = byKey.get(key)!;
+      return {
+        key,
+        jobs: groupJobs,
+        package: (groupJobs[0] as any).package as
+          { id: string; consignment_no: string; package_type: string; package_count: number; approx_weight_kg?: number | null; notes?: string | null } | null,
+      };
+    });
+  }, [packedJobs]);
 
   // Recent dispatches, ONE card per consignment: a clubbed shipment is one
   // physical box/bag and should read as one thing, not N look-alike cards.
@@ -223,17 +238,12 @@ export default function DispatchPage() {
   };
 
   // ─── Handlers ─────────────────────────────────────────────
-  const toggleSelect = (job: Job) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(job.id)) next.delete(job.id); else next.add(job.id);
-      return next;
-    });
-  };
-
-  const handleOpenDispatch = (jobsToDispatch: Job[]) => {
+  const handleOpenDispatch = (jobsToDispatch: Job[], pkg?: {
+    id: string; consignment_no: string; package_type: string; package_count: number; approx_weight_kg?: number | null;
+  } | null) => {
     if (jobsToDispatch.length === 0) return;
     setSelectedJobs(jobsToDispatch);
+    setActivePackage(pkg || null);
     const qty: Record<string, string> = {};
     for (const j of jobsToDispatch) {
       const rem = remainingFor(j);
@@ -241,14 +251,12 @@ export default function DispatchPage() {
     }
     setQtyByJob(qty);
     setDocsVerifiedByJob({});
-    // Default box count = what QC actually packed, summed over the group,
-    // else 1 — the whole point of clubbing is one box for many jobs.
-    const packed = jobsToDispatch.reduce(
-      (sum, j) => sum + (Number((j as any).packing_info?.package_count) || 0), 0);
     setDispatchForm({
       transporter_name: '', tracking_number: '', vehicle_number: '',
       driver_name: '', driver_phone: '', received_by_name: '',
-      packages: packed || 1, notes: '',
+      // A packed group already knows its box count from Pack time; the
+      // ad-hoc single-job shortcut (no package yet) defaults to 1.
+      packages: pkg?.package_count || 1, notes: '',
       dispatch_mode: 'collect',
     });
     setReceiptFile(null);
@@ -274,11 +282,11 @@ export default function DispatchPage() {
       toast.error('Open and tick the invoice / e-way bill check for every job before dispatching.');
       return;
     }
-    // One box = one client — enforced here too, not only at the checkbox,
-    // because a stale selection could in theory mix clients.
+    // One box = one client — packages are created client-uniform at Pack
+    // time; this stays as defense-in-depth against a stale package.
     if (new Set(selectedJobs.map(j => j.client_id || '')).size > 1) {
-      toast.error('These jobs belong to different clients — one box/bag goes to one client. Clear the selection and pick again.');
-      setSelectedIds(new Set());
+      toast.error('These jobs belong to different clients — one box/bag goes to one client.');
+      setShowDispatchModal(false);
       return;
     }
     // Quantities: 1 … remaining, per job. (Jobs without a usable quantity
@@ -369,9 +377,33 @@ export default function DispatchPage() {
         return { job_id: j.id, dispatched_qty: rem == null ? null : parseInt(qtyByJob[j.id], 10) };
       });
 
+      // Consignment number: an already-packed group has one from Pack time;
+      // the ad-hoc single-job "Dispatch Now" shortcut has no package yet, so
+      // mint one now — a package-of-one — right before dispatching.
+      let consignmentNo = activePackage?.consignment_no;
+      if (!consignmentNo) {
+        const pkgResult = await createPackage({
+          client_id: selectedJobs[0].client_id!,
+          package_type: 'box',
+          package_count: dispatchForm.packages || 1,
+          created_by: profile?.id,
+        }, selectedJobs.map(j => j.id));
+        // A package row can come back even when NOT every job actually got
+        // packed into it (the .is('package_id', null) guard in createPackage
+        // silently drops a job someone else already packed) — proceeding
+        // anyway would dispatch under a brand-new, wrong consignment while
+        // the job's real package stays out of sync. Treat that as a failure
+        // and refresh so the board shows where the job actually is.
+        if (!pkgResult.package || pkgResult.error) {
+          refetchJobs?.();
+          throw new Error(pkgResult.error || 'Could not create a package for this job.');
+        }
+        consignmentNo = pkgResult.package.consignment_no;
+      }
+
       // One dispatches row per job, all sharing one consignment number —
       // the invoice-required trigger and per-job e-way bill stay intact.
-      const result = await createDispatchGroup(shared as any, items);
+      const result = await createDispatchGroup(shared as any, items, consignmentNo);
       if (result.created.length === 0) {
         throw new Error(result.failed[0]?.error || 'No dispatch could be created');
       }
@@ -454,7 +486,7 @@ export default function DispatchPage() {
       // cached list so the next dispatch offers it straight away.
       invalidateContactCache();
       setShowDispatchModal(false);
-      setSelectedIds(new Set());
+      setActivePackage(null);
       if (selectedJobs.length === 1 && partials > 0) {
         toast.info('Partial dispatch recorded — the job stays on the board with the remaining quantity.');
       } else if (selectedJobs.length === 1) {
@@ -494,6 +526,13 @@ export default function DispatchPage() {
           >
             <ClipboardCheck className="w-4 h-4" />
             <span>Start QC</span>
+          </Link>
+          <Link
+            href="/admin/dispatch/pack"
+            className="flex items-center gap-2 bg-gray-700 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-600 transition-colors font-semibold text-sm"
+          >
+            <Package className="w-4 h-4" />
+            <span>Pack</span>
           </Link>
           <Link
             href="/admin/print-runs"
@@ -537,38 +576,14 @@ export default function DispatchPage() {
         </div>
       </div>
 
-      {/* ── Club-into-one-box selection bar ──
-          Appears once any Ready card is ticked. One click dispatches the
-          whole group as ONE consignment: one box/bag, one transporter entry. */}
-      {selectedReadyJobs.length > 0 && (
-        <div className="sticky top-2 z-40 flex flex-wrap items-center gap-2 bg-gray-900 text-white rounded-md px-3 py-2.5 shadow-lg">
-          <Package className="w-4 h-4 shrink-0" />
-          <span className="text-sm font-medium">
-            {selectedReadyJobs.length} job{selectedReadyJobs.length > 1 ? 's' : ''} · {anchorClientName} — one box/bag, one consignment
-          </span>
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-white/30 hover:bg-white/10 transition-colors"
-            >
-              Clear
-            </button>
-            <button
-              onClick={() => handleOpenDispatch(selectedReadyJobs)}
-              className="px-3 py-1.5 text-xs font-semibold rounded bg-white text-gray-900 hover:bg-gray-100 transition-colors"
-            >
-              Dispatch Together →
-            </button>
-          </div>
-        </div>
+      {materialReceived.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
+        <div className="text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
       )}
 
-      {/* Pre Print QC + QC & Dispatch + Ready — card grid */}
+      {/* Pre Print QC + QC & Dispatch — card grid (Ready jobs get their own
+          sections below, split by whether they've been packed yet) */}
+      {(materialReceived.length > 0 || pendingQC.length > 0) && (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-        {materialReceived.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
-          <div className="col-span-full text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
-        )}
-
         {/* ── Printing Material Received → QC ── */}
         {materialReceived.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
@@ -633,90 +648,130 @@ export default function DispatchPage() {
             </div>
           );
         })}
-
-        {readyToDispatch.map((job) => {
-          const hasInvoice = hasInvoiceAttached(job as any);
-          const invoiceAlreadyRequested = !!(job as any).invoice_requested_at;
-          const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
-          const isSelected = selectedIds.has(job.id);
-          const selectDisabled = !isSelected && !!anchorClientId && job.client_id !== anchorClientId;
-          const shipped = shippedByJob[job.id] || 0;
-          return (
-            <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isSelected ? 'ring-2 ring-gray-900' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
-              <div className="bg-green-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
-                <div className="flex items-center gap-2 min-w-0">
-                  {/* One box = one client: once a client is anchored, other
-                      clients' checkboxes grey out instead of disappearing. */}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    disabled={selectDisabled}
-                    onChange={() => toggleSelect(job)}
-                    title={selectDisabled
-                      ? `One box = one client — this job is for a different client than ${anchorClientName}`
-                      : 'Select to club into one box/bag with other jobs of this client'}
-                    className="w-4 h-4 rounded border-gray-300 accent-gray-900 disabled:opacity-30 shrink-0 cursor-pointer disabled:cursor-not-allowed"
-                  />
-                  <span className="text-[10px] font-mono text-muted-foreground truncate">#{job.job_number}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
-                  <span className="text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-semibold uppercase">Ready</span>
-                </div>
-              </div>
-              <div className="px-3 pt-2 pb-3 space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <ProductBadge category={(job as any).product_category} />
-                  {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
-                </div>
-                <p className="text-[10px] text-muted-foreground">Qty: {job.quantity} &bull; Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
-                {shipped > 0 && job.quantity ? (
-                  <p className="text-[10px] text-amber-700 font-medium">
-                    🚚 {shipped} of {job.quantity} already dispatched &bull; {Math.max((job.quantity || 0) - shipped, 0)} left
-                  </p>
-                ) : null}
-                {(job as any).packing_info && (
-                  <p className="text-[10px] text-green-700 font-medium">
-                    📦 {(job as any).packing_info.package_count} {(job as any).packing_info.package_type}(s) · ~{(job as any).packing_info.approx_weight_kg}kg
-                  </p>
-                )}
-                <div className="flex gap-1.5 flex-wrap">
-                  {!hasInvoice && (
-                    <ActionButton
-                      done={invoiceAlreadyRequested || invoiceRequested.has(job.id)}
-                      doneLabel="Requested"
-                      loadingLabel="Sending…"
-                      successToast="Invoice requested from accounts ✓"
-                      errorToast="Could not send invoice request"
-                      onAction={async () => {
-                        const res = await fetch(`/api/jobs/${job.id}/request-invoice`, { method: 'POST' });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) throw new Error(data.error || 'Request failed');
-                        setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
-                        return data;
-                      }}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors bg-card border border-border text-muted-foreground hover:text-foreground"
-                      doneClassName="bg-green-100 text-green-700 border-green-200"
-                    >
-                      <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> Request Invoice</span>
-                    </ActionButton>
-                  )}
-                  <button
-                    onClick={() => handleOpenDispatch([job])}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium rounded whitespace-nowrap ${hasInvoice ? 'bg-foreground hover:opacity-90' : 'bg-amber-500 hover:bg-amber-600'}`}
-                  >
-                    {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
       </div>
+      )}
+
+      {/* ── Awaiting Packing ──
+          QC-passed, not yet boxed. Dispatch one job as-is (mints a
+          package-of-one), or send several of the same client to Pack to
+          box them together first. */}
+      {awaitingPacking.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-section text-gray-900 font-semibold">Awaiting Packing ({awaitingPacking.length})</h2>
+            <Link href="/admin/dispatch/pack" className="text-sm text-gray-500 hover:text-gray-700">Pack jobs together →</Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
+            {awaitingPacking.map((job) => {
+              const hasInvoice = hasInvoiceAttached(job as any);
+              const invoiceAlreadyRequested = !!(job as any).invoice_requested_at;
+              const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
+              const shipped = shippedByJob[job.id] || 0;
+              return (
+                <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-green-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
+                  <div className="bg-green-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate">#{job.job_number}</span>
+                    <div className="flex items-center gap-1">
+                      {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
+                      <span className="text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-semibold uppercase">Ready</span>
+                    </div>
+                  </div>
+                  <div className="px-3 pt-2 pb-3 space-y-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <ProductBadge category={(job as any).product_category} />
+                      {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Qty: {job.quantity} &bull; Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
+                    {shipped > 0 && job.quantity ? (
+                      <p className="text-[10px] text-amber-700 font-medium">
+                        🚚 {shipped} of {job.quantity} already dispatched &bull; {Math.max((job.quantity || 0) - shipped, 0)} left
+                      </p>
+                    ) : null}
+                    <div className="flex gap-1.5 flex-wrap">
+                      {!hasInvoice && (
+                        <ActionButton
+                          done={invoiceAlreadyRequested || invoiceRequested.has(job.id)}
+                          doneLabel="Requested"
+                          loadingLabel="Sending…"
+                          successToast="Invoice requested from accounts ✓"
+                          errorToast="Could not send invoice request"
+                          onAction={async () => {
+                            const res = await fetch(`/api/jobs/${job.id}/request-invoice`, { method: 'POST' });
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) throw new Error(data.error || 'Request failed');
+                            setInvoiceRequested(prev => new Set(Array.from(prev).concat(job.id)));
+                            return data;
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors bg-card border border-border text-muted-foreground hover:text-foreground"
+                          doneClassName="bg-green-100 text-green-700 border-green-200"
+                        >
+                          <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> Request Invoice</span>
+                        </ActionButton>
+                      )}
+                      <button
+                        onClick={() => handleOpenDispatch([job])}
+                        title="Ships this job alone in its own box/bag"
+                        className={`flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium rounded whitespace-nowrap ${hasInvoice ? 'bg-foreground hover:opacity-90' : 'bg-amber-500 hover:bg-amber-600'}`}
+                      >
+                        {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Packed — Ready to Dispatch ──
+          One card per package: everything QC'd, boxed and grouped at the
+          Pack step. One "Dispatch" opens the shared shipment form for the
+          whole box — box type/count/consignment number are already decided. */}
+      {packedGroups.length > 0 && (
+        <div>
+          <h2 className="text-section text-gray-900 font-semibold mb-3">Packed — Ready to Dispatch ({packedGroups.length})</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
+            {packedGroups.map(({ key, jobs: groupJobs, package: pkg }) => {
+              const clientName = groupJobs[0]?.client?.company || groupJobs[0]?.client?.name || '';
+              const anyOverdue = groupJobs.some(j => j.client_deadline && new Date(j.client_deadline) < new Date());
+              const allInvoiced = groupJobs.every(j => hasInvoiceAttached(j as any));
+              return (
+                <div key={key} className={`bg-card rounded-md border border-border border-l-4 border-l-blue-400 hover:shadow-sm transition-shadow ${anyOverdue ? 'ring-1 ring-red-200' : ''}`}>
+                  <div className="bg-blue-50/60 px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate">{pkg?.consignment_no || '—'}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-semibold uppercase">Packed</span>
+                  </div>
+                  <div className="px-3 pt-2 pb-3 space-y-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground truncate">{clientName}</p>
+                      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">
+                        {groupJobs.length} job{groupJobs.length > 1 ? 's' : ''}: {groupJobs.map(j => `#${j.job_number}`).join(', ')}
+                      </h3>
+                    </div>
+                    {pkg && (
+                      <p className="text-[10px] text-blue-700 font-medium">
+                        📦 {pkg.package_count} {pkg.package_type}(s){pkg.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
+                      </p>
+                    )}
+                    {anyOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                    <button
+                      onClick={() => handleOpenDispatch(groupJobs, pkg)}
+                      className={`w-full flex items-center justify-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium rounded ${allInvoiced ? 'bg-foreground hover:opacity-90' : 'bg-amber-500 hover:bg-amber-600'}`}
+                    >
+                      {allInvoiced ? 'Dispatch' : '⚠️ Dispatch'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Recent Dispatches — one card per consignment */}
       {recentGroups.length > 0 && (
@@ -767,9 +822,11 @@ export default function DispatchPage() {
               <div>
                 <h2 className="text-section">Create Dispatch</h2>
                 <p className="text-sm text-gray-500">
-                  {selectedJobs.length === 1
-                    ? `Order #${selectedJobs[0].job_number}`
-                    : `${selectedJobs.length} orders · ${selectedJobs[0].client?.company || selectedJobs[0].client?.name} — one box/bag, one consignment`}
+                  {activePackage
+                    ? `${activePackage.consignment_no} · ${activePackage.package_count} ${activePackage.package_type}(s) · ${selectedJobs.length} job${selectedJobs.length > 1 ? 's' : ''}`
+                    : selectedJobs.length === 1
+                      ? `Order #${selectedJobs[0].job_number}`
+                      : `${selectedJobs.length} orders · ${selectedJobs[0].client?.company || selectedJobs[0].client?.name} — one box/bag, one consignment`}
                 </p>
               </div>
               <button onClick={() => setShowDispatchModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
@@ -924,10 +981,16 @@ export default function DispatchPage() {
                 )}
                 <div>
                   <label className="block text-sm font-medium mb-1">Packages Count</label>
-                  <input type="number" min="1"
-                    value={dispatchForm.packages || ''} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border rounded-md text-sm" />
-                  {selectedJobs.length > 1 && (
+                  {activePackage ? (
+                    <div className="w-full px-3 py-2 border rounded-md text-sm bg-gray-50 text-gray-500">
+                      {activePackage.package_count} {activePackage.package_type}(s) — set at Pack
+                    </div>
+                  ) : (
+                    <input type="number" min="1"
+                      value={dispatchForm.packages || ''} onChange={e => setDispatchForm({ ...dispatchForm, packages: parseInt(e.target.value) || 1 })}
+                      className="w-full px-3 py-2 border rounded-md text-sm" />
+                  )}
+                  {selectedJobs.length > 1 && !activePackage && (
                     <p className="text-[11px] text-gray-400 mt-1">Total boxes/bags for the whole consignment — usually 1.</p>
                   )}
                 </div>

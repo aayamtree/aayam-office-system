@@ -179,7 +179,8 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'dispatch'],
     submenu: [
       { name: 'Command Center', href: '/admin/dispatch' },
-      { name: 'QC & Packing', href: '/admin/dispatch/qc-check' },
+      { name: 'QC', href: '/admin/dispatch/qc-check' },
+      { name: 'Pack', href: '/admin/dispatch/pack' },
       { name: 'Delivery History', href: '/admin/dispatch/history' },
       { name: 'Transporters', href: '/admin/dispatch/transporters' },
       { name: '📖 My Guide', href: '/admin/dispatch/guide' },

@@ -32,7 +32,7 @@ const FALLBACK_POST_PRINT = [
   { id: 'paper_material', label: 'Paper/Material', desc: 'Correct paper type & GSM', critical: false },
   { id: 'quantity', label: 'Quantity Verified', desc: 'Count checked (may vary slightly)', critical: false },
   { id: 'finishing', label: 'Finishing', desc: 'Lamination, binding, cutting OK', critical: false },
-  { id: 'packaging', label: 'Packaging Done', desc: 'Packed in boxes/sacks', critical: true },
+  { id: 'ready_for_packing', label: 'Ready for Packing', desc: 'Counted and staged — ready to be boxed', critical: true },
 ];
 
 type QCType = 'pre_print' | 'post_print';
@@ -80,15 +80,15 @@ export default function QCCheckPage() {
   const [activeTab, setActiveTab] = useState<'design' | 'checklist' | 'notes'>('checklist');
   const [qcNotes, setQcNotes] = useState('');
 
-  // Packing details step (shown after QC passes)
-  const [showPackingStep, setShowPackingStep] = useState(false);
-  const [packingForm, setPackingForm] = useState({
-    verified_qty: '',
-    package_type: 'box' as 'box' | 'sack' | 'bundle' | 'pallet' | 'other',
-    package_count: '',
-    approx_weight_kg: '',
-    packing_notes: '',
-  });
+  // Verified-quantity step (shown after QC passes). This is deliberately the
+  // ONLY thing asked here: how many pieces were actually counted, which the
+  // ordered quantity can differ from by a run's over/under-run. What box(es)
+  // this job ends up in is NOT decided at QC time any more — that happens at
+  // the Pack step, once it's known which other jobs (if any) will share the
+  // box. Asking for a package count per single job here used to force a
+  // "1 box" answer that was routinely wrong the moment two jobs got clubbed.
+  const [showQtyStep, setShowQtyStep] = useState(false);
+  const [verifiedQty, setVerifiedQty] = useState('');
 
   // QC history for selected job
   const [qcHistory, setQcHistory] = useState<any[]>([]);
@@ -220,6 +220,7 @@ export default function QCCheckPage() {
     setCheckpoints({});
     setQcNotes(job.notes || '');
     setActiveTab('checklist');
+    setShowQtyStep(false);
     setShowQCModal(true);
 
     // Load dynamic checklists
@@ -356,25 +357,23 @@ export default function QCCheckPage() {
     }
 
     // Pre-fill qty from job
-    setPackingForm(prev => ({ ...prev, verified_qty: String(selectedJob.quantity || '') }));
-    setShowPackingStep(true);
+    setVerifiedQty(String(selectedJob.quantity || ''));
+    setShowQtyStep(true);
   };
 
-  // Final submit with packing details
-  const handleFinalSubmit = async () => {
+  // Final submit — quantity only. Packaging happens later, at Pack.
+  const handleQCPass = async () => {
     if (!selectedJob) return;
 
-    const packingInfo = {
-      verified_qty: Number(packingForm.verified_qty) || selectedJob.quantity || 0,
-      package_type: packingForm.package_type,
-      package_count: Number(packingForm.package_count) || 0,
-      approx_weight_kg: Number(packingForm.approx_weight_kg) || 0,
-      packing_notes: packingForm.packing_notes || '',
-    };
+    const qty = Number(verifiedQty) || selectedJob.quantity || 0;
+    // packing_info keeps exactly this one field going forward — box/count/
+    // weight now live on `packages`, created at the Pack step, once this job
+    // (and whichever others join it) reaches Ready. See lib/packing-display.ts.
+    const packingInfo = { verified_qty: qty };
 
-    // Save packing info to job + move to ready
+    // Save verified qty to job + move to ready
     await updateJob(selectedJob.id, { packing_info: packingInfo } as any);
-    await updateJobStage(selectedJob.id, 'ready', `QC-Dispatch Passed. Qty: ${packingInfo.verified_qty} | ${packingInfo.package_count} ${packingInfo.package_type}(s) | ~${packingInfo.approx_weight_kg}kg. Note: ${qcNotes}`);
+    await updateJobStage(selectedJob.id, 'ready', `QC-Dispatch Passed. Verified Qty: ${qty}. Note: ${qcNotes}`);
 
     // Save QC audit record
     const checklistResult: Record<string, boolean> = {};
@@ -406,7 +405,7 @@ export default function QCCheckPage() {
         message: `📋 ${selectedJob.job_number} passed QC — Invoice & E-Way Bill needed\n` +
           `Client: ${selectedJob.client?.company || selectedJob.client?.name || 'N/A'}\n` +
           `Project: ${selectedJob.project_name}\n` +
-          `Qty: ${packingInfo.verified_qty} | ${packingInfo.package_count} ${packingInfo.package_type}(s) | ~${packingInfo.approx_weight_kg} kg\n` +
+          `Qty: ${qty} pcs\n` +
           `QC: ${checkedCount}/${activeItems.length} checks passed\n` +
           `QC By: ${profile?.full_name || 'Unknown'}`,
         target_audience: 'admin',
@@ -419,11 +418,11 @@ export default function QCCheckPage() {
 
     // Log QC pass
     logActivity('qc', 'Dispatch', selectedJob.id,
-      `QC-Dispatch PASSED for ${selectedJob.job_number} (${selectedJob.project_name}) — ${packingInfo.verified_qty} pcs, ${packingInfo.package_count} ${packingInfo.package_type}(s). By: ${profile?.full_name || 'dispatch'}`,
+      `QC-Dispatch PASSED for ${selectedJob.job_number} (${selectedJob.project_name}) — ${qty} pcs verified. By: ${profile?.full_name || 'dispatch'}`,
       undefined, profile?.id
     );
 
-    setShowPackingStep(false);
+    setShowQtyStep(false);
     setShowQCModal(false);
   };
 
@@ -635,7 +634,7 @@ export default function QCCheckPage() {
                   {selectedJob.job_type && <span className="text-xs text-gray-400">{selectedJob.job_type}</span>}
                 </div>
               </div>
-              <button onClick={() => setShowQCModal(false)} className="p-2 hover:bg-gray-100 rounded-md">
+              <button onClick={() => { setShowQCModal(false); setShowQtyStep(false); }} className="p-2 hover:bg-gray-100 rounded-md">
                 <XCircle className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -782,77 +781,36 @@ export default function QCCheckPage() {
             </div>
 
             {/* Actions / Packing Form */}
-            {showPackingStep ? (
+            {showQtyStep ? (
               <div className="p-4 border-t border-gray-100 space-y-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Package className="w-4 h-4 text-green-600" />
-                  <h3 className="text-sm font-semibold text-gray-900">Packing Details for Invoice & E-Way Bill</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Verified Quantity</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Verified Qty</label>
-                    <input
-                      type="number"
-                      value={packingForm.verified_qty || ''}
-                      onChange={e => setPackingForm(p => ({ ...p, verified_qty: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                      placeholder="e.g. 2500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Package Type</label>
-                    <select
-                      value={packingForm.package_type}
-                      onChange={e => setPackingForm(p => ({ ...p, package_type: e.target.value as any }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                    >
-                      <option value="box">Box</option>
-                      <option value="sack">Sack</option>
-                      <option value="bundle">Bundle</option>
-                      <option value="pallet">Pallet</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">No. of Packages</label>
-                    <input
-                      type="number"
-                      value={packingForm.package_count || ''}
-                      onChange={e => setPackingForm(p => ({ ...p, package_count: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                      placeholder="e.g. 5"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-600 mb-1 block">Approx Weight (kg)</label>
-                    <input
-                      type="number"
-                      value={packingForm.approx_weight_kg || ''}
-                      onChange={e => setPackingForm(p => ({ ...p, approx_weight_kg: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                      placeholder="e.g. 120"
-                    />
-                  </div>
-                </div>
+                <p className="text-xs text-gray-500 -mt-2">
+                  How many pieces did you actually count? A print run can come out a little over or under the ordered quantity.
+                  Boxing — and whether this job shares a box with others — happens next, at Pack.
+                </p>
                 <div>
-                  <label className="text-xs text-gray-600 mb-1 block">Packing Notes (optional)</label>
+                  <label className="text-xs text-gray-600 mb-1 block">Verified Qty</label>
                   <input
-                    type="text"
-                    value={packingForm.packing_notes}
-                    onChange={e => setPackingForm(p => ({ ...p, packing_notes: e.target.value }))}
+                    type="number"
+                    value={verifiedQty}
+                    onChange={e => setVerifiedQty(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                    placeholder="e.g. Fragile, handle with care"
+                    placeholder="e.g. 2500"
+                    autoFocus
                   />
                 </div>
                 <div className="flex gap-3 pt-1">
                   <button
-                    onClick={() => setShowPackingStep(false)}
+                    onClick={() => setShowQtyStep(false)}
                     className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
                   >
                     ← Back
                   </button>
                   <button
-                    onClick={handleFinalSubmit}
+                    onClick={handleQCPass}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
                   >
                     <CheckCircle className="w-4 h-4" /> Complete & Notify Admin

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getStageName, getStageColor, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
+import { getPackagingDisplay } from '@/lib/packing-display';
 
 interface DossierJob {
     id: string;
@@ -25,6 +26,8 @@ interface DossierJob {
     client_deadline?: string;
     completed_date?: string;
     packing_info?: any;
+    package_id?: string | null;
+    package?: { package_type?: string; package_count?: number; approx_weight_kg?: number; notes?: string; consignment_no?: string } | null;
     invoice_reference?: string;
     eway_bill_number?: string;
     client?: { id?: string; company?: string; name?: string };
@@ -126,7 +129,7 @@ export default function JobDossierPage() {
                 id, job_number, project_name, quantity,
                 product_category, current_stage, priority, total_amount,
                 payment_status, amount_received, order_date, client_deadline,
-                completed_date, packing_info, invoice_reference, eway_bill_number,
+                completed_date, packing_info, package_id, package:packages(package_type, package_count, approx_weight_kg, notes, consignment_no), invoice_reference, eway_bill_number,
                 client:clients(id, company, name)
             `)
             .order('completed_date', { ascending: false, nullsFirst: false });
@@ -382,7 +385,7 @@ export default function JobDossierPage() {
                         const profit = (job.total_amount || 0) - expense;
                         const payBadge = getPaymentBadge(job);
                         const turnaround = getTurnaround(job.order_date, job.completed_date);
-                        const hasPacking = !!job.packing_info;
+                        const packaging = getPackagingDisplay(job as any);
 
                         return (
                             <Link
@@ -445,10 +448,10 @@ export default function JobDossierPage() {
                                             <Clock size={11} /> {turnaround} turnaround
                                         </span>
                                     )}
-                                    {hasPacking && (
+                                    {packaging && (
                                         <span className="text-teal-700 font-semibold flex items-center gap-1">
                                             <Package className="w-3 h-3" />
-                                            {job.packing_info.package_count} {job.packing_info.package_type}(s) · ~{job.packing_info.approx_weight_kg}kg
+                                            {packaging.packageCount} {packaging.packageType}(s){packaging.approxWeightKg ? ` · ~${packaging.approxWeightKg}kg` : ''}
                                         </span>
                                     )}
                                     {expense > 0 && (
