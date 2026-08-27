@@ -14,6 +14,7 @@ import { Package } from 'lucide-react';
 import { useConfirm } from '@/components/ConfirmModal';
 import { logActivity } from '@/lib/logger';
 import LoadError from '@/components/LoadError';
+import { toast } from '@/lib/toast';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { normalizeProductCategory } from '@/lib/product-category';
 
@@ -56,6 +57,7 @@ export default function QCCheckPage() {
     limit: 500,
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [focusJobId, setFocusJobId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showQCModal, setShowQCModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -230,6 +232,63 @@ export default function QCCheckPage() {
       setQcHistory([]);
     }
   };
+
+  // Deep link from a Dispatch board card: /qc-check?job=<id> opens that job's
+  // own QC checklist directly instead of dropping the person on the full list.
+  // The job is fetched by id rather than looked up in the SWR list: that list
+  // can be a stale cached snapshot, or an empty anon result on a cold load
+  // (RLS returns 0 rows with no error) — and a deep link silently eaten by
+  // either looks exactly like a broken button.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('job');
+    if (!id) return;
+    // One-shot: strip the param so refresh / back-navigation does not replay
+    // the open (handleStartQC advances a `finishing` job — not something a
+    // page load should redo).
+    window.history.replaceState(null, '', window.location.pathname);
+    setFocusJobId(id);
+  }, []);
+  useEffect(() => {
+    if (!focusJobId) return;
+    let cancelled = false;
+    let ran = false;
+    const openJob = async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)')
+        .eq('id', focusJobId)
+        .maybeSingle();
+      if (cancelled) return;
+      setFocusJobId(null);
+      if (error || !data) {
+        toast.error('Could not open that job for QC' + (error ? ': ' + error.message : ' — it may have been removed.'));
+        return;
+      }
+      const job = data as unknown as Job;
+      if (!['finishing', 'quality_check'].includes(job.current_stage)) {
+        // Passed or already moved on — show where it stands instead of
+        // reopening live Pass/Rework buttons on a finished QC.
+        setSearchQuery(job.job_number || '');
+        toast.info(`${job.job_number} is not awaiting QC (currently: ${(job.current_stage || 'unknown').replace(/_/g, ' ')}).`);
+        return;
+      }
+      void handleStartQC(job, 'post_print');
+    };
+    // Auth-race guard (same reason as the Dispatch board): on a cold load this
+    // query can run as `anon`, and RLS answers with nothing rather than an
+    // error. Only fetch once Supabase confirms a live session.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session && !ran && !cancelled) { ran = true; void openJob(); }
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && !ran && !cancelled && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+        ran = true;
+        void openJob();
+      }
+    });
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusJobId]);
 
   const updateCheckpoint = (id: string, field: 'checked' | 'note', value: boolean | string) => {
     setCheckpoints(prev => ({

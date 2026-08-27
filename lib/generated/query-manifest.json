@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-27T05:35:15.757Z",
+  "generatedAt": "2026-08-27T06:07:25.015Z",
   "filesScanned": 452,
-  "queriesSeen": 632,
+  "queriesSeen": 633,
   "wildcardQueries": 95,
   "writesSeen": 269,
   "tables": {
@@ -2253,11 +2253,11 @@
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 101
+          "line": 103
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 107
+          "line": 109
         },
         {
           "file": "lib/hooks.ts",
@@ -2656,6 +2656,7 @@
         "notes",
         "order_date",
         "packing_info",
+        "parent_job_id",
         "payment_status",
         "print_files",
         "print_ready",
@@ -2907,6 +2908,10 @@
           "line": 102
         },
         {
+          "file": "app/admin/dispatch/qc-check/page.tsx",
+          "line": 257
+        },
+        {
           "file": "app/admin/finance/awaiting-payment/page.tsx",
           "line": 47
         },
@@ -2917,10 +2922,6 @@
         {
           "file": "app/admin/jobs/overdue/page.tsx",
           "line": 115
-        },
-        {
-          "file": "app/admin/jobs/page.tsx",
-          "line": 656
         }
       ]
     },
@@ -4968,7 +4969,7 @@
           },
           "design_file_url": {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 281,
+            "line": 340,
             "verb": "insert"
           },
           "job_id": {
@@ -5026,12 +5027,12 @@
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 281,
+            "line": 340,
             "verb": "insert"
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 343,
+            "line": 402,
             "verb": "insert"
           },
           {
@@ -5044,7 +5045,7 @@
       "sites": [
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 224
+          "line": 226
         },
         {
           "file": "lib/record-locations.ts",

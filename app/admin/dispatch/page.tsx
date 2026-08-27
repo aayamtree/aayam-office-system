@@ -406,7 +406,7 @@ export default function DispatchPage() {
                   {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
-                <Link href="/admin/dispatch/qc-check"
+                <Link href={`/admin/dispatch/qc-check?job=${job.id}`}
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors">
                   <ClipboardCheck className="w-3 h-3" /> Start QC
                 </Link>
