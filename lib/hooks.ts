@@ -1298,6 +1298,11 @@ export function useDispatches() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
+  // NOTE: legacy single-job path, no longer called anywhere — the dispatch
+  // board uses createDispatchGroup below. If this is ever revived: it sends no
+  // dispatched_qty, and the DB trigger check_dispatch_qty now REJECTS a
+  // NULL-qty ("whole job") insert for a job that already has partial
+  // dispatches — pass a quantity in that case.
   const createDispatch = async (dispatch: Omit<Dispatch, 'id' | 'created_at' | 'updated_at' | 'dispatch_number' | 'client' | 'job'>) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
@@ -1341,12 +1346,58 @@ export function useDispatches() {
     return { data, error: error?.message };
   };
 
+  // ── Clubbed dispatch ──────────────────────────────────────
+  // Several jobs of the SAME client leave in one box/bag: one shipment
+  // entry (transporter / LR / receipt / package count) fans out into one
+  // dispatches row per job, all sharing a consignment number. Stage moves
+  // are deliberately NOT done here — partial quantities mean a job may
+  // stay 'ready'; the caller and the qty-aware DB trigger decide per job.
+  // Rows that fail (e.g. the invoice-required trigger) are reported per
+  // job; rows already inserted stand — they are real dispatches.
+  const createDispatchGroup = async (
+    shared: Omit<Dispatch, 'id' | 'created_at' | 'updated_at' | 'dispatch_number' | 'client' | 'job' | 'job_id' | 'dispatched_qty' | 'consignment_no'>,
+    items: { job_id: string; dispatched_qty: number | null }[]
+  ): Promise<{ consignment_no: string; created: string[]; failed: { job_id: string; error: string }[] }> => {
+    if (!isSupabaseConfigured()) {
+      return { consignment_no: '', created: [], failed: items.map(i => ({ job_id: i.job_id, error: 'Database not configured' })) };
+    }
+
+    const { data: cn } = await supabase.rpc('fn_next_consignment_no');
+    const consignment_no = (cn as string) || `CN-${Date.now()}`;
+
+    const created: string[] = [];
+    const failed: { job_id: string; error: string }[] = [];
+    for (const item of items) {
+      const { data: numberData } = await supabase.rpc('get_next_number', { counter_id: 'dispatch' });
+      const { data: row, error } = await supabase
+        .from('dispatches')
+        .insert([{ ...shared, ...item, consignment_no, dispatch_number: numberData || `DSP-${Date.now()}` }])
+        .select()
+        .single();
+      if (error || !row) {
+        failed.push({ job_id: item.job_id, error: error?.message || 'Insert failed' });
+      } else {
+        created.push(item.job_id);
+        logActivity(
+          'Created Dispatch',
+          'Dispatch',
+          row.id,
+          `Created dispatch ${row.dispatch_number} (consignment ${consignment_no})${item.dispatched_qty != null ? ` - qty ${item.dispatched_qty}` : ''}`,
+          undefined, user?.id
+        );
+      }
+    }
+    if (created.length > 0) refetch();
+    return { consignment_no, created, failed };
+  };
+
   return {
     dispatches: data,
     loading,
     error,
     refetch,
     createDispatch,
+    createDispatchGroup,
     updateDispatch
   };
 }

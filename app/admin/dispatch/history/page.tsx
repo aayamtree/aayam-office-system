@@ -105,6 +105,7 @@ export default function DispatchHistoryPage() {
   const filteredDispatches = historyDispatches.filter(d => {
     const matchesSearch =
       d.dispatch_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.consignment_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.job?.job_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.client?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -265,7 +266,12 @@ export default function DispatchHistoryPage() {
         {sourceFilter !== 'print_runs' && filteredDispatches.map((dispatch) => (
           <div key={dispatch.id} className="bg-white rounded-md border border-gray-200 overflow-hidden">
             <div className={`px-3 py-2 flex items-center justify-between ${dispatch.status === 'delivered' ? 'bg-gray-900' : dispatch.status === 'returned' ? 'bg-red-600' : 'bg-gray-700'}`}>
-              <span className="text-white font-semibold text-sm">{dispatch.dispatch_number}</span>
+              <span className="text-white font-semibold text-sm flex items-center gap-1.5 min-w-0">
+                <span className="truncate">{dispatch.dispatch_number}</span>
+                {dispatch.consignment_no && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-white/20 rounded font-mono shrink-0" title="Consignment number — dispatches sent together in one box/bag share this">{dispatch.consignment_no}</span>
+                )}
+              </span>
               <span className={`px-2 py-0.5 text-xs rounded-md border font-medium ${dispatch.status === 'delivered' ? 'bg-white/15 text-white border-white/20' : getStatusColor(dispatch.status)}`}>{getStatusLabel(dispatch.status)}</span>
             </div>
 
@@ -273,6 +279,9 @@ export default function DispatchHistoryPage() {
               <div className="mb-2">
                 <p className="text-sm font-medium text-gray-900">{dispatch.client?.company || dispatch.client?.name}</p>
                 <p className="text-xs text-gray-400">Order: {dispatch.job?.job_number}</p>
+                {dispatch.dispatched_qty != null && (
+                  <p className="text-xs text-gray-400">Qty dispatched: {dispatch.dispatched_qty}</p>
+                )}
               </div>
 
               {dispatch.packages > 0 && (
@@ -384,6 +393,12 @@ export default function DispatchHistoryPage() {
                 <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">ID</span><span className="font-medium">{selectedDispatch.dispatch_number}</span></div>
                 <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Client</span><span className="font-medium">{selectedDispatch.client?.company || selectedDispatch.client?.name}</span></div>
                 <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Packages</span><span className="font-medium flex items-center gap-1.5"><Package className="w-4 h-4 text-gray-500" /> {selectedDispatch.packages}</span></div>
+                {selectedDispatch.consignment_no && (
+                  <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Consignment</span><span className="font-medium font-mono">{selectedDispatch.consignment_no}</span></div>
+                )}
+                {selectedDispatch.dispatched_qty != null && (
+                  <div className="flex justify-between p-3 bg-gray-50 rounded-md"><span className="text-gray-500">Qty Dispatched</span><span className="font-medium">{selectedDispatch.dispatched_qty}</span></div>
+                )}
               </div>
 
               {selectedDispatch.transporter_name && (

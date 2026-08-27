@@ -245,8 +245,8 @@ export default function CommandPalette() {
                 // The LR / consignment number lives on the dispatch, not the job,
                 // so it needs its own lookup — then we land on the job it belongs to.
                 supabase.from('dispatches')
-                    .select('id, tracking_number, dispatch_number, job_id, job:jobs(id, job_number, project_name, current_stage)')
-                    .or(`tracking_number.ilike.${dbQ},dispatch_number.ilike.${dbQ}`).limit(5),
+                    .select('id, tracking_number, dispatch_number, consignment_no, job_id, job:jobs(id, job_number, project_name, current_stage)')
+                    .or(`tracking_number.ilike.${dbQ},dispatch_number.ilike.${dbQ},consignment_no.ilike.${dbQ}`).limit(5),
             ]);
 
             const dbResults: SearchResult[] = [];
@@ -292,9 +292,12 @@ export default function CommandPalette() {
                 const job = Array.isArray(d.job) ? d.job[0] : d.job;
                 if (!job?.id || seenJobIds.has(job.id)) return;
                 seenJobIds.add(job.id);
-                const label = d.tracking_number
-                    ? `LR / tracking ${d.tracking_number}`
-                    : `dispatch ${d.dispatch_number}`;
+                const needle = safeQuery.toLowerCase();
+                const label = d.consignment_no && d.consignment_no.toLowerCase().includes(needle)
+                    ? `consignment ${d.consignment_no}`
+                    : d.tracking_number
+                        ? `LR / tracking ${d.tracking_number}`
+                        : `dispatch ${d.dispatch_number}`;
                 dbResults.push({
                     id: job.id, type: 'job',
                     title: `${job.job_number} — ${job.project_name || 'Untitled'}`,

@@ -704,6 +704,10 @@ export interface Dispatch extends BaseEntity {
   receipt_url?: string;
   /** Client Collect: the person who actually came and collected. */
   received_by_name?: string;
+  /** Shared shipment number when several jobs are clubbed into one box/bag. */
+  consignment_no?: string;
+  /** Qty of the job shipped in this dispatch. Null/absent = full quantity. */
+  dispatched_qty?: number | null;
 
   // Joined data
   job?: Job;
