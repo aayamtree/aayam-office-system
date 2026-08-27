@@ -26,7 +26,10 @@ export default function DispatchPage() {
     // We fetch both so "Invoice ready" reflects reality either way.
     select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
-    orderBy: { column: 'client_deadline', ascending: true }
+    orderBy: { column: 'client_deadline', ascending: true },
+    // useJobs defaults to 50, but 150+ jobs can sit in these stages at once —
+    // a board silently showing a third of the queue reads as "all caught up".
+    limit: 500
   });
   const { dispatches, loading: dispatchesLoading, error: dispatchesError, createDispatch, refetch: refetchDispatches } = useDispatches();
 

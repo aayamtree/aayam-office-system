@@ -51,7 +51,7 @@ export default function QCCheckPage() {
 
   // quantity and notes are shown on the QC card and read by the QC form; neither
   // is in the default select, so both rendered empty.
-  const { jobs, loading, error: jobsError, updateJobStage, updateJob } = useJobs({
+  const { jobs, loading, error: jobsError, updateJobStage, updateJob, refetch: refetchJobs } = useJobs({
     select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }],
     limit: 500,
@@ -59,6 +59,11 @@ export default function QCCheckPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [focusJobId, setFocusJobId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Backlog clearing: select jobs that already physically shipped (before the
+  // app's QC flow worked) and mark them dispatched in one honest bulk move.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [showQCModal, setShowQCModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
@@ -297,6 +302,49 @@ export default function QCCheckPage() {
     }));
   };
 
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDispatch = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { confirmed } = await confirm({
+      title: `Mark ${ids.length} job${ids.length > 1 ? 's' : ''} as Dispatched?`,
+      message: `Use this ONLY for jobs whose goods already physically left — it skips the QC checklist and dispatch paperwork entirely. Each job gets a history note saying it was cleared from the backlog, and unpaid ones stay visible on the money side.`,
+      variant: 'danger',
+      confirmLabel: `Mark ${ids.length} Dispatched`,
+    });
+    if (!confirmed) return;
+    setBulkBusy(true);
+    try {
+      // One transaction, Telegram notifications suppressed inside the function
+      // — a backlog clear must not send one message per job.
+      const { data, error } = await supabase.rpc('fn_bulk_mark_dispatched', {
+        p_job_ids: ids,
+        p_actor: profile?.id ?? null,
+        p_actor_name: profile?.full_name ?? null,
+        p_actor_role: profile?.role ?? null,
+        p_note: null,
+      });
+      if (error) throw error;
+      const moved = typeof data === 'number' ? data : ids.length;
+      toast.success(`${moved} job${moved === 1 ? '' : 's'} marked dispatched.`);
+      if (moved < ids.length) toast.info(`${ids.length - moved} skipped — no longer in a QC stage.`);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      refetchJobs?.();
+    } catch (err: any) {
+      toast.error('Bulk update failed: ' + (err?.message || String(err)));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   // When Pass is clicked — show packing step first
   const handlePassClick = async () => {
     if (!selectedJob) return;
@@ -479,13 +527,26 @@ export default function QCCheckPage() {
             <option value="in_progress">In Progress</option>
             <option value="passed">Passed</option>
           </select>
+          <button
+            onClick={() => { setSelectMode(m => !m); setSelectedIds(new Set()); }}
+            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${selectMode ? 'bg-gray-900 text-white border-gray-900' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-400'}`}
+            title="Select jobs whose goods already physically left and mark them dispatched without the QC checklist"
+          >
+            {selectMode ? 'Cancel selection' : 'Clear Backlog'}
+          </button>
         </div>
 
         {/* Orders Grid */}
         {filteredJobs.length === 0 && <div className="text-center py-10 text-gray-500">No jobs found.</div>}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredJobs.map((job) => (
-            <div key={job.id} className="rounded-md p-3 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all">
+            <div
+              key={job.id}
+              onClick={selectMode ? () => toggleSelected(job.id) : undefined}
+              className={`rounded-md p-3 border transition-all ${selectMode
+                ? (selectedIds.has(job.id) ? 'border-gray-900 ring-2 ring-gray-900/15 bg-gray-50 cursor-pointer' : 'border-gray-200 cursor-pointer hover:border-gray-400')
+                : 'border-gray-100 hover:border-gray-200 hover:shadow-sm'}`}
+            >
               {/* Top: badges */}
               <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                 <span className="font-semibold text-gray-900 text-sm">{job.job_number}</span>
@@ -510,7 +571,11 @@ export default function QCCheckPage() {
 
               {/* Bottom: action */}
               <div className="mt-3 pt-2 border-t border-gray-50">
-                {job.current_stage === 'ready' ? (
+                {selectMode ? (
+                  <div className={`flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium border ${selectedIds.has(job.id) ? 'bg-gray-900 text-white border-gray-900' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                    <CheckCircle className="w-4 h-4" /> {selectedIds.has(job.id) ? 'Selected' : 'Tap to select'}
+                  </div>
+                ) : job.current_stage === 'ready' ? (
                   <div className="flex items-center justify-center gap-1.5 py-1.5 bg-green-50 text-green-700 rounded-md text-sm font-medium">
                     <CheckCircle className="w-4 h-4" /> Passed
                   </div>
@@ -527,6 +592,27 @@ export default function QCCheckPage() {
             </div>
           ))}
         </div>
+
+        {selectMode && (
+          <div className="sticky bottom-3 mt-4 bg-gray-900 text-white rounded-md p-3 flex flex-wrap items-center gap-2 shadow-lg">
+            <p className="text-sm font-medium flex-1 min-w-[180px]">
+              {selectedIds.size} selected — only for goods that already physically left
+            </p>
+            <button onClick={() => setSelectedIds(new Set(filteredJobs.map(j => j.id)))} className="px-3 py-1.5 text-xs rounded-md bg-white/10 hover:bg-white/20 transition-colors">
+              Select all ({filteredJobs.length})
+            </button>
+            <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 text-xs rounded-md bg-white/10 hover:bg-white/20 transition-colors">
+              Clear
+            </button>
+            <button
+              disabled={bulkBusy || selectedIds.size === 0}
+              onClick={handleBulkDispatch}
+              className="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-gray-900 hover:bg-gray-100 disabled:opacity-50 transition-colors"
+            >
+              {bulkBusy ? 'Working…' : `Mark ${selectedIds.size} Dispatched`}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* QC Modal */}

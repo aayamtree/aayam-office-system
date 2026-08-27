@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-27T06:07:25.015Z",
+  "generatedAt": "2026-08-27T06:43:46.889Z",
   "filesScanned": 452,
   "queriesSeen": 633,
   "wildcardQueries": 95,
@@ -2253,11 +2253,11 @@
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 103
+          "line": 108
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 109
+          "line": 114
         },
         {
           "file": "lib/hooks.ts",
@@ -2779,12 +2779,12 @@
           },
           "dispatch_mode": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 248,
+            "line": 251,
             "verb": "update"
           },
           "dispatch_receipt_url": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 248,
+            "line": 251,
             "verb": "update"
           },
           "drive_file_status": {
@@ -2888,7 +2888,7 @@
           },
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 248,
+            "line": 251,
             "verb": "update"
           },
           {
@@ -2909,7 +2909,7 @@
         },
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 257
+          "line": 262
         },
         {
           "file": "app/admin/finance/awaiting-payment/page.tsx",
@@ -4964,32 +4964,32 @@
         "columns": {
           "checklist": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "design_file_url": {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 340,
+            "line": 388,
             "verb": "insert"
           },
           "job_id": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "notes": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "performed_by": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "performed_by_name": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "photos": {
@@ -5004,12 +5004,12 @@
           },
           "qc_type": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "result": {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           "skip_reason": {
@@ -5022,17 +5022,17 @@
         "sites": [
           {
             "file": "app/admin/dispatch/page.tsx",
-            "line": 254,
+            "line": 257,
             "verb": "insert"
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 340,
+            "line": 388,
             "verb": "insert"
           },
           {
             "file": "app/admin/dispatch/qc-check/page.tsx",
-            "line": 402,
+            "line": 450,
             "verb": "insert"
           },
           {
@@ -5045,7 +5045,7 @@
       "sites": [
         {
           "file": "app/admin/dispatch/qc-check/page.tsx",
-          "line": 226
+          "line": 231
         },
         {
           "file": "lib/record-locations.ts",
@@ -6186,6 +6186,10 @@
     "fn_balance_sheet": {
       "file": "app/admin/finance/reports/accounting/page.tsx",
       "line": 86
+    },
+    "fn_bulk_mark_dispatched": {
+      "file": "app/admin/dispatch/qc-check/page.tsx",
+      "line": 327
     },
     "fn_capture_row_snapshot": {
       "file": "lib/health-checks.ts",
