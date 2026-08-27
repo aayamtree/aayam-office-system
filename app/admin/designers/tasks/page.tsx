@@ -284,7 +284,10 @@ export default function DesignerWorkspace() {
       // job_checklists was found completely empty on 2026-08-01, which left
       // designers with no checklist and nothing on screen to say why. A query
       // failure here looks exactly the same, so it is reported explicitly.
-      const { data, error } = await supabase.from('job_checklists').select('job_type, items').limit(100);
+      // category filter matters: each product has BOTH a design and a dispatch
+      // row under the same job_type key — unfiltered, whichever row arrived
+      // last silently won the map slot (sometimes the dispatch QC list).
+      const { data, error } = await supabase.from('job_checklists').select('job_type, items').eq('category', 'design').limit(100);
       if (error) toast.error('Could not load design checklists: ' + error.message);
       if (data) {
         const map: Record<string, string[]> = {};

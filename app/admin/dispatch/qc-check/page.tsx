@@ -15,6 +15,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import { logActivity } from '@/lib/logger';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { normalizeProductCategory } from '@/lib/product-category';
 
 // Fallback checkpoints if no DB checklists found
 const FALLBACK_PRE_PRINT = [
@@ -90,14 +91,18 @@ export default function QCCheckPage() {
     setLoadingChecklists(true);
 
     try {
-      // Fetch pre-print checklists (category = 'design') matching product category
-      const productCategory = job.product_category || '';
+      // Both pre-print AND dispatch checklists are keyed by PRODUCT category
+      // (job_checklists.job_type holds "Box", "Pouch", "Label"... despite its
+      // name). jobs.job_type is the WORK type ("Design + Printing") and must
+      // never be used to pick a checklist — matching on it always failed and
+      // silently served the first (arbitrary) checklist to every job.
+      const productCategory = normalizeProductCategory(job.product_category) || '';
       const { data: designChecklists } = await supabase
         .from('job_checklists')
         .select('id, category, job_type, items')
         .eq('category', 'design');
 
-      // Fetch post-print checklists (category = 'dispatch') matching job type
+      // Fetch post-print checklists (category = 'dispatch') — also keyed by product
       const { data: dispatchChecklists } = await supabase
         .from('job_checklists')
         .select('id, category, job_type, items')
@@ -106,12 +111,14 @@ export default function QCCheckPage() {
       // Find matching checklist for this job's product category (pre-print)
       let preItems: ChecklistItem[] = [];
       if (designChecklists && designChecklists.length > 0) {
-        // Try to find exact match first
-        const match = designChecklists.find(c =>
-          c.job_type?.toLowerCase() === productCategory.toLowerCase()
-        );
-        const checklist = match || designChecklists[0]; // Fall back to first checklist
-        const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
+        // Exact product match only — an arbitrary other product's checklist is
+        // worse than the generic fallback list.
+        const match = productCategory ? designChecklists.find(c =>
+          c.job_type?.trim().toLowerCase() === productCategory.toLowerCase()
+        ) : undefined;
+        const items = match
+          ? (typeof match.items === 'string' ? JSON.parse(match.items) : match.items)
+          : [];
         preItems = (items || []).map((item: any, idx: number) => ({
           id: `pre_${idx}`,
           label: typeof item === 'string' ? item : item.label,
@@ -121,15 +128,17 @@ export default function QCCheckPage() {
       }
       setPrePrintItems(preItems.length > 0 ? preItems : FALLBACK_PRE_PRINT);
 
-      // Find matching checklist for this job's job type (post-print)
+      // Find matching checklist for this job's PRODUCT category (post-print).
+      // Was matched on jobs.job_type (the WORK type) — never matched, so a BOX
+      // job got whatever checklist happened to come back first (Pouch).
       let postItems: ChecklistItem[] = [];
-      const jobType = job.job_type || '';
       if (dispatchChecklists && dispatchChecklists.length > 0) {
-        const match = dispatchChecklists.find(c =>
-          c.job_type?.toLowerCase() === jobType.toLowerCase()
-        );
-        const checklist = match || dispatchChecklists[0];
-        const items = typeof checklist.items === 'string' ? JSON.parse(checklist.items) : checklist.items;
+        const match = productCategory ? dispatchChecklists.find(c =>
+          c.job_type?.trim().toLowerCase() === productCategory.toLowerCase()
+        ) : undefined;
+        const items = match
+          ? (typeof match.items === 'string' ? JSON.parse(match.items) : match.items)
+          : [];
         postItems = (items || []).map((item: any, idx: number) => ({
           id: `post_${idx}`,
           label: typeof item === 'string' ? item : item.label,
@@ -590,10 +599,7 @@ export default function QCCheckPage() {
               ) : activeTab === 'checklist' ? (
                 <div className="space-y-3">
                   <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">
-                    {activeQCType === 'pre_print'
-                      ? `Based on product: ${selectedJob.product_category || 'Default'}`
-                      : `Based on job type: ${selectedJob.job_type || 'Default'}`
-                    }
+                    {`Based on product: ${normalizeProductCategory(selectedJob.product_category) || 'Default checklist'}`}
                   </p>
                   {activeItems.map((cp) => (
                     <div key={cp.id} className={`p-4 rounded-md border ${checkpoints[cp.id]?.checked ? 'bg-white border-green-200' : 'bg-gray-50 border-gray-200'

@@ -10,6 +10,7 @@ import { useJobChecklists, useJobs } from '@/lib/hooks';
 import { Job } from '@/types/database';
 import { logActivity } from '@/lib/logger';
 import { useAuth } from '@/lib/auth-context';
+import { normalizeProductCategory } from '@/lib/product-category';
 import type { ChecklistItem, ChecklistItemType } from '@/app/admin/settings/production/page';
 
 interface ChecklistModalProps {
@@ -55,14 +56,20 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
         if (job.checklist_progress) setProgress(job.checklist_progress as Record<string, any>);
     }, [job]);
 
-    // Match by product_category (Pouch, Banner etc.) first, then job_type, then Other
+    // Match the DESIGN checklist for this job's product category. job_checklists
+    // holds a design AND a dispatch row per product (both keyed by product name
+    // in the job_type column), so the category filter is not optional — without
+    // it a designer could be handed the dispatch QC list. jobs.job_type is the
+    // WORK type ("Design + Printing") and never matches a checklist; falling
+    // back to checklists[0] handed an arbitrary product's checklist to any job
+    // without its own — worse than saying so honestly.
     const matchedChecklist = useMemo(() => {
         if (!checklists) return null;
-        const productCat = (job as any).product_category || '';
-        return checklists.find(c => productCat && c.job_type.toLowerCase() === productCat.toLowerCase())
-            || checklists.find(c => c.job_type.toLowerCase() === job.job_type?.toLowerCase())
-            || checklists.find(c => c.job_type === 'Other')
-            || checklists[0];
+        const productCat = normalizeProductCategory((job as any).product_category) || '';
+        const designChecklists = checklists.filter(c => c.category === 'design');
+        return designChecklists.find(c => productCat && c.job_type.trim().toLowerCase() === productCat.toLowerCase())
+            || designChecklists.find(c => c.job_type.trim().toLowerCase() === 'other')
+            || null;
     }, [checklists, job]);
 
     const items: ChecklistItem[] = useMemo(
@@ -116,7 +123,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                             Pre-Print Checklist
                         </h2>
                         <p className="text-white/50 text-xs mt-0.5">
-                            Template: <span className="text-white/80 font-medium">{matchedChecklist?.job_type || 'Other'}</span>
+                            Template: <span className="text-white/80 font-medium">{matchedChecklist?.job_type || 'None'}</span>
                             {' · '}{(job as any).product_category || job.job_type || 'General'}{' · '}{job.job_number}
                         </p>
                     </div>
@@ -157,7 +164,7 @@ export default function ChecklistModal({ job, onClose, onSave }: ChecklistModalP
                     ) : !matchedChecklist ? (
                         <div className="text-center py-12 bg-gray-50 rounded-md border-2 border-dashed border-gray-200">
                             <AlertCircle className="mx-auto h-10 w-10 text-gray-300 mb-3" />
-                            <p className="text-gray-500 text-sm">No checklist template found for &quot;{job.job_type}&quot;.</p>
+                            <p className="text-gray-500 text-sm">No checklist template found for &quot;{normalizeProductCategory((job as any).product_category) || job.job_type}&quot;. Add one in Settings → Production Checklists.</p>
                         </div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12 text-gray-400 text-sm">No items configured for this checklist.</div>

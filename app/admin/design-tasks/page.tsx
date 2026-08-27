@@ -7,6 +7,7 @@ import { Palette, Play, CheckCircle, Clock, AlertCircle, CheckSquare } from 'luc
 import ChecklistModal from '@/components/design/ChecklistModal';
 import { useJobChecklists } from '@/lib/hooks';
 import { useConfirm } from '@/components/ConfirmModal';
+import { normalizeProductCategory } from '@/lib/product-category';
 
 export default function DesignTasksPage() {
     const { profile } = useAuth();
@@ -42,11 +43,15 @@ export default function DesignTasksPage() {
 
     function getChecklistProgress(job: any) {
         if (!checklists || !job.checklist_progress) return null;
-        const productCat = job.product_category || '';
-        const template =
-            checklists.find(c => productCat && c.job_type?.toLowerCase() === productCat.toLowerCase()) ||
-            checklists.find(c => c.job_type?.toLowerCase() === (job.job_type || '').toLowerCase()) ||
-            checklists[0];
+        // Design-category checklist for this job's PRODUCT only. The table holds
+        // a design and a dispatch row per product; matching without the category
+        // filter (or falling back to checklists[0]) counted progress against the
+        // wrong checklist.
+        const productCat = normalizeProductCategory(job.product_category) || '';
+        const template = checklists.find(c =>
+            c.category === 'design' &&
+            productCat && c.job_type?.trim().toLowerCase() === productCat.toLowerCase()
+        ) || null;
 
         if (!template || !template.items?.length) return null;
 
