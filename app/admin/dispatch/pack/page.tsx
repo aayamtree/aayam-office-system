@@ -3,12 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
-import { Package, Loader2, X, CheckCircle, ArrowRight } from 'lucide-react';
+import { Package, Loader2, X, CheckCircle, ArrowRight, Pencil } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job } from '@/types/database';
 import { supabase } from '@/lib/supabase';
-import { createPackage, type PackageType } from '@/lib/packages';
+import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPackage, type PackageType } from '@/lib/packages';
 import { getVerifiedQty } from '@/lib/packing-display';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
@@ -107,6 +107,22 @@ export default function PackPage() {
     notes: '',
   });
 
+  // Edit an existing package — box type/count/weight/notes, and which jobs
+  // are in it. Nothing about a package is final once created: a late job
+  // needs adding, one belongs in a different shipment, or the weight was
+  // only a guess. Available to anyone who can reach this page (admin +
+  // dispatch, per RouteGuard's /admin/dispatch rule).
+  const [editing, setEditing] = useState<null | { key: string; pkg: any; jobs: Job[] }>(null);
+  const [editForm, setEditForm] = useState({
+    package_type: 'box' as PackageType,
+    package_count: '1',
+    approx_weight_kg: '',
+    notes: '',
+  });
+  const [editRemoveIds, setEditRemoveIds] = useState<Set<string>>(new Set());
+  const [editAddIds, setEditAddIds] = useState<Set<string>>(new Set());
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   const openModal = () => {
     if (selectedJobs.length === 0) return;
     setForm({ package_type: 'box', package_count: '1', approx_weight_kg: '', notes: '' });
@@ -156,6 +172,125 @@ export default function PackPage() {
       toast.error('Could not create package: ' + (err?.message || String(err)));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Candidates to add to the package being edited: same client, still
+  // unpacked. Recomputed from the live jobs list, so a job someone else
+  // just packed elsewhere drops out of this list on its own.
+  const addCandidates = useMemo(() => {
+    if (!editing) return [];
+    const clientId = editing.jobs[0]?.client_id;
+    return unpacked.filter(j => j.client_id === clientId);
+  }, [editing, unpacked]);
+
+  const openEdit = (group: { key: string; jobs: Job[] }) => {
+    const pkg = (group.jobs[0] as any).package;
+    setEditing({ key: group.key, pkg, jobs: group.jobs });
+    setEditForm({
+      package_type: (pkg?.package_type as PackageType) || 'box',
+      package_count: String(pkg?.package_count ?? 1),
+      approx_weight_kg: pkg?.approx_weight_kg != null ? String(pkg.approx_weight_kg) : '',
+      notes: pkg?.notes || '',
+    });
+    setEditRemoveIds(new Set());
+    setEditAddIds(new Set());
+  };
+
+  const toggleEditRemove = (jobId: string) => {
+    setEditRemoveIds(prev => {
+      const next = new Set(prev);
+      if (next.has(jobId)) next.delete(jobId); else next.add(jobId);
+      return next;
+    });
+  };
+
+  const toggleEditAdd = (jobId: string) => {
+    setEditAddIds(prev => {
+      const next = new Set(prev);
+      if (next.has(jobId)) next.delete(jobId); else next.add(jobId);
+      return next;
+    });
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+
+    // A package that would end up with zero jobs isn't an edit, it's a
+    // delete — not something this form does. Block it instead of silently
+    // leaving an empty, undispatchable package row behind.
+    const remainingCount = editing.jobs.length - editRemoveIds.size + editAddIds.size;
+    if (remainingCount < 1) {
+      toast.error('A package needs at least one job — untick a removal or add a job before saving.');
+      return;
+    }
+    const count = parseInt(editForm.package_count, 10);
+    if (!Number.isFinite(count) || count < 1) {
+      toast.error('Enter how many boxes/sacks this is (at least 1).');
+      return;
+    }
+
+    setEditSubmitting(true);
+    try {
+      const pkg = editing.pkg;
+      const newWeight = editForm.approx_weight_kg ? Number(editForm.approx_weight_kg) : null;
+      // package_count/approx_weight_kg come back from PostgREST as numeric
+      // types that are NOT guaranteed to be JS numbers (approx_weight_kg is
+      // a Postgres `numeric` column, serialized as a STRING to avoid float
+      // precision loss) — compare through Number() on both sides so a
+      // same-value edit never reads as "changed".
+      const detailsChanged =
+        editForm.package_type !== ((pkg?.package_type as PackageType) || 'box') ||
+        count !== Number(pkg?.package_count ?? 1) ||
+        newWeight !== (pkg?.approx_weight_kg != null ? Number(pkg.approx_weight_kg) : null) ||
+        (editForm.notes || null) !== (pkg?.notes || null);
+
+      const errors: string[] = [];
+
+      if (detailsChanged) {
+        const res = await updatePackageDetails(editing.key, {
+          package_type: editForm.package_type,
+          package_count: count,
+          approx_weight_kg: newWeight,
+          notes: editForm.notes || null,
+        }, profile?.id);
+        if (!res.ok) errors.push(res.error || 'Could not update package details.');
+      }
+
+      // Add BEFORE remove, and gate the removal on the ADD's ACTUAL result
+      // (not the requested count) — a job someone else grabbed a moment ago
+      // makes addJobsToPackage silently add fewer than asked, and removing
+      // on the ORIGINAL plan in that case could leave the package with zero
+      // jobs: an orphaned, invisible package row nothing here can recover.
+      let addedCount = 0;
+      if (editAddIds.size > 0) {
+        const res = await addJobsToPackage(editing.key, Array.from(editAddIds), profile?.id);
+        addedCount = res.added.length;
+        if (res.error) errors.push(res.error);
+      }
+
+      if (editRemoveIds.size > 0) {
+        const safeToRemove = editing.jobs.length + addedCount - editRemoveIds.size >= 1;
+        if (!safeToRemove) {
+          errors.push('Could not remove those jobs — doing so would leave the package empty (fewer jobs were added than expected). Reload and try again with fewer removals.');
+        } else {
+          const res = await removeJobsFromPackage(editing.key, Array.from(editRemoveIds), profile?.id);
+          if (res.error) errors.push(res.error);
+        }
+      }
+
+      if (errors.length > 0) {
+        toast.error(errors.join(' '));
+      } else {
+        toast.info('Package updated.');
+      }
+      setEditing(null);
+      refetchJobs?.();
+    } catch (err: any) {
+      toast.error('Could not update package: ' + (err?.message || String(err)));
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -276,6 +411,12 @@ export default function PackPage() {
                     <p className="text-[11px] text-gray-500">
                       {groupJobs.length} job{groupJobs.length > 1 ? 's' : ''}: {groupJobs.map(j => j.job_number).join(', ')}
                     </p>
+                    <button
+                      onClick={() => openEdit({ key, jobs: groupJobs })}
+                      className="mt-1 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 font-medium"
+                    >
+                      <Pencil className="w-3 h-3" /> Edit
+                    </button>
                   </div>
                 </div>
               );
@@ -348,6 +489,120 @@ export default function PackPage() {
                   className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm disabled:opacity-40"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create Package'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-md w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h2 className="text-section">Edit Package</h2>
+                <p className="text-sm text-gray-500">{editing.pkg?.consignment_no}</p>
+              </div>
+              <button onClick={() => setEditing(null)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleSaveEdit} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Package Type</label>
+                  <select
+                    value={editForm.package_type}
+                    onChange={e => setEditForm(f => ({ ...f, package_type: e.target.value as PackageType }))}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  >
+                    <option value="box">Box</option>
+                    <option value="sack">Sack</option>
+                    <option value="bundle">Bundle</option>
+                    <option value="pallet">Pallet</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">No. of Packages</label>
+                  <input
+                    type="number" min={1}
+                    value={editForm.package_count}
+                    onChange={e => setEditForm(f => ({ ...f, package_count: e.target.value }))}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Approx Weight (kg)</label>
+                <input
+                  type="number" placeholder="Optional"
+                  value={editForm.approx_weight_kg}
+                  onChange={e => setEditForm(f => ({ ...f, approx_weight_kg: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <input
+                  type="text" placeholder="e.g. Fragile, handle with care"
+                  value={editForm.notes}
+                  onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Jobs in this package</label>
+                <div className="space-y-1 max-h-40 overflow-y-auto border rounded-md p-2">
+                  {editing.jobs.map(job => {
+                    const marked = editRemoveIds.has(job.id);
+                    return (
+                      <label key={job.id} className={`flex items-center gap-2 text-xs px-1.5 py-1 rounded cursor-pointer ${marked ? 'opacity-50 line-through' : 'hover:bg-gray-50'}`}>
+                        <input
+                          type="checkbox"
+                          checked={!marked}
+                          onChange={() => toggleEditRemove(job.id)}
+                          className="w-3.5 h-3.5 accent-gray-900 shrink-0"
+                        />
+                        <span className="font-mono text-muted-foreground shrink-0">#{job.job_number}</span>
+                        <span className="truncate">{job.project_name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">Untick a job to move it back to Awaiting Packing.</p>
+              </div>
+
+              {addCandidates.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Add more jobs ({editing.jobs[0]?.client?.company || editing.jobs[0]?.client?.name})
+                  </label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto border rounded-md p-2">
+                    {addCandidates.map(job => (
+                      <label key={job.id} className="flex items-center gap-2 text-xs px-1.5 py-1 rounded cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={editAddIds.has(job.id)}
+                          onChange={() => toggleEditAdd(job.id)}
+                          className="w-3.5 h-3.5 accent-gray-900 shrink-0"
+                        />
+                        <span className="font-mono text-muted-foreground shrink-0">#{job.job_number}</span>
+                        <span className="truncate">{job.project_name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditing(null)} className="flex-1 px-4 py-2 border rounded-md text-sm">Cancel</button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 shadow-sm font-semibold text-sm disabled:opacity-40"
+                >
+                  {editSubmitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Save Changes'}
                 </button>
               </div>
             </form>
