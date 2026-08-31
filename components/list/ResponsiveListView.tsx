@@ -92,7 +92,7 @@ export function ResponsiveListView<T>({
                                     placeholder={searchPlaceholder}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0000FF] focus:ring-2 focus:ring-[#0000FF] focus:ring-opacity-20"
+                                    className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20"
                                 />
                             </div>
                         )}
@@ -104,7 +104,7 @@ export function ResponsiveListView<T>({
                                     key={filter.id}
                                     value={filter.value}
                                     onChange={(e) => filter.onChange(e.target.value)}
-                                    className="flex-1 min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0000FF] cursor-pointer"
+                                    className="flex-1 min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-primary cursor-pointer"
                                 >
                                     <option value="">{filter.label}</option>
                                     {filter.options?.map((option) => (
@@ -130,7 +130,7 @@ export function ResponsiveListView<T>({
                                     placeholder={searchPlaceholder}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0000FF] focus:ring-2 focus:ring-[#0000FF] focus:ring-opacity-20"
+                                    className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20"
                                 />
                             </div>
                         )}
@@ -143,7 +143,7 @@ export function ResponsiveListView<T>({
                                         key={filter.id}
                                         value={filter.value}
                                         onChange={(e) => filter.onChange(e.target.value)}
-                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0000FF] cursor-pointer"
+                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-primary cursor-pointer"
                                     >
                                         <option value="">{filter.label}</option>
                                         {filter.options?.map((option) => (

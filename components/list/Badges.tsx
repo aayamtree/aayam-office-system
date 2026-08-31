@@ -60,7 +60,7 @@ interface CountBadgeProps {
  */
 export function CountBadge({ count, variant = 'primary' }: CountBadgeProps) {
     const variantClasses = {
-        primary: 'bg-[#FF6600] text-white',
+        primary: 'bg-oms-orange text-white',
         warning: 'bg-amber-500 text-white',
         danger: 'bg-red-500 text-white',
     }[variant];
@@ -137,7 +137,7 @@ export function MetadataItem({ icon, label, variant = 'default' }: MetadataItemP
     const variantClasses = {
         default: 'text-gray-900',
         muted: 'text-gray-500',
-        primary: 'text-[#0000FF]',
+        primary: 'text-primary',
         danger: 'text-red-600',
     }[variant];
 

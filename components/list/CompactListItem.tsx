@@ -68,7 +68,7 @@ export function CompactListItem({
                         type="checkbox"
                         checked={checked}
                         onChange={(e) => onCheckChange?.(e.target.checked)}
-                        className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-[#0000FF] focus:ring-2 focus:ring-[#0000FF] focus:ring-offset-0 cursor-pointer"
+                        className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 cursor-pointer"
                     />
                 </div>
             )}

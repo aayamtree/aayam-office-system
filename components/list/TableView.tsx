@@ -65,7 +65,7 @@ export function TableView<T>({
                             <th className="w-12 px-4 py-3 text-left">
                                 <input
                                     type="checkbox"
-                                    className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-[#0000FF] cursor-pointer"
+                                    className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-primary cursor-pointer"
                                     onChange={(e) => {
                                         // Handle select all
                                     }}
@@ -129,7 +129,7 @@ export function TableView<T>({
                                                 onChange={(e) =>
                                                     onSelectionChange?.(item, e.target.checked)
                                                 }
-                                                className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-[#0000FF] cursor-pointer"
+                                                className="w-[18px] h-[18px] rounded border-2 border-gray-300 text-primary cursor-pointer"
                                             />
                                         </td>
                                     )}

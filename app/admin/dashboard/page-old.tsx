@@ -518,13 +518,13 @@ export default function AdminDashboard() {
               <Link href="/admin/sales/orders" className="px-4 py-3 bg-gray-900 text-white rounded-md text-center text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm">
                 + New Order
               </Link>
-              <Link href="/admin/cmyk-print" className="px-4 py-3 bg-white border-2 border-gray-200 text-[#0000FF] rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <Link href="/admin/cmyk-print" className="px-4 py-3 bg-white border-2 border-gray-200 text-primary rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Print Job
               </Link>
               <Link href="/admin/dispatch" className="px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
                 QC Check
               </Link>
-              <Link href="/admin/crm/clients" className="px-4 py-3 bg-white border-2 border-gray-200 text-[#0000FF] rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <Link href="/admin/crm/clients" className="px-4 py-3 bg-white border-2 border-gray-200 text-primary rounded-lg text-center text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Clients
               </Link>
             </div>

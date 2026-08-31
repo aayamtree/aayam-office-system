@@ -135,7 +135,7 @@ export function MobileBottomNav() {
     return (
         <>
             {/* Bottom Nav Bar - Mobile Only */}
-            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF9F5] border-t border-gray-200 lg:hidden safe-area-bottom [transform:translateZ(0)] [-webkit-transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
+            <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#F6F5F4] border-t border-gray-200 lg:hidden safe-area-bottom [transform:translateZ(0)] [-webkit-transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]">
                 <div className="flex items-stretch justify-around h-16 px-2">
                     {/* Dynamic Tabs (4 slots) */}
                     {activeTabItems.map(item => {
@@ -201,7 +201,7 @@ export function MobileBottomNav() {
                 {showAccountMenu && (
                     <>
                         <div className="fixed inset-0 z-30" onClick={() => setShowAccountMenu(false)} />
-                        <div className="absolute bottom-full right-2 mb-2 bg-[#FAF9F5] rounded-lg shadow-xl border border-gray-200 overflow-hidden w-44 z-40">
+                        <div className="absolute bottom-full right-2 mb-2 bg-[#F6F5F4] rounded-lg shadow-xl border border-gray-200 overflow-hidden w-44 z-40">
                             <button
                                 onClick={() => { setShowAccountMenu(false); router.push('/admin/settings/profile'); }}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
@@ -229,7 +229,7 @@ export function MobileBottomNav() {
             {showCustomizer && (
                 <div className="fixed inset-0 z-50 lg:hidden">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setShowCustomizer(false)} />
-                    <div className="absolute bottom-0 left-0 right-0 bg-[#FAF9F5] rounded-t-2xl max-h-[70vh] overflow-hidden animate-slide-up">
+                    <div className="absolute bottom-0 left-0 right-0 bg-[#F6F5F4] rounded-t-2xl max-h-[70vh] overflow-hidden animate-slide-up">
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-gray-200">
                             <div>
@@ -267,7 +267,7 @@ export function MobileBottomNav() {
                                             key={i}
                                             className={`flex-1 py-2 rounded-md text-center text-xs font-medium border ${item
                                                 ? 'bg-gray-900 text-white border-gray-900'
-                                                : 'bg-[#FAF9F5] text-gray-300 border-dashed border-gray-300'
+                                                : 'bg-[#F6F5F4] text-gray-300 border-dashed border-gray-300'
                                                 }`}
                                         >
                                             {item ? item.label : 'Empty'}
@@ -296,7 +296,7 @@ export function MobileBottomNav() {
                                             ? 'bg-gray-900 text-white'
                                             : isFull
                                                 ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200 opacity-60'
-                                                : 'bg-[#FAF9F5] text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                                : 'bg-[#F6F5F4] text-gray-700 hover:bg-gray-100 border border-gray-200'
                                             }`}
                                     >
                                         <Icon size={18} />

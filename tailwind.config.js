@@ -10,16 +10,16 @@ module.exports = {
 		extend: {
 			colors: {
 				oms: {
-					blue: '#0000FF',
-					orange: '#FF6600',
-					dark: '#3A3F4F',
-					light: '#D5D5D6',
+					blue: '#0075DE',
+					orange: '#E89D01',
+					dark: '#111111',
+					light: '#EBE9E6',
 					white: '#FFFFFF'
 				},
 				'oms-text': {
-					primary: '#3A3F4F',
-					secondary: '#6B6F7A',
-					disabled: '#9AA0A6'
+					primary: '#111111',
+					secondary: '#615D59',
+					disabled: '#9C9792'
 				},
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
@@ -161,7 +161,7 @@ module.exports = {
 			boxShadow: {
 				sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
 				DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-				md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+				md: '0px 4px 12px rgba(0, 0, 0, 0.1)',
 				lg: 'none',
 				xl: 'none',
 				'2xl': 'none',
@@ -183,7 +183,7 @@ module.exports = {
 				'slide-in-right': 'slide-in-right 0.22s cubic-bezier(0.32, 0.72, 0, 1)',
 			},
 			backgroundColor: {
-				white: '#FAF9F5',
+				white: '#FFFFFF',
 			}
 		},
 	},

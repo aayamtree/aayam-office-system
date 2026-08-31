@@ -220,7 +220,7 @@ export default function ComponentDemoPage() {
         <div className="flex items-start gap-3 py-3 px-4 bg-white border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
             <input
                 type="checkbox"
-                className="w-[18px] h-[18px] mt-0.5 rounded border-2 border-gray-300 text-[#0000FF] cursor-pointer"
+                className="w-[18px] h-[18px] mt-0.5 rounded border-2 border-gray-300 text-primary cursor-pointer"
             />
 
             <div className="flex-1 min-w-0">

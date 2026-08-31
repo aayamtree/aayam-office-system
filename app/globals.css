@@ -65,27 +65,27 @@ select, option {
   --radius-3xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Colors - Primary (Yellow / Aayam brand) */
-  --color-primary-50: #fefce8;
-  --color-primary-100: #fef9c3;
-  --color-primary-200: #fef08a;
-  --color-primary-500: #eab308;
-  --color-primary-600: #ca8a04;
-  --color-primary-700: #a16207;
-  --color-primary-800: #854d0e;
-  --color-primary-900: #713f12;
+  /* Colors - Primary (Notion Blue) */
+  --color-primary-50: #ebf5fe;
+  --color-primary-100: #d8ecfd;
+  --color-primary-200: #b8dbf9;
+  --color-primary-500: #0075de;
+  --color-primary-600: #0067c2;
+  --color-primary-700: #0057a3;
+  --color-primary-800: #07467e;
+  --color-primary-900: #08365e;
 
-  /* Colors - Neutral */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
+  /* Colors - Neutral (Notion warm gray) */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f4;
+  --color-gray-200: #e9e8e7;
+  --color-gray-300: #d6d4d1;
+  --color-gray-400: #a8a39f;
+  --color-gray-500: #7b756f;
+  --color-gray-600: #605c57;
+  --color-gray-700: #46423f;
+  --color-gray-800: #2b2927;
+  --color-gray-900: #131211;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -119,7 +119,7 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   color: var(--color-gray-900);
-  background-color: #FAF9F5;
+  background-color: #F6F5F4;
 }
 
 /* =============================================
@@ -198,7 +198,7 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px hsl(45 93% 47% / 0.4);
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.4);
 }
 
 /* Placeholder styling */
@@ -226,7 +226,7 @@ button:disabled {
    CARD STYLES
    ============================================= */
 .card {
-  background: #FAF9F5;
+  background: hsl(var(--card));
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-gray-200);
   box-shadow: var(--shadow-sm);
@@ -634,74 +634,74 @@ td {
 @layer base {
   :root {
     /* âââ Stone base (warm white) â bare HSL for Tailwind v3 hsl(var(--x)) âââ */
-    --background: 48 33% 97%;
-    --foreground: 20 6% 10%;
-    --card: 48 33% 97%;
-    --card-foreground: 20 6% 10%;
-    --popover: 48 33% 97%;
-    --popover-foreground: 20 6% 10%;
+    --background: 30 10% 96%;
+    --foreground: 0 0% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
 
     /* âââ ð¡ Yellow primary (Shadcn Mira yellow) âââ */
-    --primary: 45 93% 47%;
-    --primary-foreground: 26 50% 15%;
+    --primary: 208 100% 43%;
+    --primary-foreground: 0 0% 100%;
 
     /* âââ Secondary / Muted / Accent âââ */
-    --secondary: 45 10% 96%;
-    --secondary-foreground: 20 6% 10%;
-    --muted: 45 10% 96%;
-    --muted-foreground: 25 8% 44%;
-    --accent: 45 30% 92%;
-    --accent-foreground: 20 6% 10%;
+    --secondary: 30 8% 93%;
+    --secondary-foreground: 0 0% 7%;
+    --muted: 30 8% 93%;
+    --muted-foreground: 0 0% 46%;
+    --accent: 208 92% 95%;
+    --accent-foreground: 0 0% 7%;
 
     /* âââ Destructive âââ */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 7 92% 58%;
+    --destructive-foreground: 0 0% 100%;
 
     /* âââ Input / Border / Ring âââ */
     --border: 30 6% 90%;
     --input: 30 6% 90%;
-    --ring: 45 93% 47%;
-    --radius: 0.5rem;
+    --ring: 208 100% 43%;
+    --radius: 0.75rem;
 
     /* âââ Charts âââ */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 208 100% 43%;
+    --chart-2: 7 92% 58%;
+    --chart-3: 40 100% 53%;
+    --chart-4: 23 33% 54%;
+    --chart-5: 208 83% 66%;
 
     /* âââ Sidebar â Mira Inverted (dark warm-stone bg) âââ */
     /* Note: sidebar uses raw CSS values since Tailwind doesn't map --sidebar-* */
-    --sidebar: #292524;
-    --sidebar-foreground: #fafaf9;
-    --sidebar-primary: #eab308;
-    --sidebar-primary-foreground: #292524;
-    --sidebar-accent: #3d3836;
-    --sidebar-accent-foreground: #fafaf9;
-    --sidebar-border: #44403c;
-    --sidebar-ring: #eab308;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #111111;
+    --sidebar-primary: #0075de;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e6f3fe;
+    --sidebar-accent-foreground: #111111;
+    --sidebar-border: #e7e6e4;
+    --sidebar-ring: #0075de;
   }
 
   .dark {
-    --background: 20 6% 10%;
-    --foreground: 45 10% 97%;
-    --card: 20 8% 14%;
-    --card-foreground: 45 10% 97%;
-    --popover: 20 8% 14%;
-    --popover-foreground: 45 10% 97%;
-    --primary: 45 93% 47%;
-    --primary-foreground: 26 50% 15%;
-    --secondary: 20 8% 20%;
-    --secondary-foreground: 45 10% 97%;
-    --muted: 20 8% 20%;
-    --muted-foreground: 30 8% 63%;
-    --accent: 20 8% 20%;
-    --accent-foreground: 45 10% 97%;
-    --destructive: 0 63% 31%;
+    --background: 0 0% 7%;
+    --foreground: 30 10% 96%;
+    --card: 0 0% 11%;
+    --card-foreground: 30 10% 96%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 30 10% 96%;
+    --primary: 208 83% 66%;
+    --primary-foreground: 0 0% 7%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 30 10% 96%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 30 10% 96%;
+    --destructive: 7 84% 48%;
     --destructive-foreground: 0 0% 98%;
-    --border: 20 8% 20%;
-    --input: 20 8% 20%;
-    --ring: 45 93% 47%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 208 83% 66%;
   }
 }
 
@@ -723,58 +723,58 @@ td {
    ============================================= */
 @layer utilities {
   .bg-white {
-    background-color: rgb(250 249 245 / var(--tw-bg-opacity, 1)) !important;
+    background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1)) !important;
   }
 
-  /* Slightly deeper cream for table headers, hover rows, panels */
+  /* Deeper warm-neutral for table headers, hover rows, panels */
   .bg-gray-50 {
-    background-color: #F2F0EA !important;
+    background-color: #EFEDEC !important;
   }
 
   .hover\:bg-gray-50:hover {
-    background-color: #EDE9E0 !important;
+    background-color: #E1DEDB !important;
   }
 
   .hover\:bg-white:hover {
-    background-color: #FAF9F5 !important;
+    background-color: #FFFFFF !important;
   }
 }
 
 /* Direct override for all bg-white/XX opacity variants */
 [class~="bg-white\/10"] {
-  background-color: rgba(250, 249, 245, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [class~="bg-white\/15"] {
-  background-color: rgba(250, 249, 245, 0.15) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 [class~="bg-white\/20"] {
-  background-color: rgba(250, 249, 245, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 [class~="bg-white\/25"] {
-  background-color: rgba(250, 249, 245, 0.25) !important;
+  background-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 [class~="bg-white\/50"] {
-  background-color: rgba(250, 249, 245, 0.5) !important;
+  background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 [class~="bg-white\/60"] {
-  background-color: rgba(250, 249, 245, 0.6) !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 [class~="bg-white\/75"] {
-  background-color: rgba(250, 249, 245, 0.75) !important;
+  background-color: rgba(255, 255, 255, 0.75) !important;
 }
 
 [class~="bg-white\/80"] {
-  background-color: rgba(250, 249, 245, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
 }
 
 [class~="bg-white\/90"] {
-  background-color: rgba(250, 249, 245, 0.9) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* Hide scrollbar for horizontal scroll rows (filter tabs etc.) */
