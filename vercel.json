@@ -74,6 +74,14 @@
         {
             "path": "/api/cron/zoho-bank-sync",
             "schedule": "30 12 * * *"
+        },
+        {
+            "path": "/api/cron/reconcile-payment-captures",
+            "schedule": "0 5 * * *"
+        },
+        {
+            "path": "/api/cron/reconcile-payment-captures",
+            "schedule": "0 13 * * *"
         }
     ]
 }

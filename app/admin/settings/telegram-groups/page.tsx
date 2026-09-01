@@ -25,6 +25,10 @@ const DEPARTMENTS = [
   { value: 'dispatch', label: '📦 Dispatch' },
   { value: 'admin', label: '👑 Admin' },
   { value: 'cmyk', label: '🖨️ CMYK' },
+  // Not a job department. A group set to Payments becomes the payment-proof
+  // inbox: every screenshot posted there is read and parked for accounts.
+  // Leave Job alerts and Digest OFF for it.
+  { value: 'payments', label: '💸 Payments (screenshot inbox)' },
 ];
 
 export default function TelegramGroupsPage() {

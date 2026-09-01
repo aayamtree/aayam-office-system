@@ -160,6 +160,7 @@ const menuItems: MenuItem[] = [
       { name: 'Zoho Books', href: '/admin/finance/zoho' },
       { name: 'Invoice Matching', href: '/admin/finance/invoice-matching' },
       { name: 'Payments', href: '/admin/finance/payments' },
+      { name: '📸 Payment Captures', href: '/admin/finance/payment-captures' },
       { name: '⚡ Quick Expense', href: '/admin/finance/expenses/quick' },
       { name: 'Expense Categories', href: '/admin/finance/expense-categories', adminOnly: true },
       { name: 'Banking', href: '/admin/finance/banking' },

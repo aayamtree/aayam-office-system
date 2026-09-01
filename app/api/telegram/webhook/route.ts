@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { escapeHtml } from '@/lib/telegram-groups';
+import {
+  handlePaymentPhoto,
+  handlePaymentText,
+  handlePaymentCallback,
+  PAYMENTS_DEPARTMENT,
+} from '@/lib/telegram-payment-capture';
 
 // FIX 2026-07-06: accept both env names (was NEXT_PUBLIC_* only, while the
 // notification service used TELEGRAM_BOT_TOKEN — whichever wasn't set silently broke)
@@ -13,6 +20,12 @@ async function sendMessage(chatId: number | string, text: string) {
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
 }
+
+// Reading a screenshot means downloading it and making a vision call, which is
+// far longer than a notification relay. Without this the function is cut off at
+// the platform default, Telegram never gets its 200, and it redelivers.
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +50,10 @@ export async function POST(req: NextRequest) {
     if (memberUpdate?.chat && ['group', 'supergroup'].includes(memberUpdate.chat.type)) {
       const status = memberUpdate.new_chat_member?.status;
       const groupChatId = String(memberUpdate.chat.id);
-      const title = memberUpdate.chat.title || 'Unnamed group';
+      // Escaped: a group named with a "<" makes Telegram reject the whole
+      // HTML message, so the confirmation would never arrive and nobody would
+      // know why.
+      const title = escapeHtml(memberUpdate.chat.title || 'Unnamed group');
       if (status === 'member' || status === 'administrator') {
         await supabaseAdmin
           .from('telegram_groups')
@@ -54,6 +70,18 @@ export async function POST(req: NextRequest) {
           .from('telegram_groups')
           .update({ is_active: false, updated_at: new Date().toISOString() })
           .eq('chat_id', groupChatId);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // ── PAYMENT CAPTURE BUTTONS ──
+    // Vendor-confirm taps under a payment screenshot. Failing here must never
+    // take the rest of the webhook down with it.
+    if (body?.callback_query) {
+      try {
+        await handlePaymentCallback(supabaseAdmin, body.callback_query);
+      } catch (err) {
+        console.error('[telegram] payment callback failed:', err);
       }
       return NextResponse.json({ ok: true });
     }
@@ -76,7 +104,7 @@ export async function POST(req: NextRequest) {
     // welcome logic in groups (no spam in group rooms).
     if (message.chat && ['group', 'supergroup'].includes(message.chat.type)) {
       const groupChatId = String(message.chat.id);
-      const title = message.chat.title || 'Unnamed group';
+      const title = escapeHtml(message.chat.title || 'Unnamed group');
       const { data: existing } = await supabaseAdmin
         .from('telegram_groups')
         .select('id, department')
@@ -94,6 +122,46 @@ export async function POST(req: NextRequest) {
           groupChatId,
           `✅ <b>Aayam bot connected to "${title}"</b>\n\nAdmin: assign this group to a department in the app → Settings → Telegram Groups. Job updates for that department will then arrive here automatically. 🚀`
         );
+      }
+
+      // ── PAYMENT CAPTURE ──
+      // A photo in the group assigned to the 'payments' department is treated
+      // as a payment proof: stored, read, and parked for accounts. Wrapped so
+      // a bad screenshot can never break job alerts for the other groups.
+      // A screenshot is the usual case; a typed line covers cash and anything
+      // else with no receipt to photograph. handlePaymentText stays silent on
+      // ordinary conversation, so the group is not a bot shouting at everyone.
+      if (existing?.department === PAYMENTS_DEPARTMENT) {
+        try {
+          // Android's "send as file" and any forwarded receipt arrive as a
+          // document, not a photo. Those used to fall through to the chat
+          // mirror and vanish without a word to whoever posted them.
+          const asDocument =
+            message.document && String(message.document.mime_type || '').startsWith('image/')
+              ? {
+                  ...message,
+                  photo: [{ file_id: message.document.file_id }],
+                  __declared_mime: message.document.mime_type,
+                }
+              : null;
+
+          if (message.photo || asDocument) {
+            const handled = await handlePaymentPhoto(supabaseAdmin, asDocument || message);
+            if (handled) return NextResponse.json({ ok: true });
+          } else if (message.document) {
+            await sendMessage(
+              String(message.chat.id),
+              `📎 That came through as a file, not a photo. Please send it as a photo (or paste the details as text) so it can be read.`
+            );
+            return NextResponse.json({ ok: true });
+          } else if (message.text) {
+            const handled = await handlePaymentText(supabaseAdmin, message);
+            if (handled) return NextResponse.json({ ok: true });
+          }
+        } catch (err) {
+          console.error('[telegram] payment capture failed:', err);
+          return NextResponse.json({ ok: true });
+        }
       }
 
       // ── TWO-WAY BRIDGE: mirror group text into the app's department room ──
