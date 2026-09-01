@@ -518,8 +518,12 @@ export default function DispatchHistoryPage() {
                           <p className="text-xs text-gray-500 uppercase font-medium mb-1">Remote QC Photos</p>
                           <div className="flex gap-2 flex-wrap">
                             {record.photos.map((url, idx) => (
-                              <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">
-                                Photo {idx + 1}
+                              <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                <img
+                                  src={url}
+                                  alt={`QC photo ${idx + 1}`}
+                                  className="w-12 h-12 object-cover rounded border border-gray-200 hover:border-gray-400 transition-colors"
+                                />
                               </a>
                             ))}
                           </div>

@@ -39,6 +39,13 @@ function calcBill(items: LineItem[], discountPct: number, adjustment: number) {
   return { subtotal, gst_amount, discount_amount, total };
 }
 
+// True when a stored attachment URL is a photo, so it can show a real
+// thumbnail instead of a generic link — most bill attachments are phone
+// photos of a slip, not PDFs.
+function isImageUrl(url: string) {
+    return /\.(png|jpe?g|gif|webp|heic|bmp|avif)(\?|$)/i.test(url);
+}
+
 function fmt(n: number) {
   return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -671,8 +678,13 @@ export default function VendorPurchasesPage() {
                   className="w-full px-3 py-2 border rounded-md text-sm file:mr-4 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-gray-700 bg-white" />
                 {selectedFile && <p className="text-xs text-gray-600 mt-1 flex items-center gap-1"><Upload className="w-3 h-3" /> {selectedFile.name}</p>}
                 {!selectedFile && form.attachmentUrl && (
-                  <a href={form.attachmentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline mt-1 flex items-center gap-1">
-                    <ExternalLink className="w-3 h-3" /> View existing attachment
+                  <a href={form.attachmentUrl} target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-2 text-xs text-blue-600 hover:underline">
+                    {isImageUrl(form.attachmentUrl) ? (
+                      <img src={form.attachmentUrl} alt="Attachment" className="w-9 h-9 object-cover rounded border border-gray-200" />
+                    ) : (
+                      <span className="w-9 h-9 flex items-center justify-center rounded border border-gray-200 bg-gray-50 text-gray-500"><ExternalLink className="w-4 h-4" /></span>
+                    )}
+                    View existing attachment
                   </a>
                 )}
               </div>

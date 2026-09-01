@@ -173,8 +173,11 @@ export default function PrintRunsPage() {
     // Delivery modal state
     const [deliveryMode, setDeliveryMode] = useState<'warehouse' | 'direct_to_client'>('warehouse');
     const [deliveryAddress, setDeliveryAddress] = useState('');
-    const [directPhotoUrl, setDirectPhotoUrl] = useState('');
-    const [directSkipReason, setDirectSkipReason] = useState('');
+    // Goods photos (packaging / transport slip) snapped before a direct-to-client
+    // dispatch — up to 4, uploaded immediately like the job sheet image so the
+    // thumbnails are visible before Mark Dispatched is even clicked.
+    const [directPhotos, setDirectPhotos] = useState<string[]>([]);
+    const [uploadingDirectPhotos, setUploadingDirectPhotos] = useState(false);
 
     // Dispatch modal state
     const [ewayBill, setEwayBill] = useState('');
@@ -306,15 +309,23 @@ export default function PrintRunsPage() {
     // Invoice + e-way bill live in the `attachments` bucket (same one the
     // Dispatch screen already uses for delivery receipts), and the public URL
     // is stored on the run so it can be pulled up months later for GST/audit.
-    const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway' | 'job-sheet') => {
+    const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway' | 'job-sheet' | 'dispatch-photo') => {
         // "invoice" (no dot) would otherwise make the extension "invoice".
         const dot = file.name.lastIndexOf('.');
         const ext = (dot > 0 ? file.name.slice(dot + 1) : 'pdf').toLowerCase();
-        const path = `print-runs/${runId}/${kind}-${Date.now()}.${ext}`;
+        // Random suffix, not just Date.now() — several dispatch photos uploaded
+        // back-to-back in the same millisecond used to collide and overwrite.
+        const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const path = `print-runs/${runId}/${kind}-${unique}.${ext}`;
         const { error } = await supabase.storage.from('attachments').upload(path, file);
         if (error) throw error;
         return supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl || null;
     };
+
+    // A photo/doc URL we uploaded ourselves is safe to sniff by extension —
+    // used to decide whether an uploaded file gets a real thumbnail or a
+    // generic document icon (PDFs mostly).
+    const isImageUrl = (url: string) => /\.(png|jpe?g|gif|webp|heic|bmp|avif)(\?|$)/i.test(url);
 
     // A dispatched run with paperwork still missing — the chase list.
     const needsDocs = (r: PrintRun) =>
@@ -332,15 +343,39 @@ export default function PrintRunsPage() {
         return new Set(names).size;
     };
 
-    // Cancelling used to leave deliveryMode / address / skip-reason set, so the
+    // Cancelling used to leave deliveryMode / address / photos set, so the
     // NEXT run opened in this modal inherited them — one Cancel on run A could
-    // send run B straight past QC with run A's address and waiver text.
+    // send run B straight past QC with run A's address and photos.
     const closeDeliveryModal = () => {
         setDeliveryModal(null);
         setDeliveryAddress('');
         setDeliveryMode('warehouse');
-        setDirectPhotoUrl('');
-        setDirectSkipReason('');
+        setDirectPhotos([]);
+    };
+
+    // Goods photos (packaging / transport slip) for a direct-to-client dispatch —
+    // uploaded immediately, same pattern as the job sheet image, capped at 4.
+    const handleDirectPhotosUpload = async (files: FileList) => {
+        if (!deliveryModal) return;
+        const remaining = 4 - directPhotos.length;
+        if (remaining <= 0) {
+            toast.error('Maximum 4 photos.');
+            return;
+        }
+        const toUpload = Array.from(files).slice(0, remaining);
+        setUploadingDirectPhotos(true);
+        try {
+            const urls: string[] = [];
+            for (const file of toUpload) {
+                const url = await uploadDoc(deliveryModal.id, file, 'dispatch-photo');
+                if (url) urls.push(url);
+            }
+            setDirectPhotos(prev => [...prev, ...urls]);
+        } catch (err: any) {
+            toast.error('Could not upload photo: ' + (err.message || 'Unknown error'));
+        } finally {
+            setUploadingDirectPhotos(false);
+        }
     };
 
     // ─── Delivery Mode Handler ──────────────────────────────
@@ -359,26 +394,23 @@ export default function PrintRunsPage() {
                 toast.error(`${deliveryModal.print_run_number} carries ${n} clients — that is ${n} consignments with ${n} e-way bills. Send it to the warehouse and dispatch each client separately.`);
                 return;
             }
-            if (!directSkipReason.trim()) {
-                toast.error('Please enter a reason for skipping physical QC.');
-                return;
-            }
             data.delivery_address = deliveryAddress;
             data.dispatch_date = new Date().toISOString().split('T')[0];
             const ok = await updateStatus(deliveryModal.id, 'dispatched', data);
             if (!ok) return; // keep the modal open with the operator's input intact
 
-            // Save remote QC record (photo + waiver). This is the ONLY trace that
-            // physical QC was waived, so a silent failure here is not acceptable.
+            // Save remote QC record (photos). Direct-to-client is the normal way
+            // this shop ships, not an exception that needs a typed-in reason — the
+            // photos ARE the evidence. This is the ONLY trace that physical QC was
+            // waived, so a silent failure here is not acceptable.
             try {
                 const { error: qcErr } = await supabase.from('qc_records').insert({
                     print_run_id: deliveryModal.id,
                     qc_type: 'remote',
                     checklist: {},
                     result: 'passed',
-                    notes: `Direct to client — QC skipped. Reason: ${directSkipReason}`,
-                    photos: directPhotoUrl ? [directPhotoUrl] : [],
-                    skip_reason: directSkipReason,
+                    notes: 'Direct to client — dispatched from printer, physical QC skipped.',
+                    photos: directPhotos,
                     performed_by: profile?.id || null,
                     performed_by_name: profile?.full_name || 'Unknown',
                 });
@@ -514,6 +546,30 @@ export default function PrintRunsPage() {
 
     // ─── Stage history ──────────────────────────────────────
     const historyReqRef = useRef<string | null>(null);
+
+    // Remote-QC / dispatch photos (packaging, transport slip) for whichever run
+    // is open in the View modal — pulled from qc_records so the thumbnails are
+    // visible right where the run lives, not only on the separate Dispatch
+    // History page.
+    const [dispatchPhotos, setDispatchPhotos] = useState<string[]>([]);
+    const dispatchPhotosReqRef = useRef<string | null>(null);
+    const fetchDispatchPhotos = useCallback(async (runId: string) => {
+        dispatchPhotosReqRef.current = runId;
+        try {
+            const { data, error } = await supabase
+                .from('qc_records')
+                .select('photos, created_at')
+                .eq('print_run_id', runId)
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            if (dispatchPhotosReqRef.current !== runId) return;
+            const all = (data || []).flatMap((r: any) => (Array.isArray(r.photos) ? r.photos : []));
+            setDispatchPhotos(all);
+        } catch {
+            // Non-critical — the run view still works without these thumbnails.
+            if (dispatchPhotosReqRef.current === runId) setDispatchPhotos([]);
+        }
+    }, []);
     const fetchHistory = useCallback(async (runId: string) => {
         // Open run A then run B quickly and A's slower response would land under
         // B's header, looking authoritative. Last request opened wins.
@@ -546,6 +602,8 @@ export default function PrintRunsPage() {
         setViewRun(run);
         setHistory([]);
         fetchHistory(run.id);
+        setDispatchPhotos([]);
+        fetchDispatchPhotos(run.id);
     };
 
     // ─── Roll back one stage ────────────────────────────────
@@ -1010,17 +1068,27 @@ export default function PrintRunsPage() {
                                         {viewRun.dispatch_date && <div><span className="text-gray-400">Dispatched:</span> <strong>{formatDate(viewRun.dispatch_date)}</strong></div>}
                                     </div>
                                     {viewRun.status === 'dispatched' && (
-                                        <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t border-gray-200">
+                                        <div className="flex items-end gap-3 flex-wrap mt-2 pt-2 border-t border-gray-200">
                                             {viewRun.invoice_doc_url ? (
-                                                <a href={viewRun.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded hover:border-gray-400">
-                                                    <FileText size={11} /> Invoice
+                                                <a href={viewRun.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-0.5">
+                                                    {isImageUrl(viewRun.invoice_doc_url) ? (
+                                                        <img src={viewRun.invoice_doc_url} alt="Invoice" className="w-10 h-10 object-cover rounded border border-gray-200 hover:border-gray-400 transition-colors" />
+                                                    ) : (
+                                                        <span className="w-10 h-10 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-gray-400 transition-colors"><FileText size={16} /></span>
+                                                    )}
+                                                    <span className="text-[9px] text-gray-500">Invoice</span>
                                                 </a>
                                             ) : (
                                                 <span className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">Invoice missing</span>
                                             )}
                                             {viewRun.eway_doc_url ? (
-                                                <a href={viewRun.eway_doc_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded hover:border-gray-400">
-                                                    <FileText size={11} /> E-way Bill
+                                                <a href={viewRun.eway_doc_url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-0.5">
+                                                    {isImageUrl(viewRun.eway_doc_url) ? (
+                                                        <img src={viewRun.eway_doc_url} alt="E-way bill" className="w-10 h-10 object-cover rounded border border-gray-200 hover:border-gray-400 transition-colors" />
+                                                    ) : (
+                                                        <span className="w-10 h-10 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-gray-400 transition-colors"><FileText size={16} /></span>
+                                                    )}
+                                                    <span className="text-[9px] text-gray-500">E-way Bill</span>
                                                 </a>
                                             ) : (
                                                 <span className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded">E-way bill missing</span>
@@ -1030,6 +1098,22 @@ export default function PrintRunsPage() {
                                                     Upload
                                                 </button>
                                             )}
+                                        </div>
+                                    )}
+                                    {dispatchPhotos.length > 0 && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                            <p className="text-[10px] text-gray-400 mb-1">Goods Photos (packaging / transport slip)</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {dispatchPhotos.map((url, idx) => (
+                                                    <a key={url + idx} href={url} target="_blank" rel="noopener noreferrer">
+                                                        {isImageUrl(url) ? (
+                                                            <img src={url} alt={`Goods photo ${idx + 1}`} className="w-10 h-10 object-cover rounded border border-gray-200 hover:border-gray-400 transition-colors" />
+                                                        ) : (
+                                                            <span className="w-10 h-10 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:border-gray-400 transition-colors"><FileText size={16} /></span>
+                                                        )}
+                                                    </a>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1239,27 +1323,48 @@ export default function PrintRunsPage() {
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 mb-1.5">
                                             <Camera size={12} className="inline mr-1" />
-                                            Printer Photo URL (for remote QC)
+                                            Goods Photos (packaging / transport slip)
                                         </label>
-                                        <input
-                                            type="url"
-                                            value={directPhotoUrl}
-                                            onChange={e => setDirectPhotoUrl(e.target.value)}
-                                            placeholder="Paste photo link from printer..."
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:ring-2 focus:ring-gray-400 outline-none"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">Ask printer to share photo before dispatch</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-red-600 mb-1.5">Reason for Skipping Physical QC *</label>
-                                        <input
-                                            type="text"
-                                            value={directSkipReason}
-                                            onChange={e => setDirectSkipReason(e.target.value)}
-                                            placeholder="e.g. Repeat order, Trusted printer, Urgent..."
-                                            className="w-full px-3 py-2 border border-red-200 rounded-md text-sm focus:ring-2 focus:ring-red-300 outline-none"
-                                            required
-                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                            {directPhotos.map((url, idx) => (
+                                                <div key={url} className="relative group">
+                                                    <a href={url} target="_blank" rel="noopener noreferrer">
+                                                        <img
+                                                            src={url}
+                                                            alt={`Goods photo ${idx + 1}`}
+                                                            className="w-16 h-16 object-cover rounded-md border border-gray-200 hover:border-gray-400 transition-colors"
+                                                        />
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDirectPhotos(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        aria-label="Remove photo"
+                                                    >×</button>
+                                                </div>
+                                            ))}
+                                            {directPhotos.length < 4 && (
+                                                <label className="w-16 h-16 flex flex-col items-center justify-center gap-0.5 border-2 border-dashed border-gray-200 rounded-md cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600">
+                                                    {uploadingDirectPhotos ? (
+                                                        <span className="text-[9px] font-medium">Uploading…</span>
+                                                    ) : (
+                                                        <>
+                                                            <Camera size={16} />
+                                                            <span className="text-[9px] font-medium">Add</span>
+                                                        </>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        multiple
+                                                        className="hidden"
+                                                        disabled={uploadingDirectPhotos}
+                                                        onChange={e => { if (e.target.files?.length) handleDirectPhotosUpload(e.target.files); e.target.value = ''; }}
+                                                    />
+                                                </label>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-1">{directPhotos.length}/4 · snap the packed goods or transport slip before dispatch</p>
                                     </div>
                                     <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 text-xs text-amber-700 flex items-start gap-2">
                                         <AlertTriangle size={14} className="shrink-0 mt-0.5" />
@@ -1323,9 +1428,16 @@ export default function PrintRunsPage() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Invoice File</label>
                                 {docsModal.invoice_doc_url ? (
-                                    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
-                                        <a href={docsModal.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex items-center gap-1">
-                                            <FileText size={12} /> Already uploaded — open
+                                    <div className="flex items-center gap-2.5 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
+                                        <a href={docsModal.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                                            {isImageUrl(docsModal.invoice_doc_url) ? (
+                                                <img src={docsModal.invoice_doc_url} alt="Invoice" className="w-9 h-9 object-cover rounded border border-green-200" />
+                                            ) : (
+                                                <span className="w-9 h-9 flex items-center justify-center rounded border border-green-200 bg-white text-green-600"><FileText size={16} /></span>
+                                            )}
+                                        </a>
+                                        <a href={docsModal.invoice_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex-1">
+                                            Already uploaded — open
                                         </a>
                                         <span className="text-[10px] text-green-600">✓</span>
                                     </div>
@@ -1342,9 +1454,16 @@ export default function PrintRunsPage() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1.5">E-way Bill File</label>
                                 {docsModal.eway_doc_url ? (
-                                    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
-                                        <a href={docsModal.eway_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex items-center gap-1">
-                                            <FileText size={12} /> Already uploaded — open
+                                    <div className="flex items-center gap-2.5 px-3 py-2 bg-green-50 border border-green-200 rounded-md">
+                                        <a href={docsModal.eway_doc_url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                                            {isImageUrl(docsModal.eway_doc_url) ? (
+                                                <img src={docsModal.eway_doc_url} alt="E-way bill" className="w-9 h-9 object-cover rounded border border-green-200" />
+                                            ) : (
+                                                <span className="w-9 h-9 flex items-center justify-center rounded border border-green-200 bg-white text-green-600"><FileText size={16} /></span>
+                                            )}
+                                        </a>
+                                        <a href={docsModal.eway_doc_url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-green-700 hover:underline flex-1">
+                                            Already uploaded — open
                                         </a>
                                         <span className="text-[10px] text-green-600">✓</span>
                                     </div>
