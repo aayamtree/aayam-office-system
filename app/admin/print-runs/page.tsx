@@ -60,6 +60,7 @@ interface PrintRun {
     // Dispatch paperwork, kept for later reference (GST / audit).
     invoice_doc_url: string | null;
     eway_doc_url: string | null;
+    job_sheet_url: string | null;
 
     // Jobs
     jobs: PrintRunJob[];
@@ -163,6 +164,12 @@ export default function PrintRunsPage() {
     const [ewayFile, setEwayFile] = useState<File | null>(null);
     const [uploadingDocs, setUploadingDocs] = useState(false);
 
+    // Job sheet image (the physical print job sheet / work order for this run).
+    // Lives at print-run level — one sheet can carry several jobs, but there is
+    // only ever one physical job sheet per run. Uploaded immediately on file
+    // select (no separate file-picker state needed).
+    const [uploadingJobSheet, setUploadingJobSheet] = useState(false);
+
     // Delivery modal state
     const [deliveryMode, setDeliveryMode] = useState<'warehouse' | 'direct_to_client'>('warehouse');
     const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -192,7 +199,7 @@ export default function PrintRunsPage() {
                     sheet_size_label, pulling_multiple,
                     paper_qty, paper_rate, paper_gst_percent, paper_total, paper_payment_status,
                     delivery_mode, delivery_address, transporter_name, eway_bill_number,
-                    dispatch_date, invoice_reference, invoice_doc_url, eway_doc_url,
+                    dispatch_date, invoice_reference, invoice_doc_url, eway_doc_url, job_sheet_url,
                     vendors!print_runs_vendor_id_fkey(name),
                     machines(name),
                     sheet_sizes(size),
@@ -244,6 +251,7 @@ export default function PrintRunsPage() {
                 invoice_reference: r.invoice_reference,
                 invoice_doc_url: r.invoice_doc_url,
                 eway_doc_url: r.eway_doc_url,
+                job_sheet_url: r.job_sheet_url,
                 jobs: jobsData
                     .filter(j => j.print_run_id === r.id)
                     .map(j => ({
@@ -298,7 +306,7 @@ export default function PrintRunsPage() {
     // Invoice + e-way bill live in the `attachments` bucket (same one the
     // Dispatch screen already uses for delivery receipts), and the public URL
     // is stored on the run so it can be pulled up months later for GST/audit.
-    const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway') => {
+    const uploadDoc = async (runId: string, file: File, kind: 'invoice' | 'eway' | 'job-sheet') => {
         // "invoice" (no dot) would otherwise make the extension "invoice".
         const dot = file.name.lastIndexOf('.');
         const ext = (dot > 0 ? file.name.slice(dot + 1) : 'pdf').toLowerCase();
@@ -422,6 +430,26 @@ export default function PrintRunsPage() {
             toast.error('Could not save documents: ' + (err.message || 'Unknown error'));
         } finally {
             setUploadingDocs(false);
+        }
+    };
+
+    // ─── Job sheet image (the physical print job sheet for this run) ──
+    // One run = one physical sheet fed to the machine, so this lives on the
+    // run, not per-job, even though a run can carry several jobs.
+    const handleJobSheetUpload = async (file: File) => {
+        if (!viewRun) return;
+        setUploadingJobSheet(true);
+        try {
+            const url = await uploadDoc(viewRun.id, file, 'job-sheet');
+            const { error } = await supabase.from('print_runs').update({ job_sheet_url: url, updated_at: new Date().toISOString() }).eq('id', viewRun.id);
+            if (error) throw error;
+            toast.success('Job sheet uploaded');
+            setViewRun(prev => (prev ? { ...prev, job_sheet_url: url } : prev));
+            setRuns(prev => prev.map(r => (r.id === viewRun.id ? { ...r, job_sheet_url: url } : r)));
+        } catch (err: any) {
+            toast.error('Could not upload job sheet: ' + (err.message || 'Unknown error'));
+        } finally {
+            setUploadingJobSheet(false);
         }
     };
 
@@ -825,7 +853,7 @@ export default function PrintRunsPage() {
                                     <div>
                                         <p className="text-[10px] text-muted-foreground truncate">{run.vendor_name || 'No vendor'}</p>
                                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">
-                                            {[run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
+                                            {run.notes || [run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
                                         </h3>
                                     </div>
 
@@ -1046,6 +1074,46 @@ export default function PrintRunsPage() {
                                             );
                                         })}
                                     </div>
+                                )}
+                            </div>
+
+                            {/* Job sheet image — the physical print job sheet for this run */}
+                            <div>
+                                <p className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1.5">
+                                    <Camera size={12} /> Job Sheet
+                                </p>
+                                {viewRun.job_sheet_url ? (
+                                    <div className="relative inline-block group">
+                                        <a href={viewRun.job_sheet_url} target="_blank" rel="noopener noreferrer">
+                                            <img
+                                                src={viewRun.job_sheet_url}
+                                                alt="Job sheet"
+                                                className="max-h-48 rounded-md border border-gray-200 object-contain hover:border-gray-400 transition-colors"
+                                            />
+                                        </a>
+                                        <label className="absolute bottom-1.5 right-1.5 text-[10px] font-medium px-2 py-1 bg-white/90 border border-gray-200 rounded cursor-pointer hover:bg-white shadow-sm">
+                                            {uploadingJobSheet ? 'Uploading…' : 'Replace'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                disabled={uploadingJobSheet}
+                                                onChange={e => { const f = e.target.files?.[0]; if (f) handleJobSheetUpload(f); e.target.value = ''; }}
+                                            />
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <label className="flex flex-col items-center justify-center gap-1.5 w-full h-28 border-2 border-dashed border-gray-200 rounded-md cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600">
+                                        <Camera size={18} />
+                                        <span className="text-xs font-medium">{uploadingJobSheet ? 'Uploading…' : 'Upload job sheet image'}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            disabled={uploadingJobSheet}
+                                            onChange={e => { const f = e.target.files?.[0]; if (f) handleJobSheetUpload(f); e.target.value = ''; }}
+                                        />
+                                    </label>
                                 )}
                             </div>
 
