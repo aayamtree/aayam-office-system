@@ -31,6 +31,7 @@ import {
   Star,
   Search,
   Library,
+  Paperclip,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -249,6 +250,17 @@ const menuItems: MenuItem[] = [
     icon: Share2,
     href: '/admin/team/files',
     allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'],
+  },
+  {
+    // Cross-cutting gallery of every uploaded file in the system — job
+    // sheets, invoices, e-way bills, goods photos, receipts, purchase bills,
+    // staff ID docs. Restricted to admin/finance since staff ID documents
+    // are personal — everyone else already sees these files in context on
+    // their own screens (Print Runs, Dispatch, Purchases).
+    name: 'All Uploads',
+    icon: Paperclip,
+    href: '/admin/uploads',
+    allowedRoles: ['admin', 'finance'],
   },
   {
     name: 'My Profile',

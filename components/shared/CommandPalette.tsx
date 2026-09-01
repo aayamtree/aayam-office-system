@@ -98,6 +98,7 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'EOD Report',            subtitle: 'End of day report',                href: '/admin/eod-report' },
     { title: 'Broadcast',             subtitle: 'Send team announcements',          href: '/admin/broadcast' },
     { title: 'Team Files',            subtitle: 'Shared team files',                href: '/admin/team/files' },
+    { title: 'All Uploads',           subtitle: 'Every uploaded file, one gallery',  href: '/admin/uploads' },
     { title: 'My Profile',            subtitle: 'Your profile settings',            href: '/admin/settings/profile' },
     { title: 'Settings',              subtitle: 'System settings',                  href: '/admin/settings' },
     { title: 'Company Info',          subtitle: 'Company details',                  href: '/admin/settings/company' },
