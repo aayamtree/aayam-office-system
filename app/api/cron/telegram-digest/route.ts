@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
-import { sendToChat, escapeHtml, mentionStaff, APP_URL, TelegramDepartment } from '@/lib/telegram-groups';
+import { sendToChat, escapeHtml, mentionStaff, APP_URL, TelegramGroupPurpose } from '@/lib/telegram-groups';
 import { withCronLog } from '@/lib/cron-log';
 import {
   getReceivables,
@@ -411,7 +411,10 @@ async function runJob(request: NextRequest) {
   // 1) Department group digests (per-person sections for design)
   let groupsSent = 0;
   for (const g of groups || []) {
-    const dept = g.department as TelegramDepartment;
+    // A 'payments' group matches none of the branches below and is skipped —
+    // it is the payment-screenshot inbox, not a job department, and must stay
+    // quiet apart from its own replies.
+    const dept = g.department as TelegramGroupPurpose;
     let text: string | null = null;
     if (dept === 'design') text = buildDesignGroupDigest(slot, allJobs, allStaff);
     else if (dept === 'print' || dept === 'dispatch') text = buildQueueGroupDigest(slot, dept, allJobs);

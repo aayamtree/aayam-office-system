@@ -10,7 +10,23 @@
  *  - app/api/cron/telegram-digest   (daily 9AM department digest)
  */
 
+/**
+ * Departments that receive JOB traffic — stage alerts and the daily digest.
+ * STAGE_DEPARTMENT and DEPARTMENT_LABELS are keyed by this, so anything added
+ * here must have a label and is expected to want job updates.
+ */
 export type TelegramDepartment = 'design' | 'print' | 'dispatch' | 'admin' | 'cmyk';
+
+/**
+ * Every value telegram_groups.department can legally hold.
+ *
+ * 'payments' is deliberately NOT a TelegramDepartment: it marks the group that
+ * acts as the payment-screenshot inbox, and it must never receive job alerts or
+ * the digest. Kept in step with the telegram_groups_department_check constraint
+ * and the dropdown in app/admin/settings/telegram-groups/page.tsx — all three
+ * once disagreed, so the dropdown offered a value the database refused.
+ */
+export type TelegramGroupPurpose = TelegramDepartment | 'payments';
 
 export const DEPARTMENT_LABELS: Record<TelegramDepartment, string> = {
   design: '🎨 Design',

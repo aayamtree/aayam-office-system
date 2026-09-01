@@ -63,7 +63,13 @@ export async function PATCH(request: NextRequest) {
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ('department' in body) {
     const dept = body.department;
-    const valid = ['design', 'print', 'dispatch', 'admin', 'cmyk', null];
+    // Must stay in step with BOTH the dropdown in
+    // app/admin/settings/telegram-groups/page.tsx AND the
+    // telegram_groups_department_check constraint in the database. All three
+    // rejected 'payments' when the payment-capture group was introduced, so the
+    // dropdown offered a choice that could never be saved.
+    // 'payments' is not a job department: it marks the payment-screenshot inbox.
+    const valid = ['design', 'print', 'dispatch', 'admin', 'cmyk', 'payments', null];
     if (!valid.includes(dept)) {
       return NextResponse.json({ error: 'Invalid department' }, { status: 400 });
     }
