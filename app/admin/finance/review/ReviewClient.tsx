@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import StaleLedgerNotice from '@/components/finance/StaleLedgerNotice';
 
 export interface BreakdownRow { name: string; amount: number }
 export interface MonthRow {
@@ -118,6 +119,8 @@ export default function ReviewClient({ rows }: { rows: MonthRow[] }) {
 
     return (
         <div className="space-y-4">
+            <StaleLedgerNotice what="This review" />
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-3">

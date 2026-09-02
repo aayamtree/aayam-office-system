@@ -1,22 +1,59 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// FINANCE OVERVIEW — every figure on this page comes from Zoho
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS FILE WAS REWRITTEN (2026-09-01)
+//
+// This is the landing page of the finance section — the first screen anyone
+// opens. It used to take its "bills due" card from Zoho and EVERY OTHER number
+// from the app's own ledger: `invoices` (2 rows), `expenses` (0 rows, ever),
+// `bank_transactions` (dead since 2026-07-29) and fn_finance_overview_pnl
+// (journal entries, dead since 2026-08-05). One true figure surrounded by six
+// stale ones, with nothing on screen to tell them apart. A confident wrong
+// number reads as reassurance.
+//
+// Zoho is the book of record — Satish's explicit decision. So:
+//   · what we BILLED      → zoho_documents, doc_type='invoice'
+//   · what we are OWED    → the same, balance on sent/overdue (lib/receivables)
+//   · what we OWE         → zoho_documents, doc_type='bill'   (lib/payables)
+//   · what MOVED          → zoho_bank_transactions, the HDFC feed
+//
+// TWO THINGS THAT WOULD OTHERWISE BE READ BACKWARDS
+//
+// 1. In Zoho's bank feed `debit_or_credit` is written from the LEDGER's point of
+//    view: debit = money IN, credit = money OUT. An outgoing payment is a CREDIT
+//    row. Reading it the intuitive way would show spending as income.
+// 2. `balance` is what is still unpaid. Summing `total` would count money
+//    already collected as though it were still owed.
+//
+// AND ONE HONEST LIMIT, SURFACED ON THE PAGE RATHER THAN HIDDEN
+//
+// Zoho's automatic bank fetch is broken, so statements are uploaded by hand
+// every few days. Whatever this page says about money MOVED is only true up to
+// `bankFeedThrough`. That date is returned so the page can say so out loud
+// instead of implying today's figures are complete.
+
 import { createServerSupabase } from '@/lib/supabase-server';
 import { isOwedBill } from '@/lib/payables';
 
+/** Zoho invoice statuses that still owe us money. Matches lib/receivables.ts. */
+const OWED_INVOICE_STATUSES = ['sent', 'overdue'];
+/** Never counted as business activity, in either direction. */
+const NOT_REAL = ['draft', 'void'];
+
 export interface FinanceOverviewData {
-    // KPI totals (this month)
-    revenueThisMonth: number;
+    billedThisMonth: number;
     receivedThisMonth: number;
-    expensesThisMonth: number;
+    paidOutThisMonth: number;
     outstandingTotal: number;
 
-    // Month-over-month trend
-    revenueLastMonth: number;
+    billedLastMonth: number;
     receivedLastMonth: number;
 
-    // Invoice breakdown
+    /** Invoice mix. `partial` = still owed but part-collected. */
     invoiceCounts: { pending: number; partial: number; paid: number; overdue: number };
     invoiceTotals: { pending: number; partial: number; paid: number; overdue: number };
 
-    // Smart nav card stats
     navStats: {
         invoices: { unpaid: number; overdueCount: number };
         payments: { receivedThisMonth: number };
@@ -24,21 +61,19 @@ export interface FinanceOverviewData {
         expenses: { thisMonth: number; count: number };
     };
 
-    // 6-month revenue chart
+    /** 6 months: what we billed vs what actually reached the bank. */
     monthlyRevenue: { month: string; revenue: number; received: number; active: boolean }[];
 
-    // Ledger-based Profit & Loss (Zoho-style) for the current fiscal year
-    pnl: {
+    /** Cash-basis view of the fiscal year, from the bank feed. NOT a ledger P&L. */
+    cashflow: {
         fyLabel: string;
         monthly: { label: string; income: number; expense: number }[];
         topExpenses: { name: string; amount: number }[];
         totalIncome: number;
         totalExpense: number;
-        expenseThisMonth: number;
         expenseCountFY: number;
     };
 
-    // Recent invoices (last 8)
     recentInvoices: {
         id: string;
         invoice_number: string;
@@ -51,16 +86,21 @@ export interface FinanceOverviewData {
         invoice_date: string;
     }[];
 
-    // Today's overdue count
     overdueToday: number;
+
+    /** How far the bank feed has actually reached. Null when it has never run. */
+    bankFeedThrough: string | null;
+    bankFeedDaysBehind: number | null;
+    /** True when the fetch itself failed — so the page shows an error, not zeroes. */
+    failed: boolean;
 }
 
 const EMPTY: FinanceOverviewData = {
-    revenueThisMonth: 0,
+    billedThisMonth: 0,
     receivedThisMonth: 0,
-    expensesThisMonth: 0,
+    paidOutThisMonth: 0,
     outstandingTotal: 0,
-    revenueLastMonth: 0,
+    billedLastMonth: 0,
     receivedLastMonth: 0,
     invoiceCounts: { pending: 0, partial: 0, paid: 0, overdue: 0 },
     invoiceTotals: { pending: 0, partial: 0, paid: 0, overdue: 0 },
@@ -71,259 +111,208 @@ const EMPTY: FinanceOverviewData = {
         expenses: { thisMonth: 0, count: 0 },
     },
     monthlyRevenue: [],
-    pnl: {
-        fyLabel: '',
-        monthly: [],
-        topExpenses: [],
-        totalIncome: 0,
-        totalExpense: 0,
-        expenseThisMonth: 0,
-        expenseCountFY: 0,
-    },
+    cashflow: { fyLabel: '', monthly: [], topExpenses: [], totalIncome: 0, totalExpense: 0, expenseCountFY: 0 },
     recentInvoices: [],
     overdueToday: 0,
+    bankFeedThrough: null,
+    bankFeedDaysBehind: null,
+    failed: true,
 };
+
+const num = (v: unknown) => Number(v) || 0;
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
+
+/** Indian fiscal year: 1 April to 31 March. */
+function fiscalYearStart(now: Date): Date {
+    const year = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return new Date(year, 3, 1);
+}
 
 export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
     const supabase = createServerSupabase();
 
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const today = now.toISOString().split('T')[0];
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
-
-    const safe = async (fn: () => any, fallback: any) => {
-        try { return await fn(); } catch { return fallback; }
-    };
+    const monthStart = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
+    const lastMonthStart = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    const sixMonthsAgo = ymd(new Date(now.getFullYear(), now.getMonth() - 5, 1));
+    const fyStart = fiscalYearStart(now);
+    const today = ymd(now);
 
     try {
-        const [
-            allInvoicesRes,
-            recentInvoicesRes,
-            expensesThisMonthRes,
-            expensesLastMonthRes,
-            purchaseBillsRes,
-            sixMonthSalesRes,
-            bankExpensesThisMonthRes,
-            bankExpensesLastMonthRes,
-            bankIncomeThisMonthRes,
-            pnlRes,
-        ] = await Promise.all([
-            // All invoices for stats
-            safe(() => supabase
-                .from('invoices')
-                .select('id, invoice_number, total_amount, amount_paid, payment_status, due_date, invoice_date, created_at, client:clients(name, company)')
-                .order('created_at', { ascending: false })
-                .then(r => r), { data: [] } as any),
+        const [invoicesRes, billsRes, bankRes] = await Promise.all([
+            // Every invoice back to the start of the fiscal year, plus anything
+            // still owed however old — an invoice from March that is still
+            // unpaid belongs on this page.
+            supabase
+                .from('zoho_documents')
+                .select('id, doc_number, doc_date, due_date, customer_name, total, balance, status')
+                .eq('doc_type', 'invoice')
+                // Deliberately simple: "this fiscal year, OR still unpaid".
+                // A nested and(...) filter is easy to get subtly wrong, and a
+                // malformed filter is a 400 that blanks the whole page.
+                // Paid invoices carry balance 0, so the second clause only adds
+                // genuinely open ones; draft and void are dropped in JS below.
+                .or(`doc_date.gte.${ymd(fyStart)},balance.gt.0`)
+                .order('doc_date', { ascending: false })
+                .limit(2000),
 
-            // Recent 8 for the table
-            safe(() => supabase
-                .from('invoices')
-                .select('id, invoice_number, total_amount, amount_paid, payment_status, due_date, invoice_date, client:clients(name, company)')
-                .order('created_at', { ascending: false })
-                .limit(8)
-                .then(r => r), { data: [] } as any),
-
-            // Expenses this month
-            safe(() => supabase
-                .from('expenses')
-                .select('amount')
-                .gte('expense_date', startOfMonth)
-                .then(r => r), { data: [] } as any),
-
-            // Expenses last month
-            safe(() => supabase
-                .from('expenses')
-                .select('amount')
-                .gte('expense_date', startOfLastMonth)
-                .lt('expense_date', endOfLastMonth)
-                .then(r => r), { data: [] } as any),
-
-            // Bills we still owe — from ZOHO, not the app's `purchase_bills`
-            // table. That table holds 5 rows and was reporting ₹32,209 payable
-            // while Zoho carried the real, largely overdue figure. Bills are
-            // created in Zoho only; this app mirrors them read-only.
-            // Statuses are excluded, not allowlisted: anything with a balance
-            // is owed unless it is provably a draft or void. See lib/payables.ts.
-            safe(() => supabase
+            supabase
                 .from('zoho_documents')
                 .select('customer_name, balance, status')
                 .eq('doc_type', 'bill')
                 .gt('balance', 0)
-                .then(r => r), { data: [] } as any),
+                .limit(2000),
 
-            // 6-month income data for chart — from verified bank inflows (ledger source of truth).
-            // The invoices/payments_received tables are unused in this deployment, so revenue
-            // is derived from categorised bank income instead.
-            safe(() => supabase
-                .from('bank_transactions')
-                .select('amount, transaction_date')
-                .eq('is_verified', true)
-                .eq('categorization_type', 'income')
-                .eq('transaction_type', 'inflow')
-                .gte('transaction_date', sixMonthsAgo.split('T')[0])
-                .then(r => r), { data: [] } as any),
-
-            // Bank-verified expenses this month (salary, rent, utilities etc.)
-            safe(() => supabase
-                .from('bank_transactions')
-                .select('amount, transaction_date')
-                .eq('is_verified', true)
-                .eq('categorization_type', 'expense')
-                .eq('transaction_type', 'outflow')
-                .gte('transaction_date', startOfMonth.split('T')[0])
-                .then(r => r), { data: [] } as any),
-
-            // Bank-verified expenses last month
-            safe(() => supabase
-                .from('bank_transactions')
-                .select('amount, transaction_date')
-                .eq('is_verified', true)
-                .eq('categorization_type', 'expense')
-                .eq('transaction_type', 'outflow')
-                .gte('transaction_date', startOfLastMonth.split('T')[0])
-                .lt('transaction_date', endOfLastMonth.split('T')[0])
-                .then(r => r), { data: [] } as any),
-
-            // Bank-verified income this month
-            safe(() => supabase
-                .from('bank_transactions')
-                .select('amount, transaction_date')
-                .eq('is_verified', true)
-                .eq('categorization_type', 'income')
-                .eq('transaction_type', 'inflow')
-                .gte('transaction_date', startOfMonth.split('T')[0])
-                .then(r => r), { data: [] } as any),
-
-            // Ledger-based P&L (fiscal year): income/expense by month + top categories
-            safe(() => supabase.rpc('fn_finance_overview_pnl').then(r => r), { data: null } as any),
+            // The HDFC feed. debit = money in, credit = money out.
+            supabase
+                .from('zoho_bank_transactions')
+                .select('amount, txn_date, debit_or_credit, offset_account_name, payee, description')
+                .gte('txn_date', ymd(fyStart) < sixMonthsAgo ? ymd(fyStart) : sixMonthsAgo)
+                .order('txn_date', { ascending: false })
+                .limit(2000),
         ]);
 
-        const allInvoices = allInvoicesRes.data || [];
+        // A failed query must not render as ₹0 — that is the exact failure this
+        // rewrite exists to remove.
+        if (invoicesRes.error || billsRes.error || bankRes.error) {
+            console.error('[finance-overview] query failed:',
+                invoicesRes.error?.message || billsRes.error?.message || bankRes.error?.message);
+            return EMPTY;
+        }
 
-        // Invoice breakdown
+        const invoices = invoicesRes.data || [];
+        const bank = bankRes.data || [];
+
+        // ── Invoices ──────────────────────────────────────────────────────
         const invoiceCounts = { pending: 0, partial: 0, paid: 0, overdue: 0 };
         const invoiceTotals = { pending: 0, partial: 0, paid: 0, overdue: 0 };
         let outstandingTotal = 0;
-        let revenueThisMonth = 0;
-        let receivedThisMonth = 0;
-        let revenueLastMonth = 0;
-        let receivedLastMonth = 0;
+        let billedThisMonth = 0;
+        let billedLastMonth = 0;
+        let overdueToday = 0;
 
-        for (const inv of allInvoices) {
-            const status = inv.payment_status as keyof typeof invoiceCounts;
-            if (status in invoiceCounts) {
-                invoiceCounts[status]++;
-                invoiceTotals[status] += inv.total_amount || 0;
+        for (const inv of invoices) {
+            const status = String(inv.status || '').toLowerCase();
+            if (NOT_REAL.includes(status)) continue;
+
+            const total = num(inv.total);
+            const balance = num(inv.balance);
+            const owed = OWED_INVOICE_STATUSES.includes(status) && balance > 0;
+
+            if (owed) {
+                outstandingTotal += balance;
+                // Part-collected is its own state: "they have paid something" is
+                // a different conversation from "they have paid nothing".
+                const bucket = balance < total ? 'partial' : (status === 'overdue' ? 'overdue' : 'pending');
+                invoiceCounts[bucket]++;
+                invoiceTotals[bucket] += total;
+                if (status === 'overdue') overdueToday++;
+            } else if (status === 'paid') {
+                invoiceCounts.paid++;
+                invoiceTotals.paid += total;
             }
-            if (status !== 'paid') {
-                outstandingTotal += (inv.total_amount || 0) - (inv.amount_paid || 0);
-            }
-            // This month
-            if (inv.created_at >= startOfMonth) {
-                revenueThisMonth += inv.total_amount || 0;
-                receivedThisMonth += inv.amount_paid || 0;
-            }
-            // Last month
-            if (inv.created_at >= startOfLastMonth && inv.created_at < endOfLastMonth) {
-                revenueLastMonth += inv.total_amount || 0;
-                receivedLastMonth += inv.amount_paid || 0;
-            }
+
+            const date = String(inv.doc_date || '');
+            if (date >= monthStart) billedThisMonth += total;
+            else if (date >= lastMonthStart && date < monthStart) billedLastMonth += total;
         }
 
-        // Expenses — manual + bank-verified
-        const manualExpensesThisMonth = (expensesThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
-        const manualExpensesCount = (expensesThisMonthRes.data || []).length;
-        const bankExpensesThisMonth = (bankExpensesThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
-        const bankExpensesCount = (bankExpensesThisMonthRes.data || []).length;
-        const expensesThisMonth = manualExpensesThisMonth + bankExpensesThisMonth;
-        const expensesThisMonthCount = manualExpensesCount + bankExpensesCount;
+        // ── Bank movement ─────────────────────────────────────────────────
+        const isIn = (r: any) => String(r.debit_or_credit || '').toLowerCase() === 'debit';
+        const isOut = (r: any) => String(r.debit_or_credit || '').toLowerCase() === 'credit';
 
-        // Bank-verified income (for cash received tracking)
-        const bankIncomeThisMonth = (bankIncomeThisMonthRes.data || []).reduce((s: number, e: any) => s + (e.amount || 0), 0);
+        const sumIn = (from: string, to?: string) => bank
+            .filter((r) => isIn(r) && r.txn_date >= from && (!to || r.txn_date < to))
+            .reduce((s, r) => s + num(r.amount), 0);
+        const sumOut = (from: string, to?: string) => bank
+            .filter((r) => isOut(r) && r.txn_date >= from && (!to || r.txn_date < to))
+            .reduce((s, r) => s + num(r.amount), 0);
 
-        // Ledger-based P&L (source of truth for recorded expenses via fn_record_expense)
-        const rawPnl = pnlRes?.data || {};
-        const num = (v: any) => Number(v) || 0;
-        const pnl = {
-            fyLabel: rawPnl.fyLabel || '',
-            monthly: (rawPnl.monthly || []).map((m: any) => ({
-                label: m.label,
-                income: num(m.income),
-                expense: num(m.expense),
-            })),
-            topExpenses: (rawPnl.topExpenses || []).map((t: any) => ({
-                name: t.name,
-                amount: num(t.amount),
-            })),
-            totalIncome: num(rawPnl.totalIncome),
-            totalExpense: num(rawPnl.totalExpense),
-            expenseThisMonth: num(rawPnl.expenseThisMonth),
-            expenseCountFY: num(rawPnl.expenseCountFY),
-        };
-        // Prefer ledger figure for this month's expenses; fall back to manual+bank if ledger empty
-        const effectiveExpensesThisMonth = pnl.expenseThisMonth || expensesThisMonth;
+        const receivedThisMonth = sumIn(monthStart);
+        const receivedLastMonth = sumIn(lastMonthStart, monthStart);
+        const paidOutThisMonth = sumOut(monthStart);
+        const paidOutCount = bank.filter((r) => isOut(r) && r.txn_date >= monthStart).length;
 
-        // Bills we owe (Zoho). `balance` is what is still outstanding — summing
-        // `total` would count money already paid as though it were still due.
-        const pendingBills = (purchaseBillsRes.data || []).filter((b: any) => isOwedBill(b.status));
-        const pendingBillsAmount = pendingBills.reduce((s: number, b: any) => s + (Number(b.balance) || 0), 0);
+        const bankFeedThrough = bank.length > 0
+            ? bank.reduce((max, r) => (r.txn_date > max ? r.txn_date : max), bank[0].txn_date as string)
+            : null;
+        const bankFeedDaysBehind = bankFeedThrough
+            ? Math.max(0, Math.round(
+                (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${bankFeedThrough}T00:00:00Z`)) / 86400000))
+            : null;
 
-        // Overdue today
-        const overdueToday = allInvoices.filter((inv: any) =>
-            inv.payment_status !== 'paid' && inv.due_date && inv.due_date < today
-        ).length;
-
-        // 6-month chart — built from verified bank income (cash basis: amount received = revenue)
-        const sixMonthData = sixMonthSalesRes.data || [];
+        // ── Six months: billed vs actually received ───────────────────────
         const monthlyRevenue = [];
         for (let i = 5; i >= 0; i--) {
-            const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-            const monthLabel = monthStart.toLocaleString('en', { month: 'short' });
-            const monthSum = sixMonthData
-                .filter((tx: any) => {
-                    const d = new Date(tx.transaction_date);
-                    return d >= monthStart && d < monthEnd;
-                })
-                .reduce((s: number, tx: any) => s + (tx.amount || 0), 0);
+            const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+            const s = ymd(start), e = ymd(end);
             monthlyRevenue.push({
-                month: monthLabel,
-                revenue: monthSum,
-                received: monthSum,
+                month: start.toLocaleString('en', { month: 'short' }),
+                revenue: invoices
+                    .filter((inv) => !NOT_REAL.includes(String(inv.status || '').toLowerCase())
+                        && String(inv.doc_date) >= s && String(inv.doc_date) < e)
+                    .reduce((sum, inv) => sum + num(inv.total), 0),
+                received: sumIn(s, e),
                 active: i === 0,
             });
         }
-        // Derive this/last-month revenue from the same ledger-backed series so the KPI cards
-        // match the chart (the invoices table they previously used is empty).
-        const revenueThisMonthLedger = monthlyRevenue[5]?.revenue || 0;
-        const revenueLastMonthLedger = monthlyRevenue[4]?.revenue || 0;
 
-        // Recent invoices
-        const recentInvoices = (recentInvoicesRes.data || []).map((inv: any) => ({
-            id: inv.id,
-            invoice_number: inv.invoice_number,
-            client_name: inv.client?.name || '',
-            client_company: inv.client?.company || '',
-            total_amount: inv.total_amount || 0,
-            amount_paid: inv.amount_paid || 0,
-            payment_status: inv.payment_status,
-            due_date: inv.due_date,
-            invoice_date: inv.invoice_date,
-        }));
+        // ── Cash-basis fiscal year, straight off the feed ─────────────────
+        // Named cashflow, not P&L, because it is money in and out of one bank
+        // account — not revenue and cost. Cash kept outside the bank is not here.
+        const fyStartStr = ymd(fyStart);
+        const fyMonths: { label: string; income: number; expense: number }[] = [];
+        for (let m = new Date(fyStart); m <= now; m.setMonth(m.getMonth() + 1)) {
+            const start = new Date(m.getFullYear(), m.getMonth(), 1);
+            const end = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+            fyMonths.push({
+                label: start.toLocaleString('en', { month: 'short' }),
+                income: sumIn(ymd(start), ymd(end)),
+                expense: sumOut(ymd(start), ymd(end)),
+            });
+        }
 
-        // Add bank income to received this month
-        const totalReceivedThisMonth = receivedThisMonth + bankIncomeThisMonth;
+        // What the money went ON. offset_account_name is the category Satish
+        // himself assigned in Zoho, so this needs no guessing on our side.
+        const byCategory = new Map<string, number>();
+        for (const r of bank) {
+            if (!isOut(r) || String(r.txn_date) < fyStartStr) continue;
+            const name = String(r.offset_account_name || '').trim() || 'Not categorised in Zoho';
+            byCategory.set(name, (byCategory.get(name) || 0) + num(r.amount));
+        }
+        const topExpenses = Array.from(byCategory.entries())
+            .map(([name, amount]) => ({ name, amount }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 6);
+
+        // ── Bills we owe ──────────────────────────────────────────────────
+        const pendingBills = (billsRes.data || []).filter((b: any) => isOwedBill(b.status));
+        const pendingBillsAmount = pendingBills.reduce((s: number, b: any) => s + num(b.balance), 0);
+
+        // ── Recent invoices ───────────────────────────────────────────────
+        const recentInvoices = invoices
+            .filter((inv) => !NOT_REAL.includes(String(inv.status || '').toLowerCase()))
+            .slice(0, 8)
+            .map((inv) => ({
+                id: String(inv.id),
+                invoice_number: String(inv.doc_number || ''),
+                client_name: String(inv.customer_name || ''),
+                client_company: String(inv.customer_name || ''),
+                total_amount: num(inv.total),
+                amount_paid: Math.max(0, num(inv.total) - num(inv.balance)),
+                payment_status: String(inv.status || ''),
+                due_date: (inv.due_date as string) || null,
+                invoice_date: String(inv.doc_date || ''),
+            }));
 
         return {
-            revenueThisMonth: revenueThisMonthLedger,
-            receivedThisMonth: totalReceivedThisMonth || revenueThisMonthLedger,
-            expensesThisMonth: effectiveExpensesThisMonth,
+            billedThisMonth,
+            receivedThisMonth,
+            paidOutThisMonth,
             outstandingTotal,
-            revenueLastMonth: revenueLastMonthLedger,
-            receivedLastMonth: revenueLastMonthLedger,
+            billedLastMonth,
+            receivedLastMonth,
             invoiceCounts,
             invoiceTotals,
             navStats: {
@@ -331,17 +320,27 @@ export async function fetchFinanceOverview(): Promise<FinanceOverviewData> {
                     unpaid: invoiceCounts.pending + invoiceCounts.partial + invoiceCounts.overdue,
                     overdueCount: invoiceCounts.overdue,
                 },
-                payments: { receivedThisMonth: totalReceivedThisMonth },
+                payments: { receivedThisMonth },
                 purchases: { pendingBills: pendingBills.length, billsAmount: pendingBillsAmount },
-                expenses: { thisMonth: effectiveExpensesThisMonth, count: expensesThisMonthCount },
+                expenses: { thisMonth: paidOutThisMonth, count: paidOutCount },
             },
             monthlyRevenue,
-            pnl,
+            cashflow: {
+                fyLabel: `FY ${fyStart.getFullYear()}-${String(fyStart.getFullYear() + 1).slice(2)}`,
+                monthly: fyMonths,
+                topExpenses,
+                totalIncome: sumIn(fyStartStr),
+                totalExpense: sumOut(fyStartStr),
+                expenseCountFY: bank.filter((r) => isOut(r) && String(r.txn_date) >= fyStartStr).length,
+            },
             recentInvoices,
             overdueToday,
+            bankFeedThrough,
+            bankFeedDaysBehind,
+            failed: false,
         };
     } catch (err) {
-        console.error('Finance overview fetch error:', err);
+        console.error('[finance-overview] fetch error:', err);
         return EMPTY;
     }
 }

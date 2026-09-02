@@ -55,17 +55,22 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function FinanceClient({ data }: Props) {
     const {
-        revenueThisMonth, receivedThisMonth, expensesThisMonth, outstandingTotal,
-        revenueLastMonth, receivedLastMonth,
+        billedThisMonth, receivedThisMonth, paidOutThisMonth, outstandingTotal,
+        billedLastMonth, receivedLastMonth,
         invoiceCounts, invoiceTotals,
         navStats, monthlyRevenue, recentInvoices, overdueToday,
-        pnl,
+        cashflow, bankFeedThrough, bankFeedDaysBehind, failed,
     } = data;
 
-    const maxMonthlyRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 1);
+    // Every figure below now comes from Zoho. `cashflow` is money in and out of
+    // the bank account — deliberately NOT called a P&L, because cash kept
+    // outside the bank never appears in it.
+    const pnl = cashflow;
 
-    // ── Zoho-style fiscal-year P&L derived values ──
-    const maxIE = Math.max(...pnl.monthly.flatMap(m => [m.income, m.expense]), 1);
+    const maxMonthlyRevenue = Math.max(...monthlyRevenue.map((m: { revenue: number }) => m.revenue), 1);
+
+    // ── Fiscal-year cash movement, derived ──
+    const maxIE = Math.max(...pnl.monthly.flatMap((m: { income: number; expense: number }) => [m.income, m.expense]), 1);
     const netProfit = pnl.totalIncome - pnl.totalExpense;
     const EXPENSE_COLORS = ['#10b981', '#f97316', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'];
     // Collapse smaller categories into "Others" (keep top 5)
@@ -192,11 +197,37 @@ export default function FinanceClient({ data }: Props) {
     return (
         <div className="space-y-5">
 
+            {/* A failed query must announce itself. Rendering ₹0 for a query that
+                never returned is how a broken page passes for a quiet month. */}
+            {failed && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800 flex gap-2.5">
+                    <AlertTriangle size={15} className="shrink-0 mt-0.5 text-red-500" />
+                    <div>
+                        <p className="font-semibold mb-0.5">Could not load the figures from Zoho.</p>
+                        <p>Everything below is showing zero because the data did not arrive — not because there was no activity. Try refreshing; if it persists, check the Zoho connection.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Zoho's automatic bank fetch is broken, so statements are uploaded
+                by hand every few days. Anything here about money MOVED is only
+                true up to that date, and the page says so. */}
+            {!failed && bankFeedDaysBehind !== null && bankFeedDaysBehind > 1 && (
+                <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground flex gap-2.5">
+                    <Clock size={15} className="shrink-0 mt-0.5" />
+                    <div>
+                        Bank figures are complete to <b className="text-foreground">{bankFeedThrough}</b>
+                        {' '}({bankFeedDaysBehind} days ago). Anything paid or received since then is not counted yet —
+                        upload the latest statement to Zoho to bring it up to date. Invoices and bills are current.
+                    </div>
+                </div>
+            )}
+
             {/* ── Header ── */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-lg font-semibold tracking-tight">Finance</h1>
-                    <p className="text-xs text-muted-foreground">Financial overview &amp; management</p>
+                    <p className="text-xs text-muted-foreground">Every figure on this page comes from Zoho Books</p>
                 </div>
                 <div className="flex gap-2">
                     <Link
@@ -223,17 +254,17 @@ export default function FinanceClient({ data }: Props) {
                 {/* Total Revenue */}
                 <div className="bg-foreground text-background rounded-lg p-3 md:p-4 space-y-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs text-background/60 font-medium">Revenue (This Month)</span>
+                        <span className="text-xs text-background/60 font-medium">Billed this month</span>
                         <IndianRupee className="h-3.5 w-3.5 text-background/40" />
                     </div>
-                    <div className="text-2xl font-bold tabular-nums">{formatCompact(revenueThisMonth)}</div>
-                    <TrendBadge current={revenueThisMonth} previous={revenueLastMonth} />
+                    <div className="text-2xl font-bold tabular-nums">{formatCompact(billedThisMonth)}</div>
+                    <TrendBadge current={billedThisMonth} previous={billedLastMonth} />
                 </div>
 
                 {/* Amount Received */}
                 <div className="bg-emerald-600 text-white rounded-lg p-3 md:p-4 space-y-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs text-white/60 font-medium">Received</span>
+                        <span className="text-xs text-white/60 font-medium">Into the bank</span>
                         <ArrowDownRight className="h-3.5 w-3.5 text-white/40" />
                     </div>
                     <div className="text-2xl font-bold tabular-nums">{formatCompact(receivedThisMonth)}</div>
@@ -241,17 +272,19 @@ export default function FinanceClient({ data }: Props) {
                 </div>
 
                 {/* Expenses */}
+                {/* Links to the Zoho mirror, not to Quick Expense — that screen
+                    writes into the ledger nobody has used since July. */}
                 <Link
-                    href="/admin/finance/expenses/quick"
+                    href="/admin/finance/zoho"
                     className="bg-card border border-border rounded-lg p-3 md:p-4 space-y-1 hover:shadow-sm hover:border-orange-200 transition-all group"
                 >
                     <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground font-medium">Expenses</span>
+                        <span className="text-xs text-muted-foreground font-medium">Out of the bank</span>
                         <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-orange-500" />
                     </div>
                     <div className="text-2xl font-bold tabular-nums">{formatCompact(pnl.totalExpense)}</div>
                     <span className="text-[10px] text-muted-foreground">
-                        FY{pnl.fyLabel ? ` ${pnl.fyLabel}` : ''} · {formatCompact(expensesThisMonth)} this month
+                        {pnl.fyLabel || 'This FY'} · {formatCompact(paidOutThisMonth)} this month
                     </span>
                 </Link>
 
@@ -276,7 +309,9 @@ export default function FinanceClient({ data }: Props) {
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <h3 className="text-sm font-semibold">Income &amp; Expense</h3>
-                            <p className="text-xs text-muted-foreground">This Fiscal Year{pnl.fyLabel ? ` · ${pnl.fyLabel}` : ''}</p>
+                            <p className="text-xs text-muted-foreground">
+                                Money in and out of the bank{pnl.fyLabel ? ` · ${pnl.fyLabel}` : ''} — cash handled outside the bank is not included
+                            </p>
                         </div>
                         <div className="flex items-center gap-3">
                             <Link href="/admin/finance/review" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">
@@ -315,7 +350,7 @@ export default function FinanceClient({ data }: Props) {
                     {/* Grouped monthly bars */}
                     {pnl.monthly.length > 0 ? (
                         <div className="flex items-end justify-between gap-2 h-40 border-b border-border pb-1">
-                            {pnl.monthly.map((m) => (
+                            {pnl.monthly.map((m: { label: string; income: number; expense: number }) => (
                                 <div key={m.label} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
                                     <div className="flex items-end justify-center gap-1 w-full h-full">
                                         <div

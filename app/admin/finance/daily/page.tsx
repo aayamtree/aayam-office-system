@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import LoadError from '@/components/LoadError';
+import StaleLedgerNotice from '@/components/finance/StaleLedgerNotice';
 
 export default function DailyFinancePage() {
     const [loading, setLoading] = useState(true);
@@ -62,6 +63,8 @@ export default function DailyFinancePage() {
 
     return (
         <div className="space-y-4">
+            <StaleLedgerNotice what="Today's cash figures" />
+
             {/* Shown above the figures, not instead of them: the totals below are
                 computed from whatever loaded, so if anything failed they are wrong
                 and the reader has to know that before acting on them. */}

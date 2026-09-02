@@ -10,6 +10,7 @@ import { usePaymentsReceived, useJobs, useClients, useExpenses, useBankTransacti
 import { useAuth } from '@/lib/auth-context';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import StaleLedgerNotice from '@/components/finance/StaleLedgerNotice';
 
 export default function PaymentReportsPage() {
     const { profile } = useAuth();
@@ -163,6 +164,8 @@ export default function PaymentReportsPage() {
 
     return (
         <div className="space-y-4 md:space-y-6">
+            <StaleLedgerNotice what="These reports" />
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
