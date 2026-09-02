@@ -145,7 +145,7 @@ function summary(c: {
     // Shown, never hidden: an "Accepted" is not a "Successful", and the whole
     // system exists to respect that difference.
     if (c.gateway_status) lines.push(`🏦 Bank says: <i>${esc(c.gateway_status)}</i>`);
-    if (c.is_cash) lines.push(`💵 Cash — the bank statement will never show this, so it stays unconfirmed by design.`);
+    if (c.is_cash) lines.push(`💵 Cash — no bank statement will show this, so it goes on the "To enter in Zoho" list instead.`);
     const conf = c.extraction_confidence ?? c.confidence;
     if (conf === 'low') lines.push(`⚠️ <b>Low confidence</b> — please check the figures.`);
     return lines.join('\n');
@@ -647,7 +647,7 @@ export async function handlePaymentCallback(db: SupabaseClient, query: any): Pro
     await editSummary(
         `✅ ${choice.kind === 'client' ? 'From' : 'Vendor'}: <b>${esc(choice.label)}</b>\n` +
         (capture.needs_bank_match === false
-            ? `💵 Cash — nothing to match against the bank.`
+            ? `💵 Cash — no bank statement will confirm this. It is now on the "To enter in Zoho" list in Finance → Payment Captures.`
             : matched
                 ? `🏦 Matched to the bank statement — verified.`
                 : `⏳ Waiting for the bank feed to confirm it (usually next day).`)

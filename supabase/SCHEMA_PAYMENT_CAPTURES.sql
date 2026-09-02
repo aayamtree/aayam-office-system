@@ -111,6 +111,14 @@ CREATE TABLE IF NOT EXISTS payment_captures (
     -- Nothing here does it automatically.
     vendor_payment_id     UUID REFERENCES vendor_payments(id) ON DELETE SET NULL,
 
+    -- ── Cash: the one case a HUMAN confirms ───────────────────────────────
+    -- Cash and off-bank payments never reach a statement, so nothing can ever
+    -- confirm them automatically. They go on a "to enter in Zoho" queue and a
+    -- person ticks them off. Meaningful only where needs_bank_match = false;
+    -- a human must never vouch for a BANK payment having moved.
+    entered_in_books_at   TIMESTAMPTZ,
+    entered_in_books_by   UUID REFERENCES profiles(id) ON DELETE SET NULL,
+
     created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -128,6 +136,9 @@ ALTER TABLE payment_captures ADD COLUMN IF NOT EXISTS offered_choices JSONB;
 ALTER TABLE payment_captures ADD COLUMN IF NOT EXISTS choices_rev INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE payment_captures ADD COLUMN IF NOT EXISTS zoho_bank_transaction_id UUID
     REFERENCES zoho_bank_transactions(id) ON DELETE SET NULL;
+ALTER TABLE payment_captures ADD COLUMN IF NOT EXISTS entered_in_books_at TIMESTAMPTZ;
+ALTER TABLE payment_captures ADD COLUMN IF NOT EXISTS entered_in_books_by UUID
+    REFERENCES profiles(id) ON DELETE SET NULL;
 
 -- ── Indexes ───────────────────────────────────────────────────────────────
 
@@ -163,6 +174,31 @@ CREATE INDEX IF NOT EXISTS payment_captures_zoho_txn_idx  ON payment_captures (z
 CREATE INDEX IF NOT EXISTS payment_captures_match_idx     ON payment_captures (amount, txn_date)
     WHERE zoho_bank_transaction_id IS NULL AND needs_bank_match;
 
+-- The cash queue: cash, still live, not yet entered. This predicate must stay
+-- identical to isCashQueue() on the review page and to the reconcile cron's
+-- query — if the three disagree, the Telegram count and the on-screen badge
+-- disagree, and neither gets believed.
+CREATE INDEX IF NOT EXISTS payment_captures_to_enter_idx
+    ON payment_captures (txn_date)
+    WHERE needs_bank_match = false
+      AND entered_in_books_at IS NULL
+      -- A payment the statement already proves is booked in Zoho by the feed
+      -- itself. Leaving it in this queue asks a person to enter it a second
+      -- time, by hand, in the book of record.
+      AND zoho_bank_transaction_id IS NULL
+      AND status NOT IN ('rejected', 'duplicate');
+
+-- A capture cannot be waiting for the bank to confirm it AND ticked off as
+-- entered by hand at the same time. One PATCH carrying both flags could
+-- produce exactly that, and the review screen draws no control for the
+-- resulting row — it could never be cleared. Enforced here so no future
+-- caller can recreate it.
+ALTER TABLE payment_captures
+    DROP CONSTRAINT IF EXISTS payment_captures_tick_is_cash_only;
+ALTER TABLE payment_captures
+    ADD CONSTRAINT payment_captures_tick_is_cash_only
+    CHECK (entered_in_books_at IS NULL OR needs_bank_match = false);
+
 -- ── updated_at ────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION fn_payment_captures_touch()
 RETURNS TRIGGER AS $$
@@ -197,5 +233,7 @@ COMMENT ON COLUMN payment_captures.direction IS
  'out = we paid a vendor (matches a Zoho CREDIT row); in = a client paid us (matches a Zoho DEBIT row).';
 COMMENT ON COLUMN payment_captures.needs_bank_match IS
  'false for cash, which never reaches the bank feed and must never be flagged as unconfirmed.';
+COMMENT ON COLUMN payment_captures.entered_in_books_at IS
+ 'When a person confirmed this cash payment had been entered into Zoho. Only meaningful where needs_bank_match = false — everything else is confirmed by the bank feed instead.';
 COMMENT ON COLUMN payment_captures.choices_rev IS
  'Bumped every time offered_choices is replaced. Buttons carry the revision they were built from, so a tap on a stale keyboard is refused rather than misapplied.';

@@ -8,14 +8,18 @@
 // WHAT IT IS FOR
 // The matching is the small half. The valuable half is the two lists it
 // produces, which nobody was watching before:
-//   · a screenshot with NO bank line after 3 days — the payment may have
-//     failed, and "Request Accepted" was never a promise it wouldn't.
+//   · a screenshot the statement has since covered and still not shown — the
+//     payment may have failed, and "Request Accepted" was never a promise it
+//     wouldn't. Measured against how far the FEED has reached, never against
+//     today: statements arrive by hand in batches, and silence from a statement
+//     that has not arrived is not evidence of anything.
 //   · a bank OUTFLOW with no screenshot — money left the account and nobody
 //     announced it in the group.
-//
-// Cash is excluded from both lists. It never reaches a bank feed, so counting
-// it as unconfirmed would fill the warning list with entries that can never be
-// resolved — and a warning list nobody can clear is a warning list nobody reads.
+//   · CASH waiting to be entered in Zoho — no statement line will ever confirm
+//     these, so they are not unconfirmed, they are unentered. Different problem,
+//     different fix, its own list. Mixing them would fill the warning list with
+//     entries nobody can ever clear, and a list nobody can clear is one nobody
+//     reads.
 //
 // SAFETY
 //  - Read-mostly. The only writes are to payment_captures (an inbox table).
@@ -78,17 +82,75 @@ export async function GET(request: NextRequest) {
     // That snapshot is stale by now, so a 4-day-old capture whose bank line
     // landed overnight was reported as "the bank never confirmed this" in the
     // same response that had just confirmed it.
+    //
+    // MEASURED AGAINST THE FEED, NOT AGAINST TODAY.
+    // "Three days old" is the wrong question. The right one is "has the bank
+    // statement reached this payment's date yet, and still not shown it?"
+    // Zoho's automatic bank fetch is broken, so statements arrive by hand in
+    // batches; counting days from today accused every payment made since the
+    // last upload of having failed. Silence from a statement that has not
+    // arrived is not evidence of anything.
+    const { data: feedTip, error: feedErr } = await db
+        .from('zoho_bank_transactions')
+        .select('txn_date')
+        .not('txn_date', 'is', null)
+        .order('txn_date', { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+    // A failed read and an empty feed both leave feedTip null, and they call for
+    // opposite behaviour: an empty feed means "nothing can be confirmed", a
+    // failed read means "we don't know anything, including that". Left merged,
+    // one bad read would silently revert the cutoff to the today-minus-3 rule
+    // this whole change exists to remove — false-accusing every payment made
+    // since the last statement upload — while ALSO announcing that the bank
+    // feed is empty. Two contradictory alerts in one run, both wrong.
+    const feedReadFailed = Boolean(feedErr);
+    if (feedErr) console.error('[reconcile] could not read the bank feed tip:', feedErr.message);
+    const feedThrough: string | null = feedTip?.txn_date ?? null;
+
     const staleCutoff = new Date();
     staleCutoff.setUTCDate(staleCutoff.getUTCDate() - STALE_DAYS);
-    const { data: stale } = await db
+    // Whichever is EARLIER: the ordinary grace period, or how far the feed has
+    // actually reached. A capture is only suspicious once its date is behind
+    // both.
+    const cutoffIso = [staleCutoff.toISOString().slice(0, 10), feedThrough]
+        .filter((d): d is string => Boolean(d))
+        .sort()[0];
+
+    // If the feed has not reached even the start of the lookback window, the
+    // two bounds cross and the query below can only ever return nothing — a
+    // permanently empty warning list that still reports ok:true. The more
+    // overdue the statement upload, the more completely the alarm would switch
+    // itself off, so THAT is what gets reported instead.
+    const feedBlind = !feedReadFailed && (!feedThrough || feedThrough < sinceIso);
+    const { data: stale, error: staleErr } = feedReadFailed ? { data: [], error: null } : await db
         .from('payment_captures')
         .select('id, amount, txn_date, paid_to, paid_from, direction, gateway_status')
         .is('zoho_bank_transaction_id', null)
         .in('status', ['pending', 'confirmed'])
         .eq('needs_bank_match', true)
         .gte('txn_date', sinceIso)
-        .lte('txn_date', staleCutoff.toISOString().slice(0, 10))
+        .lte('txn_date', cutoffIso)
         .order('txn_date', { ascending: true })
+        .limit(STALE_LIMIT);
+
+    // A screenshot whose date could not be read fell through every net: the
+    // query above filters on txn_date, and NULL fails both bounds silently, so
+    // a payment that may have failed sat in "needs attention" for ever with
+    // nothing anywhere raising it. Its posting time is the only clock we have,
+    // and it cannot be judged against the feed's reach — so it gets its own
+    // list, which says exactly that.
+    const datelessCutoff = new Date();
+    datelessCutoff.setUTCDate(datelessCutoff.getUTCDate() - STALE_DAYS);
+    const { data: dateless, error: datelessErr } = await db
+        .from('payment_captures')
+        .select('id, amount, paid_to, paid_from, direction, created_at')
+        .is('zoho_bank_transaction_id', null)
+        .in('status', ['pending', 'confirmed'])
+        .eq('needs_bank_match', true)
+        .is('txn_date', null)
+        .lte('created_at', datelessCutoff.toISOString())
+        .order('created_at', { ascending: true })
         .limit(STALE_LIMIT);
 
     // ── 3. Money that left with no screenshot ─────────────────────────────
@@ -146,10 +208,33 @@ export async function GET(request: NextRequest) {
             // the most valuable half of this feature silently do nothing.
             kind: 'alert',
             title: `${(stale || []).length}${(stale || []).length === STALE_LIMIT ? '+' : ''} payment${(stale || []).length > 1 ? 's' : ''} the bank has not confirmed`,
-            body: `A screenshot was shared but no matching line has appeared in the bank statement after ${STALE_DAYS} days. ` +
+            body: (feedThrough
+                    ? `A screenshot was shared, and the newest line in the bank feed is now ` +
+                      `${feedThrough} with no sign of it. `
+                    : `A screenshot was shared and no matching bank line has appeared. `) +
                 `An accepted request can still fail — worth checking.\n\n${lines.join('\n')}` +
                 ((stale || []).length > 8 ? `\n…and ${(stale || []).length - 8} more.` : ''),
             dedupe_key: `payment_unconfirmed_${new Date().toISOString().slice(0, 10)}`,
+            app_path: '/admin/finance/payment-captures',
+        });
+    }
+    if ((dateless || []).length > 0) {
+        const n = (dateless || []).length;
+        const lines = (dateless || []).slice(0, 8).map((c) => {
+            const who = (c.direction === 'in' ? c.paid_from : c.paid_to) || 'unknown';
+            const verb = c.direction === 'in' ? 'from' : 'to';
+            return `• ₹${Number(c.amount || 0).toLocaleString('en-IN')} ${verb} ${who}` +
+                ` (posted ${String(c.created_at).slice(0, 10)})`;
+        });
+        notices.push({
+            kind: 'alert',
+            title: `${n}${n === STALE_LIMIT ? '+' : ''} payment${n > 1 ? 's' : ''} with no readable date`,
+            body: `The date could not be read off ${n > 1 ? 'these receipts' : 'this receipt'}, so ` +
+                `nothing can check ${n > 1 ? 'them' : 'it'} against the statement — not even to say ` +
+                `${n > 1 ? 'they are' : 'it is'} fine. Open the screenshot and set the date, or mark ` +
+                `${n > 1 ? 'them' : 'it'} as cash.\n\n${lines.join('\n')}` +
+                (n > 8 ? `\n…and ${n - 8} more.` : ''),
+            dedupe_key: `payment_dateless_${new Date().toISOString().slice(0, 10)}`,
             app_path: '/admin/finance/payment-captures',
         });
     }
@@ -167,6 +252,81 @@ export async function GET(request: NextRequest) {
             app_path: '/admin/finance/payment-captures',
         });
     }
+    if (feedReadFailed) {
+        notices.push({
+            kind: 'alert',
+            title: `The bank check could not run`,
+            body: `Reading the bank feed failed, so no payment was checked against the statement ` +
+                `tonight. This is not a clean bill of health — it is a check that did not happen.`,
+            dedupe_key: `payment_feed_unreadable_${new Date().toISOString().slice(0, 10)}`,
+            app_path: '/admin/finance/zoho',
+        });
+    }
+    if (feedBlind) {
+        notices.push({
+            kind: 'alert',
+            title: feedThrough
+                ? `The bank statement is ${LOOKBACK_DAYS}+ days behind`
+                : `No bank statement data at all`,
+            body: feedThrough
+                ? `The newest line in the bank feed is ${feedThrough}. Until a more recent statement ` +
+                  `is uploaded to Zoho, no payment can be confirmed and this check cannot tell a failed ` +
+                  `payment from an unrecorded one — so it is reporting nothing rather than a reassuring zero.`
+                : `The bank feed is empty, so nothing can be confirmed and this check is blind. ` +
+                  `Upload a statement to Zoho, or check the Zoho connection.`,
+            dedupe_key: `payment_feed_blind_${new Date().toISOString().slice(0, 10)}`,
+            app_path: '/admin/finance/zoho',
+        });
+    }
+
+    // ── Cash waiting to be entered in Zoho ────────────────────────────────
+    // No bank line will ever appear for these, so they are not "unconfirmed" —
+    // they are unentered, which is a different job with a different fix.
+    const { data: toEnter, error: toEnterErr } = await db
+        .from('payment_captures')
+        .select('id, amount, txn_date, paid_to, paid_from, direction, payment_method')
+        .eq('needs_bank_match', false)
+        .is('entered_in_books_at', null)
+        // A payment the statement already proves is booked in Zoho by the feed
+        // itself. Listing it here would ask someone to enter it a second time,
+        // in the book of record, by hand.
+        .is('zoho_bank_transaction_id', null)
+        .not('status', 'in', '(rejected,duplicate)')
+        // Deliberately NO date bound: cash never ages out of needing to be
+        // entered, and a typed entry ("gave 5000 cash to Ramesh") often has no
+        // date at all — a .gte() would drop those silently. This must select
+        // exactly what the page's isCashQueue() selects, or the Telegram count
+        // and the on-screen badge will disagree and neither will be believed.
+        .order('created_at', { ascending: true })
+        .limit(STALE_LIMIT);
+
+    if ((toEnter || []).length > 0) {
+        const lines = (toEnter || []).slice(0, 8).map((c) => {
+            const who = (c.direction === 'in' ? c.paid_from : c.paid_to) || 'unknown';
+            const verb = c.direction === 'in' ? 'from' : 'to';
+            // txn_date is nullable — a typed cash entry often carries no date.
+            return `• ₹${Number(c.amount || 0).toLocaleString('en-IN')} ${verb} ${who}` +
+                (c.txn_date ? ` (${c.txn_date})` : '');
+        });
+        notices.push({
+            kind: 'alert',
+            title: `${(toEnter || []).length}${(toEnter || []).length === STALE_LIMIT ? '+' : ''} payment${(toEnter || []).length > 1 ? 's' : ''} still to enter in Zoho`,
+            body: `These were paid in cash or outside the bank account, so no statement line will ever ` +
+                `confirm them. ` +
+                `Enter them in Zoho and tick them off in Finance → Payment Captures.\n\n${lines.join('\n')}` +
+                ((toEnter || []).length > 8 ? `\n…and ${(toEnter || []).length - 8} more.` : ''),
+            dedupe_key: `payment_to_enter_${new Date().toISOString().slice(0, 10)}`,
+            app_path: '/admin/finance/payment-captures',
+        });
+    }
+
+    // A failed query becomes null, becomes [], becomes "no notice", and the
+    // route still answers ok:true. Silence must not be indistinguishable from
+    // health — this is the whole thesis of the feature applied to itself.
+    for (const [what, err] of [['stale list', staleErr], ['cash queue', toEnterErr], ['dateless list', datelessErr]] as const) {
+        if (err) console.error(`[reconcile] ${what} query failed:`, err.message);
+    }
+
     let notified = 0;
     for (const n of notices) {
         // Plain INSERT, not upsert. watchman_notices_open_dedupe_idx is a
@@ -191,6 +351,10 @@ export async function GET(request: NextRequest) {
         checked: (unmatched || []).length,
         matched,
         notified,
+        bank_feed_latest_line: feedThrough,
+        bank_feed_blind: feedBlind,
+        query_errors: [staleErr?.message, toEnterErr?.message, feedErr?.message].filter(Boolean),
+        cash_awaiting_entry: (toEnter || []).length,
         awaiting_bank_confirmation: (stale || []).map((c) => ({
             id: c.id,
             amount: c.amount,
