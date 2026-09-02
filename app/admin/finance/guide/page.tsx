@@ -151,6 +151,61 @@ export default function FinanceGuidePage() {
                 </div>
             </div>
 
+            {/* PHASE 4, 2026-09-02. The steps further down this page still say
+                "Finance → Payments → New Payment" and "Finance → Invoices → New
+                Invoice". Those screens have been closed for writing since
+                2026-08 and are no longer in the menu, so following them now
+                leads to a refusal. Rewriting every bilingual step is its own
+                job; until then this block says plainly what changed, at the top,
+                where it is read first. */}
+            <div className="rounded-md border-2 border-blue-600 bg-blue-50 p-4 space-y-3">
+                <div>
+                    <p className="text-sm font-bold text-blue-900">
+                        નવું: ફાયનાન્સ હવે પાંચ દરવાજા છે
+                    </p>
+                    <p className="text-sm font-semibold text-blue-800">
+                        New: Finance is now five doors
+                    </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-2">
+                    {[
+                        ['Money In', 'આપણને કોણ પૈસા આપવાના બાકી છે', 'Who owes us money'],
+                        ['Money Out', 'આપણે કોને પૈસા આપવાના બાકી છે', 'Who we owe money to'],
+                        ['Bank & Cash', 'બેન્કમાં શું દેખાય છે', 'What the bank statement shows'],
+                        ['To Do', 'બાકી રહેલું કામ', 'Work still unfinished'],
+                        ['Reports', 'મહિનાનો હિસાબ', 'The month\u2019s figures'],
+                    ].map(([door, gu, en]) => (
+                        <div key={door} className="rounded-md bg-white border border-blue-200 px-3 py-2">
+                            <p className="text-xs font-bold text-blue-900">{door}</p>
+                            <p className="text-xs text-gray-700">{gu}</p>
+                            <p className="text-[11px] text-gray-500">{en}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="rounded-md bg-amber-50 border border-amber-300 px-3 py-2.5">
+                    <p className="text-xs font-bold text-amber-900 mb-1">
+                        ⚠️ ઇન્વૉઇસ, બિલ અને જર્નલ એન્ટ્રી હવે <u>Zoho Books</u> માં જ કરવાનાં — આ એપમાં નહીં.
+                    </p>
+                    <p className="text-xs text-amber-800">
+                        Invoices, purchase bills and journal entries are now made in Zoho Books, not in this
+                        app. Zoho is the book of record. This app shows you what is in Zoho, links each
+                        invoice to its job, and collects payment proofs.
+                    </p>
+                    <p className="text-[11px] text-amber-700 mt-1.5">
+                        નીચેનાં પગલાંમાં જ્યાં &ldquo;Finance → Payments&rdquo; કે &ldquo;Finance → Invoices&rdquo;
+                        લખ્યું હોય તે હવે જૂનું છે. · The steps below that mention Payments, Invoices, Daily or
+                        Journal are out of date and kept only as history.
+                    </p>
+                </div>
+
+                <p className="text-xs text-blue-900">
+                    રોકડ (cash) આપ્યા કે લીધા પછી: Zoho માં એન્ટ્રી કરો, પછી <b>To Do</b> માં ટીક કરો. ·
+                    After any cash payment: enter it in Zoho, then tick it off under <b>To Do</b>.
+                </p>
+            </div>
+
             <div className="bg-white rounded-md border border-gray-200 p-4">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Finance Flow</p>
                 <div className="flex flex-wrap items-center gap-1">

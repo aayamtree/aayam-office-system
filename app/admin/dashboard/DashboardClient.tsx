@@ -252,7 +252,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                         </Card>
                     </Link>
 
-                    <Link href="/admin/finance/payments">
+                    <Link href="/admin/finance/money-in">
                         <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-1">
                                 <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>

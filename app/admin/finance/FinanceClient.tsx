@@ -9,7 +9,15 @@ import {
 } from 'lucide-react';
 import type { FinanceOverviewData } from '@/lib/finance-overview-data';
 
-interface Props { data: FinanceOverviewData; }
+interface Props {
+    data: FinanceOverviewData;
+    /** Cash waiting to be entered in Zoho. Null when the count could not be read —
+        which must not render as a confident zero. */
+    cashToEnter: number | null;
+    /** True at the query's cap — the card must say "100+", never a flat "100",
+        or it disagrees with the Telegram message and with Payment Proofs. */
+    cashTruncated: boolean;
+}
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -53,7 +61,7 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-export default function FinanceClient({ data }: Props) {
+export default function FinanceClient({ data, cashToEnter, cashTruncated }: Props) {
     const {
         billedThisMonth, receivedThisMonth, paidOutThisMonth, outstandingTotal,
         billedLastMonth, receivedLastMonth,
@@ -92,97 +100,79 @@ export default function FinanceClient({ data }: Props) {
         return seg;
     });
 
+    // ── THE FIVE DOORS ───────────────────────────────────────────────────
+    // These used to be seven cards pointing at Invoices, Payments, Vendors,
+    // Quick Expense, Reports, Accounting Reports and Daily Summary — five of
+    // which read the ledger closed for writing on 5 August. Each card below is
+    // one door, and each door answers one question.
     const navCards = [
         {
-            href: '/admin/finance/invoices',
+            href: '/admin/finance/money-in',
             icon: FileText,
-            title: 'Invoices',
-            iconColor: 'text-slate-700',
-            iconBg: 'bg-slate-100',
-            borderColor: 'border-l-slate-400',
-            stat1: `${navStats.invoices.unpaid} unpaid`,
-            stat2: navStats.invoices.overdueCount > 0 ? `${navStats.invoices.overdueCount} overdue` : 'None overdue',
-            stat2Red: navStats.invoices.overdueCount > 0,
-            action: 'Open in Zoho',
-            actionHref: '/admin/finance/zoho',
-        },
-        {
-            href: '/admin/finance/payments',
-            icon: CreditCard,
-            title: 'Payments',
+            title: 'Money In',
             iconColor: 'text-emerald-700',
             iconBg: 'bg-emerald-50',
             borderColor: 'border-l-emerald-500',
-            stat1: formatCompact(navStats.payments.receivedThisMonth),
-            stat2: 'received this month',
-            stat2Red: false,
-            action: 'Payment proofs',
-            actionHref: '/admin/finance/payment-captures',
+            stat1: `${navStats.invoices.unpaid} unpaid`,
+            stat2: navStats.invoices.overdueCount > 0 ? `${navStats.invoices.overdueCount} overdue` : 'None overdue',
+            stat2Red: navStats.invoices.overdueCount > 0,
+            action: 'Who owes us',
+            actionHref: '/admin/finance/money-in',
         },
         {
-            href: '/admin/finance/vendors',
+            href: '/admin/finance/money-out',
             icon: ShoppingBag,
-            title: 'Purchases',
+            title: 'Money Out',
             iconColor: 'text-violet-700',
             iconBg: 'bg-violet-50',
             borderColor: 'border-l-violet-500',
             stat1: `${navStats.purchases.pendingBills} bills pending`,
             stat2: navStats.purchases.billsAmount > 0 ? formatCompact(navStats.purchases.billsAmount) + ' due' : 'All clear',
             stat2Red: navStats.purchases.pendingBills > 0,
-            action: 'Vendors',
-            actionHref: '/admin/finance/vendors',
+            action: 'Who we owe',
+            actionHref: '/admin/finance/money-out',
         },
         {
-            href: '/admin/finance/expenses/quick',
-            icon: TrendingDown,
-            title: 'Expenses',
-            iconColor: 'text-orange-700',
-            iconBg: 'bg-orange-50',
-            borderColor: 'border-l-orange-500',
-            stat1: formatCompact(pnl.totalExpense),
-            stat2: `${pnl.expenseCountFY} entries this FY`,
-            stat2Red: false,
-            action: 'Open in Zoho',
-            actionHref: '/admin/finance/zoho',
+            href: '/admin/finance/bank-cash',
+            icon: CreditCard,
+            title: 'Bank & Cash',
+            iconColor: 'text-blue-700',
+            iconBg: 'bg-blue-50',
+            borderColor: 'border-l-blue-500',
+            stat1: formatCompact(navStats.payments.receivedThisMonth),
+            stat2: bankFeedThrough ? `feed dated ${bankFeedThrough}` : 'no bank feed',
+            stat2Red: bankFeedDaysBehind !== null && bankFeedDaysBehind > 7,
+            action: 'What the bank shows',
+            actionHref: '/admin/finance/bank-cash',
+        },
+        {
+            href: '/admin/finance/to-do',
+            icon: Clock,
+            title: 'To Do',
+            iconColor: 'text-amber-700',
+            iconBg: 'bg-amber-50',
+            borderColor: 'border-l-amber-500',
+            // Only the cash queue is counted here, from the one shared
+            // definition. A made-up total that disagrees with the Telegram
+            // message would be worse than no total at all.
+            stat1: cashToEnter === null ? 'Open the list' : `${cashToEnter}${cashTruncated ? '+' : ''} cash to enter`,
+            stat2: 'plus payments to chase',
+            stat2Red: (cashToEnter ?? 0) > 0,
+            action: 'What is unfinished',
+            actionHref: '/admin/finance/to-do',
         },
         {
             href: '/admin/finance/reports',
             icon: BarChart3,
             title: 'Reports',
-            iconColor: 'text-blue-700',
-            iconBg: 'bg-blue-50',
-            borderColor: 'border-l-blue-500',
-            stat1: 'P&L · Cash · GST',
-            stat2: 'Financial reports',
+            iconColor: 'text-slate-700',
+            iconBg: 'bg-slate-100',
+            borderColor: 'border-l-slate-400',
+            stat1: `${formatCompact(pnl.totalIncome)} in · ${formatCompact(pnl.totalExpense)} out`,
+            stat2: pnl.fyLabel,
             stat2Red: false,
-            action: 'View Reports',
+            action: 'What it added up to',
             actionHref: '/admin/finance/reports',
-        },
-        {
-            href: '/admin/finance/reports/accounting',
-            icon: BarChart3,
-            title: 'Accounting Reports',
-            iconColor: 'text-indigo-700',
-            iconBg: 'bg-indigo-50',
-            borderColor: 'border-l-indigo-500',
-            stat1: 'Accrual P&L · AR/AP Aging',
-            stat2: 'From the ledger',
-            stat2Red: false,
-            action: 'Open',
-            actionHref: '/admin/finance/reports/accounting',
-        },
-        {
-            href: '/admin/finance/daily',
-            icon: Calendar,
-            title: 'Daily Summary',
-            iconColor: 'text-gray-700',
-            iconBg: 'bg-gray-100',
-            borderColor: 'border-l-gray-400',
-            stat1: "Today's snapshot",
-            stat2: overdueToday > 0 ? `${overdueToday} overdue items` : 'All on track',
-            stat2Red: overdueToday > 0,
-            action: 'View Today',
-            actionHref: '/admin/finance/daily',
         },
     ];
 
@@ -234,7 +224,7 @@ export default function FinanceClient({ data }: Props) {
                         refuses to save. Payments are recorded in Zoho; what the
                         app uniquely offers is the proof inbox. */}
                     <Link
-                        href="/admin/finance/payment-captures"
+                        href="/admin/finance/to-do"
                         className="flex items-center gap-1.5 bg-muted text-foreground px-3 py-2 rounded-md hover:bg-muted/80 transition-colors font-medium text-sm"
                     >
                         <CreditCard className="w-3.5 h-3.5" />
@@ -318,10 +308,7 @@ export default function FinanceClient({ data }: Props) {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Link href="/admin/finance/review" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">
-                                Review <ArrowUpRight className="h-3 w-3" />
-                            </Link>
-                            <Link href="/admin/finance/reports" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                            <Link href="/admin/finance/reports" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">
                                 Reports <ArrowUpRight className="h-3 w-3" />
                             </Link>
                         </div>
@@ -384,8 +371,8 @@ export default function FinanceClient({ data }: Props) {
                             <h3 className="text-sm font-semibold">Top Expenses</h3>
                             <p className="text-xs text-muted-foreground">By category · This Fiscal Year</p>
                         </div>
-                        <Link href="/admin/finance/expenses/quick" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
-                            Log Expense <ArrowUpRight className="h-3 w-3" />
+                        <Link href="/admin/finance/reports" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                            All spending <ArrowUpRight className="h-3 w-3" />
                         </Link>
                     </div>
 
@@ -443,12 +430,12 @@ export default function FinanceClient({ data }: Props) {
                 <div className="lg:col-span-1 bg-card border border-border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between mb-1">
                         <h3 className="text-sm font-semibold">Invoice Status</h3>
-                        <Link href="/admin/finance/invoices" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                        <Link href="/admin/finance/money-in" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
                             View all <ArrowUpRight className="h-3 w-3" />
                         </Link>
                     </div>
                     {statusStrip.map(({ label, count, amount, icon: Icon, color, bg }) => (
-                        <Link key={label} href={`/admin/finance/invoices?status=${label.toLowerCase()}`}>
+                        <Link key={label} href="/admin/finance/money-in">
                             <div className={`flex items-center justify-between p-2.5 rounded-md border ${bg} hover:opacity-80 transition-opacity`}>
                                 <div className="flex items-center gap-2">
                                     <Icon className={`h-3.5 w-3.5 ${color}`} />
@@ -556,7 +543,7 @@ export default function FinanceClient({ data }: Props) {
                 <div className="bg-card border border-border rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                         <h3 className="text-sm font-semibold">Recent Invoices</h3>
-                        <Link href="/admin/finance/invoices" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
+                        <Link href="/admin/finance/money-in" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5">
                             View all <ArrowUpRight className="h-3 w-3" />
                         </Link>
                     </div>
@@ -575,7 +562,7 @@ export default function FinanceClient({ data }: Props) {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {recentInvoices.map((inv) => (
-                                    <Link key={inv.id} href={`/admin/finance/invoices`} legacyBehavior>
+                                    <Link key={inv.id} href="/admin/finance/money-in" legacyBehavior>
                                         <tr className="hover:bg-muted/30 cursor-pointer transition-colors">
                                             <td className="px-4 py-2.5">
                                                 <span className="font-mono text-xs font-semibold">{inv.invoice_number}</span>
@@ -607,7 +594,7 @@ export default function FinanceClient({ data }: Props) {
                     {/* Mobile cards */}
                     <div className="md:hidden divide-y divide-border">
                         {recentInvoices.slice(0, 5).map((inv) => (
-                            <Link key={inv.id} href="/admin/finance/invoices" className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                            <Link key={inv.id} href="/admin/finance/money-in" className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono text-xs font-semibold text-foreground">{inv.invoice_number}</span>

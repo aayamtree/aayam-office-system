@@ -199,7 +199,7 @@ export async function fetchCalendarBusinessData(
                 type: 'invoice',
                 status: inv.payment_status,
                 color: 'bg-rose-100 text-rose-800',
-                link: '/admin/finance/invoices',
+                link: '/admin/finance/money-in',
             });
         }
     });

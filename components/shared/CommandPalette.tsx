@@ -65,14 +65,20 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'Finance Overview',      subtitle: 'Finance summary',                  href: '/admin/finance' },
     { title: 'Sales Quotations',      subtitle: 'Quotations list',                  href: '/admin/sales/quotations' },
     { title: 'Sales Orders',          subtitle: 'Orders list',                      href: '/admin/sales/orders' },
-    { title: 'Invoices',              subtitle: 'All invoices',                     href: '/admin/finance/invoices' },
-    { title: 'Payments',              subtitle: 'Payment records',                  href: '/admin/finance/payments' },
-    { title: 'Banking',               subtitle: 'Bank reconciliation',              href: '/admin/finance/banking' },
+    // The five doors (phase 4). This list was a back door into the old menu:
+    // nine of its entries opened screens that read the ledger closed on
+    // 5 August, so typing "invoices" landed you on a page holding two of them.
+    { title: 'Money In',              subtitle: 'Who owes us, and who paid',        href: '/admin/finance/money-in' },
+    { title: 'Money Out',             subtitle: 'Who we owe, and what we paid',     href: '/admin/finance/money-out' },
+    { title: 'Bank & Cash',           subtitle: 'What the bank shows',              href: '/admin/finance/bank-cash' },
+    { title: 'Finance To Do',         subtitle: 'Payments to chase, cash to enter', href: '/admin/finance/to-do' },
+    { title: 'Finance Reports',       subtitle: 'Money in and out, by month',       href: '/admin/finance/reports' },
+    // The screens the doors open — still reachable by name.
+    { title: 'Awaiting Payment',      subtitle: 'Design work sent, not yet paid',   href: '/admin/finance/awaiting-payment' },
+    { title: 'Invoice Matching',      subtitle: 'Link a Zoho invoice to a job',     href: '/admin/finance/invoice-matching' },
+    { title: 'Payment Captures',      subtitle: 'Payment proofs from Telegram',     href: '/admin/finance/payment-captures' },
+    { title: 'Zoho Books',            subtitle: 'Invoices, bills and bank lines',   href: '/admin/finance/zoho' },
     { title: 'Bank Accounts',         subtitle: 'Manage bank accounts',             href: '/admin/finance/banks' },
-    { title: 'Daily Summary',         subtitle: 'Daily finance summary',            href: '/admin/finance/daily' },
-    { title: 'Accounts',              subtitle: 'Chart of accounts',                href: '/admin/finance/accounts' },
-    { title: 'Journal',               subtitle: 'Journal entries',                  href: '/admin/finance/journal' },
-    { title: 'Purchase Bills',        subtitle: 'Vendor purchase bills',            href: '/admin/finance/vendors/purchases' },
     { title: 'Vendors',               subtitle: 'Vendor directory',                 href: '/admin/finance/vendors' },
     { title: 'Finance Guide',         subtitle: 'Finance reference guide',          href: '/admin/finance/guide' },
     // Dispatch
@@ -88,7 +94,7 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'Retail POS',            subtitle: 'Point of sale',                    href: '/admin/cmyk-print/retail-pos' },
     // Reports
     { title: 'Reports Overview',      subtitle: 'All reports',                      href: '/admin/reports' },
-    { title: 'Finance Reports',       subtitle: 'Financial reports',                href: '/admin/reports/finance' },
+    { title: 'Finance Reports (all reports section)', subtitle: 'Financial reports', href: '/admin/reports/finance' },
     { title: 'Sales Reports',         subtitle: 'Sales reports',                    href: '/admin/reports/sales' },
     { title: 'Vendor Reports',        subtitle: 'Vendor reports',                   href: '/admin/finance/reports/vendor-reports' },
     { title: 'Dispatch Reports',      subtitle: 'Dispatch reports',                 href: '/admin/reports/dispatch' },
@@ -240,8 +246,14 @@ export default function CommandPalette() {
                     .or(`name.ilike.${dbQ},company.ilike.${dbQ},phone.ilike.${dbQ}`).limit(5),
                 supabase.from('leads').select('id, lead_number, name, company, status')
                     .or(`lead_number.ilike.${dbQ},name.ilike.${dbQ},company.ilike.${dbQ}`).limit(5),
-                supabase.from('invoices').select('id, invoice_number, total_amount, payment_status')
-                    .or(`invoice_number.ilike.${dbQ}`).limit(5),
+                // Zoho is the book of record. This searched the app's own
+                // `invoices` table, which holds 2 rows against Zoho's 1,501 — so
+                // a client ringing up with an invoice number got "no results",
+                // and on the rare hit was sent to a screen closed for writing.
+                supabase.from('zoho_documents')
+                    .select('id, doc_number, customer_name, total, balance, status')
+                    .eq('doc_type', 'invoice')
+                    .or(`doc_number.ilike.${dbQ},customer_name.ilike.${dbQ}`).limit(5),
                 supabase.from('quotations').select('id, quote_number, total_amount, status')
                     .or(`quote_number.ilike.${dbQ}`).limit(5),
                 // The LR / consignment number lives on the dispatch, not the job,
@@ -324,9 +336,20 @@ export default function CommandPalette() {
 
             if (invoicesRes.data) invoicesRes.data.forEach(inv => dbResults.push({
                 id: inv.id, type: 'invoice',
-                title: inv.invoice_number,
-                subtitle: `₹${(inv.total_amount || 0).toLocaleString('en-IN')} · ${inv.payment_status || 'draft'}`,
-                href: `/admin/finance/invoices?open=${inv.id}`,
+                title: `${inv.doc_number}${inv.customer_name ? ` — ${inv.customer_name}` : ''}`,
+                // Balance, not total: what is still owed is the thing anyone
+                // searching for an invoice actually wants to know.
+                subtitle: `₹${(inv.total || 0).toLocaleString('en-IN')} · ${
+                    Number(inv.balance) > 0
+                        ? `₹${Number(inv.balance).toLocaleString('en-IN')} still owed`
+                        : (inv.status || 'draft')
+                }`,
+                // The Zoho screen lists the newest 500 documents and has no
+                // search, so an older invoice found here would not be on it.
+                // An invoice with money still on it belongs to Money In, which
+                // is grouped by customer — the name is in the title above, and
+                // that is the screen someone chasing this payment needs.
+                href: Number(inv.balance) > 0 ? '/admin/finance/money-in' : '/admin/finance/zoho',
             }));
 
             if (quotationsRes.data) quotationsRes.data.forEach(q => dbResults.push({

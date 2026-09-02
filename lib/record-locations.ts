@@ -117,7 +117,10 @@ export async function getJobLocations(jobId: string): Promise<RecordLocation[]> 
             key: 'invoice',
             label: 'Invoice',
             detail: `${invoice.invoice_number || 'Draft'} · ${invoice.payment_status || 'pending'}`,
-            href: `/admin/finance/invoices?open=${invoice.id}`,
+            // Money In groups by CUSTOMER and shows no invoice numbers, and the
+            // ?open= parameter was read by nothing. Zoho is where an invoice
+            // actually lives now.
+            href: `/admin/finance/zoho`,
         });
     }
 
@@ -126,7 +129,7 @@ export async function getJobLocations(jobId: string): Promise<RecordLocation[]> 
             key: 'payments',
             label: 'Payments',
             detail: 'Payment recorded',
-            href: `/admin/finance/payments-new`,
+            href: `/admin/finance/bank-cash`,
         });
     }
 
@@ -181,7 +184,7 @@ export async function getClientLocations(clientId: string): Promise<RecordLocati
             key: 'invoices',
             label: 'Invoices',
             detail: `${invoicesRes.count} invoice${invoicesRes.count === 1 ? '' : 's'}`,
-            href: `/admin/finance/invoices`,
+            href: `/admin/finance/money-in`,
         });
     }
 

@@ -74,7 +74,7 @@ export default function OverdueAlertsWidget() {
                     title: `Invoice ${inv.invoice_number}`,
                     subtitle: `₹${((inv.total_amount || 0) - (inv.amount_paid || 0)).toLocaleString('en-IN')} pending`,
                     dueDate: inv.due_date, daysOverdue: days,
-                    link: '/admin/finance/invoices',
+                    link: '/admin/finance/money-in',
                 });
             });
 

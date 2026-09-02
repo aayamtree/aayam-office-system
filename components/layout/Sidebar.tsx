@@ -152,25 +152,30 @@ const menuItems: MenuItem[] = [
     href: '/admin/finance',
     allowedRoles: ['admin', 'finance'],
     submenu: [
+      // FIVE DOORS, not twenty (phase 4, 2026-09-02).
+      // The menu had grown one page at a time and nothing was ever removed:
+      // nineteen entries, most of them reading a ledger closed for writing since
+      // 5 August. Each door below answers ONE question and reads Zoho, the book
+      // of record.
+      //
+      // Nothing was deleted: every screen that used to be listed here still
+      // exists at its own address and still opens if you type it. The ones worth
+      // reaching are linked from the door that owns them, and the dead-ledger
+      // reports are listed at the bottom of the Reports door. The rest —
+      // journal, banking, payments, payments-new, chart-of-accounts,
+      // expense-categories, review, invoices — are now reachable ONLY by URL,
+      // which is the intended state until phase 5 archives them behind one
+      // read-only link. Setting LEGACY_LEDGER_CLOSED = false still restores
+      // every write path exactly as it was.
       { name: 'Overview', href: '/admin/finance' },
+      { name: 'Money In', href: '/admin/finance/money-in' },
+      { name: 'Money Out', href: '/admin/finance/money-out' },
+      { name: 'Bank & Cash', href: '/admin/finance/bank-cash' },
+      { name: 'To Do', href: '/admin/finance/to-do' },
+      { name: 'Reports', href: '/admin/finance/reports' },
+      // Sales sits in this section too, and is not a money door.
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
-      { name: '💰 Awaiting Payment', href: '/admin/finance/awaiting-payment' },
-      { name: 'Invoices', href: '/admin/finance/invoices' },
-      { name: 'Zoho Books', href: '/admin/finance/zoho' },
-      { name: 'Invoice Matching', href: '/admin/finance/invoice-matching' },
-      { name: 'Payments', href: '/admin/finance/payments' },
-      { name: '📸 Payment Captures', href: '/admin/finance/payment-captures' },
-      { name: '⚡ Quick Expense', href: '/admin/finance/expenses/quick' },
-      { name: 'Expense Categories', href: '/admin/finance/expense-categories', adminOnly: true },
-      { name: 'Banking', href: '/admin/finance/banking' },
-      { name: 'Bank Accounts', href: '/admin/finance/banks', adminOnly: true },
-      { name: 'Daily Summary', href: '/admin/finance/daily', adminOnly: true },
-      { name: 'Accounts', href: '/admin/finance/accounts', adminOnly: true },
-      { name: 'Chart of Accounts', href: '/admin/finance/chart-of-accounts', adminOnly: true },
-      { name: 'Journal', href: '/admin/finance/journal', adminOnly: true },
-      { name: 'Purchase Bills', href: '/admin/finance/vendors/purchases' },
-      { name: 'Vendors', href: '/admin/finance/vendors' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
     ]
   },
@@ -649,7 +654,9 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
                         if (sub.name === 'Leads') badge = activeLeadsCount;
                         if (sub.name === 'Production Queue') badge = prodQueueCount;
                         if (sub.name === '🔴 Overdue') badge = overdueCount;
-                        if (sub.name === '💰 Awaiting Payment') badge = awaitingPayCount;
+                        // Awaiting Payment moved inside the Money In door; the badge follows it
+                        // so the count and the screen it opens still match.
+                        if (sub.name === 'Money In') badge = awaitingPayCount;
 
                         const showBadge = badge > 0;
 

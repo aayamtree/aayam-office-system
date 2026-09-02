@@ -77,7 +77,11 @@ export default function ReportsPage() {
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-md md:rounded-md p-3 md:p-4 text-white flex justify-between items-center">
         <div>
           <h3 className="text-section mb-1">Manual Journal Entry</h3>
-          <p className="text-gray-300 text-sm">Record accounting adjustments and non-cash transactions</p>
+          {/* The journal is closed for writing — adjustments are made in Zoho,
+              the book of record. The screen is still here to read history, so
+              the button still opens it; the promise above it was the thing that
+              needed fixing, not the destination. */}
+          <p className="text-gray-300 text-sm">Past entries only — adjustments are now made in Zoho Books</p>
         </div>
         <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-md font-bold hover:bg-gray-100 transition-colors">
           Open Journal

@@ -196,7 +196,7 @@ export async function notifyPaymentReceived(payment: any) {
     priority: 'normal',
     entityType: 'payment',
     entityId: payment.id,
-    actionUrl: `/admin/finance/payments`,
+    actionUrl: `/admin/finance/money-in`,
     icon: '💰',
   });
 }

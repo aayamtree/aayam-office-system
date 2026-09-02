@@ -481,7 +481,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
                         title: `${j.job_number} — ₹${due.toLocaleString('en-IN')} pending`,
                         subtitle: j.client?.company || j.client?.name || '',
                         urgency: 'high' as const,
-                        href: '/admin/finance/payments',
+                        href: '/admin/finance/money-in',
                         badge: `${Math.floor((Date.now() - new Date(j.client_deadline).getTime()) / 86400000)}d late`,
                     };
                 }),
