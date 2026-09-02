@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useBankAccounts } from '@/lib/hooks';
 import { BankAccount } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
+import { LEGACY_LEDGER_CLOSED } from '@/lib/legacy-ledger';
 
 const accountTypes = ['Current', 'Savings', 'OD', 'CC', 'UPI'];
 
@@ -68,7 +69,9 @@ export default function BankAccountsPage() {
           opening_balance_date: formData.opening_balance_date
         } as any);
         // Recalculate all transaction balances if opening_balance changed
-        if (editingBank.opening_balance !== formData.opening_balance) {
+        // Renaming an account is master data and stays open; REWRITING every
+        // running balance across bank_transactions is a ledger write.
+        if (editingBank.opening_balance !== formData.opening_balance && !LEGACY_LEDGER_CLOSED) {
           await supabase.rpc('recalculate_account_balances', { p_account_id: editingBank.id });
         }
       } else {
@@ -328,15 +331,26 @@ export default function BankAccountsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">Opening Balance (₹)</label>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Opening Balance (₹)
+                    {LEGACY_LEDGER_CLOSED && (
+                      <span className="block font-normal text-[11px] text-muted-foreground mt-0.5">
+                        Set in Zoho Books. Changing it here would save a figure without
+                        recalculating any balance behind it.
+                      </span>
+                    )}
+                  </label>
                   <input type="number" value={formData.opening_balance || ''}
                     onChange={(e) => setFormData({ ...formData, opening_balance: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2.5 border rounded-md" placeholder="0" />
+                    disabled={LEGACY_LEDGER_CLOSED}
+                    className="w-full px-3 py-2.5 border rounded-md disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+                    placeholder="0" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Balance as on Date</label>
                   <input type="date" value={formData.opening_balance_date}
                     onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
+                    disabled={LEGACY_LEDGER_CLOSED}
                     className="w-full px-3 py-2.5 border rounded-md" />
                 </div>
               </div>

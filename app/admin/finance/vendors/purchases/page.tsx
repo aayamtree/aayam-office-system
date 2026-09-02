@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 import { supabase } from '@/lib/supabase';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const UNITS = ['Kg', 'Piece', 'Sheet', 'Ltr', 'Meter', 'Sqft', 'Box', 'Pack', 'Job'];
@@ -82,6 +84,8 @@ export default function VendorPurchasesPage() {
   };
 
   const submitBillPayment = async () => {
+    if (refuseLegacyWrite('Paying a purchase bill')) return;
+
     if (!payBill) return;
     if (!payForm.amount || payForm.amount <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
     if (!payForm.accountId) { toast.error('Select an account to pay from'); return; }
@@ -182,7 +186,9 @@ export default function VendorPurchasesPage() {
 
   // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
+    // preventDefault FIRST — see the note in expenses/quick.
     e.preventDefault();
+    if (refuseLegacyWrite('Adding or editing a purchase bill')) return;
     if (lineItems.some(it => !it.description.trim())) { toast.error('Fill in description for all items'); return; }
 
     setSubmitting(true);
@@ -255,6 +261,8 @@ export default function VendorPurchasesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (refuseLegacyWrite('Deleting a purchase bill')) return;
+
     const { confirmed } = await confirm({
       title: 'Delete this purchase bill?',
       message: 'The bill is removed for good.',
@@ -302,6 +310,8 @@ export default function VendorPurchasesPage() {
 
   return (
     <div className="space-y-5">
+            <ReadOnlyLedgerBanner what="Adding and paying purchase bills here" />
+
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
         <div className="flex items-center gap-3">

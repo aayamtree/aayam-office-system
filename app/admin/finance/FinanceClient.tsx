@@ -103,8 +103,8 @@ export default function FinanceClient({ data }: Props) {
             stat1: `${navStats.invoices.unpaid} unpaid`,
             stat2: navStats.invoices.overdueCount > 0 ? `${navStats.invoices.overdueCount} overdue` : 'None overdue',
             stat2Red: navStats.invoices.overdueCount > 0,
-            action: 'New Invoice',
-            actionHref: '/admin/finance/invoices?new=true',
+            action: 'Open in Zoho',
+            actionHref: '/admin/finance/zoho',
         },
         {
             href: '/admin/finance/payments',
@@ -116,8 +116,8 @@ export default function FinanceClient({ data }: Props) {
             stat1: formatCompact(navStats.payments.receivedThisMonth),
             stat2: 'received this month',
             stat2Red: false,
-            action: 'Record Payment',
-            actionHref: '/admin/finance/payments?new=true',
+            action: 'Payment proofs',
+            actionHref: '/admin/finance/payment-captures',
         },
         {
             href: '/admin/finance/vendors',
@@ -129,7 +129,7 @@ export default function FinanceClient({ data }: Props) {
             stat1: `${navStats.purchases.pendingBills} bills pending`,
             stat2: navStats.purchases.billsAmount > 0 ? formatCompact(navStats.purchases.billsAmount) + ' due' : 'All clear',
             stat2Red: navStats.purchases.pendingBills > 0,
-            action: 'Add Bill',
+            action: 'Vendors',
             actionHref: '/admin/finance/vendors',
         },
         {
@@ -142,8 +142,8 @@ export default function FinanceClient({ data }: Props) {
             stat1: formatCompact(pnl.totalExpense),
             stat2: `${pnl.expenseCountFY} entries this FY`,
             stat2Red: false,
-            action: 'Log Expense',
-            actionHref: '/admin/finance/expenses/quick',
+            action: 'Open in Zoho',
+            actionHref: '/admin/finance/zoho',
         },
         {
             href: '/admin/finance/reports',
@@ -230,21 +230,25 @@ export default function FinanceClient({ data }: Props) {
                     <p className="text-xs text-muted-foreground">Every figure on this page comes from Zoho Books</p>
                 </div>
                 <div className="flex gap-2">
+                    {/* Was "Record Payment", deep-linking into a form that now
+                        refuses to save. Payments are recorded in Zoho; what the
+                        app uniquely offers is the proof inbox. */}
                     <Link
-                        href="/admin/finance/payments?new=true"
+                        href="/admin/finance/payment-captures"
                         className="flex items-center gap-1.5 bg-muted text-foreground px-3 py-2 rounded-md hover:bg-muted/80 transition-colors font-medium text-sm"
                     >
                         <CreditCard className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Record Payment</span>
-                        <span className="sm:hidden">Payment</span>
+                        <span className="hidden sm:inline">Payment proofs</span>
+                        <span className="sm:hidden">Proofs</span>
                     </Link>
+                    {/* Was "New Invoice" into the app's 2-row invoices table. */}
                     <Link
-                        href="/admin/finance/invoices?new=true"
+                        href="/admin/finance/zoho"
                         className="flex items-center gap-1.5 bg-foreground text-background px-3 py-2 rounded-md hover:bg-foreground/90 transition-colors font-medium text-sm"
                     >
                         <FileText className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">New Invoice</span>
-                        <span className="sm:hidden">Invoice</span>
+                        <span className="hidden sm:inline">Open Zoho Books</span>
+                        <span className="sm:hidden">Zoho</span>
                     </Link>
                 </div>
             </div>

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 
 export default function PaymentsPageNew() {
     const [payments, setPayments] = useState<any[]>([]);
@@ -61,6 +63,7 @@ export default function PaymentsPageNew() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (refuseLegacyWrite('Recording a payment')) return;
         setSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
@@ -117,6 +120,8 @@ export default function PaymentsPageNew() {
 
     return (
         <div className="space-y-4">
+            <ReadOnlyLedgerBanner what="Recording payments here" />
+
             <div className="flex justify-between items-center mb-3 md:mb-1.5">
                 <div>
                     <h1 className="text-page-title">Payments (New)</h1>

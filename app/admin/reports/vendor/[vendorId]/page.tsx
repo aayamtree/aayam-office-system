@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, Phone, Mail, MapPin, Building2, FileText, CreditCard, Scale, Banknote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 
 const fmt = (n: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
@@ -193,6 +194,13 @@ export default function VendorStatementPage() {
     const outstanding = totalBilled - totalPaid;
 
     const handleSaveCash = async () => {
+        // Writes cash_transactions AND moves cash_accounts.current_balance —
+        // the same abandoned ledger, reached from a primary-coloured button on
+        // a statement page. Exactly the double-entry path this closure exists
+        // to remove; it was missed on the first pass because the page lives
+        // under /admin/reports, not /admin/finance.
+        if (refuseLegacyWrite('Recording a cash payment to a vendor')) return;
+
         if (!cashEntry.amount || !cashEntry.cash_account_id || !cashEntry.date) {
             setCashError('Please fill in all required fields.');
             return;

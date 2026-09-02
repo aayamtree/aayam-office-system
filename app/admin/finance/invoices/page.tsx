@@ -29,6 +29,8 @@ import { supabase } from '@/lib/supabase';
 import { useConfirm } from '@/components/ConfirmModal';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 
 export default function InvoicesPage() {
   const confirm = useConfirm();
@@ -200,6 +202,8 @@ export default function InvoicesPage() {
   };
 
   const submitPayment = async () => {
+    if (refuseLegacyWrite('Recording a payment against an invoice')) return;
+
     if (!payInvoice) return;
     if (!payForm.amount || payForm.amount <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
     if (!payForm.accountId) { toast.error('Select a deposit account'); return; }
@@ -633,7 +637,10 @@ export default function InvoicesPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // preventDefault FIRST — see the note in expenses/quick. A guard that
+    // returns before it reloads the page and destroys its own message.
     e.preventDefault();
+    if (refuseLegacyWrite('Creating or editing an invoice')) return;
     setSubmitting(true);
 
     try {
@@ -771,6 +778,8 @@ export default function InvoicesPage() {
 
   // BUG-12: Delete invoice with confirmation
   const handleDeleteInvoice = async (inv: Invoice) => {
+    if (refuseLegacyWrite('Deleting an invoice')) return;
+
     const { confirmed } = await confirm({
       title: `Delete invoice ${inv.invoice_number}?`,
       message: 'The invoice and every line on it are removed for good.',
@@ -883,6 +892,8 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-2 md:space-y-4 lg:space-y-3 md:space-y-6">
+            <ReadOnlyLedgerBanner what="Creating and editing invoices here" />
+
       {/* An empty invoice list reads as "nothing outstanding". If that is a
           failed query rather than the truth, money goes uncollected and the
           totals on this page are wrong. */}

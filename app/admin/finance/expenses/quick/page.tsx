@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Plus, Check, AlertCircle, Pencil, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/ConfirmModal';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 
 // Fallback list only used if the expense_categories table can't be loaded
 const FALLBACK_CATEGORIES = [
@@ -154,6 +156,8 @@ export default function QuickExpensePage() {
     };
 
     const handleDelete = async (expense: any) => {
+        if (refuseLegacyWrite('Deleting an expense')) return;
+
         // Was a native window.confirm on what is a full accounting reversal.
         const { confirmed } = await confirmDialog({
             title: 'Delete this expense?',
@@ -182,7 +186,11 @@ export default function QuickExpensePage() {
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
+        // preventDefault FIRST. Returning before it lets the browser submit the
+        // form natively: the page reloads, the refusal toast is destroyed with
+        // it, and the form is wiped — the visual signature of a SUCCESSFUL save.
         e.preventDefault();
+        if (refuseLegacyWrite('Recording an expense')) return;
         setLoading(true);
         setError('');
         setSuccess('');
@@ -258,6 +266,8 @@ export default function QuickExpensePage() {
 
     return (
         <div className="space-y-2 md:space-y-6 pb-16 md:pb-20">
+            <ReadOnlyLedgerBanner what="Quick Expense" />
+
             {/* Header */}
             <div className="flex items-center gap-3 md:gap-4">
                 <button

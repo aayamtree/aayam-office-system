@@ -7,6 +7,8 @@ import {
     BookText, ChevronDown, ChevronRight, Search,
     Plus, X
 } from 'lucide-react';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 
 interface JournalEntry {
     id: string;
@@ -145,7 +147,10 @@ export default function JournalPage() {
     };
 
     const handleSubmitManual = async (e: React.FormEvent) => {
+        // preventDefault before the guard, and the guard before setSaving —
+        // otherwise the page reloads, or the button spins forever.
         e.preventDefault();
+        if (refuseLegacyWrite('Posting a manual journal entry')) return;
         setSavingManual(true);
 
         try {
@@ -232,6 +237,8 @@ export default function JournalPage() {
 
     return (
         <div className="space-y-4 md:space-y-6 animate-fade-in pb-16 md:pb-20">
+            <ReadOnlyLedgerBanner what="Posting journal entries" />
+
             {/* Header */}
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>

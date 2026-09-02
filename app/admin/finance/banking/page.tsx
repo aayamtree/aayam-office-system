@@ -17,6 +17,7 @@ import { useExpenseCategories, useIncomeCategories } from '@/lib/categorization-
 import { useTransactionCategorization } from '@/lib/categorization-hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 import { supabase } from '@/lib/supabase';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 
 export default function BankingPage() {
     const [selectedAccountId, setSelectedAccountId] = useState('');
@@ -99,7 +100,11 @@ export default function BankingPage() {
             requireExactInput: 'DELETE',
         });
         if (!confirmed) return;
-        await deleteTransaction(txn.id);
+        // The return value used to be discarded, so a refused delete left the
+        // row in place and said nothing — the operator typed DELETE and watched
+        // nothing happen.
+        const { error } = await deleteTransaction(txn.id);
+        if (error) toast.error(error);
     };
     const {
         transactions: bankTxns,
@@ -288,7 +293,7 @@ export default function BankingPage() {
         if (!confirmed) return;
         const { error } = await uncategorizeTransaction(txn.id);
         if (error) {
-            toast.error(`Error: ${error}`);
+            toast.error(String(error));
         } else {
             toast.success('Categorization removed');
         }
@@ -330,6 +335,8 @@ export default function BankingPage() {
     // ------------------------------------------------------------------
     return (
         <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
+            <ReadOnlyLedgerBanner what="Categorising bank transactions" />
+
             {/* Header - Responsive */}
             <div className="flex flex-col gap-3 md:gap-4">
                 <div>
@@ -577,7 +584,10 @@ export default function BankingPage() {
                                             {/* Toggle Ignore */}
                                             {txn.status === 'ignored' ? (
                                                 <button
-                                                    onClick={() => updateTransaction(txn.id, { reference_type: null })}
+                                                    onClick={async () => {
+                                                        const { error } = await updateTransaction(txn.id, { reference_type: null });
+                                                        if (error) toast.error(error);
+                                                    }}
                                                     className="p-1.5 hover:bg-muted text-gray-400 hover:text-foreground rounded-md transition-colors"
                                                     title="Un-ignore (Track again)"
                                                 >
@@ -585,7 +595,10 @@ export default function BankingPage() {
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => updateTransaction(txn.id, { reference_type: 'ignored' })}
+                                                    onClick={async () => {
+                                                        const { error } = await updateTransaction(txn.id, { reference_type: 'ignored' });
+                                                        if (error) toast.error(error);
+                                                    }}
                                                     className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
                                                     title="Ignore (Don't track)"
                                                 >

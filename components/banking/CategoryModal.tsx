@@ -442,7 +442,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
 
         const { error } = await categorizeTransaction(transaction.id, categorizationData);
         if (error) {
-            toast.error(`Error: ${error}`);
+            toast.error(String(error));
         } else {
             toast.success(isEditMode ? 'Updated successfully' : 'Transaction categorized!');
             onSuccess();
@@ -456,7 +456,7 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
         try {
             const createFn = transactionType === 'expense' ? createExpenseCategory : createIncomeCategory;
             const { data, error } = await createFn(newCategoryName.trim());
-            if (error) { toast.error(`Error: ${error}`); }
+            if (error) { toast.error(String(error)); }
             else if (data) {
                 setSelectedCategory(data.id);
                 setNewCategoryName('');

@@ -12,6 +12,7 @@ import { Vendor } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
+import { LEGACY_LEDGER_CLOSED } from '@/lib/legacy-ledger';
 
 interface VendorCategory { id: string; name: string; color: string; }
 
@@ -124,6 +125,13 @@ export default function VendorsPage() {
   // in the normal payables workflow (matches Zoho Books behavior).
   // Marker: purchase_bills.product_type = 'Opening Balance'.
   const upsertOpeningBalanceBill = async (vendorId: string, amount: number, asOfDate: string | null) => {
+    // The vendor MASTER stays fully editable — it is live data the whole app
+    // uses. Only this side effect is retired: it writes a purchase_bills row,
+    // and purchase_bills is the abandoned ledger (5 rows against Zoho's 608).
+    // Guarded silently, with no toast: the person is saving a vendor, not a
+    // bill, and a refusal about bills would be baffling. Their vendor edit
+    // still saves.
+    if (LEGACY_LEDGER_CLOSED) return { error: null };
     // Find an existing opening balance bill for this vendor
     const { data: existing } = await supabase
       .from('purchase_bills')
@@ -211,6 +219,10 @@ export default function VendorsPage() {
         : Number(obRaw) || 0;
       const opening_balance_date = formData.opening_balance_date || null;
 
+      // opening_balance is still written on every save — but the input is
+      // disabled, so it can only ever carry the value already on the vendor
+      // (or 0 for a new one). Nothing new can be entered, so it can no longer
+      // drift away from purchase_bills.
       const basePayload: any = {
         ...formData,
         payment_terms,
@@ -511,7 +523,8 @@ export default function VendorsPage() {
                       placeholder="0.00"
                       value={formData.opening_balance || ''}
                       onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md"
+                      disabled={LEGACY_LEDGER_CLOSED}
+                      className="w-full px-3 py-2 border rounded-md disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -520,12 +533,15 @@ export default function VendorsPage() {
                       type="date"
                       value={formData.opening_balance_date}
                       onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md"
+                      disabled={LEGACY_LEDGER_CLOSED}
+                      className="w-full px-3 py-2 border rounded-md disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
                 <p className="text-[11px] text-gray-500 mt-1">
-                  Amount you already owe this vendor when adding them. Leave blank or 0 if none.
+                  {LEGACY_LEDGER_CLOSED
+                    ? 'Opening balances are set in Zoho Books now. This field is disabled because the bill it used to create lives in the old ledger — leaving it editable would save a number with nothing behind it. Everything else on this form still saves normally.'
+                    : 'Amount you already owe this vendor when adding them. Leave blank or 0 if none.'}
                 </p>
               </div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 border rounded-md">Cancel</button><button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 flex items-center justify-center gap-2 shadow-sm font-semibold">{saving && <Loader2 className="w-4 h-4 md:w-4.5 md:h-4.5 animate-spin" />}{isEditing ? 'Update' : 'Add'}</button></div>

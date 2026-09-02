@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
+import { refuseLegacyWriteAsError } from '@/lib/legacy-ledger';
 
 // =====================================================
 // TYPES
@@ -440,6 +441,10 @@ export function useTransactionCategorization() {
         transactionId: string,
         categorization: TransactionCategorization
     ) => {
+        // Guarded HERE rather than in the modal, because this hook is the one
+        // chokepoint both the Banking page and CategoryModal go through.
+        const refused = refuseLegacyWriteAsError('Categorising a bank transaction');
+        if (refused) return refused;
         try {
             setSaving(true);
 
@@ -554,6 +559,8 @@ export function useTransactionCategorization() {
     };
 
     const uncategorizeTransaction = async (transactionId: string) => {
+        const refused = refuseLegacyWriteAsError('Undoing a categorisation');
+        if (refused) return refused;
         try {
             setSaving(true);
 

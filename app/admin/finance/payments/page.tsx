@@ -5,6 +5,8 @@ import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { Plus, X, Loader2, ArrowDownRight, ArrowUpRight, Building2, Tag } from 'lucide-react';
 import { logActivity } from '@/lib/logger';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 
 export default function PaymentsPageNew() {
     const [payments, setPayments] = useState<any[]>([]);
@@ -138,7 +140,11 @@ export default function PaymentsPageNew() {
     const bankTxnCount = payments.filter(p => p.source === 'banking').length;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        // preventDefault FIRST. This form's inputs are named and read via
+        // FormData, so a native submit would also echo the amount and client
+        // into the URL.
         e.preventDefault();
+        if (refuseLegacyWrite('Recording a payment')) return;
         setSubmitting(true);
 
         const formData = new FormData(e.currentTarget);
@@ -221,6 +227,8 @@ export default function PaymentsPageNew() {
 
     return (
         <div className="space-y-4">
+            <ReadOnlyLedgerBanner what="Recording payments here" />
+
             {/* Header - Stack on mobile */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 md:mb-1.5">
                 <div>

@@ -15,6 +15,7 @@ import { logActivity } from './logger';
 import { autoProgressJob } from './job-auto-progress';
 import { getProjectTypeCode } from './job-workflow';
 import { upsertAutoCalendarEvent } from './calendar-auto-events';
+import { refuseLegacyWriteAsError } from '@/lib/legacy-ledger';
 
 // Generic hook for fetching data
 export interface UseSupabaseQueryOptions {
@@ -1011,6 +1012,12 @@ export function useBankAccounts() {
   };
 
   const deleteBankAccount = async (id: string) => {
+    // bank_transactions.bank_account_id is ON DELETE CASCADE, so deleting one
+    // account erases its whole statement history. legacy-ledger promises the
+    // July data stays readable; this is the one path that could break it, and
+    // grepping for writes to bank_transactions never finds it.
+    const refused = refuseLegacyWriteAsError('Deleting a bank account');
+    if (refused) return refused;
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     const { error } = await supabase
@@ -1124,6 +1131,11 @@ export function useBankTransactions(accountId?: string) {
   const { data, loading, error, refetch } = useSupabaseQuery<BankTransaction>('bank_transactions', options as any);
 
   const importTransactions = async (transactions: Omit<BankTransaction, 'id' | 'created_at'>[]) => {
+    // Importing a statement here is the front door of the app's own bank
+    // reconciliation — the flow that produced the ledger nobody has used since
+    // July. Statements go to Zoho now, and this app mirrors them from there.
+    const refused = refuseLegacyWriteAsError('Importing a bank statement');
+    if (refused) return refused;
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
 
     const { data: result, error } = await supabase
@@ -1136,6 +1148,8 @@ export function useBankTransactions(accountId?: string) {
   };
 
   const deleteTransaction = async (id: string) => {
+    const refused = refuseLegacyWriteAsError('Deleting a bank transaction');
+    if (refused) return refused;
     const { error } = await supabase
       .from('bank_transactions')
       .delete()
@@ -1145,6 +1159,8 @@ export function useBankTransactions(accountId?: string) {
   };
 
   const updateTransaction = async (id: string, updates: Partial<BankTransaction>) => {
+    const refused = refuseLegacyWriteAsError('Editing a bank transaction');
+    if (refused) return refused;
     const { error } = await supabase
       .from('bank_transactions')
       .update(updates)

@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { Building2, Wallet, Plus, RefreshCw, ArrowLeftRight, ChevronDown } from 'lucide-react';
 import { useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { refuseLegacyWrite } from '@/lib/legacy-ledger';
+import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 
 // Transfer types config
 const TRANSFER_TYPES = [
@@ -52,6 +54,8 @@ export default function AccountsPage() {
 
     return (
         <div className="space-y-3 md:space-y-6 px-2 animate-fade-in pb-16 md:pb-20">
+            <ReadOnlyLedgerBanner what="Transfers and balance adjustments" />
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 md:gap-4">
                 <div>
@@ -289,6 +293,11 @@ function TransferModal({
         if (!formData.from_account_id) { toast.error('Please select an account'); return; }
         if (!isAdjust && !formData.to_account_id) { toast.error('Please select a destination account'); return; }
         if (!isAdjust && formData.from_account_id === formData.to_account_id) { toast.error('Source and destination must be different'); return; }
+
+        // A transfer — and especially "Adjust balance", which posts an
+        // arbitrary signed delta — is a money movement in the old ledger, not
+        // account master data. Adding or renaming an account stays open.
+        if (refuseLegacyWrite('Recording a transfer or balance adjustment')) return;
 
         setSaving(true);
         try {
