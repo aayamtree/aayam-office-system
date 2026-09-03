@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Bell, Menu, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { Bell, Menu, ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import NotificationBell from '@/components/NotificationBell';
@@ -214,6 +214,23 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
     if (showNotifications) fetchNotifications();
   }, [showNotifications, fetchNotifications]);
 
+  // Has this tab navigated inside the app yet? window.history.length cannot
+  // answer that — it counts the whole tab's history, including whatever the
+  // person was looking at before. A counter of our own is the only honest test
+  // of "is there somewhere of OURS to go back to".
+  const [canGoBack, setCanGoBack] = useState(false);
+  useEffect(() => {
+    try {
+      const seen = Number(sessionStorage.getItem('oms_nav_depth') || '0');
+      setCanGoBack(seen > 0);
+      sessionStorage.setItem('oms_nav_depth', String(seen + 1));
+    } catch {
+      // Private window or storage blocked: fall back to stepping up a level,
+      // which needs no history at all.
+      setCanGoBack(false);
+    }
+  }, [pathname]);
+
   // Generate Breadcrumbs
   const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
@@ -234,20 +251,47 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
       'purchase-bills': 'Purchase Bills',
     };
 
-    const breadcrumbs = pathSegments
-      .filter(segment => !isUUID(segment)) // hide raw UUIDs — page content shows the name clearly
-      .map((segment) => {
-        // rebuild href using the original full path up to this segment's position
-        const originalIndex = pathSegments.indexOf(segment);
-        const href = '/admin/' + pathSegments.slice(0, originalIndex + 1).join('/');
-        const label = segmentLabels[segment] || segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        return { label, href };
-      });
+    const breadcrumbs: { label: string; href: string }[] = [];
+    pathSegments.forEach((segment, i) => {
+      // The link is built from this segment's REAL position in the path. It
+      // used to use indexOf(segment), which returns the FIRST match — so any
+      // repeated segment (…/reports/…/reports) silently linked to the wrong
+      // level, and the trail sent you somewhere you had never been.
+      const href = '/admin/' + pathSegments.slice(0, i + 1).join('/');
+      // Raw UUIDs are hidden — the page itself names the record — but they
+      // still count toward the path above them.
+      if (isUUID(segment)) return;
+      const label = segmentLabels[segment]
+        || segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      breadcrumbs.push({ label, href });
+    });
 
     return [{ label: 'Dashboard', href: '/admin/dashboard' }, ...breadcrumbs];
   };
 
   const breadcrumbs = generateBreadcrumbs();
+
+  // ── GOING BACK ──────────────────────────────────────────────────────────
+  // This app is opened as a Chrome app window: no address bar, and no browser
+  // back button. Once you are two or three levels in, the ONLY way out is to
+  // find the right sidebar entry — and if the screen you are on is not in the
+  // sidebar (many are not), there is no way out at all. This button is that
+  // way out, and it is on every screen in the system, not one section.
+  //
+  // It answers "where was I", so it uses real history first. But someone
+  // arriving from a Telegram link, a bookmark or a shared URL has no history
+  // inside the app, and router.back() would throw them out of it entirely —
+  // so with no history it steps ONE LEVEL UP the trail instead, which always
+  // lands somewhere inside the app.
+  const isHome = pathname === '/admin' || pathname === '/admin/dashboard';
+  const upOneLevel = breadcrumbs.length > 1
+    ? breadcrumbs[breadcrumbs.length - 2]
+    : { label: 'Dashboard', href: '/admin/dashboard' };
+
+  const goBack = () => {
+    if (canGoBack) router.back();
+    else router.push(upOneLevel.href);
+  };
 
   return (
     <>
@@ -263,6 +307,21 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
           >
             <Menu className="h-5 w-5" strokeWidth={1} />
           </Button>
+
+          {/* Hidden only on the dashboard, which is the top — everywhere else
+              in the system this is present and does the same thing. */}
+          {!isHome && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goBack}
+              aria-label={canGoBack ? 'Go back' : `Up to ${upOneLevel.label}`}
+              title={canGoBack ? 'Back' : `Up to ${upOneLevel.label}`}
+              className="flex-shrink-0 h-9 w-9 -ml-1 mr-0.5"
+            >
+              <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+            </Button>
+          )}
 
           <nav className="flex items-center overflow-x-auto scrollbar-hide whitespace-nowrap">
             {breadcrumbs.map((crumb, index) => {
