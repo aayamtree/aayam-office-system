@@ -7,7 +7,7 @@ import { getStageName } from '@/lib/job-workflow';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
-  Calendar, User, Package, IndianRupee, Truck, CheckCircle,
+  Calendar, Package, IndianRupee, Truck, CheckCircle,
   AlertCircle, ChevronRight, Briefcase, ExternalLink,
   Upload, CreditCard, Banknote, Smartphone, ChevronDown, Tag
 } from 'lucide-react';
@@ -448,19 +448,21 @@ export default function OrdersPage() {
   };
 
   const getStatusColor = (status: string) => {
+    // Three meanings, not ten decorations: quiet = work in progress,
+    // solid orange = a person has to do something, green = finished.
     const colors: Record<string, string> = {
       'new': 'bg-muted text-foreground',
-      'designing': 'bg-gray-900 text-white',
-      'approval': 'bg-amber-100 text-amber-700',
-      'printing': 'bg-gray-900 text-white',
-      'finishing': 'bg-pink-100 text-pink-700',
-      'quality_check': 'bg-orange-100 text-orange-700',
-      'ready': 'bg-gray-100 text-gray-900',
-      'dispatched': 'bg-cyan-100 text-cyan-700',
-      'delivered': 'bg-gray-100 text-gray-700',
-      'cancelled': 'bg-red-100 text-red-700',
+      'designing': 'bg-primary/10 text-primary',
+      'approval': 'bg-amber-100 text-amber-900',
+      'printing': 'bg-primary/10 text-primary',
+      'finishing': 'bg-primary/10 text-primary',
+      'quality_check': 'bg-amber-100 text-amber-900',
+      'ready': 'bg-emerald-50 text-emerald-800',
+      'dispatched': 'bg-emerald-50 text-emerald-800',
+      'delivered': 'bg-emerald-100 text-emerald-800',
+      'cancelled': 'bg-destructive/10 text-destructive',
     };
-    return colors[status] || 'bg-gray-100 text-gray-700';
+    return colors[status] || 'bg-muted text-muted-foreground';
   };
 
   // Helper to get category name from ID
@@ -654,90 +656,120 @@ export default function OrdersPage() {
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden lg:block bg-white rounded-md border border-gray-100 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50/50 border-b border-gray-100">
+            <div className="hidden lg:block bg-card rounded-md border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+              {/* Explicit column widths. Without them the browser hands the
+                  unbreakable project-name string over half the table and
+                  squeezes the rest until the status wraps to three lines and
+                  the Actions column falls off the right edge. */}
+              <table className="w-full table-fixed min-w-[68rem]">
+                <colgroup>
+                  <col />
+                  <col className="w-48" />
+                  <col className="w-36" />
+                  <col className="w-32" />
+                  <col className="w-52" />
+                  <col className="w-32" />
+                </colgroup>
+                <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Info</th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Client</th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery</th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Delivery</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-border/60">
                   {filteredJobs.map((job) => (
-                    <tr key={job.id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4 align-top">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900 font-mono text-sm bg-gray-100 px-2 py-1 rounded-md">{job.job_number}</span>
-                          {job.priority === 'urgent' && <span className="text-xs font-bold uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-md">Urgent</span>}
-                          {job.priority === 'high' && <span className="text-xs font-bold uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">High</span>}
-                          {job.priority === 'normal' && <span className="text-xs font-medium uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">Normal</span>}
-                        </div>
-                        <div className="font-semibold text-gray-800">
-                          {job.project_name}
+                    <tr key={job.id} className="hover:bg-muted/40 transition-colors group">
+                      {/* align-middle everywhere: with align-top each column started
+                          its own stack at the top and nothing shared a line. */}
+                      <td className="px-4 py-3 align-middle">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-0.5 min-w-0">
+                          <span className="font-mono text-xs font-medium text-foreground bg-muted px-1.5 py-0.5 rounded">{job.job_number}</span>
+                          {job.priority === 'urgent' && <span className="text-[10px] font-semibold uppercase tracking-wide text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Urgent</span>}
+                          {job.priority === 'high' && <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">High</span>}
+                          {job.priority === 'normal' && <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap">Normal</span>}
                           {getCategoryName(job) && (
-                            <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                              <Tag className="w-3 h-3" />{getCategoryName(job)}
+                            <span className="inline-flex items-center gap-1 max-w-[10rem] text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full whitespace-nowrap" title={getCategoryName(job)}>
+                              <Tag className="w-2.5 h-2.5 shrink-0" /><span className="truncate">{getCategoryName(job)}</span>
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{job.quantity} items</div>
+                        {/* The project name is a single unbreakable token, so it
+                            truncates on one line; the full text is on hover. */}
+                        <div className="flex items-baseline gap-1.5 text-sm text-muted-foreground min-w-0">
+                          <span className="truncate" title={job.project_name}>{job.project_name}</span>
+                          <span className="shrink-0 whitespace-nowrap">· {job.quantity} item{Number(job.quantity) === 1 ? '' : 's'}</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-gray-900">{job.client?.company || job.client?.name || '-'}</div>
-                        {job.client?.company && (
-                          <div className="text-sm text-gray-500 flex items-center gap-1">
-                            <User className="w-3 h-3" /> {job.client?.name}
-                          </div>
-                        )}
+                      <td className="px-4 py-3 align-middle">
+                        <div className="font-medium text-foreground truncate" title={job.client?.company || job.client?.name || ''}>{job.client?.company || job.client?.name || '—'}</div>
                         {(() => {
                           const tag = getSourceTag(job);
                           return (
-                            <div className="mt-1.5 flex items-center gap-1.5">
-                              <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md ${tag.className}`}>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                              <span className={`inline-flex items-center shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${tag.className}`}>
                                 {tag.label}
                               </span>
-                              {tag.shortName && (
-                                <span className="text-xs text-gray-400">{tag.shortName}</span>
-                              )}
+                              <span className="truncate" title={[job.client?.company ? job.client?.name : null, tag.shortName].filter(Boolean).join(' · ')}>
+                                {[job.client?.company ? job.client?.name : null, tag.shortName].filter(Boolean).join(' · ')}
+                              </span>
                             </div>
                           );
                         })()}
                       </td>
-                      <td className="px-6 py-4 align-top">
-                        <div className="font-bold text-gray-900">{formatCurrency(job.total_amount)}</div>
-                        {job.payment_status !== 'paid' && (
-                          <span className="text-label text-destructive bg-white px-2 py-0.5 rounded-md mt-1 inline-block">
-                            Due: {formatCurrency(job.total_amount - job.amount_received)}
+                      <td className="px-4 py-3 align-middle text-right">
+                        {(() => {
+                          const total = Number(job.total_amount || 0);
+                          const paid = Number(job.amount_received || 0);
+                          const due = total - paid;
+                          return (
+                            <>
+                              <div className={`tabular-nums font-semibold whitespace-nowrap ${total > 0 ? 'text-foreground' : 'text-muted-foreground font-medium'}`}>
+                                {formatCurrency(total)}
+                              </div>
+                              {/* Unpaid still SAYS unpaid even when nobody priced the
+                                  job — but only a real balance gets alarm colour, or
+                                  a red "Due 0" on every row teaches people to ignore red. */}
+                              {job.payment_status !== 'paid' && (
+                                <div className={`text-xs tabular-nums whitespace-nowrap mt-0.5 ${due > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                  {due > 0 ? `Due ${formatCurrency(due)}` : due < 0 ? `Advance ${formatCurrency(-due)}` : 'Unpaid'}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        {job.client_deadline ? (
+                          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums whitespace-nowrap">
+                            <Calendar className="w-3.5 h-3.5 text-muted-foreground/70" />
+                            {formatDate(job.client_deadline)}
                           </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground/60">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 align-top">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md w-fit">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          {job.client_deadline ? formatDate(job.client_deadline) : '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 align-top">
-                        <span className={`px-3 py-1 text-xs font-semibold rounded-md ${getStatusColor(job.current_stage)}`}>
+                      <td className="px-4 py-3 align-middle">
+                        <span className={`inline-block max-w-full truncate px-2.5 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(job.current_stage)}`} title={getStageName(job.current_stage)}>
                           {getStageName(job.current_stage)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 align-middle text-right">
-                        <div className="flex items-center justify-end gap-2 text-gray-500">
-                          <button onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
-                            <Eye className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                      <td className="px-4 py-3 align-middle text-right">
+                        <div className="flex items-center justify-end gap-1 text-muted-foreground">
+                          <button title="View" aria-label="View order" onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }} className="p-1.5 hover:bg-muted rounded-md hover:text-foreground transition-colors">
+                            <Eye className="w-4 h-4" />
                           </button>
                           {profile?.role !== 'marketing' && (
                             <>
-                              <button onClick={() => handleEdit(job)} className="p-2 hover:bg-gray-100 rounded-md hover:text-gray-900 transition-colors">
-                                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                              <button title="Edit" aria-label="Edit order" onClick={() => handleEdit(job)} className="p-1.5 hover:bg-muted rounded-md hover:text-foreground transition-colors">
+                                <Edit className="w-4 h-4" />
                               </button>
-                              <button onClick={(e) => handleDelete(job.id, e)} className="p-2 hover:bg-red-50 rounded-md hover:text-red-500 transition-colors">
-                                <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
+                              <button title="Delete" aria-label="Delete order" onClick={(e) => handleDelete(job.id, e)} className="p-1.5 hover:bg-destructive/10 rounded-md hover:text-destructive transition-colors">
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </>
                           )}
@@ -747,6 +779,7 @@ export default function OrdersPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </>
         )}
