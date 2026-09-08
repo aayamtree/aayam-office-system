@@ -160,6 +160,48 @@ function cashFallbackDate(
     return new Date(messageDate * 1000).toISOString().slice(0, 10);
 }
 
+/**
+ * When the reader says "not a payment" but the line carries a figure, work out
+ * what it WOULD be, so the bot can ask a real question instead of a vague one.
+ *
+ * This is a proposal, never a record. Nothing is written to the books from it;
+ * a person taps a button and chooses cash or bank, and only then does a capture
+ * become live. That is the whole reason it is allowed to be this crude.
+ *
+ * The case it exists for (2026-09-08): "278 cable lable sticker from amazon".
+ * No "paid", no "cash", no "Rs" — and 278 sits directly in front of a countable
+ * noun, so "278 stickers" is a perfectly good reading of it, and in a printing
+ * business arguably the better one. The reader was not being stupid; the
+ * sentence genuinely says both. Asking is the only honest way through that.
+ *
+ * Dates are removed first: "12-09-26 to 12-09-27" must never be read as ₹12.
+ */
+function proposeFromText(text: string): { amount: number; description: string } | null {
+    if (!text) return null;
+    const withoutDates = text.replace(/\b\d{1,4}[-/.]\d{1,2}[-/.]\d{2,4}\b/g, ' ');
+    // Three things this regex has to get right, each learned by testing it
+    // against real messages from the group:
+    //   - the comma branch must REQUIRE a comma (+ not *), or "65000" matches
+    //     only its first three digits and ₹65,000 is proposed as ₹650;
+    //   - the number must not be glued to what precedes it, or the 0809001 in
+    //     job number DP-0809001 becomes a payment;
+    //   - nor to what follows it, for the same reason.
+    const m = withoutDates.match(
+        /(?:^|[\s(])(?:₹|rs\.?\s*)?(\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![\w-])/i
+    );
+    if (!m) return null;
+    const amount = Number(m[1].replace(/,/g, ''));
+    // Below 10 is far more likely a count than a payment; above a crore, a
+    // reference number that lost its label.
+    if (!Number.isFinite(amount) || amount < 10 || amount > 10_000_000) return null;
+    const description = withoutDates
+        .replace(m[0], ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (!description) return null;
+    return { amount, description };
+}
+
 function looksLikeMoney(text: string): boolean {
     if (!text) return false;
     // Any run of 2+ digits, or 1+ digits next to a money word/symbol.
@@ -389,19 +431,51 @@ export async function handlePaymentText(db: SupabaseClient, message: any): Promi
             //
             // The test is deliberately dumber than the reader: a number that
             // could be an amount, or a money word. "ok", "send the file",
-            // "good morning" stay silent. Anything with a figure in it gets one
-            // line and a button, because a wrongly-dropped payment costs far
-            // more than a wrongly-asked question.
+            // "good morning" stay silent. Anything with a figure in it gets a
+            // question, because a wrongly-dropped payment costs far more than a
+            // wrongly-asked question.
+            //
+            // The question is SPECIFIC where it can be. This group is called
+            // Payment, so a bare figure in it probably is rupees — but probably
+            // is not good enough to write into the books, and "500 stickers
+            // ready for dispatch" must never become ₹500. So the bot proposes a
+            // reading and a person confirms it, choosing cash or bank, because
+            // that decides which queue it belongs in and only they know.
             if (looksLikeMoney(text)) {
-                await reply(
-                    chatId,
-                    `🤔 I could not read a payment in that, so I have set it aside.\n\n` +
-                    `<i>${escapeHtml(text.slice(0, 200))}</i>\n\n` +
-                    `If it was a payment, tap below and it will wait for you in ` +
-                    `Finance → Payment Captures.`,
-                    messageId,
-                    [[{ text: '💰 It was a payment', callback_data: `pc:${packId(captureId)}:0:p` }]],
-                );
+                const guess = proposeFromText(text);
+                const hex = packId(captureId);
+                if (guess) {
+                    // Kept on the row so the button does not have to carry it:
+                    // callback_data is capped at 64 bytes and Telegram drops the
+                    // whole message, silently, if any button exceeds it.
+                    await db.from('payment_captures')
+                        .update({ extraction_raw: { auto_rejected: true, proposed: guess } as any })
+                        .eq('id', captureId);
+                    await reply(
+                        chatId,
+                        `🤔 I could not tell whether that was a payment.\n\n` +
+                        `Did you pay <b>₹${guess.amount.toLocaleString('en-IN')}</b> ` +
+                        `for <i>${escapeHtml(guess.description.slice(0, 120))}</i>?\n\n` +
+                        `<i>If ${guess.amount.toLocaleString('en-IN')} was a quantity and not money, ` +
+                        `just tap "Not a payment".</i>`,
+                        messageId,
+                        [
+                            [{ text: `💵 Yes — cash`, callback_data: `pc:${hex}:0:p` }],
+                            [{ text: `🏦 Yes — from bank`, callback_data: `pc:${hex}:0:b` }],
+                            [{ text: '🚫 Not a payment', callback_data: `pc:${hex}:0:x` }],
+                        ],
+                    );
+                } else {
+                    await reply(
+                        chatId,
+                        `🤔 I could not read a payment in that, so I have set it aside.\n\n` +
+                        `<i>${escapeHtml(text.slice(0, 200))}</i>\n\n` +
+                        `If it was a payment, tap below and finish it in ` +
+                        `Finance → Payment Captures.`,
+                        messageId,
+                        [[{ text: '💰 It was a payment', callback_data: `pc:${hex}:0:p` }]],
+                    );
+                }
             }
             return false;
         }
@@ -617,7 +691,7 @@ export async function handlePaymentCallback(db: SupabaseClient, query: any): Pro
 
     const { data: capture } = await db
         .from('payment_captures')
-        .select('id, amount, paid_to, paid_from, txn_date, bank_name, reference_number, gateway_status, payment_method, extraction_confidence, status, direction, needs_bank_match, offered_choices, choices_rev, zoho_bank_transaction_id')
+        .select('id, amount, paid_to, paid_from, txn_date, bank_name, reference_number, gateway_status, payment_method, extraction_confidence, status, direction, needs_bank_match, offered_choices, choices_rev, zoho_bank_transaction_id, extraction_raw, raw_text, created_at')
         .eq('id', captureId)
         .maybeSingle();
     if (!capture) { await answer('That capture no longer exists.'); return true; }
@@ -668,20 +742,54 @@ export async function handlePaymentCallback(db: SupabaseClient, query: any): Pro
         return true;
     }
 
-    // "It was a payment" — overruling an automatic rejection. Reopens the row
-    // so it appears in the inbox with whatever text was posted; a person fills
-    // in the amount there. Nothing is guessed on their behalf.
-    if (action === 'p') {
-        await db.from('payment_captures').update({
+    // Overruling an automatic rejection. 'p' = it was cash, 'b' = it came out of
+    // the bank. The split is not decoration: cash never reaches a bank feed and
+    // must stay out of the unconfirmed list, while a bank payment must stay IN
+    // it until a statement line proves it. Only the person who paid knows which,
+    // so the button asks rather than the code guessing.
+    if (action === 'p' || action === 'b') {
+        const wasCash = action === 'p';
+        const proposed = (capture as any).extraction_raw?.proposed as
+            { amount?: number; description?: string } | undefined;
+
+        const patch: Record<string, unknown> = {
             status: 'pending',
-            needs_bank_match: false,
+            needs_bank_match: !wasCash,
+            confirmed_by: actorId,
+            confirmed_at: new Date().toISOString(),
             notes: 'Reopened from Telegram — the reader had set it aside',
-            confirmed_by: actorId, confirmed_at: new Date().toISOString(),
-        }).eq('id', captureId);
-        await answer('Reopened. Finish it in Finance → Payment Captures.');
+        };
+
+        // Only fill in what a person just vouched for by tapping. If there was
+        // no proposal on the row, the capture reopens empty and is completed in
+        // the app — an empty row in the inbox is honest; a guessed amount is not.
+        if (proposed?.amount) {
+            patch.amount = proposed.amount;
+            patch.currency = 'INR';
+            patch.direction = 'out';
+            patch.paid_to = proposed.description?.slice(0, 120) || null;
+            patch.extraction_confidence = 'low';
+        }
+        if (wasCash) {
+            patch.payment_method = 'cash';
+            // Same rule as a typed cash entry: the message's own date, because
+            // cash has no receipt and no statement can contradict it. Bank
+            // payments deliberately get nothing — see cashFallbackDate.
+            const posted = (capture as any).created_at;
+            if (posted) patch.txn_date = new Date(posted).toISOString().slice(0, 10);
+        }
+
+        await db.from('payment_captures').update(patch).eq('id', captureId);
+        await answer(wasCash ? 'Recorded as cash.' : 'Recorded — waiting for the bank line.');
         if (chatId) await tg('editMessageText', {
             chat_id: chatId, message_id: query.message.message_id,
-            text: '💰 Reopened — waiting for you in Finance → Payment Captures.',
+            text: proposed?.amount
+                ? `${wasCash ? '💵' : '🏦'} Recorded ₹${Number(proposed.amount).toLocaleString('en-IN')}` +
+                  ` — ${esc(proposed.description || '')}.` +
+                  (wasCash
+                      ? ' Cash, so it goes on the "To enter in Zoho" list.'
+                      : ' Waiting for a matching line in the bank statement.')
+                : '💰 Reopened — waiting for you in Finance → Payment Captures.',
             parse_mode: 'HTML',
         });
         return true;
