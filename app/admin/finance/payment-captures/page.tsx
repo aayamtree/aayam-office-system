@@ -283,6 +283,32 @@ export default function PaymentCapturesPage() {
         return feedThrough < since.toISOString().slice(0, 10);
     }, [feedThrough, feedError]);
 
+    // How far behind the bank statement actually is, and how to say it.
+    //
+    // feedBlind above only fires at 30 days, which is right for "this page can
+    // tell you nothing" — but on 2026-09-08 the feed had stopped on 28 August,
+    // eleven days earlier, and because eleven is under thirty every card
+    // cheerfully said "usually next day". Four payments worth ₹3.8 lakh were
+    // sitting under that reassurance. Nothing was wrong with the app; the
+    // statement simply had not been uploaded, and the screen was the last place
+    // that would have told anyone.
+    //
+    // So the card no longer states a habit ("usually next day"). It states the
+    // fact: the date the statement stops, and how old that is.
+    const feedAge = useMemo(() => {
+        if (!feedThrough) return null;
+        const through = new Date(`${feedThrough}T00:00:00Z`);
+        if (Number.isNaN(through.getTime())) return null;
+        const days = Math.floor((Date.now() - through.getTime()) / 86_400_000);
+        return {
+            days,
+            label: through.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+            // One day behind is normal: the statement is uploaded the next
+            // morning. Beyond two, silence is no longer reassurance.
+            stale: days > 2,
+        };
+    }, [feedThrough]);
+
     const stale = useMemo(() => {
         if (feedBlind) return [] as Capture[];
         // Whichever is EARLIER: the ordinary 3-day grace, or how far the bank
@@ -573,8 +599,18 @@ export default function PaymentCapturesPage() {
                                         independently, a dateless row showed this reassurance
                                         for ever while the banner above called it out. */}
                                     {waiting && c.needs_bank_match && !c.extraction_error && !flaggedIds.has(c.id) && (
-                                        <p className="text-[11px] mt-1 text-muted-foreground flex items-center gap-1">
-                                            <Clock size={10} /> Waiting for the bank feed (usually next day).
+                                        <p className={`text-[11px] mt-1 flex items-start gap-1 ${feedAge?.stale ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                                            <Clock size={10} className="shrink-0 mt-0.5" />
+                                            {feedError
+                                                ? <span>The bank feed could not be read, so this has not been checked either way.</span>
+                                                : feedAge?.stale
+                                                    ? <span>
+                                                        The bank statement stops at <b>{feedAge.label}</b> — {feedAge.days} days ago.
+                                                        Nothing paid since then can be checked yet. Upload a statement to Zoho.
+                                                    </span>
+                                                    : feedAge
+                                                        ? <span>Waiting for the bank feed — the statement runs to {feedAge.label}.</span>
+                                                        : <span>There is no bank statement data at all, so nothing can be confirmed.</span>}
                                         </p>
                                     )}
 

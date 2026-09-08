@@ -125,6 +125,48 @@ const unpackId = (hex: string) =>
 
 const esc = (v: string | null | undefined) => escapeHtml(String(v ?? ''));
 
+/**
+ * Could this line plausibly be about money?
+ *
+ * Used ONLY to decide whether an auto-rejection is worth mentioning in the
+ * group. Deliberately generous and deliberately stupid: it is not a second
+ * reader, it is the difference between "chat" and "something with a figure in
+ * it that I failed to understand". False positives cost one polite message;
+ * false negatives cost a payment nobody ever hears about again.
+ */
+/**
+ * The date to use for a cash payment that carries none of its own.
+ *
+ * A typed cash line ("65000 cash to satish") has no receipt, so the reader has
+ * nothing to read a date FROM, and every such capture landed with txn_date null.
+ * The bot then said "date not read" and the row joined the "date could not be
+ * read" queue — a queue asking a person to supply something they never wrote,
+ * which nobody could ever clear. Four such rows had built up by 2026-09-08.
+ *
+ * The message's own timestamp is the honest answer: cash is handed over at
+ * roughly the moment it is posted about, and unlike a bank payment there is no
+ * statement that could ever contradict it.
+ *
+ * Deliberately NOT applied to bank payments. A screenshot can be posted days
+ * after the transfer, and dating one from the message would fabricate a date
+ * that the bank feed then fails to match — inventing a discrepancy rather than
+ * admitting an unknown.
+ */
+function cashFallbackDate(
+    extracted: { is_cash?: boolean },
+    messageDate?: number,
+): string | null {
+    if (!extracted.is_cash || !messageDate) return null;
+    return new Date(messageDate * 1000).toISOString().slice(0, 10);
+}
+
+function looksLikeMoney(text: string): boolean {
+    if (!text) return false;
+    // Any run of 2+ digits, or 1+ digits next to a money word/symbol.
+    if (/\d{2,}/.test(text)) return true;
+    return /(₹|rs\.?|inr|cash|paid|payment|paise|rupee)/i.test(text);
+}
+
 function summary(c: {
     amount: number | null; paid_to: string | null; paid_from: string | null;
     txn_date: string | null; bank_name: string | null; reference_number: string | null;
@@ -281,7 +323,7 @@ export async function handlePaymentPhoto(db: SupabaseClient, message: any): Prom
         await finishCapture(db, captureId, extracted, chatId, messageId, {
             image_url: imageUrl,
             image_path: upErr ? null : path,
-        });
+        }, Number(message.date) || undefined);
         return true;
     } catch (err: any) {
         await failCapture(db, captureId, chatId, messageId, err);
@@ -335,9 +377,35 @@ export async function handlePaymentText(db: SupabaseClient, message: any): Promi
             await db.from('payment_captures')
                 .update({ status: 'rejected', notes: 'Not a payment record (auto)' })
                 .eq('id', captureId);
+
+            // ...but say so when the line LOOKED like money.
+            //
+            // Staying silent over ordinary conversation is deliberate and still
+            // holds. What did not hold is staying silent over a line the reader
+            // merely FAILED to understand. On 2026-09-08 "278 cable lable
+            // sticker from amazon" — ₹278 of stickers — was auto-rejected and
+            // the group heard nothing. Money left the business and the only
+            // trace was a status nobody would ever look at.
+            //
+            // The test is deliberately dumber than the reader: a number that
+            // could be an amount, or a money word. "ok", "send the file",
+            // "good morning" stay silent. Anything with a figure in it gets one
+            // line and a button, because a wrongly-dropped payment costs far
+            // more than a wrongly-asked question.
+            if (looksLikeMoney(text)) {
+                await reply(
+                    chatId,
+                    `🤔 I could not read a payment in that, so I have set it aside.\n\n` +
+                    `<i>${escapeHtml(text.slice(0, 200))}</i>\n\n` +
+                    `If it was a payment, tap below and it will wait for you in ` +
+                    `Finance → Payment Captures.`,
+                    messageId,
+                    [[{ text: '💰 It was a payment', callback_data: `pc:${packId(captureId)}:0:p` }]],
+                );
+            }
             return false;
         }
-        await finishCapture(db, captureId, extracted, chatId, messageId, {});
+        await finishCapture(db, captureId, extracted, chatId, messageId, {}, Number(message.date) || undefined);
     } catch (err: any) {
         // A model outage must NOT make the bot announce itself over ordinary
         // conversation — at this point nobody has said this is even a payment.
@@ -448,7 +516,9 @@ async function finishCapture(
     extracted: ExtractedPayment,
     chatId: string,
     messageId: number,
-    extra: Record<string, unknown>
+    extra: Record<string, unknown>,
+    /** Unix seconds from the Telegram message — the fallback date for cash. */
+    messageDate?: number,
 ): Promise<void> {
     if (!extracted.is_payment_receipt) {
         // A photo of a job, a meme, a bill. Drop it quietly rather than nagging
@@ -479,7 +549,7 @@ async function finishCapture(
         currency: extracted.currency,
         paid_to: extracted.paid_to,
         paid_from: extracted.paid_from,
-        txn_date: extracted.txn_date,
+        txn_date: extracted.txn_date ?? cashFallbackDate(extracted, messageDate),
         bank_name: extracted.bank_name,
         transaction_id: extracted.transaction_id,
         reference_number: extracted.reference_number,
@@ -594,6 +664,25 @@ export async function handlePaymentCallback(db: SupabaseClient, query: any): Pro
         if (chatId) await tg('editMessageText', {
             chat_id: chatId, message_id: query.message.message_id,
             text: '🚫 Marked as not a payment.', parse_mode: 'HTML',
+        });
+        return true;
+    }
+
+    // "It was a payment" — overruling an automatic rejection. Reopens the row
+    // so it appears in the inbox with whatever text was posted; a person fills
+    // in the amount there. Nothing is guessed on their behalf.
+    if (action === 'p') {
+        await db.from('payment_captures').update({
+            status: 'pending',
+            needs_bank_match: false,
+            notes: 'Reopened from Telegram — the reader had set it aside',
+            confirmed_by: actorId, confirmed_at: new Date().toISOString(),
+        }).eq('id', captureId);
+        await answer('Reopened. Finish it in Finance → Payment Captures.');
+        if (chatId) await tg('editMessageText', {
+            chat_id: chatId, message_id: query.message.message_id,
+            text: '💰 Reopened — waiting for you in Finance → Payment Captures.',
+            parse_mode: 'HTML',
         });
         return true;
     }
