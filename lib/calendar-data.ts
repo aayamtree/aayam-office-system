@@ -73,10 +73,19 @@ export async function fetchCalendarBusinessData(
             // Designer sees only their own jobs
             jobsQuery = jobsQuery.eq('designer_id', userId);
         } else if (isDispatch || isCmyk) {
-            // Dispatch / CMYK: exclude pure design jobs (job_type === 'Design')
-            // Supabase: neq only works for one value — use filter with 'not.eq' or 'in'
-            // We show: 'Print', 'Design + Print', and any other non-Design type
-            jobsQuery = jobsQuery.neq('job_type', 'Design');
+            // Dispatch / CMYK: exclude pure design jobs — they never reach a press
+            // or a box, so they must not sit in a dispatch calendar.
+            //
+            // This used to test the single literal 'Design', which was the word
+            // Design Studio's New Project form wrote. After the 2026-09-08 rename
+            // those 182 jobs say 'Design Only', so a one-word test would have
+            // matched nothing and put every design job in front of dispatch and
+            // CMYK. Both spellings are excluded: the master name for everything
+            // from now on, and the old one for anything that predates the rename
+            // or arrives from an unmigrated source.
+            jobsQuery = jobsQuery
+                .neq('job_type', 'Design Only')
+                .neq('job_type', 'Design');
         }
         // Admin and Finance: no extra filter — see all
     }

@@ -228,6 +228,14 @@ export function normalizeJobType(jobType: string | undefined): WorkflowJobType {
         'Design+Print': 'design_print',
         'design and print': 'design_print',
         printing: 'print_only',
+        // Design Studio's New Project form wrote its own vocabulary for the same
+        // three types until 2026-09-08 ("Design" / "Printing" / "Design + Printing",
+        // 403 jobs). The form now writes the master names, but these stay so the
+        // pre-rename rows and any old bookmark still resolve. 'Printing' with a
+        // capital P matched nothing before and fell through to design_print,
+        // silently filing 20 print-only jobs as design work.
+        'Printing': 'print_only',
+        'Design + Printing': 'design_print',
     };
     return map[jobType] ?? 'design_print';
 }

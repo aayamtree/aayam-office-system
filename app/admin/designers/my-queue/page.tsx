@@ -7,6 +7,7 @@ import { Calendar, Clock, User, AlertCircle, Search, Palette, Users, ChevronDown
 import Link from 'next/link';
 import { DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
+import { normalizeJobType, type WorkflowJobType } from '@/lib/job-workflow';
 
 // ─── Stage color config matching app theme ────────────────────────────────────
 const stageConfig: Record<string, { borderColor: string; tintBg: string; badgeBg: string; badgeText: string; label: string }> = {
@@ -45,11 +46,14 @@ function deadlineBadge(deadline: string | null | undefined) {
 }
 
 // ─── Job type badges ──────────────────────────────────────────────────────────
-const jobTypeBadge: Record<string, { label: string; bg: string; text: string }> = {
-    'Design': { label: 'Design', bg: 'bg-violet-100', text: 'text-violet-700' },
-    'Printing': { label: 'Print', bg: 'bg-orange-100', text: 'text-orange-700' },
-    'Design + Printing': { label: 'Design+Print', bg: 'bg-sky-100', text: 'text-sky-700' },
-    'Design + Print': { label: 'Design+Print', bg: 'bg-sky-100', text: 'text-sky-700' },
+// Keyed on the NORMALISED type, not the raw stored word. Two forms used to write
+// two vocabularies for the same three types, so a map keyed on raw strings went
+// blank the moment a job arrived spelled the other way. normalizeJobType knows
+// every spelling the system has ever written, including the pre-2026-09-08 ones.
+const jobTypeBadge: Record<WorkflowJobType, { label: string; bg: string; text: string }> = {
+    design_only:  { label: 'Design', bg: 'bg-violet-100', text: 'text-violet-700' },
+    print_only:   { label: 'Print', bg: 'bg-orange-100', text: 'text-orange-700' },
+    design_print: { label: 'Design+Print', bg: 'bg-sky-100', text: 'text-sky-700' },
 };
 
 export default function UnifiedQueue() {
@@ -204,7 +208,7 @@ export default function UnifiedQueue() {
                                         const cfg = stageConfig[task.status] || stageConfig['new'];
                                         const dl = deadlineBadge(task.deadline);
                                         const isOverdue = dl?.label.includes('overdue');
-                                        const typeTag = jobTypeBadge[task.jobType] || { label: task.jobType, bg: 'bg-muted', text: 'text-muted-foreground' };
+                                        const typeTag = jobTypeBadge[normalizeJobType(task.jobType)];
                                         const isEditable = task.isMyTask;
                                         // Print Only jobs are excluded from the design-tasks page, so send them
                                         // to the universal job detail page instead (otherwise the click dead-ends).

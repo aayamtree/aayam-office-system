@@ -4,12 +4,13 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft, Building2, Users, Briefcase, Calendar,
-    Filter, Download, Loader2, TrendingUp, IndianRupee,
+    Filter, Download, Loader2,
     ChevronDown, Printer
 } from 'lucide-react';
 import { useJobs, useVendors, useClients } from '@/lib/hooks';
 import { Button } from '@/components/ui/Button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getProjectTypeLabel } from '@/lib/job-workflow';
 
 type ViewMode = 'vendor' | 'client' | 'job_type';
 type DateRange = 'all' | 'month' | 'quarter' | 'year';
@@ -64,22 +65,30 @@ export default function VendorReportsPage() {
     // Summary Stats
     const totalJobs = filteredJobs.length;
     const totalBilling = filteredJobs.reduce((sum, j) => sum + (j.total_amount || 0), 0);
-    const totalReceived = filteredJobs.reduce((sum, j) => sum + (j.amount_received || 0), 0);
-    const totalPending = totalBilling - totalReceived;
+    // Received / Pending used to be summed from jobs.amount_received. That field
+    // is zero on all 484 jobs: since 1 September, payment is recorded in Zoho, and
+    // the app's own ledger stopped being written on 5 August. Summing it produced
+    // "Received ₹0" and a Pending figure equal to the whole billing — a confident
+    // number that was simply wrong. It is not shown here any more.
+    //
+    // The honest replacement is a Zoho-backed figure, and that needs the job ↔
+    // invoice link to be filled in first: at the time of writing 8 of 484 jobs are
+    // linked, so a Zoho total would cover under 2% of this report. Until Invoice
+    // Matching has been worked through, this page reports jobs and billing only.
+    const jobsWithNoAmount = filteredJobs.filter(j => !j.total_amount).length;
 
     // Group by Vendor
     const vendorData = useMemo(() => {
-        const map = new Map<string, { vendor: any; jobs: typeof filteredJobs; totalAmount: number; totalReceived: number }>();
+        const map = new Map<string, { vendor: any; jobs: typeof filteredJobs; totalAmount: number }>();
         filteredJobs.forEach(job => {
             if (!job.vendor_id) return;
             if (!map.has(job.vendor_id)) {
                 const vendor = vendors.find(v => v.id === job.vendor_id);
-                map.set(job.vendor_id, { vendor, jobs: [], totalAmount: 0, totalReceived: 0 });
+                map.set(job.vendor_id, { vendor, jobs: [], totalAmount: 0 });
             }
             const entry = map.get(job.vendor_id)!;
             entry.jobs.push(job);
             entry.totalAmount += job.total_amount || 0;
-            entry.totalReceived += job.amount_received || 0;
         });
         return Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
     }, [filteredJobs, vendors]);
@@ -109,7 +118,12 @@ export default function VendorReportsPage() {
     const jobTypeData = useMemo(() => {
         const map = new Map<string, { type: string; jobs: typeof filteredJobs; totalAmount: number; vendorCount: number; clientCount: number }>();
         filteredJobs.forEach(job => {
-            const type = job.job_type || 'Unspecified';
+            // Two forms wrote two vocabularies for the same three work types, so
+            // grouping on the raw word produced six rows for three real types
+            // (Design/Design Only, Printing/Print Only, Design + Printing/Design +
+            // Print). getProjectTypeLabel is the system's single answer to "what
+            // type is this job", and it knows every spelling ever written.
+            const type = getProjectTypeLabel(job.job_type);
             if (!map.has(type)) {
                 map.set(type, { type, jobs: [], totalAmount: 0, vendorCount: 0, clientCount: 0 });
             }
@@ -127,7 +141,9 @@ export default function VendorReportsPage() {
     // Export CSV
     const handleExport = () => {
         let rows: string[][] = [];
-        const header = ['Job #', 'Project', 'Client', 'Vendor', 'Job Type', 'Amount', 'Received', 'Date'];
+        // No 'Received' column: jobs.amount_received is zero on every row (money
+        // lives in Zoho), and an all-zero column in a spreadsheet reads as fact.
+        const header = ['Job #', 'Project', 'Client', 'Vendor', 'Job Type', 'Amount', 'Date'];
         rows.push(header);
         filteredJobs.forEach(job => {
             rows.push([
@@ -135,9 +151,8 @@ export default function VendorReportsPage() {
                 job.project_name || '',
                 job.client?.name || '',
                 vendors.find(v => v.id === job.vendor_id)?.name || '',
-                job.job_type || '',
+                getProjectTypeLabel(job.job_type),
                 String(job.total_amount || 0),
-                String(job.amount_received || 0),
                 job.order_date ? new Date(job.order_date).toLocaleDateString() : '',
             ]);
         });
@@ -179,8 +194,9 @@ export default function VendorReportsPage() {
                 </Button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Summary Cards — jobs and billing only. See the note on the totals
+                above: what has been received is a question only Zoho can answer. */}
+            <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Jobs</p>
                     <p className="text-page-title text-gray-900">{totalJobs}</p>
@@ -188,15 +204,23 @@ export default function VendorReportsPage() {
                 <div className="bg-white rounded-md p-4 border border-gray-100">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Billing</p>
                     <p className="text-page-title text-gray-900">{formatCurrency(totalBilling)}</p>
+                    {jobsWithNoAmount > 0 && (
+                        <p className="text-xs text-amber-700 mt-1">
+                            {jobsWithNoAmount} of these {totalJobs} jobs carry no amount, so this total is not the period&apos;s billing.
+                        </p>
+                    )}
                 </div>
-                <div className="bg-white rounded-md p-4 border border-gray-100">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Received</p>
-                    <p className="text-page-title text-green-700">{formatCurrency(totalReceived)}</p>
-                </div>
-                <div className="bg-white rounded-md p-4 border border-gray-100">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Pending</p>
-                    <p className="text-page-title text-red-600">{formatCurrency(totalPending)}</p>
-                </div>
+            </div>
+
+            <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                <span className="font-semibold">Money is not on this page.</span>{' '}
+                What was invoiced and what was received live in Zoho Books, which is the
+                book of record. This report answers a different question: which jobs went
+                to which vendor for which client. To see what is owed and what was paid,
+                open{' '}
+                <Link href="/admin/finance/money-in" className="underline font-medium">Money In</Link>
+                {' '}or{' '}
+                <Link href="/admin/finance/money-out" className="underline font-medium">Money Out</Link>.
             </div>
 
             {/* Filters */}
@@ -273,14 +297,12 @@ export default function VendorReportsPage() {
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Vendor</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Jobs</th>
                                     <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total Amount</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Received</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Pending</th>
                                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Clients</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
                                 {vendorData.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-10 text-gray-400">No vendor data found for the selected filters.</td></tr>
+                                    <tr><td colSpan={4} className="text-center py-10 text-gray-400">No vendor data found for the selected filters.</td></tr>
                                 ) : vendorData.map((entry, idx) => {
                                     const uniqueClients = Array.from(new Set(entry.jobs.map(j => j.client?.name).filter(Boolean)));
                                     return (
@@ -300,8 +322,6 @@ export default function VendorReportsPage() {
                                                 <span className="bg-gray-100 px-2.5 py-1 rounded-md text-sm font-medium">{entry.jobs.length}</span>
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(entry.totalAmount)}</td>
-                                            <td className="px-4 py-3 text-right text-green-700">{formatCurrency(entry.totalReceived)}</td>
-                                            <td className="px-4 py-3 text-right text-red-600">{formatCurrency(entry.totalAmount - entry.totalReceived)}</td>
                                             <td className="px-4 py-3">
                                                 <div className="flex flex-wrap gap-1">
                                                     {uniqueClients.slice(0, 3).map((name, i) => (

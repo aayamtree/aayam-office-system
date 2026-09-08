@@ -110,7 +110,11 @@ export default function NewProjectPage() {
         brandId: '',       // UUID from brands table (if migration run)
         brandName: '',     // text name always stored for display
         designerId: '',
-        jobType: 'Design',
+        // The master list in Settings holds three work types, and this form now
+        // writes those exact names. It used to write 'Design' / 'Printing' /
+        // 'Design + Printing' — a second vocabulary for the same three things,
+        // which left 403 jobs invisible to every screen that tests job_type.
+        jobType: 'Design Only',
         productCategory: '',
         deadline: undefined as Date | undefined,
         priority: 'normal',
@@ -254,7 +258,7 @@ export default function NewProjectPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Smart default: Print-only jobs have no design work → non-billable.
-        const isPrintOnly = formData.jobType === 'Printing';
+        const isPrintOnly = formData.jobType === 'Print Only';
         setBillingChoice(isPrintOnly ? 'non_billable' : 'billable');
         setShowBillingModal(true);
     };
@@ -685,13 +689,13 @@ export default function NewProjectPage() {
                                 onValueChange={(val) => { if (val) setFormData(prev => ({ ...prev, jobType: val })); }}
                                 className="justify-start"
                             >
-                                <ToggleGroupItem value="Design" className="gap-1.5 px-4 data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 data-[state=on]:border-violet-300">
-                                    Design
+                                <ToggleGroupItem value="Design Only" className="gap-1.5 px-4 data-[state=on]:bg-violet-100 data-[state=on]:text-violet-700 data-[state=on]:border-violet-300">
+                                    Design Only
                                 </ToggleGroupItem>
-                                <ToggleGroupItem value="Printing" className="gap-1.5 px-4 data-[state=on]:bg-emerald-100 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-300">
-                                    Print
+                                <ToggleGroupItem value="Print Only" className="gap-1.5 px-4 data-[state=on]:bg-emerald-100 data-[state=on]:text-emerald-700 data-[state=on]:border-emerald-300">
+                                    Print Only
                                 </ToggleGroupItem>
-                                <ToggleGroupItem value="Design + Printing" className="gap-1.5 px-4 data-[state=on]:bg-sky-100 data-[state=on]:text-sky-700 data-[state=on]:border-sky-300">
+                                <ToggleGroupItem value="Design + Print" className="gap-1.5 px-4 data-[state=on]:bg-sky-100 data-[state=on]:text-sky-700 data-[state=on]:border-sky-300">
                                     Design + Print
                                 </ToggleGroupItem>
                             </ToggleGroup>
@@ -999,7 +1003,7 @@ export default function NewProjectPage() {
                             <h3 className="text-lg font-bold text-foreground">Is the design work billable?</h3>
                             <p className="text-sm text-muted-foreground mt-1">
                                 Choose whether this project&apos;s design is charged to the client.
-                                {formData.jobType === 'Printing' && ' (Print-only jobs are usually non-billable.)'}
+                                {formData.jobType === 'Print Only' && ' (Print-only jobs are usually non-billable.)'}
                             </p>
                         </div>
 

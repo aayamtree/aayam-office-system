@@ -23,6 +23,7 @@ import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { normalizeJobType, type WorkflowJobType } from '@/lib/job-workflow';
 
 // Stages after the design is done — job has moved to print/production.
 // The design-billing tag is a designer effort signal, so we hide it here.
@@ -1111,13 +1112,14 @@ export default function DesignerWorkspace() {
                     <div className="flex items-center gap-1.5 flex-wrap mb-2">
                       <span className="font-mono text-xs text-gray-500 font-medium tracking-wide">{task.taskId}</span>
                       {(() => {
-                        const typeMap: Record<string, { label: string; bg: string; text: string }> = {
-                          'Design': { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
-                          'Printing': { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-                          'Design + Printing': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
-                          'Design + Print': { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
+                        // Keyed on the normalised type: a raw-string map went blank
+                        // whenever a job arrived in the other form's vocabulary.
+                        const typeMap: Record<WorkflowJobType, { label: string; bg: string; text: string }> = {
+                          design_only:  { label: 'DESIGN', bg: 'bg-violet-100', text: 'text-violet-700' },
+                          print_only:   { label: 'PRINT', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+                          design_print: { label: 'DESIGN+PRINT', bg: 'bg-sky-100', text: 'text-sky-700' },
                         };
-                        const t = typeMap[task.jobType] || { label: task.jobType?.toUpperCase() || 'PROJECT', bg: 'bg-gray-100', text: 'text-gray-600' };
+                        const t = typeMap[normalizeJobType(task.jobType)];
                         return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${t.bg} ${t.text}`}>{t.label}</span>;
                       })()}
                       <ProductBadge category={task.productCategory} />
