@@ -172,6 +172,7 @@ const menuItems: MenuItem[] = [
       { name: 'Money Out', href: '/admin/finance/money-out' },
       { name: 'Bank & Cash', href: '/admin/finance/bank-cash' },
       { name: 'To Do', href: '/admin/finance/to-do' },
+      { name: '📸 Payment Captures', href: '/admin/finance/payment-captures' },
       { name: 'Reports', href: '/admin/finance/reports' },
       // Sales sits in this section too, and is not a money door.
       { name: 'Quotations', href: '/admin/sales/quotations' },
