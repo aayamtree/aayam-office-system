@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-09-08T13:47:39.588Z",
+  "note": "Tables the app subscribes to via postgres_changes. Each MUST be in the supabase_realtime publication or its live updates are silently dead.",
+  "tables": [
+    "broadcast_notifications",
+    "chat_messages",
+    "job_notes",
+    "notifications",
+    "payment_captures"
+  ],
+  "sites": {
+    "broadcast_notifications": [
+      "lib/realtime-context.tsx"
+    ],
+    "chat_messages": [
+      "components/ChatPanel.tsx"
+    ],
+    "job_notes": [
+      "components/ProjectNotesLog.tsx"
+    ],
+    "notifications": [
+      "components/NotificationBell.tsx",
+      "lib/realtime-context.tsx"
+    ],
+    "payment_captures": [
+      "lib/realtime-context.tsx"
+    ]
+  }
+}

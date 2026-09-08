@@ -29,11 +29,19 @@ interface RealtimeContextValue {
   notifPing: number;
   /** Latest broadcast_notifications row inserted (null until one arrives). */
   lastBroadcast: any | null;
+  /**
+   * Increments on any INSERT or UPDATE to payment_captures. Screens that show
+   * the capture inbox watch this number and refetch when it moves, instead of
+   * each opening a channel of its own — see the PERF note at the top of this
+   * file. RLS still applies to realtime, so only finance staff receive these.
+   */
+  capturePing: number;
 }
 
 const RealtimeContext = createContext<RealtimeContextValue>({
   notifPing: 0,
   lastBroadcast: null,
+  capturePing: 0,
 });
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
@@ -42,6 +50,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
   const [notifPing, setNotifPing] = useState(0);
   const [lastBroadcast, setLastBroadcast] = useState<any | null>(null);
+  const [capturePing, setCapturePing] = useState(0);
 
   useEffect(() => {
     if (!isSupabaseConfigured() || !userId) return;
@@ -70,6 +79,19 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         },
         (payload) => setLastBroadcast(payload.new)
       )
+      // '*' rather than INSERT: a capture arriving is news, and so is one being
+      // verified or rejected by someone else while you have the inbox open.
+      // No filter — capture rows are not per-user, and the RLS read policy
+      // (fn_is_finance_staff) already decides who may see them.
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_captures',
+        },
+        () => setCapturePing((n) => n + 1)
+      )
       .subscribe();
 
     return () => {
@@ -78,13 +100,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   return (
-    <RealtimeContext.Provider value={{ notifPing, lastBroadcast }}>
+    <RealtimeContext.Provider value={{ notifPing, lastBroadcast, capturePing }}>
       {children}
     </RealtimeContext.Provider>
   );
 }
 
-/** Read the shared realtime state (new-notification ping + latest broadcast). */
+/** Read the shared realtime state (notification ping, latest broadcast, capture ping). */
 export function useRealtime() {
   return useContext(RealtimeContext);
 }

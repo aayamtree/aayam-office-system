@@ -14,8 +14,9 @@
 // all. Nobody was watching either of those before.
 // =============================================================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRealtime } from '@/lib/realtime-context';
 import { toast } from '@/lib/toast';
 import LoadError from '@/components/LoadError';
 import {
@@ -117,13 +118,19 @@ export default function PaymentCapturesPage() {
     const [feedThrough, setFeedThrough] = useState<string | null>(null);
     const [feedError, setFeedError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [live, setLive] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
     const [tab, setTab] = useState<'attention' | 'toenter' | 'verified' | 'all'>('attention');
     const [search, setSearch] = useState('');
 
-    const load = useCallback(async () => {
-        setLoading(true);
+    // silent = a refresh triggered by the live feed rather than by the person.
+    // It must NOT raise the full-screen spinner: blanking a list someone is
+    // reading, every time a colleague verifies a capture, is worse than the
+    // stale row it replaces.
+    const load = useCallback(async (opts?: { silent?: boolean }) => {
+        if (!opts?.silent) setLoading(true);
         setLoadError(null);
         const [
             { data: caps, error: capErr },
@@ -175,10 +182,30 @@ export default function PaymentCapturesPage() {
         // "after 3+ days" as though that were a considered judgement.
         setFeedError(tipErr ? tipErr.message : null);
         setFeedThrough((tip as { txn_date: string } | null)?.txn_date ?? null);
+        setLastUpdated(new Date());
         setLoading(false);
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    // ── Live updates ─────────────────────────────────────────────────────────
+    // A capture arrives from Telegram seconds after someone posts a screenshot,
+    // and this page used to show it only if you pressed reload. It now refetches
+    // when the shared realtime channel reports a change to payment_captures.
+    //
+    // The channel is the app-wide one in lib/realtime-context — deliberately not
+    // a second channel opened here. The comment at the top of that file records
+    // why: per-component channels once produced 100k+ create/destroy cycles and
+    // dominated database CPU.
+    const { capturePing } = useRealtime();
+    const seenPing = useRef(0);
+    useEffect(() => {
+        // Skip the very first render: load() above has already fetched.
+        if (capturePing === seenPing.current) return;
+        seenPing.current = capturePing;
+        setLive(true);
+        load({ silent: true });
+    }, [capturePing, load]);
 
     const patch = async (id: string, body: Record<string, unknown>) => {
         setBusy(id);
@@ -194,7 +221,7 @@ export default function PaymentCapturesPage() {
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Could not save');
-            if (json.warning) { toast.error(json.warning); await load(); return; }
+            if (json.warning) { toast.error(json.warning); await load({ silent: true }); return; }
             if (!json.capture) throw new Error('Saved, but the updated row could not be read back — refresh to confirm.');
             setCaptures((prev) => prev.map((c) => (c.id === id ? { ...c, ...json.capture } : c)));
             // Re-checking can reclassify a row on its own — "This went through
@@ -226,7 +253,7 @@ export default function PaymentCapturesPage() {
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || 'Could not re-check');
             toast.success(`Checked ${json.checked} — ${json.matched} newly matched`);
-            await load();
+            await load({ silent: true });
         } catch (err: any) {
             toast.error(err.message || 'Could not re-check');
         } finally {
@@ -318,7 +345,7 @@ export default function PaymentCapturesPage() {
                 .some((f) => (f || '').toLowerCase().includes(q)));
     }, [captures, tab, search]);
 
-    if (loadError) return <LoadError what="payment captures" error={loadError} onRetry={load} />;
+    if (loadError) return <LoadError what="payment captures" error={loadError} onRetry={() => load()} />;
 
     return (
         <div className="p-4 sm:p-6 space-y-4 max-w-6xl">
@@ -334,14 +361,26 @@ export default function PaymentCapturesPage() {
                         a bank receipt saying &ldquo;Request Accepted&rdquo; is not proof the money moved.
                     </p>
                 </div>
-                <button
-                    onClick={rematchAll}
-                    disabled={busy === 'all'}
-                    className="text-xs px-3 py-2 rounded-md border border-border bg-card hover:bg-muted flex items-center gap-1.5 disabled:opacity-50"
-                >
-                    <RefreshCw size={13} className={busy === 'all' ? 'animate-spin' : ''} />
-                    Re-check against bank
-                </button>
+                <div className="flex items-center gap-3">
+                    {lastUpdated && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1.5" title={
+                            live
+                                ? 'This page updates on its own when a payment is posted or changed.'
+                                : 'Waiting for the first live update since this page opened.'
+                        }>
+                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${live ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                            Updated {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    )}
+                    <button
+                        onClick={rematchAll}
+                        disabled={busy === 'all'}
+                        className="text-xs px-3 py-2 rounded-md border border-border bg-card hover:bg-muted flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                        <RefreshCw size={13} className={busy === 'all' ? 'animate-spin' : ''} />
+                        Re-check against bank
+                    </button>
+                </div>
             </div>
 
             {feedBlind && (

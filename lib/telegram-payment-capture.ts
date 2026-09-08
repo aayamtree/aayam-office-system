@@ -388,7 +388,24 @@ async function claimMessage(
         .select('id')
         .single();
 
-    if (data) return data.id as string;
+    if (data) {
+        // Activity trail: a payment arriving in the group is a system event with
+        // no signed-in user behind it, so posted_by_profile_id is the actor and
+        // may legitimately be null when the poster is not a known staff member.
+        // Fire-and-forget — a failed log must never lose the capture.
+        void db.from('activity_logs').insert([{
+            user_id: postedBy,
+            user_name: label,
+            action: 'Payment Capture Received',
+            entity_type: 'payment_capture',
+            entity_id: data.id,
+            description: `Posted in the Telegram payments group by ${label || 'an unknown sender'}`,
+            metadata: { module: 'Finance', source: 'telegram', telegram_chat_id: chatId },
+        }]).then(({ error: logErr }: { error: { message: string } | null }) => {
+            if (logErr) console.warn('[telegram] activity log failed:', logErr.message);
+        });
+        return data.id as string;
+    }
 
     // 23505 is the unique index — this exact Telegram message is already ours.
     // Anything else is a REAL failure (an RLS change, a new NOT NULL column),

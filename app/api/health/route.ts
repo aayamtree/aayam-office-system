@@ -20,6 +20,7 @@ import { requireAdmin } from '@/lib/api-auth';
 import { healthNoticeBody, summariseHealth } from '@/lib/health-message';
 import {
     checkSchemaDrift, checkRpcs, checkConfigTables, checkCrons, checkDataLoss,
+    checkRealtimePublication,
     checkWriteDrift, checkLedgerPosting, captureRowSnapshot, EXPECTED_CRONS, type Finding,
 } from '@/lib/health-checks';
 import { checkExpectedActivity } from '@/lib/activity-expectations';
@@ -282,6 +283,10 @@ export async function GET(request: NextRequest) {
             // Create Dispatch being dead for months.
             runCheck(() => checkWriteDrift(db), 'write-drift'),
             runCheck(() => checkRpcs(db), 'rpc-drift'),
+            // Live updates: subscribed in code, but was the table ever published?
+            // Two were not, and neither failure raised anything — see the note
+            // on checkRealtimePublication.
+            runCheck(() => checkRealtimePublication(db), 'realtime-publication'),
             runCheck(() => checkConfigTables(db), 'config-tables'),
             runCheck(() => checkCrons(db, EXPECTED_CRONS), 'cron-freshness'),
             // The only check that asks whether anyone is actually getting work

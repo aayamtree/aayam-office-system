@@ -12,7 +12,7 @@
 // can tell the system the money actually moved.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { requireRole } from '@/lib/api-auth';
 import { tryMatch } from '@/lib/telegram-payment-capture';
 
@@ -166,6 +166,18 @@ export async function PATCH(request: NextRequest) {
             warning: 'Saved, but the updated row could not be read back. Refresh to confirm.',
         });
     }
+    // ── Activity trail ───────────────────────────────────────────────────────
+    // Payment captures wrote nothing to activity_logs, so money being vouched
+    // for, rejected or ticked into the books left no trace anywhere outside
+    // this table. Fire-and-forget: a failed log must never fail the save.
+    void logCaptureActivity(db, {
+        userId: gate.user.id,
+        captureId: id,
+        before: current,
+        after: fresh,
+        askedFor: body,
+    });
+
     // tryMatch can set status='duplicate' on its own when the bank line it
     // found is already claimed. That is a real finding, but the caller asked
     // for something else, and returning a plain ok:true made the screen say
@@ -212,4 +224,61 @@ export async function POST(request: NextRequest) {
         try { if (await tryMatch(db, id)) matched++; } catch { /* keep going */ }
     }
     return NextResponse.json({ ok: true, checked: ids.length, matched });
+}
+
+
+// ─── Activity trail ──────────────────────────────────────────────────────────
+/**
+ * Write one activity_logs row describing what a person just did to a capture.
+ *
+ * Server-side and service-role, so it bypasses RLS — that is deliberate: the
+ * log must record the action even when the actor could not read the log table.
+ * Never awaited by the caller and never throws: a payment save must not fail
+ * because its audit line did not write.
+ */
+async function logCaptureActivity(
+    db: SupabaseClient,
+    args: {
+        userId: string;
+        captureId: string;
+        before: { status?: string | null } | null;
+        after: Record<string, any>;
+        askedFor: Record<string, any>;
+    },
+) {
+    try {
+        const { before, after, askedFor } = args;
+        const amount = after.amount != null ? `₹${Number(after.amount).toLocaleString('en-IN')}` : 'an unstated amount';
+        const who = after.paid_to || after.paid_from || 'an unnamed party';
+
+        // Name the action by what actually changed, not by what was posted:
+        // matching can move a row's status on its own.
+        let action = 'Updated Payment Capture';
+        if ('entered_in_books_at' in askedFor && after.entered_in_books_at) {
+            action = 'Entered Payment In Books';
+        } else if (before?.status !== after.status) {
+            action = after.status === 'rejected' ? 'Rejected Payment Capture'
+                : after.status === 'verified' ? 'Verified Payment Capture'
+                : after.status === 'duplicate' ? 'Flagged Duplicate Payment Capture'
+                : 'Updated Payment Capture';
+        }
+
+        await db.from('activity_logs').insert([{
+            user_id: args.userId,
+            action,
+            entity_type: 'payment_capture',
+            entity_id: args.captureId,
+            description: `${amount} — ${who}`
+                + (before?.status !== after.status ? ` (${before?.status ?? 'new'} → ${after.status})` : ''),
+            metadata: {
+                module: 'Finance',
+                status_before: before?.status ?? null,
+                status_after: after.status ?? null,
+                amount: after.amount ?? null,
+                bank_linked: Boolean(after.zoho_bank_transaction_id),
+            },
+        }]);
+    } catch (e) {
+        console.warn('[payment-captures] activity log failed:', e);
+    }
 }

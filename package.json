@@ -13,9 +13,10 @@
     "audit:dispatch": "node scripts/test-dispatch-rules.mjs",
     "audit:query": "node scripts/test-query-failure.mjs",
     "audit:errors": "node scripts/audit-error-handling.js",
-    "audit": "npm run audit:manifest && npm run audit:selects && npm run audit:health && npm run audit:dispatch && npm run audit:query && npm run audit:errors",
-    "_comment_audit": "Run `npm run audit` before pushing anything you are unsure about. It regenerates the query manifest FIRST — /api/health compares that manifest against the live schema every night, and a stale one would quietly audit the previous deploy's queries instead of this one.",
-    "_comment_no_prebuild": "There is deliberately no `prebuild` hook. Wiring these into the build would block a deploy whenever a check fails, and for a one-person business a site that refuses to ship is worse than one that ships with a known warning. The same checks run nightly at 03:45 via /api/health and alert on Telegram, where they can be read and judged instead of silently stopping a release. If a check ever becomes trustworthy enough to gate on, move it here on purpose — not by default."
+    "audit": "npm run audit:manifest && npm run audit:realtime && npm run audit:selects && npm run audit:health && npm run audit:dispatch && npm run audit:query && npm run audit:errors",
+    "_comment_audit": "Run `npm run audit` before pushing anything you are unsure about. It regenerates the query manifest FIRST \u2014 /api/health compares that manifest against the live schema every night, and a stale one would quietly audit the previous deploy's queries instead of this one.",
+    "_comment_no_prebuild": "There is deliberately no `prebuild` hook. Wiring these into the build would block a deploy whenever a check fails, and for a one-person business a site that refuses to ship is worse than one that ships with a known warning. The same checks run nightly at 03:45 via /api/health and alert on Telegram, where they can be read and judged instead of silently stopping a release. If a check ever becomes trustworthy enough to gate on, move it here on purpose \u2014 not by default.",
+    "audit:realtime": "node scripts/extract-realtime-tables.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

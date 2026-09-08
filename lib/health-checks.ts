@@ -31,6 +31,7 @@
 // this does not have.
 
 import manifest from './generated/query-manifest.json';
+import realtimeManifest from './generated/realtime-tables.json';
 
 export type Finding = {
     severity: 'critical' | 'warning';
@@ -612,6 +613,66 @@ export async function checkCrons(db: any, expected: { job: string; maxAgeHours: 
  * Mon–Sat only (`* * * 1-6`), so their windows must clear a whole idle Sunday
  * or the audit would alert every Monday morning for no reason.
  */
+/**
+ * Every table the app subscribes to must be published for live updates.
+ *
+ * THE OUTAGE THAT PUT THIS HERE — 2026-09-08
+ * `notifications` and `chat_messages` were subscribed to in code and had never
+ * been added to the `supabase_realtime` publication. Postgres published nothing
+ * for them, the browser's subscription received nothing, and no error was
+ * raised anywhere: not in the console, not in page_errors, not in /api/health.
+ * The Notification Bell looked fine only because a 60-second poll sat behind it.
+ * The in-app chat — 2,092 messages, used daily — had never updated live at all,
+ * and everyone assumed that was how it worked.
+ *
+ * This is the same shape as the three outages at the top of this file: database
+ * up, health green, feature quietly dead. It belongs here for the same reason.
+ *
+ * The subscribed list is GENERATED from source (scripts/extract-realtime-tables.js),
+ * never hand-kept — a hand-kept list drifts exactly like the thing it is
+ * supposed to catch. The publication is read live, because a table can be
+ * dropped from it by any migration long after the code was written.
+ */
+export async function checkRealtimePublication(db: any): Promise<Finding[]> {
+    const { data, error } = await db.rpc('fn_realtime_tables');
+    if (error) {
+        return [{
+            severity: 'warning',
+            check: 'realtime-publication',
+            summary: 'Could not read the live-updates publication, so it was not checked',
+            detail: [error.message],
+        }];
+    }
+
+    const published = new Set<string>((data || []).map((r: any) => r.table_name));
+    const sites = (realtimeManifest as any).sites as Record<string, string[]>;
+    const subscribed: string[] = (realtimeManifest as any).tables || [];
+
+    // An empty manifest means the extractor stopped matching, not that the app
+    // stopped subscribing. Reporting "all good" off an empty list is the exact
+    // calm-zero failure this file exists to prevent.
+    if (!subscribed.length) {
+        return [{
+            severity: 'warning',
+            check: 'realtime-publication',
+            summary: 'The list of subscribed tables is empty, so nothing could be compared',
+            detail: ['Run `npm run audit:realtime`. If the app still calls .on("postgres_changes"), the extractor has stopped matching and this check is blind.'],
+        }];
+    }
+
+    const unpublished = subscribed.filter((t) => !published.has(t));
+    if (!unpublished.length) return [];
+
+    return [{
+        severity: 'critical',
+        check: 'realtime-publication',
+        summary: `${unpublished.length} table(s) are subscribed to but not published — their live updates are silently dead`,
+        detail: unpublished.map(
+            (t) => `${t} — subscribed in ${(sites[t] || ['unknown']).join(', ')}. Fix: ALTER PUBLICATION supabase_realtime ADD TABLE public.${t};`
+        ),
+    }];
+}
+
 export const EXPECTED_CRONS = [
     { job: 'health', maxAgeHours: 26 },
     { job: 'telegram-digest', maxAgeHours: 50 },
