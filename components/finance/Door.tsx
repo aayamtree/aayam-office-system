@@ -67,6 +67,39 @@ export function DoorLink({
 }
 
 /**
+ * The same doors as the card row, as one slim strip that sits directly under
+ * the header. The team's complaint was simple: the links lived at the foot of
+ * a long statement, so on a busy page nobody knew they were there. A row you
+ * can see the moment the page opens is worth more than a prettier row you
+ * have to scroll to find.
+ */
+export function DoorNav({
+    links,
+}: {
+    links: { href: string; label: string; count?: number | null }[];
+}) {
+    return (
+        <nav className="flex flex-wrap items-center gap-1.5">
+            {links.map((l) => (
+                <Link
+                    key={l.href + l.label}
+                    href={l.href}
+                    className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:border-primary/50 hover:bg-accent/40 transition-colors"
+                >
+                    <span>{l.label}</span>
+                    {typeof l.count === 'number' && l.count > 0 && (
+                        <span className="rounded-full bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5 tabular-nums">
+                            {l.count}
+                        </span>
+                    )}
+                    <ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground group-hover:text-primary" />
+                </Link>
+            ))}
+        </nav>
+    );
+}
+
+/**
  * One headline figure. `tone` is semantic, not decorative: red means money at
  * risk or a problem, never just "important".
  */

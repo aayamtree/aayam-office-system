@@ -1,7 +1,7 @@
 'use client';
 
 import {
-    DoorHeader, DoorLink, DoorSection, DoorError, Figure, rupees, compact,
+    DoorHeader, DoorNav, DoorSection, DoorError, Figure, rupees, compact,
 } from '@/components/finance/Door';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
@@ -65,6 +65,15 @@ export default function BankCashClient({
                 title="Bank & Cash"
                 question="What the bank shows, and what is still to enter."
                 source="The HDFC feed in Zoho Books · plus the cash inbox, which no statement will ever confirm."
+            />
+
+            <DoorNav
+                links={[
+                    { href: '/admin/finance/payment-captures', label: 'Payment proofs', count: cashUnknown ? null : cashToEnter },
+                    { href: '/admin/finance/to-do', label: 'What is unfinished' },
+                    { href: '/admin/finance/banks', label: 'Bank accounts', count: accountCount },
+                    { href: '/admin/finance/zoho', label: 'The full feed in Zoho' },
+                ]}
             />
 
             {feedReadFailed && <DoorError what="the bank feed" />}
@@ -182,33 +191,6 @@ export default function BankCashClient({
                     </div>
                 )}
             </DoorSection>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                <DoorLink
-                    href="/admin/finance/payment-captures"
-                    label="Payment proofs"
-                    hint={cashTruncated
-                        ? 'The inbox of screenshots and cash entries — more than shown here'
-                        : 'The inbox of screenshots and cash entries'}
-                    count={cashUnknown ? null : cashToEnter}
-                />
-                <DoorLink
-                    href="/admin/finance/to-do"
-                    label="What is unfinished"
-                    hint="Payments the bank has not confirmed, cash to enter"
-                />
-                <DoorLink
-                    href="/admin/finance/banks"
-                    label="Bank accounts"
-                    hint="The accounts on file"
-                    count={accountCount}
-                />
-                <DoorLink
-                    href="/admin/finance/zoho"
-                    label="The full feed in Zoho"
-                    hint="Every statement line, unfiltered"
-                />
-            </div>
         </div>
     );
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Payables, VendorDebt } from '@/lib/payables';
 import {
-    DoorHeader, DoorLink, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
+    DoorHeader, DoorNav, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
 } from '@/components/finance/Door';
 
 interface Props {
@@ -45,6 +45,15 @@ export default function MoneyOutClient({ payables, ageing, error, vendorCount }:
                 title="Money Out"
                 question="Who we owe, what we paid, and to which vendor."
                 source="Bills from Zoho Books · grouped by vendor, because eight bills from one supplier is one phone call."
+            />
+
+            <DoorNav
+                links={[
+                    { href: '/admin/finance/vendors', label: 'Vendors', count: vendorCount },
+                    { href: '/admin/finance/zoho', label: 'Every bill in Zoho' },
+                    { href: '/admin/finance/payment-captures', label: 'Payment proofs' },
+                    { href: '/admin/finance/reports/vendor-reports', label: 'Vendor report' },
+                ]}
             />
 
             {error && <DoorError what="what we owe vendors" detail={error} />}
@@ -167,30 +176,6 @@ export default function MoneyOutClient({ payables, ageing, error, vendorCount }:
                     </DoorSection>
                 </>
             )}
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                <DoorLink
-                    href="/admin/finance/vendors"
-                    label="Vendors"
-                    hint="Names, contacts and payment terms"
-                    count={vendorCount}
-                />
-                <DoorLink
-                    href="/admin/finance/zoho"
-                    label="Every bill in Zoho"
-                    hint="The full list, straight from the book of record"
-                />
-                <DoorLink
-                    href="/admin/finance/payment-captures"
-                    label="Payment proofs"
-                    hint="Screenshots of what we have already paid out"
-                />
-                <DoorLink
-                    href="/admin/finance/reports/vendor-reports"
-                    label="Vendor report"
-                    hint="What each vendor did, by job"
-                />
-            </div>
 
             <CashCaveat />
         </div>

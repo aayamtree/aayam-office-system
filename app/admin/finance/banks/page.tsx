@@ -13,6 +13,7 @@ import { useBankAccounts } from '@/lib/hooks';
 import { BankAccount } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 import { LEGACY_LEDGER_CLOSED } from '@/lib/legacy-ledger';
+import { TransferMenu, RecentTransfers } from '@/components/finance/TransferMenu';
 
 const accountTypes = ['Current', 'Savings', 'OD', 'CC', 'UPI'];
 
@@ -23,8 +24,12 @@ export default function BankAccountsPage() {
     createBankAccount,
     updateBankAccount,
     deleteBankAccount,
-    setDefaultAccount
+    setDefaultAccount,
+    refresh: refreshBanks
   } = useBankAccounts();
+
+  // Bumped after a deposit / withdrawal so the history below re-reads.
+  const [cashbookKey, setCashbookKey] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -165,7 +170,13 @@ export default function BankAccountsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {/* Record Transaction Button Removed for Simplicity/Refactor needed if connected to real data */}
+          {/* Deposits, withdrawals and transfers between our own accounts. This
+              is the office cash book, not the Zoho ledger — see the note in
+              components/finance/TransferMenu.tsx. */}
+          <TransferMenu
+            types={['bank_to_cash', 'cash_to_bank', 'bank_to_bank', 'adjust_balance']}
+            onDone={() => { refreshBanks(); setCashbookKey(k => k + 1); }}
+          />
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-900 font-medium">
             <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
@@ -273,6 +284,10 @@ export default function BankAccountsPage() {
           </div>
         ))}
       </div>
+
+      {/* A balance typed by hand needs a record beside it, or a wrong entry is
+          invisible. */}
+      <RecentTransfers reloadKey={cashbookKey} />
 
       {filteredBanks.length === 0 && !loading && (
         <div className="text-center py-12 bg-white rounded-md border">

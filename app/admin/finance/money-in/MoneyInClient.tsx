@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Receivables, CustomerDebt } from '@/lib/receivables';
 import {
-    DoorHeader, DoorLink, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
+    DoorHeader, DoorNav, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
 } from '@/components/finance/Door';
 
 interface Props {
@@ -35,6 +35,15 @@ export default function MoneyInClient({ receivables, error, awaitingCount }: Pro
                 title="Money In"
                 question="Who owes us, who paid, and against which invoice."
                 source="Invoices from Zoho Books · grouped by customer, because you do not ring an invoice number."
+            />
+
+            <DoorNav
+                links={[
+                    { href: '/admin/finance/awaiting-payment', label: 'Awaiting payment', count: awaitingCount },
+                    { href: '/admin/finance/invoice-matching', label: 'Match invoices to jobs' },
+                    { href: '/admin/finance/payment-captures', label: 'Payment proofs' },
+                    { href: '/admin/finance/zoho', label: 'Every invoice in Zoho' },
+                ]}
             />
 
             {error && <DoorError what="what customers owe us" detail={error} />}
@@ -135,30 +144,6 @@ export default function MoneyInClient({ receivables, error, awaitingCount }: Pro
                     </DoorSection>
                 </>
             )}
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                <DoorLink
-                    href="/admin/finance/awaiting-payment"
-                    label="Awaiting payment"
-                    hint="Design work sent to the client, not yet paid"
-                    count={awaitingCount}
-                />
-                <DoorLink
-                    href="/admin/finance/invoice-matching"
-                    label="Match invoices to jobs"
-                    hint="The one join Zoho cannot make for you"
-                />
-                <DoorLink
-                    href="/admin/finance/payment-captures"
-                    label="Payment proofs"
-                    hint="Screenshots posted in the payments group"
-                />
-                <DoorLink
-                    href="/admin/finance/zoho"
-                    label="Every invoice in Zoho"
-                    hint="The full list, straight from the book of record"
-                />
-            </div>
 
             <CashCaveat />
         </div>

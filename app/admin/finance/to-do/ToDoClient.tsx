@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import {
-    DoorHeader, DoorLink, DoorSection, Figure, rupees,
+    DoorHeader, DoorNav, DoorSection, Figure, rupees,
 } from '@/components/finance/Door';
 import { counterparty, type FinanceTodo, LOOKBACK_DAYS, STALE_DAYS } from '@/lib/finance-todo';
 import { AlertTriangle, Info } from 'lucide-react';
@@ -78,6 +78,14 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
                 title="To Do"
                 question="Payments to chase, receipts to check, cash to enter."
                 source="The same four lists the nightly message sends to Telegram — read from one place, so the two can never disagree."
+            />
+
+            <DoorNav
+                links={[
+                    { href: '/admin/finance/payment-captures', label: 'Payment proofs' },
+                    { href: '/admin/finance/bank-cash', label: 'Bank & Cash' },
+                    { href: '/admin/finance/money-in', label: 'Money In' },
+                ]}
             />
 
             {/* A list that could not be read is not an empty list. */}
@@ -299,24 +307,6 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
                     </>
                 )}
             </DoorSection>
-
-            <div className="grid sm:grid-cols-3 gap-2.5">
-                <DoorLink
-                    href="/admin/finance/payment-captures"
-                    label="Payment proofs"
-                    hint="Where each of these is actually resolved"
-                />
-                <DoorLink
-                    href="/admin/finance/bank-cash"
-                    label="Bank & Cash"
-                    hint="The statement these are checked against"
-                />
-                <DoorLink
-                    href="/admin/finance/money-in"
-                    label="Money In"
-                    hint="Customers to chase for payment"
-                />
-            </div>
         </div>
     );
 }

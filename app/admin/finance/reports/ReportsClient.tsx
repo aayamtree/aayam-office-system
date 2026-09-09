@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { FinanceOverviewData } from '@/lib/finance-overview-data';
 import {
-    DoorHeader, DoorLink, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
+    DoorHeader, DoorNav, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
 } from '@/components/finance/Door';
 
 export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
@@ -20,6 +20,14 @@ export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
                 title="Reports"
                 question="What it added up to."
                 source="Money in and out of the bank account, from Zoho's HDFC feed. Deliberately not called a P&L — it is cash movement, not revenue and cost."
+            />
+
+            <DoorNav
+                links={[
+                    { href: '/admin/finance/reports/vendor-reports', label: 'Vendor report' },
+                    { href: '/admin/reports/sales', label: 'Sales & dispatch' },
+                    { href: '/admin/finance/zoho', label: 'Zoho Books' },
+                ]}
             />
 
             {failed && <DoorError what="the figures from Zoho" />}
@@ -152,32 +160,6 @@ export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
                 </DoorSection>
                 </>
             )}
-
-            <div className="grid sm:grid-cols-3 gap-2.5">
-                <DoorLink
-                    href="/admin/finance/reports/vendor-reports"
-                    label="Vendor report"
-                    hint="What each vendor did, by job and by client"
-                />
-                {/* This card used to say "All reports — Sales, dispatch, team
-                    performance" and point at /admin/reports, which is the OLD
-                    Reports Center: three tabs on the ledger that stopped on 5
-                    August, one of which was leaking every client's payments onto
-                    every other client's statement. A clean white card next to
-                    four live doors is a promise. It now points at the sales
-                    report, which is current, and the dead statements are listed
-                    with the other archived screens below. */}
-                <DoorLink
-                    href="/admin/reports/sales"
-                    label="Sales &amp; dispatch"
-                    hint="Orders, billing by client, deliveries"
-                />
-                <DoorLink
-                    href="/admin/finance/zoho"
-                    label="Zoho Books"
-                    hint="Every invoice, bill and bank line"
-                />
-            </div>
 
             <CashCaveat />
 
