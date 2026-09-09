@@ -13,6 +13,7 @@ import {
 import { useClients, useJobs } from '@/lib/hooks';
 import { Client } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
+import LoadError from '@/components/LoadError';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -111,36 +112,62 @@ function TelegramClientSection({ client, onUpdated }: { client: any; onUpdated: 
 
 // Sub-component: Client Jobs & Financial Summary
 function ClientJobsSection({ clientId }: { clientId: string }) {
-  const { jobs } = useJobs();
-  const clientJobs = (jobs || []).filter(j => j.client_id === clientId);
+  // /admin/finance is gated to admin|finance by RouteGuard, while this panel is
+  // open to marketing too. Linking there unconditionally sent a marketing user to
+  // ?access=denied — a blank figure AND a door they cannot open.
+  const { profile } = useAuth();
+  const canOpenFinance = profile?.role === 'admin' || profile?.role === 'finance';
+  // `useJobs()` with no options takes the hook's DEFAULT 50-row limit, ordered by
+  // created_at — so this panel was summing only this client's jobs among the 50
+  // newest jobs in the whole business. A client with older work showed a Total
+  // Billed of ₹0 and every figure below it followed. Ask the database for this
+  // client's jobs instead of filtering a truncated page in the browser.
+  const { jobs, loading: jobsLoading, error: jobsError, refetch: refetchJobs } = useJobs({
+    select: 'id, job_number, project_name, client_id, current_stage, total_amount, order_date, created_at',
+    filter: [{ column: 'client_id', value: clientId }],
+    limit: 500,
+  });
+  const clientJobs = jobs || [];
   const totalBilled = clientJobs.reduce((s, j) => s + (j.total_amount || 0), 0);
 
-  // Fetch real payment totals (bank + cash) instead of jobs.amount_received
-  const [totalReceived, setTotalReceived] = useState(0);
+  // Bank and cash transactions are admin-only at the database level now, so this
+  // goes through a server route that allows admin + marketing.
+  //
+  // `null` means "we could not read it" and 0 means "we read it and it is zero".
+  // They used to be the same value, so a failed route call rendered a confident
+  // ₹0 Received and an Outstanding equal to the entire billing.
+  const [totalReceived, setTotalReceived] = useState<number | null>(null);
+  const [receivedFailed, setReceivedFailed] = useState(false);
   useEffect(() => {
-    // Bank and cash transactions are admin-only at the database level now, so
-    // this goes through a server route that allows admin + marketing.
+    let cancelled = false;
     const fetchPayments = async () => {
       try {
         const res = await fetch(`/api/crm/clients/${clientId}/finance`, { cache: 'no-store' });
         if (!res.ok) {
-          setTotalReceived(0);
+          if (!cancelled) { setTotalReceived(null); setReceivedFailed(true); }
           return;
         }
         const finance = await res.json();
-        setTotalReceived(Number(finance.received_total || 0));
+        if (!cancelled) { setTotalReceived(Number(finance.received_total || 0)); setReceivedFailed(false); }
       } catch {
-        setTotalReceived(0);
+        if (!cancelled) { setTotalReceived(null); setReceivedFailed(true); }
       }
     };
     fetchPayments();
+    return () => { cancelled = true; };
   }, [clientId]);
-
-  const outstanding = totalBilled - totalReceived;
 
   const formatCurrency = (n: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
   // Colors + labels from the single source of truth (lib/job-workflow.ts)
+
+  if (jobsError) {
+    return <LoadError what="this client's jobs" error={jobsError} onRetry={() => refetchJobs()} variant="inline" />;
+  }
+
+  if (jobsLoading) {
+    return <div className="text-center py-4 text-sm text-gray-400 bg-gray-50 rounded-md">Loading…</div>;
+  }
 
   return (
     <div className="space-y-3">
@@ -152,13 +179,29 @@ function ClientJobsSection({ clientId }: { clientId: string }) {
         </div>
         <div className="bg-gray-50 rounded-md p-3 text-center">
           <p className="text-xs text-gray-500">Received</p>
-          <p className="text-sm font-bold text-green-700">{formatCurrency(totalReceived)}</p>
+          <p className="text-sm font-bold text-green-700">
+            {totalReceived === null ? <span className="text-gray-300">&mdash;</span> : formatCurrency(totalReceived)}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">{receivedFailed ? 'could not be read' : 'to 5 Aug 2026'}</p>
         </div>
+        {/* Outstanding was totalBilled − totalReceived. Billing is LIVE (jobs,
+            current to today); received comes from bank_transactions and
+            cash_transactions via the finance route — the app's own ledger,
+            closed for writing on 5 August 2026. Subtracting one from the other
+            billed a client for five weeks of new work and credited them with
+            nothing paid in those weeks, printing a red "owed" figure on the
+            screen the sales team reads before calling a customer. Removed
+            2026-09-08 for the same reason as on the statement pages. */}
         <div className="bg-gray-50 rounded-md p-3 text-center">
           <p className="text-xs text-gray-500">Outstanding</p>
-          <p className={`text-sm font-bold ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-700' : 'text-gray-900'}`}>
-            {formatCurrency(Math.abs(outstanding))}{outstanding < 0 ? ' CR' : ''}
-          </p>
+          <p className="text-sm font-bold text-gray-300">&mdash;</p>
+          {canOpenFinance ? (
+            <Link href="/admin/finance/money-in" className="text-[10px] text-primary underline underline-offset-2 mt-0.5 inline-block">
+              Money In
+            </Link>
+          ) : (
+            <p className="text-[10px] text-gray-400 mt-0.5">ask accounts</p>
+          )}
         </div>
       </div>
 

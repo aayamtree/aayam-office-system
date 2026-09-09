@@ -217,15 +217,27 @@ const menuItems: MenuItem[] = [
   {
     name: 'Reports',
     icon: FileText,
+    // Stays '/admin/reports'. That page is no longer a statement generator — it
+    // is the section's overview, explaining what was withdrawn on 2026-09-08 and
+    // linking to what is current. Keeping it here also keeps `isActive`'s prefix
+    // match working: point the section at a child instead and the parent stops
+    // highlighting on every OTHER child, while a submenu entry that lives under
+    // another section (Vendor Reports, Team Performance) starts lighting two
+    // sections at once.
     href: '/admin/reports',
     allowedRoles: ['admin', 'finance'],
+    // Reordered 2026-09-08 so that what is live comes first and what is history
+    // says so in its own name. 'Finance Reports' (/admin/reports/finance) came
+    // OFF this menu: it published a Net Profit and a margin % from the ledger
+    // that stopped on 5 August, and on 2026-09-08 it was claiming ₹24.77L of
+    // income against the bank's ₹91.51L. It is not deleted — it is linked from
+    // the old-statements page below, the same way phase 4 handled the others.
     submenu: [
       { name: 'Overview', href: '/admin/reports' },
-      { name: 'Team Performance', href: '/admin/team/performance', adminOnly: true },
-      { name: 'Finance Reports', href: '/admin/reports/finance' },
       { name: 'Sales Reports', href: '/admin/reports/sales' },
-      { name: 'Vendor Reports', href: '/admin/finance/reports/vendor-reports' },
       { name: 'Dispatch Reports', href: '/admin/reports/dispatch' },
+      { name: 'Vendor Reports', href: '/admin/finance/reports/vendor-reports' },
+      { name: 'Team Performance', href: '/admin/team/performance', adminOnly: true },
     ]
   },
   {

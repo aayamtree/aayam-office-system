@@ -159,10 +159,18 @@ export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
                     label="Vendor report"
                     hint="What each vendor did, by job and by client"
                 />
+                {/* This card used to say "All reports — Sales, dispatch, team
+                    performance" and point at /admin/reports, which is the OLD
+                    Reports Center: three tabs on the ledger that stopped on 5
+                    August, one of which was leaking every client's payments onto
+                    every other client's statement. A clean white card next to
+                    four live doors is a promise. It now points at the sales
+                    report, which is current, and the dead statements are listed
+                    with the other archived screens below. */}
                 <DoorLink
-                    href="/admin/reports"
-                    label="All reports"
-                    hint="Sales, dispatch, team performance"
+                    href="/admin/reports/sales"
+                    label="Sales &amp; dispatch"
+                    hint="Orders, billing by client, deliveries"
                 />
                 <DoorLink
                     href="/admin/finance/zoho"
@@ -190,6 +198,8 @@ export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
                         ['/admin/finance/reports/cashbook', 'Cashbook'],
                         ['/admin/finance/reports/accounting', 'Accounting reports'],
                         ['/admin/finance/daily', 'Daily summary'],
+                        
+                        ['/admin/reports/finance', 'Finance report (income and expenses, to 5 Aug)'],
                     ].map(([href, label]) => (
                         <li key={href}>
                             <Link href={href} className="hover:text-foreground underline underline-offset-2">

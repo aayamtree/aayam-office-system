@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, Phone, Mail, MapPin, Building2, FileText, CreditCard, Scale, Banknote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -191,7 +192,6 @@ export default function VendorStatementPage() {
 
     const totalBilled = ledger.reduce((s, r) => s + r.debit, 0);
     const totalPaid = ledger.reduce((s, r) => s + r.credit, 0);
-    const outstanding = totalBilled - totalPaid;
 
     const handleSaveCash = async () => {
         // Writes cash_transactions AND moves cash_accounts.current_balance —
@@ -275,7 +275,7 @@ export default function VendorStatementPage() {
                         <ArrowLeft className="w-4 h-4" />
                     </button>
                     <div>
-                        <h1 className="font-bold text-gray-900 text-sm">Vendor Statement</h1>
+                        <h1 className="font-bold text-gray-900 text-sm">Vendor Transaction History</h1>
                         <p className="text-xs text-gray-500">{vendor.company || vendor.name}</p>
                     </div>
                 </div>
@@ -315,7 +315,7 @@ export default function VendorStatementPage() {
                             </div>
                         </div>
                         <div className="text-right text-sm text-gray-500">
-                            <p className="font-semibold text-gray-900">Statement Period</p>
+                            <p className="font-semibold text-gray-900">Period</p>
                             <p>{fmtDate(dateFrom)} – {fmtDate(dateTo)}</p>
                             <p className="text-xs mt-1">Generated {fmtDate(new Date().toISOString().split('T')[0])}</p>
                         </div>
@@ -332,6 +332,17 @@ export default function VendorStatementPage() {
                         className="border rounded-md px-3 py-1.5 text-sm focus:ring-2 ring-gray-200 outline-none" />
                     <button onClick={() => { setDateFrom(fyStart); setDateTo(new Date().toISOString().split('T')[0]); }}
                         className="text-xs text-gray-500 underline">Reset to FY</button>
+                </div>
+
+                {/* Bills stop in April, payments in July, and both books are closed. */}
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm print:border-gray-300 print:bg-white">
+                    <p className="font-semibold text-amber-900">This is history, not a current position.</p>
+                    <p className="mt-1 text-amber-800">
+                        Purchase bills here stop in April 2026 and vendor payments in July 2026 — the
+                        app&rsquo;s own ledger was closed for writing on 5 August. What we actually owe this
+                        vendor is in Zoho:{' '}
+                        <Link href="/admin/finance/money-out" className="font-semibold underline underline-offset-2">Money Out</Link>.
+                    </p>
                 </div>
 
                 {/* Summary cards */}
@@ -354,16 +365,21 @@ export default function VendorStatementPage() {
                             {ledger.filter(r => r.paymentMode === 'bank').length} bank · {ledger.filter(r => r.paymentMode === 'cash').length} cash
                         </p>
                     </div>
+                    {/* Removed 2026-09-08. Bills and payments here are BOTH from the
+                        closed ledger, but they stopped at different times —
+                        purchase_bills holds 5 rows and ends in APRIL, vendor_payments
+                        holds 145 and runs to July. Subtracting one from the other made
+                        every vendor read as a large "Advance paid", i.e. this business
+                        has ₹12L sitting with its suppliers. It has not. */}
                     <div className="bg-white border rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-1">
                             <Scale className="w-4 h-4 text-gray-400" />
                             <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Outstanding</span>
                         </div>
-                        <p className={`text-xl font-bold ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-700' : 'text-gray-900'}`}>
-                            {fmt(Math.abs(outstanding))}
-                            {outstanding < 0 && <span className="text-xs font-normal ml-1">ADV</span>}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">{outstanding > 0 ? 'Payable to vendor' : outstanding < 0 ? 'Advance paid' : 'Fully settled'}</p>
+                        <p className="text-xl font-bold text-gray-300">&mdash;</p>
+                        <Link href="/admin/finance/money-out" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">
+                            Money Out has the real figure
+                        </Link>
                     </div>
                 </div>
 
@@ -393,7 +409,6 @@ export default function VendorStatementPage() {
                                         <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Ref / Bill No.</th>
                                         <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Billed</th>
                                         <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Paid</th>
-                                        <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Balance</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -432,23 +447,14 @@ export default function VendorStatementPage() {
                                             <td className="px-4 py-3 text-right font-semibold text-red-700">
                                                 {row.credit > 0 ? fmt(row.credit) : <span className="text-gray-300">—</span>}
                                             </td>
-                                            <td className={`px-4 py-3 text-right font-bold ${row.balance > 0 ? 'text-red-600' : row.balance < 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                                                {fmt(Math.abs(row.balance))}
-                                                {row.balance < 0 && <span className="text-xs font-normal ml-1 text-green-600">ADV</span>}
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                                 <tfoot className="border-t-2 border-gray-200">
                                     <tr className="bg-gray-50 font-bold">
-                                        <td colSpan={3} className="px-4 py-3 text-sm text-gray-700">Closing Balance</td>
+                                        <td colSpan={3} className="px-4 py-3 text-sm text-gray-700">Totals for this period</td>
                                         <td className="px-4 py-3 text-right text-sm text-gray-800">{fmt(totalBilled)}</td>
                                         <td className="px-4 py-3 text-right text-sm text-red-700">{fmt(totalPaid)}</td>
-                                        <td className={`px-4 py-3 text-right text-sm ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                                            {fmt(Math.abs(outstanding))}
-                                            {outstanding < 0 && <span className="text-xs font-normal ml-1">ADV</span>}
-                                            {outstanding === 0 && <span className="text-xs font-normal ml-1">Settled</span>}
-                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -457,7 +463,9 @@ export default function VendorStatementPage() {
                 </div>
 
                 <p className="text-xs text-center text-gray-400 pb-4">
-                    This is a computer-generated statement. Bank-verified and cash payments appear in the Paid column.
+                    Transaction history, not a statement of account. Both columns come from the app&rsquo;s
+                    own ledger — bills stop in April 2026, payments in July — so they cover different
+                    periods and must not be subtracted from each other.
                 </p>
             </div>
 

@@ -3,9 +3,10 @@
 import { useState, useMemo } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, TrendingUp, TrendingDown, IndianRupee, PieChart, Loader2 } from 'lucide-react';
-import { usePaymentsReceived, useExpenses, useVendorPayments, useJobs } from '@/lib/hooks';
+import { ArrowLeft, Download, Filter, Printer, Loader2 } from 'lucide-react';
+import { useExpenses, useVendorPayments } from '@/lib/hooks';
 import { exportToCSV } from '@/lib/csv-export';
+import LoadError from '@/components/LoadError';
 import { createAuditedBrowserClient } from '@/lib/supabase';
 import useSWR from 'swr';
 
@@ -28,24 +29,31 @@ function usePaymentsReceivedDirect() {
     const { data, error } = await supabase
       .from('payments_received')
       .select('id, payment_number, payment_date, amount, payment_mode, notes, client:clients(name, company)')
-      .order('payment_date', { ascending: false });
+      .order('payment_date', { ascending: false })
+      // Its twin on the Reports Center was capped at 500 with a comment calling
+      // the unbounded version a full table scan; this copy never was. The table
+      // is frozen at 50 rows so the cap is theory today, but an uncapped select
+      // is how it stops being theory.
+      .limit(500);
     if (error) throw error;
     return data || [];
   }, { revalidateOnFocus: false });
 }
 
 export default function FinanceReportPage() {
-  const { data: paymentsRaw, isLoading: loadingPayments } = usePaymentsReceivedDirect();
-  const { expenses, loading: loadingExpenses } = useExpenses();
-  const { vendorPayments, loading: loadingVendor } = useVendorPayments();
-  // Needs order_date/created_at for the billed-in-range total; the default
-  // JOB_SELECTS.LIST omits them (and caps at 50 rows), which silently zeroed it out.
-  const { jobs, loading: loadingJobs } = useJobs({
-    select: 'id, job_number, order_date, created_at, current_stage, total_amount, amount_received',
-    limit: 2000,
-  });
+  // Every one of these three used to be destructured without its error, so a
+  // failed read fell through to "No transactions for this period / filter" and
+  // "No expenses recorded" — the same words the screen shows when the period
+  // genuinely holds nothing. An empty array and an unread query are identical in
+  // JavaScript and opposite in meaning.
+  const { data: paymentsRaw, isLoading: loadingPayments, error: paymentsError, mutate: retryPayments } = usePaymentsReceivedDirect();
+  const { expenses, loading: loadingExpenses, error: expensesError, refetch: retryExpenses } = useExpenses();
+  const { vendorPayments, loading: loadingVendor, error: vendorError, refetch: retryVendor } = useVendorPayments();
+  const loadError = paymentsError || expensesError || vendorError;
+  // The jobs query that fed the billed-in-range total is gone with it — this
+  // screen is history from the app's own ledger and nothing else.
 
-  const isLoading = loadingPayments || loadingExpenses || loadingVendor || loadingJobs;
+  const isLoading = loadingPayments || loadingExpenses || loadingVendor;
 
   // Default: start of current financial year (April 1), to today
   const fyStart = new Date().getMonth() >= 3
@@ -101,8 +109,6 @@ export default function FinanceReportPage() {
 
   const totalIncome = useMemo(() => dateFiltered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [dateFiltered]);
   const totalExpense = useMemo(() => dateFiltered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [dateFiltered]);
-  const netProfit = totalIncome - totalExpense;
-  const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
 
   // Table applies type filter on top of date filter
   const filteredTransactions = useMemo(() =>
@@ -111,16 +117,11 @@ export default function FinanceReportPage() {
       .sort((a, b) => b.date.localeCompare(a.date))
     , [dateFiltered, typeFilter]);
 
-  // Total BILLED from jobs in the same date range
-  const totalBilled = useMemo(() =>
-    (jobs || []).filter((j: any) => {
-      const d = ((j.order_date || j.created_at) || '').split('T')[0];
-      return d >= dateFrom && d <= dateTo && j.current_stage !== 'cancelled';
-    }).reduce((s: number, j: any) => s + (Number(j.total_amount) || 0), 0)
-    , [jobs, dateFrom, dateTo]);
+  // `totalBilled` (summed from the live `jobs` table) used to live here purely to
+  // be divided by a dead payments figure into "Outstanding" and "% collected".
+  // A live numerator over a frozen denominator is worse than either number alone,
+  // so it is gone with them. Billing by client lives on the Sales report.
 
-  const outstandingTotal = Math.max(0, totalBilled - totalIncome);
-  const collectionRate = totalBilled > 0 ? Math.round((totalIncome / totalBilled) * 100) : 0;
 
   // Expense breakdown (always full date range)
   const expenseBreakdown = useMemo(() => {
@@ -172,7 +173,7 @@ export default function FinanceReportPage() {
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Finance Report</h1>
-            <p className="text-sm text-gray-500">Income (payments received) · Expenses · Profit analysis</p>
+            <p className="text-sm text-gray-500">History only — the app&rsquo;s own ledger, up to 5 August 2026</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -180,7 +181,7 @@ export default function FinanceReportPage() {
             <Download size={15} /> Export CSV
           </button>
           <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm font-medium">
-            <Download size={15} /> Print
+            <Printer size={15} /> Print
           </button>
         </div>
       </div>
@@ -190,7 +191,7 @@ export default function FinanceReportPage() {
         <div className="flex items-center gap-2 mb-3">
           <Filter size={15} className="text-gray-500" />
           <span className="font-medium text-gray-700 text-sm">Filters</span>
-          <span className="ml-auto text-xs text-gray-400">Stats (cards above table) always show totals for the selected date range — the Type filter only affects the transaction list below.</span>
+          <span className="ml-auto text-xs text-gray-400">The date range filters everything below. The Type filter only affects the transaction list.</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
@@ -216,72 +217,60 @@ export default function FinanceReportPage() {
       </div>
 
 
-      {/* Stat Cards — AR View */}
+      {/* ⛔ 2026-09-08. This block used to show Total Billed, Received, Outstanding,
+          Expenses, NET PROFIT and a profit margin %, plus a collection-progress
+          bar — all computed from the app's own ledger, which stopped being
+          written on 5 August 2026. Measured against Zoho on 2026-09-08 for
+          FY2026-27 it was claiming ₹24.77L income where the bank saw ₹91.51L,
+          ₹16.06L of spend where the bank saw ₹76.80L (the `expenses` table has
+          never held a single row, so only vendor payments counted), and ₹9.15L
+          billed against Zoho's ₹1.19cr. Net Profit ₹8.70L at a 35% margin was
+          therefore an invented number wearing the most confident styling on the
+          page — and mixing a LIVE jobs figure with a DEAD payments figure is
+          what made Outstanding and "collected %" worse than either half alone.
+
+          A banner above a wrong number does not fix the number. The derived
+          judgments are gone. What survives is the transaction history below,
+          which is a true record of what this ledger held while it was alive. */}
       {isLoading ? (
         <div className="flex items-center justify-center h-32"><Loader2 size={24} className="animate-spin text-gray-400" /></div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* Total Billed */}
-            <div className="bg-white rounded-md border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2 text-gray-500"><IndianRupee size={14} /><span className="text-xs font-bold uppercase tracking-wide">Total Billed</span></div>
-              <p className="text-2xl font-bold text-gray-900">{fmtRs(totalBilled)}</p>
-              <p className="text-xs text-gray-400 mt-1">all orders / invoices</p>
-            </div>
-            {/* Received */}
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
-              <div className="flex items-center gap-2 mb-2"><TrendingUp size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Received</span></div>
-              <p className="text-2xl font-bold">{fmtRs(totalIncome)}</p>
-              <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'income').length} payments · {collectionRate}% collected</p>
-            </div>
-            {/* Outstanding */}
-            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
-              <div className="flex items-center gap-2 mb-2"><TrendingDown size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Outstanding</span></div>
-              <p className="text-2xl font-bold">{fmtRs(outstandingTotal)}</p>
-              <p className="text-xs opacity-75 mt-1">still owed by clients</p>
-            </div>
-            {/* Expenses */}
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-md p-4 text-white">
-              <div className="flex items-center gap-2 mb-2"><PieChart size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Expenses</span></div>
-              <p className="text-2xl font-bold">{fmtRs(totalExpense)}</p>
-              <p className="text-xs opacity-75 mt-1">{dateFiltered.filter(t => t.type === 'expense').length} entries</p>
-            </div>
-            {/* Net Profit */}
-            <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-gray-700 to-gray-900' : 'from-orange-600 to-red-700'} rounded-md p-4 text-white`}>
-              <div className="flex items-center gap-2 mb-2"><IndianRupee size={14} /><span className="text-xs font-bold uppercase tracking-wide opacity-90">Net Profit</span></div>
-              <p className="text-2xl font-bold">{netProfit < 0 ? '−' : ''}{fmtRs(Math.abs(netProfit))}</p>
-              <p className="text-xs opacity-75 mt-1">{netProfit >= 0 ? '✅ Profitable' : '⚠️ Loss'} · {profitMargin}% margin</p>
-            </div>
-          </div>
-
-          {/* Collection Progress Bar */}
-          {totalBilled > 0 && (
-            <div className="bg-white rounded-md border border-gray-100 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Collection Progress</span>
-                <span className="text-xs text-gray-500">{collectionRate}% collected · ₹{outstandingTotal.toLocaleString('en-IN')} still pending</span>
-              </div>
-              <div className="w-full h-3 bg-red-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${collectionRate}%` }} />
-              </div>
-              <div className="flex justify-between mt-1">
-                <span className="text-xs text-green-600 font-bold">✅ ₹{totalIncome.toLocaleString('en-IN')} received</span>
-                <span className="text-xs text-red-500 font-bold">🔴 ₹{outstandingTotal.toLocaleString('en-IN')} pending</span>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-
-      {/* No data hint */}
-      {!isLoading && totalIncome === 0 && totalExpense === 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-sm text-amber-800">
-          <p className="font-bold mb-1">⚠️ No transactions found for {dateFrom} → {dateTo}</p>
-          <p>Make sure you have recorded <strong>Payments Received</strong> in Finance → Payments, and <strong>Expenses</strong> in Finance → Expenses. Also check the date range above.</p>
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+          <p className="font-semibold text-amber-900">There is no profit figure on this page any more.</p>
+          <p className="mt-1 text-sm text-amber-800">
+            This screen reads the app&rsquo;s own ledger, which stopped being written on 5 August 2026
+            when Zoho became the book of record. It last held about a quarter of the money that
+            actually moved through the bank this financial year, so any income, expense, profit or
+            margin worked out from it would be wrong by a wide margin rather than slightly stale.
+          </p>
+          <p className="mt-2 text-sm text-amber-800">
+            For what is true today, use{' '}
+            <Link href="/admin/finance" className="font-semibold underline underline-offset-2">Sales &amp; Finance</Link>
+            {' '}— Money In, Money Out and Bank &amp; Cash all read Zoho, and{' '}
+            <Link href="/admin/finance/reports" className="font-semibold underline underline-offset-2">Finance &rarr; Reports</Link>
+            {' '}has the cashflow and category picture.
+          </p>
+          <p className="mt-2 text-xs text-amber-700">
+            The table below is kept because July still matters. It is history, not a current position.
+          </p>
         </div>
       )}
 
+      {loadError && (
+        <LoadError
+          what="this ledger's history"
+          error={loadError}
+          // All three sources feed `loadError`, so retrying only one of them
+          // left a permanent error with a button that did nothing whenever the
+          // failure was in expenses or vendor payments.
+          onRetry={() => { retryPayments(); retryExpenses(); retryVendor(); }}
+        />
+      )}
+
+      {/* Nothing below renders while a read is failing: an empty transaction
+          table under a real heading says "nothing happened", which is the one
+          thing a failed query must never be allowed to say. */}
+      {!loadError && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Transaction Table */}
         <div className="lg:col-span-2 bg-white rounded-md border border-gray-100 overflow-hidden">
@@ -368,20 +357,26 @@ export default function FinanceReportPage() {
             )}
           </div>
 
-          {/* Quick Summary */}
+          {/* A second Net Profit lived here, in the Period Summary card, computed
+              the same way from the same dead ledger. Removing the big tile and
+              leaving this one would have kept the wrong number on the page in
+              smaller type. The two totals below are what this ledger recorded —
+              stated as that, with no net drawn from them. */}
           {!isLoading && (totalIncome > 0 || totalExpense > 0) && (
             <div className="bg-gray-900 text-white rounded-md p-4 space-y-2 text-sm">
-              <p className="font-bold text-xs uppercase tracking-wide text-gray-400">Period Summary</p>
-              <div className="flex justify-between"><span className="text-gray-300">Gross Income</span><span className="font-bold text-green-400">{fmtRs(totalIncome)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-300">Total Expenses</span><span className="font-bold text-red-400">{fmtRs(totalExpense)}</span></div>
-              <div className="border-t border-gray-700 pt-2 flex justify-between">
-                <span className="text-gray-300">Net {netProfit >= 0 ? 'Profit' : 'Loss'}</span>
-                <span className={`font-bold text-base ${netProfit >= 0 ? 'text-green-400' : 'text-orange-400'}`}>{fmtRs(Math.abs(netProfit))}</span>
-              </div>
+              <p className="font-bold text-xs uppercase tracking-wide text-gray-400">What this ledger recorded</p>
+              <div className="flex justify-between"><span className="text-gray-300">Payments received</span><span className="font-bold">{fmtRs(totalIncome)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-300">Expenses and vendor payments</span><span className="font-bold">{fmtRs(totalExpense)}</span></div>
+              <p className="border-t border-gray-700 pt-2 text-xs text-gray-400">
+                No net is shown. This ledger never held the whole picture, and it has held nothing
+                new since 5 August 2026 — subtracting one incomplete figure from another would only
+                produce a confident wrong answer.
+              </p>
             </div>
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

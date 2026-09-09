@@ -1,500 +1,146 @@
 'use client';
 
+// REPORTS CENTER — closed 2026-09-08, and the reason is worth keeping.
+//
+// This page used to generate a Client Statement, a Vendor Statement and a Cash
+// Flow report. All three are gone. What is left is the explanation, because the
+// next person to want a client statement will come looking here.
+//
+// ── 1. The leak ──────────────────────────────────────────────────────────────
+// The client statement filtered payments with:
+//     p.client_id === selectedClientId || p.client?.name
+// `client_id` was never in the select, so the left side was `undefined === uuid`
+// — false for every row — and the right side is true for any payment that has a
+// client at all. The filter passed EVERYTHING. Choosing one client rendered all
+// 50 payments belonging to 26 DIFFERENT clients (₹25,06,519) onto that client's
+// statement, under a working Print button and a working CSV button.
+//
+// ── 2. Why fixing the filter was not enough ──────────────────────────────────
+// With the filter corrected the statement got worse, not better, in the way that
+// matters. Its two sides come from different eras:
+//     debits  ← `jobs`               LIVE, 248 jobs created since 5 August
+//     credits ← `payments_received`  FROZEN, last row 29 July 2026
+// So it billed a client for five weeks of new work and credited them with
+// nothing they had paid in those five weeks. One real client came out at
+// ₹1,03,191 Dr — a printable, e-mailable demand for money that Zoho may well
+// show as already settled. The first bug showed a client somebody else's money;
+// the second would have sent them an invoice for money they had already paid.
+// A live numerator over a dead denominator is not a stale report, it is a wrong
+// one, and it does not announce itself.
+//
+// The vendor tab had the same shape and worse arithmetic: `purchase_bills` holds
+// 5 rows and stopped in APRIL while `vendor_payments` holds 145, so every vendor
+// balance read as a large Dr — "we have paid this vendor ₹12L in advance".
+//
+// The cash flow tab defaulted to the current month, where both its sources are
+// empty, and rendered ₹0 through its positive-number styling: "+₹0" in the
+// good-news card. Identical to what three failed queries produce.
+//
+// ── 3. What replaces it ──────────────────────────────────────────────────────
+// Nothing here, yet. A statement a client can be sent has to come from Zoho —
+// their invoices and what actually reached the bank — and that needs each client
+// matched to a Zoho contact first (about 35 of 92 match by name today). Until
+// that exists, no statement is better than a confident wrong one.
+//
+// The per-client and per-vendor history pages under /admin/reports/client/[id]
+// and /admin/reports/vendor/[id] still list transactions, with their running
+// balances suppressed for exactly the reason above.
+
 import Link from 'next/link';
-import { toast } from '@/lib/toast';
-import { BarChart3, TrendingUp, Truck, FileText, Download, Loader2, Search, Printer, Calendar, ArrowRightLeft, DollarSign } from 'lucide-react';
-import { useDashboardStats, useClients, useJobs, useVendors, usePurchaseBills, useVendorPayments, useExpenses } from '@/lib/hooks';
-import { useState } from 'react';
-import { exportToCSV } from '@/lib/csv-export';
-import { createAuditedBrowserClient } from '@/lib/supabase';
-import useSWR from 'swr';
+import { FileText, ArrowRight } from 'lucide-react';
 
-const supabase = createAuditedBrowserClient();
+const LIVE = [
+    { href: '/admin/finance/money-in', label: 'Money In', hint: 'What customers owe us, from Zoho' },
+    { href: '/admin/finance/money-out', label: 'Money Out', hint: 'What we owe vendors, from Zoho' },
+    { href: '/admin/finance/bank-cash', label: 'Bank & Cash', hint: 'What actually moved through the bank' },
+    { href: '/admin/finance/reports', label: 'Finance → Reports', hint: 'Cashflow, categories, billed against collected' },
+    { href: '/admin/reports/sales', label: 'Sales Report', hint: 'Orders and billing by client, from jobs' },
+];
 
-// Direct payments_received query (bypasses unreliable RPC)
-function usePaymentsReceivedDirect() {
-  return useSWR('pr_direct', async () => {
-    const { data, error } = await supabase
-      .from('payments_received')
-      .select('id, payment_number, payment_date, amount, payment_mode, client:clients(name, company)')
-      .order('payment_date', { ascending: false })
-      .limit(500); // PERF: cap at 500 — was unbounded (full table scan)
-    if (error) throw error;
-    return data || [];
-  }, { revalidateOnFocus: false });
-}
+// The Dispatch Report deliberately does NOT appear above. It reads `dispatches`,
+// which holds 2 rows, newest 5 August — while 105 jobs have reached dispatched or
+// delivered. Listing it under "where the current figures are" would repeat the
+// mistake this page exists to explain. It stays on the menu because it is a
+// dispatch screen, not a money screen, and the gap there is data, not code.
 
 export default function ReportsPage() {
-  const { stats, loading } = useDashboardStats();
-  const [activeTab, setActiveTab] = useState<'client' | 'vendor' | 'cashflow'>('client');
+    return (
+        <div className="space-y-4 animate-fade-in pb-16 md:pb-20">
+            <div>
+                <h1 className="text-page-title text-gray-900">Reports</h1>
+                <p className="text-gray-500">Where each figure comes from, and what was withdrawn</p>
+            </div>
 
-  return (
-    <div className="space-y-3 md:space-y-6 animate-fade-in pb-16 md:pb-20">
-      {/* Header */}
-      <div>
-        <h1 className="text-page-title text-gray-900">Reports Center</h1>
-        <p className="text-gray-500">Financial statements, sales analytics, and cash flow</p>
-      </div>
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-900">
+                    The client statement, vendor statement and cash flow report have been taken off this page.
+                </p>
+                <p className="mt-2 text-sm text-amber-800">
+                    They were built on the app&rsquo;s own ledger, which stopped being written on 5 August 2026
+                    when Zoho became the book of record. Two faults were found on 8 September. The client
+                    statement was showing <strong>every client&rsquo;s payments on every client&rsquo;s
+                        statement</strong> &mdash; 50 payments from 26 different clients, ₹25,06,519, on a page
+                    with a working Print button.
+                </p>
+                <p className="mt-2 text-sm text-amber-800">
+                    Correcting that made it worse in the way that matters. Billing came from the live jobs
+                    table and payments came from the frozen ledger, so a client was billed for five weeks of
+                    new work and credited with nothing they had paid in those five weeks. One real client came
+                    out at <strong>₹1,03,191 owing</strong> when Zoho may well show them settled. That is not
+                    a stale report &mdash; it is a demand for money that could be sent to a customer.
+                </p>
+                <p className="mt-2 text-sm text-amber-800">
+                    A statement you can send has to come from Zoho: their invoices, and what actually reached
+                    the bank. That work needs each client matched to a Zoho contact first. Until it exists,
+                    no statement is safer than a confident wrong one.
+                </p>
+            </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('client')}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'client'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-          >
-            Client Statement
-          </button>
-          <button
-            onClick={() => setActiveTab('vendor')}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'vendor'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-          >
-            Vendor Statement
-          </button>
-          <button
-            onClick={() => setActiveTab('cashflow')}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'cashflow'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-          >
-            Cash Flow Report
-          </button>
-        </nav>
-      </div>
+            <div>
+                <h2 className="text-section text-gray-900 mb-2">Where the current figures are</h2>
+                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                    {LIVE.map(({ href, label, hint }) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="group flex items-start justify-between gap-2 rounded-md border border-gray-200 bg-white p-3.5 hover:border-gray-400 transition-colors"
+                        >
+                            <span className="min-w-0">
+                                <span className="block font-semibold text-gray-900">{label}</span>
+                                <span className="block text-xs text-gray-500 mt-0.5">{hint}</span>
+                            </span>
+                            <ArrowRight size={15} className="mt-0.5 shrink-0 text-gray-300 group-hover:text-gray-600" />
+                        </Link>
+                    ))}
+                </div>
+            </div>
 
-      {activeTab === 'client' && <ClientStatementGenerator />}
-      {activeTab === 'vendor' && <VendorStatementGenerator />}
-      {activeTab === 'cashflow' && <CashFlowStatement />}
-
-      {/* Manual Journal Link */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-md md:rounded-md p-3 md:p-4 text-white flex justify-between items-center">
-        <div>
-          <h3 className="text-section mb-1">Manual Journal Entry</h3>
-          {/* The journal is closed for writing — adjustments are made in Zoho,
-              the book of record. The screen is still here to read history, so
-              the button still opens it; the promise above it was the thing that
-              needed fixing, not the destination. */}
-          <p className="text-gray-300 text-sm">Past entries only — adjustments are now made in Zoho Books</p>
+            {/* Nothing was deleted. The history this ledger recorded while it was
+                alive is still worth reading, and July still matters. */}
+            <div className="rounded-md border border-gray-200 bg-white p-3.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                    <FileText size={15} className="text-gray-400" />
+                    <h2 className="font-semibold text-gray-900 text-sm">History, up to 5 August 2026</h2>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">
+                    A true record of what the app&rsquo;s own ledger held while it was being written. Not a
+                    current position, and no profit figure is drawn from it.
+                </p>
+                <ul className="space-y-1 text-sm">
+                    <li>
+                        <Link href="/admin/reports/finance" className="text-primary underline underline-offset-2">
+                            Finance report
+                        </Link>
+                        <span className="text-gray-500"> — every payment and vendor payment it recorded</span>
+                    </li>
+                    <li>
+                        <Link href="/admin/finance/journal" className="text-primary underline underline-offset-2">
+                            Manual journal
+                        </Link>
+                        <span className="text-gray-500"> — past entries only; adjustments are made in Zoho</span>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <Link href="/admin/finance/journal" className="px-4 py-2 bg-white text-gray-900 rounded-md font-bold hover:bg-gray-100 transition-colors">
-          Open Journal
-        </Link>
-      </div>
-
-    </div>
-  );
-}
-
-function ClientStatementGenerator() {
-  const { clients } = useClients();
-  // Reports hub: needs created_at/order_date to bucket by period, and must not be
-  // capped at the default 50 rows or every total here understates reality.
-  const { jobs } = useJobs({
-    select: 'id, job_number, project_name, client_id, current_stage, job_type, product_category, order_date, created_at, quantity, total_amount, amount_received, payment_status, client:clients(id, name, company)',
-    limit: 2000,
-  });
-  const { data: payments } = usePaymentsReceivedDirect();
-
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showStatement, setShowStatement] = useState(false);
-
-  const generateStatement = () => {
-    if (!selectedClientId) return toast.error('Please select a client');
-    setShowStatement(true);
-  };
-
-  const client = clients?.find(c => c.id === selectedClientId);
-
-  // MERGE LEGER
-  const mergedLedger = client ? [
-    ...(jobs?.filter(j => j.client_id === selectedClientId) || []).map(j => ({
-      date: j.created_at, type: 'INVOICE', ref: j.job_number,
-      desc: j.project_name, debit: j.total_amount, credit: 0,
-      mode: '-'
-    })),
-    ...(payments?.filter((p: any) => p.client_id === selectedClientId || p.client?.name) || []).map((p: any) => ({
-      date: p.payment_date, type: 'PAYMENT', ref: p.payment_number,
-      desc: 'Payment Received', debit: 0, credit: p.amount,
-      mode: p.payment_mode
-    }))
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : [];
-
-  // Filter by Date
-  const filteredLedger = mergedLedger.filter(item => {
-    if (dateRange.start && new Date(item.date) < new Date(dateRange.start)) return false;
-    if (dateRange.end && new Date(item.date) > new Date(dateRange.end + 'T23:59:59')) return false;
-    return true;
-  });
-
-  return (
-    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
-      {/* ... Header UI ... */}
-      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-900 rounded-md flex items-center justify-center text-white">
-          <FileText size={20} />
-        </div>
-        <div>
-          <h2 className="text-section text-gray-900">Generate Client Statement</h2>
-          <p className="text-sm text-gray-500">Debtor Ledger (Receivables)</p>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Select Client</label>
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white">
-            <option value="">-- Choose Client --</option>
-            {clients?.map(c => <option key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
-        </div>
-      </div>
-      <button onClick={generateStatement} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
-        Generate Statement
-      </button>
-
-      {/* Detail Modal */}
-      {showStatement && client && (
-        <StatementModal
-          title="Statement of Account"
-          entity={client}
-          period={dateRange}
-          ledger={filteredLedger}
-          onClose={() => setShowStatement(false)}
-          columns={['Description', 'Mode', 'Debit (Inv)', 'Credit (Rec)']}
-        />
-      )}
-    </div>
-  );
-}
-
-function VendorStatementGenerator() {
-  const { vendors } = useVendors();
-  const { purchaseBills: bills } = usePurchaseBills();
-  const { vendorPayments: payments } = useVendorPayments();
-
-  const [selectedVendorId, setSelectedVendorId] = useState('');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showStatement, setShowStatement] = useState(false);
-
-  const vendor = vendors?.find(v => v.id === selectedVendorId);
-
-  const mergedLedger = vendor ? [
-    ...(bills?.filter(b => b.vendor_id === selectedVendorId) || []).map(b => ({
-      date: b.bill_date, type: 'BILL', ref: b.bill_number,
-      desc: b.description || 'Purchase Bill', debit: 0, credit: b.total_amount, // Crediting Vendor (We owe)
-      mode: '-'
-    })),
-    ...(payments?.filter(p => p.vendor_id === selectedVendorId) || []).map(p => ({
-      date: p.payment_date, type: 'PAYMENT', ref: p.payment_number,
-      desc: 'Payment Made', debit: p.amount, credit: 0, // Debiting Vendor (We paid)
-      mode: p.payment_mode
-    }))
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) : [];
-
-  // Filter by Date
-  const filteredLedger = mergedLedger.filter(item => {
-    if (dateRange.start && new Date(item.date) < new Date(dateRange.start)) return false;
-    if (dateRange.end && new Date(item.date) > new Date(dateRange.end + 'T23:59:59')) return false;
-    return true;
-  });
-
-  return (
-    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
-      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-amber-100 rounded-md flex items-center justify-center text-destructive">
-          <Truck size={20} />
-        </div>
-        <div>
-          <h2 className="text-section text-gray-900">Generate Vendor Statement</h2>
-          <p className="text-sm text-gray-500">Creditor Ledger (Payables)</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 items-end mb-3 md:mb-1.5">
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Select Vendor</label>
-          <select value={selectedVendorId} onChange={e => setSelectedVendorId(e.target.value)} className="w-full px-3 py-2 border rounded-md bg-white">
-            <option value="">-- Choose Vendor --</option>
-            {vendors?.map(v => <option key={v.id} value={v.id}>{v.name} {v.company ? `(${v.company})` : ''}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" className="w-full px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
-        </div>
-      </div>
-      <button onClick={() => selectedVendorId && setShowStatement(true)} className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-900 font-medium w-full md:w-auto">
-        Generate Statement
-      </button>
-
-      {showStatement && vendor && (
-        <StatementModal
-          title="Vendor Statement"
-          entity={vendor}
-          period={dateRange}
-          ledger={filteredLedger}
-          onClose={() => setShowStatement(false)}
-          columns={['Description', 'Mode', 'Debit (Paid)', 'Credit (Billed)']}
-          // Vendor balance is Credit dominated usually (Payables). 
-          // But here we used Debit=Paid, Credit=Bill. 
-          // Running Balance (Debit - Credit) would be negative if we owe money.
-          // To show "Amount Payable" as positive, we might flip signs in display?
-          // Standard: Cr Balance = Payable. Dr Balance = Advance Paid.
-          reverseBalanceColor={true}
-        />
-      )}
-    </div>
-  )
-}
-
-function CashFlowStatement() {
-  const { data: inflowsRaw } = usePaymentsReceivedDirect();
-  const { vendorPayments: vendorOutflows } = useVendorPayments();
-  const { expenses } = useExpenses();
-
-  const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  });
-
-  const mergedFlow = [
-    ...(inflowsRaw || []).map((i: any) => ({
-      date: i.payment_date, type: 'INFLOW', ref: i.payment_number,
-      desc: `Received from ${i.client?.company || i.client?.name || 'Client'}`, amount: i.amount, mode: i.payment_mode
-    })),
-    ...(vendorOutflows || []).map(o => ({
-      date: o.payment_date, type: 'OUTFLOW', ref: o.payment_number,
-      desc: `Paid to Vendor (${o.payment_number})`, amount: -o.amount, mode: o.payment_mode
-    })),
-    ...(expenses || []).map(e => ({
-      date: e.expense_date, type: 'EXPENSE', ref: e.expense_number,
-      desc: `${e.category}: ${e.description || ''}`, amount: -e.amount, mode: e.payment_mode || 'cash'
-    }))
-  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  const filteredFlow = mergedFlow.filter(item => {
-    if (dateRange.start && new Date(item.date) < new Date(dateRange.start)) return false;
-    if (dateRange.end && new Date(item.date) > new Date(dateRange.end + 'T23:59:59')) return false;
-    return true;
-  });
-
-  const totalIn = filteredFlow.filter(f => f.amount > 0).reduce((sum, f) => sum + f.amount, 0);
-  const totalOut = filteredFlow.filter(f => f.amount < 0).reduce((sum, f) => sum + Math.abs(f.amount), 0);
-  const netFlow = totalIn - totalOut;
-
-  return (
-    <div className="bg-white rounded-md md:rounded-md p-3 md:p-4 border border-gray-100 animate-scale-in">
-      <div className="flex items-center gap-3 mb-3 md:mb-1.5">
-        <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-900">
-          <ArrowRightLeft size={20} />
-        </div>
-        <div>
-          <h2 className="text-section text-gray-900">Cash Flow Statement</h2>
-          <p className="text-sm text-gray-500">Inflow vs Outflow Analysis</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 md:gap-4 mb-3 md:mb-1.5">
-        <div>
-          <label className="block text-sm font-medium mb-1">From</label>
-          <input type="date" value={dateRange.start} className="px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">To</label>
-          <input type="date" value={dateRange.end} className="px-3 py-2 border rounded-md" onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 mb-3 md:mb-1.5">
-        <div className="bg-white p-4 rounded-md border border-green-100">
-          <p className="text-sm text-gray-900 font-medium">Total Inflow</p>
-          <p className="text-page-title text-gray-900">₹{totalIn.toLocaleString()}</p>
-        </div>
-        <div className="bg-red-50 p-4 rounded-md border border-red-100">
-          <p className="text-sm text-red-600 font-medium">Total Outflow</p>
-          <p className="text-page-title text-red-700">₹{totalOut.toLocaleString()}</p>
-        </div>
-        <div className={`p-4 rounded-md border ${netFlow >= 0 ? 'bg-gray-900 border-gray-300' : 'bg-white border-gray-100'}`}>
-          <p className={`text-sm font-medium ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>Net Cash Flow</p>
-          <p className={`text-page-title ${netFlow >= 0 ? 'text-primary' : 'text-amber-700'}`}>
-            {netFlow >= 0 ? '+' : ''}₹{netFlow.toLocaleString()}
-          </p>
-        </div>
-      </div>
-
-      {/* Print Button */}
-      <div className="mt-4 flex justify-end gap-2">
-        <button onClick={() => exportToCSV(filteredFlow.map(f => ({ ...f, amount_display: f.amount })), [
-          { header: 'Date', accessor: (r: any) => new Date(r.date).toLocaleDateString('en-IN') },
-          { header: 'Description', accessor: (r: any) => r.desc },
-          { header: 'Reference', accessor: (r: any) => r.ref },
-          { header: 'Type', accessor: (r: any) => r.type },
-          { header: 'Mode', accessor: (r: any) => r.mode },
-          { header: 'Amount', accessor: (r: any) => r.amount },
-        ], 'cashflow_report')} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-md hover:bg-gray-50 border">
-          <Download size={16} /> Export CSV
-        </button>
-        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
-          <Printer size={16} /> Print Report
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto border rounded-md mt-4">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="py-3 px-4 font-semibold text-gray-600">Date</th>
-              <th className="py-3 px-4 font-semibold text-gray-600">Description</th>
-              <th className="py-3 px-4 font-semibold text-gray-600">Type</th>
-              <th className="py-3 px-4 font-semibold text-gray-600 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {filteredFlow.length === 0 ? (
-              <tr><td colSpan={4} className="py-8 text-center text-gray-500">No transactions found in this period.</td></tr>
-            ) : filteredFlow.map((flow, i) => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="py-3 px-4 text-gray-500">{new Date(flow.date).toLocaleDateString()}</td>
-                <td className="py-3 px-4 font-medium">{flow.desc} <span className="text-xs text-gray-400">({flow.ref})</span></td>
-                <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 rounded textxs font-bold uppercase text-xs ${flow.type === 'INFLOW' ? 'bg-gray-100 text-gray-900' : 'bg-red-100 text-red-700'
-                    }`}>{flow.type}</span>
-                </td>
-                <td className={`py-3 px-4 text-right font-mono font-medium ${flow.amount > 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                  {flow.amount > 0 ? '+' : ''}{flow.amount.toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// Shared Modal Component
-function StatementModal({ title, entity, period, ledger, onClose, columns, reverseBalanceColor }: any) {
-  // Calculate running balance and totals
-  let runningBalance = 0;
-  const totals = ledger.reduce((acc: any, row: any) => ({
-    debit: acc.debit + row.debit,
-    credit: acc.credit + row.credit
-  }), { debit: 0, credit: 0 });
-
-  return (
-    <div className="fixed inset-0 bg-white z-[100] overflow-auto p-4 md:p-8 animate-fade-in">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-1.5 border-b pb-4">
-          <div>
-            <h1 className="text-page-title uppercase tracking-widest text-gray-900">{title}</h1>
-            <p className="text-gray-500 mt-1">Aayam Office System</p>
-          </div>
-          <div className="text-right flex gap-2 print:hidden">
-            <button onClick={() => exportToCSV(ledger, [
-              { header: 'Date', accessor: (r: any) => new Date(r.date).toLocaleDateString('en-IN') },
-              { header: 'Reference', accessor: (r: any) => r.ref },
-              { header: 'Description', accessor: (r: any) => r.desc },
-              { header: 'Mode', accessor: (r: any) => r.mode !== '-' ? r.mode : '' },
-              { header: 'Debit', accessor: (r: any) => r.debit || '' },
-              { header: 'Credit', accessor: (r: any) => r.credit || '' },
-            ], `statement_${entity.name}`)} className="px-4 py-2 bg-white text-gray-700 rounded-md flex items-center gap-2 hover:bg-gray-50 border">
-              <Download size={16} /> CSV
-            </button>
-            <button onClick={() => window.print()} className="px-4 py-2 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800">
-              <Printer size={16} /> Print
-            </button>
-            <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:text-red-500 border rounded-md">Close</button>
-          </div>
-        </div>
-
-        <div className="flex justify-between mb-1.5">
-          <div>
-            <p className="text-xs text-gray-400 uppercase font-bold">To</p>
-            <h3 className="text-page-title">{entity.name}</h3>
-            <p>{entity.company}</p>
-            <p className="text-gray-500">{entity.phone}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-400 uppercase font-bold">Statement Period</p>
-            <p className="font-medium">{period.start || 'Beginning'} - {period.end || 'Today'}</p>
-          </div>
-        </div>
-
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-y border-gray-200">
-              <th className="py-3 text-left font-semibold text-gray-600 pl-2">Date</th>
-              <th className="py-3 text-left font-semibold text-gray-600">Ref</th>
-              <th className="py-3 text-left font-semibold text-gray-600 w-1/3">{columns[0]}</th>
-              <th className="py-3 text-left font-semibold text-gray-600">{columns[1]}</th>
-              <th className="py-3 text-right font-semibold text-gray-600">{columns[2]}</th>
-              <th className="py-3 text-right font-semibold text-gray-600">{columns[3]}</th>
-              <th className="py-3 text-right font-semibold text-gray-600 pr-2">Balance</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {ledger.length === 0 ? (
-              <tr><td colSpan={7} className="py-8 text-center text-gray-400">No transactions found</td></tr>
-            ) : ledger.map((row: any, i: number) => {
-              runningBalance += (row.debit - row.credit); // Standard: Dr+ Cr-
-              // For Vendor, if Credit (Bill) > Debit (Paid), Balance is Negative (Payable).
-              // We can display Absolute value and Dr/Cr suffix if we want, but keeping signed number is clearer for internal view.
-              return (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="py-3 pl-2 text-gray-500">{new Date(row.date).toLocaleDateString('en-IN')}</td>
-                  <td className="py-3 font-mono text-xs">{row.ref}</td>
-                  <td className="py-3 font-medium">{row.desc}</td>
-                  <td className="py-3 text-xs uppercase text-gray-400">{row.mode !== '-' ? row.mode : ''}</td>
-                  <td className="py-3 text-right text-gray-600">{row.debit > 0 ? row.debit.toLocaleString() : '-'}</td>
-                  <td className="py-3 text-right text-gray-600">{row.credit > 0 ? row.credit.toLocaleString() : '-'}</td>
-                  <td className={`py-3 text-right font-bold pr-2 ${reverseBalanceColor
-                    ? (runningBalance < 0 ? 'text-red-600' : 'text-gray-900') // Vendor: Negative is Payable (Red?) Wait. Payable = Bad (Red)? No Payable is standard. 
-                    // Let's stick to: Negative balance = Credit Balance (Payable).
-                    : (runningBalance > 0 ? 'text-primary' : 'text-red-700')
-                    }`}>
-                    {Math.abs(runningBalance).toLocaleString()} {runningBalance < 0 ? 'Cr' : 'Dr'}
-                  </td>
-                </tr>
-              );
-            })}
-            {/* TOTALS */}
-            <tr className="bg-gray-50 font-bold border-t-2 border-gray-200">
-              <td colSpan={4} className="py-4 pl-2 text-right uppercase">Total</td>
-              <td className="py-4 text-right text-gray-900">{totals.debit.toLocaleString()}</td>
-              <td className="py-4 text-right text-gray-900">{totals.credit.toLocaleString()}</td>
-              <td className="py-4 text-right pr-2 text-lg">
-                {Math.abs(runningBalance).toLocaleString()} {runningBalance < 0 ? 'Cr' : 'Dr'}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="mt-12 pt-8 border-t text-center text-gray-400 text-xs">
-          <p>Generated by Aayam Office System on {new Date().toLocaleString()}</p>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

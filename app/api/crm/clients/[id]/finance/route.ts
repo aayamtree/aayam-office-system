@@ -61,6 +61,18 @@ export async function GET(_request: Request, { params }: { params: { id: string 
         const sum = (rows: { amount: number | null }[] | null) =>
             (rows || []).reduce((total, row) => total + Number(row.amount || 0), 0);
 
+        // If EITHER side of the receipts total failed, `.data` is null, sum() is 0
+        // and this used to answer 200 with received_total: 0 — a confident zero the
+        // caller could not tell from a real one. The caller draws a money figure
+        // from this; a half-read total is worse than no answer.
+        if (bankRes.error || cashRes.error) {
+            console.error('CRM client finance: receipts read failed', bankRes.error || cashRes.error);
+            return NextResponse.json(
+                { error: 'Could not read this client\u2019s receipts' },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json({
             invoices: invoicesRes.data || [],
             payments: paymentsRes.data || [],

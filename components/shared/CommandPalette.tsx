@@ -93,8 +93,13 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'Paper Stock',           subtitle: 'Paper stock levels',               href: '/admin/cmyk-print/paper-stock' },
     { title: 'Retail POS',            subtitle: 'Point of sale',                    href: '/admin/cmyk-print/retail-pos' },
     // Reports
-    { title: 'Reports Overview',      subtitle: 'All reports',                      href: '/admin/reports' },
-    { title: 'Finance Reports (all reports section)', subtitle: 'Financial reports', href: '/admin/reports/finance' },
+    // /admin/reports is no longer a statement generator — it is the section
+    // overview explaining what was withdrawn on 2026-09-08 and where the current
+    // figures live. /admin/reports/finance is history from the app's own ledger
+    // (to 5 Aug) and came off the sidebar; it stays searchable, labelled for what
+    // it is, so nobody opens it expecting a current P&L.
+    { title: 'Reports Overview',      subtitle: 'Where each report figure comes from', href: '/admin/reports' },
+    { title: 'Finance Reports (history to 5 Aug)', subtitle: 'Old ledger — not current', href: '/admin/reports/finance' },
     { title: 'Sales Reports',         subtitle: 'Sales reports',                    href: '/admin/reports/sales' },
     { title: 'Vendor Reports',        subtitle: 'Vendor reports',                   href: '/admin/finance/reports/vendor-reports' },
     { title: 'Dispatch Reports',      subtitle: 'Dispatch reports',                 href: '/admin/reports/dispatch' },

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, Truck, Package, Clock, CheckCircle } from 'lucide-react';
+import { exportToCSV } from '@/lib/csv-export';
+import LoadError from '@/components/LoadError';
+import { ArrowLeft, Download, Printer, Filter, Truck, Package, Clock, CheckCircle } from 'lucide-react';
 
 interface DispatchRecord {
   id: string;
@@ -20,7 +21,17 @@ interface DispatchRecord {
 import { useDispatches } from '@/lib/hooks';
 
 export default function DispatchReportPage() {
-  const { dispatches, loading } = useDispatches();
+  // `error` was discarded here, so a failed read rendered "0 dispatched, 0
+  // delivered, 0 in transit" — the same screen a genuinely quiet month gives.
+  const { dispatches, loading, error, refetch } = useDispatches();
+
+  // Read the newest date off the data rather than writing a month into the copy —
+  // one dispatch entered tomorrow would otherwise leave the banner saying August
+  // for ever.
+  const newestDispatch = (dispatches || []).reduce((latest: string, d: any) => {
+    const when = (d.dispatch_date || d.created_at || '').split('T')[0];
+    return when > latest ? when : latest;
+  }, '');
   const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -68,8 +79,20 @@ export default function DispatchReportPage() {
 
   const transporterData = Object.entries(transporterBreakdown).sort((a, b) => b[1] - a[1]);
 
-  const handleExport = (type: 'pdf' | 'excel') => {
-    toast.info(`📥 Exporting Dispatch Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+  // Was a toast reading "In production, this would generate a downloadable
+  // file." — a download button that had never downloaded anything. Excel opens
+  // CSV, and the browser's own Save-as-PDF is the honest answer for PDF.
+  const handleExport = () => {
+    exportToCSV(filteredDispatches, [
+      { header: 'Date', accessor: (r) => r.date },
+      { header: 'Order', accessor: (r) => r.orderNumber },
+      { header: 'Client', accessor: (r) => r.client },
+      { header: 'Destination', accessor: (r) => r.destination },
+      { header: 'Transporter', accessor: (r) => r.transporter },
+      { header: 'Status', accessor: (r) => r.status },
+      { header: 'Delivered on', accessor: (r) => r.deliveryDate },
+      { header: 'Days in transit', accessor: (r) => r.deliveryDays },
+    ], 'dispatch_report');
   };
 
   const getStatusColor = (status: string) => {
@@ -96,17 +119,44 @@ export default function DispatchReportPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-gray-900 rounded-md hover:bg-red-100">
+          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 border border-gray-200">
             <Download size={16} />
-            <span>PDF</span>
+            <span>Export CSV</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100">
-            <Download size={16} />
-            <span>Excel</span>
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800">
+            <Printer size={16} />
+            <span>Print</span>
           </button>
         </div>
       </div>
 
+      {error && <LoadError what="dispatch records" error={error} onRetry={() => refetch()} />}
+
+      {/* Measured 2026-09-08: `dispatches` holds 2 rows, newest 5 August, while
+          105 jobs have reached dispatched or delivered. The counts below are
+          therefore true about the table and useless about the business, and a
+          screen that reads 0 without saying why is the same trap as a failed
+          query rendering as a calm zero. This is a data gap, not a code fault —
+          jobs are being marked shipped without a dispatch record being created. */}
+      {!error && !loading && (dispatches || []).length < 5 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
+          <p className="font-semibold text-amber-900">Almost nothing has been recorded here.</p>
+          <p className="mt-1 text-amber-800">
+            Only {(dispatches || []).length} dispatch {(dispatches || []).length === 1 ? 'record exists' : 'records exist'} in
+            total{newestDispatch ? `, the most recent from ${newestDispatch}` : ''}, while jobs are being marked
+            dispatched and delivered every week. The figures below describe the dispatch records, not the
+            deliveries — treat a zero here as &ldquo;not entered&rdquo;, never as &ldquo;nothing shipped&rdquo;.
+          </p>
+        </div>
+      )}
+
+      {!error && loading && (
+        <div className="rounded-md border border-gray-200 bg-white py-14 text-center text-sm text-gray-400">
+          Loading dispatch records…
+        </div>
+      )}
+
+      {!error && !loading && (<>
       {/* Filters */}
       <div className="bg-white rounded-lg md:rounded-lg p-3 md:p-4 border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
@@ -263,6 +313,7 @@ export default function DispatchReportPage() {
           </div>
         </div>
       </div>
+      </>)}
     </div>
   );
 }

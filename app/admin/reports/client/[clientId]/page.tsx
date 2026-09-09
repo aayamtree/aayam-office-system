@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Printer, Phone, Mail, MapPin, Building2, Scale, FileText, CreditCard, Banknote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -194,7 +195,6 @@ export default function ClientStatementPage() {
 
     const totalBilled = ledger.reduce((s, r) => s + r.debit, 0);
     const totalReceived = ledger.reduce((s, r) => s + r.credit, 0);
-    const outstanding = totalBilled - totalReceived;
 
     const handleSaveCash = async () => {
         // Writes cash_transactions AND moves cash_accounts.current_balance —
@@ -284,7 +284,7 @@ export default function ClientStatementPage() {
                         <ArrowLeft className="w-4 h-4" />
                     </button>
                     <div>
-                        <h1 className="font-bold text-gray-900 text-sm">Statement of Account</h1>
+                        <h1 className="font-bold text-gray-900 text-sm">Transaction History</h1>
                         <p className="text-xs text-gray-500">{client.company || client.name}</p>
                     </div>
                 </div>
@@ -324,7 +324,7 @@ export default function ClientStatementPage() {
                             </div>
                         </div>
                         <div className="text-right text-sm text-gray-500">
-                            <p className="font-semibold text-gray-900">Statement Period</p>
+                            <p className="font-semibold text-gray-900">Period</p>
                             <p>{fmtDate(dateFrom)} – {fmtDate(dateTo)}</p>
                             <p className="text-xs mt-1">Generated {fmtDate(new Date().toISOString().split('T')[0])}</p>
                         </div>
@@ -341,6 +341,21 @@ export default function ClientStatementPage() {
                         className="border rounded-md px-3 py-1.5 text-sm focus:ring-2 ring-gray-200 outline-none" />
                     <button onClick={() => { setDateFrom(fyStart); setDateTo(new Date().toISOString().split('T')[0]); }}
                         className="text-xs text-gray-500 underline">Reset to FY</button>
+                </div>
+
+                {/* The receipts side of this page reads bank_transactions and
+                    cash_transactions — the app's own ledger, closed for writing on
+                    5 August 2026. The invoice side reads jobs and is current. Saying
+                    so is not optional: without it the two totals below look like a
+                    matched pair. */}
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm print:border-gray-300 print:bg-white">
+                    <p className="font-semibold text-amber-900">Received stops at 5 August 2026.</p>
+                    <p className="mt-1 text-amber-800">
+                        Payments have been recorded in Zoho and Vyapar since then, and this page cannot see
+                        them. Invoicing below is current, so the two columns cover different periods and must
+                        not be subtracted from each other. For what a client actually owes, use{' '}
+                        <Link href="/admin/finance/money-in" className="font-semibold underline underline-offset-2">Money In</Link>.
+                    </p>
                 </div>
 
                 {/* Summary cards */}
@@ -363,16 +378,24 @@ export default function ClientStatementPage() {
                             {ledger.filter(r => r.paymentMode === 'bank').length} bank · {ledger.filter(r => r.paymentMode === 'cash').length} cash
                         </p>
                     </div>
+                    {/* This tile said "Outstanding … Amount due" in red, from
+                        totalBilled − totalReceived. Billing is LIVE (jobs, current
+                        to today); receipts come from bank_transactions and
+                        cash_transactions, which stopped on 5 August 2026. So the
+                        subtraction billed a client for five weeks of new work and
+                        credited them with nothing they had paid in those weeks —
+                        a red "amount due" that Zoho may show as settled, on a page
+                        whose own footer calls itself a statement. Removed
+                        2026-09-08; the rows below are still true individually. */}
                     <div className="bg-white border rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-1">
                             <Scale className="w-4 h-4 text-gray-400" />
                             <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Outstanding</span>
                         </div>
-                        <p className={`text-xl font-bold ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-700' : 'text-gray-900'}`}>
-                            {fmt(Math.abs(outstanding))}
-                            {outstanding < 0 && <span className="text-xs font-normal ml-1">CR</span>}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">{outstanding > 0 ? 'Amount due' : outstanding < 0 ? 'Credit balance' : 'Fully settled'}</p>
+                        <p className="text-xl font-bold text-gray-300">&mdash;</p>
+                        <Link href="/admin/finance/money-in" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">
+                            Money In has the real figure
+                        </Link>
                     </div>
                 </div>
 
@@ -402,7 +425,6 @@ export default function ClientStatementPage() {
                                         <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Ref</th>
                                         <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoiced</th>
                                         <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Received</th>
-                                        <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Balance</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -441,23 +463,19 @@ export default function ClientStatementPage() {
                                             <td className="px-4 py-3 text-right font-semibold text-green-700">
                                                 {row.credit > 0 ? fmt(row.credit) : <span className="text-gray-300">—</span>}
                                             </td>
-                                            <td className={`px-4 py-3 text-right font-bold ${row.balance > 0 ? 'text-red-600' : row.balance < 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                                                {fmt(Math.abs(row.balance))}
-                                                {row.balance < 0 && <span className="text-xs font-normal ml-1 text-green-600">CR</span>}
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
                                 <tfoot className="border-t-2 border-gray-200">
+                                    {/* The running balance per row and the closing
+                                        balance were the same wrong subtraction as the
+                                        tile above, repeated on every line. Totals of
+                                        what was invoiced and what was received stay —
+                                        each of those is a real sum of real rows. */}
                                     <tr className="bg-gray-50 font-bold">
-                                        <td colSpan={3} className="px-4 py-3 text-sm text-gray-700">Closing Balance</td>
+                                        <td colSpan={3} className="px-4 py-3 text-sm text-gray-700">Totals for this period</td>
                                         <td className="px-4 py-3 text-right text-sm text-gray-800">{fmt(totalBilled)}</td>
                                         <td className="px-4 py-3 text-right text-sm text-green-700">{fmt(totalReceived)}</td>
-                                        <td className={`px-4 py-3 text-right text-sm ${outstanding > 0 ? 'text-red-600' : outstanding < 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                                            {fmt(Math.abs(outstanding))}
-                                            {outstanding < 0 && <span className="text-xs font-normal ml-1">CR</span>}
-                                            {outstanding === 0 && <span className="text-xs font-normal ml-1">Settled</span>}
-                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -467,7 +485,9 @@ export default function ClientStatementPage() {
 
                 {/* Footer note */}
                 <p className="text-xs text-center text-gray-400 pb-4">
-                    This is a computer-generated statement. Bank-verified and cash transactions appear in the Received column.
+                    Transaction history, not a statement of account. Received covers bank-verified and cash
+                    entries in the app&rsquo;s own ledger, which stopped on 5 August 2026 — anything paid
+                    since then is in Zoho and is not shown here. Do not send this to a client as a balance.
                 </p>
             </div>
 

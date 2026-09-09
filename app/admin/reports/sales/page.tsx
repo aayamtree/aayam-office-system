@@ -1,22 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { toast } from '@/lib/toast';
+import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, TrendingUp, Users, Package, IndianRupee, CheckCircle, Clock } from 'lucide-react';
-import { createAuditedBrowserClient } from '@/lib/supabase';
-import useSWR from 'swr';
+import { ArrowLeft, Download, Filter, Printer, Users, IndianRupee, CheckCircle } from 'lucide-react';
+import { exportToCSV } from '@/lib/csv-export';
+import LoadError from '@/components/LoadError';
 
-const supabase = createAuditedBrowserClient();
-
-function usePaymentsReceivedDirect() {
-  return useSWR('pr_direct_sales', async () => {
-    const { data } = await supabase
-      .from('payments_received')
-      .select('id, amount, payment_date, client_id');
-    return data || [];
-  }, { revalidateOnFocus: false });
-}
+// The payments source that used to live here is gone. It read `payments_received`,
+// the app's own ledger, which stopped being written on 5 August 2026 — and it had
+// TWO faults on top of being frozen: it discarded the query error (`const { data } =
+// await …`), so a failed read was an indistinguishable ₹0, and it was never filtered
+// by the client filter above it. Filtering the report to one client therefore
+// compared THAT client's billing against EVERY client's receipts, which on
+// 2026-09-08 read as a 271% collection rate with ₹0 pending.
+// Billing below comes from `jobs` and is live. Money collected is Zoho's answer now:
+// see Sales & Finance → Money In.
 
 interface SaleRecord {
   id: string;
@@ -34,11 +32,15 @@ import { useJobs } from '@/lib/hooks';
 export default function SalesReportPage() {
   // Sales report needs order_date + quantity, which the default JOB_SELECTS.LIST
   // does NOT fetch. Without them job.order_date is undefined and .split() crashes.
-  const { jobs, loading } = useJobs({
+  // `error` and `refetch` were never destructured here and `loading` was never
+  // used, so a failed jobs read rendered this page as "Total Billed ₹0.0K ·
+  // 0 orders · 0 clients" with an empty table — a calm, confident nothing that
+  // is indistinguishable from a quiet week. This page is now the landing screen
+  // for the whole Reports section, which makes that worse, not better.
+  const { jobs, loading, error, refetch } = useJobs({
     select: 'id, job_number, project_name, order_date, quantity, current_stage, total_amount, client:clients(id, name, company)',
     limit: 2000,
   });
-  const { data: paymentsRaw } = usePaymentsReceivedDirect();
 
   // Financial year start
   const fyStart = new Date().getMonth() >= 3
@@ -78,17 +80,6 @@ export default function SalesReportPage() {
   const totalBilled = filteredSales.filter(s => s.status !== 'cancelled').reduce((sum, s) => sum + s.amount, 0);
   const totalOrders = filteredSales.length;
 
-  // Received = actual payments collected within the same date range
-  const receivedTotal = useMemo(() => {
-    return (paymentsRaw || []).filter((p: any) => {
-      const d = (p.payment_date || '').split('T')[0];
-      return d >= dateFrom && d <= dateTo;
-    }).reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
-  }, [paymentsRaw, dateFrom, dateTo]);
-
-  const pendingTotal = Math.max(0, totalBilled - receivedTotal);
-  const collectionRate = totalBilled > 0 ? Math.round((receivedTotal / totalBilled) * 100) : 0;
-
   const avgOrderValue = totalOrders > 0 ? Math.round(totalBilled / totalOrders) : 0;
 
   const uniqueClients = Array.from(new Set(filteredSales.map(s => s.client)));
@@ -105,8 +96,21 @@ export default function SalesReportPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  const handleExport = (type: 'pdf' | 'excel') => {
-    toast.info(`📥 Exporting Sales Report as ${type.toUpperCase()}...\n\nIn production, this would generate a downloadable file.`);
+  // These two buttons used to call toast.info("In production, this would generate a
+  // downloadable file.") — a download button that has never downloaded anything.
+  // exportToCSV already exists and Excel opens CSV, so Excel is now real. Print is
+  // the honest answer for PDF: the browser's own Save-as-PDF, rather than a second
+  // button that does nothing.
+  const handleExport = () => {
+    exportToCSV(filteredSales, [
+      { header: 'Date', accessor: (r: SaleRecord) => r.date },
+      { header: 'Order', accessor: (r: SaleRecord) => r.orderNumber },
+      { header: 'Client', accessor: (r: SaleRecord) => r.client },
+      { header: 'Items', accessor: (r: SaleRecord) => r.items },
+      { header: 'Quantity', accessor: (r: SaleRecord) => r.quantity },
+      { header: 'Billed', accessor: (r: SaleRecord) => r.amount },
+      { header: 'Status', accessor: (r: SaleRecord) => r.status },
+    ], 'sales_report');
   };
 
   return (
@@ -123,13 +127,13 @@ export default function SalesReportPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => handleExport('pdf')} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100">
+          <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100 border border-gray-200">
             <Download size={16} />
-            <span>PDF</span>
+            <span>Export CSV</span>
           </button>
-          <button onClick={() => handleExport('excel')} className="flex items-center gap-2 px-3 py-2 bg-white text-gray-900 rounded-md hover:bg-gray-100">
-            <Download size={16} />
-            <span>Excel</span>
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800">
+            <Printer size={16} />
+            <span>Print</span>
           </button>
         </div>
       </div>
@@ -185,6 +189,19 @@ export default function SalesReportPage() {
         </div>
       </div>
 
+      {error && (
+        <LoadError what="this sales report" error={error} onRetry={() => refetch()} />
+      )}
+
+      {!error && loading && (
+        <div className="rounded-md border border-gray-200 bg-white py-14 text-center text-sm text-gray-400">
+          Loading orders…
+        </div>
+      )}
+
+      {/* Nothing numeric renders while the read is failing or still in flight —
+          an empty table under a real heading is a claim about the business. */}
+      {!error && !loading && (<>
       {/* Stats — AR View: Billed / Received / Pending / Orders */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
         {/* Total Billed */}
@@ -195,21 +212,18 @@ export default function SalesReportPage() {
           <p className="text-2xl font-bold text-gray-900">₹{(totalBilled / 1000).toFixed(1)}K</p>
           <p className="text-xs text-gray-400 mt-1">{totalOrders} orders · {avgOrderValue > 0 ? `avg ₹${(avgOrderValue / 1000).toFixed(0)}K` : ''}</p>
         </div>
-        {/* Received */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-md p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Received</span>
+        {/* The Received and Pending tiles that sat here were the report's two
+            biggest numbers and both came from the dead ledger — Received was also
+            never narrowed by the client filter. What a client has actually paid is
+            Zoho's answer, so this points there instead of guessing. */}
+        <div className="bg-white rounded-md border border-gray-200 p-4">
+          <div className="flex items-center gap-2 mb-2 text-gray-500">
+            <CheckCircle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Collected</span>
           </div>
-          <p className="text-2xl font-bold">₹{(receivedTotal / 1000).toFixed(1)}K</p>
-          <p className="text-xs opacity-75 mt-1">{collectionRate}% collected</p>
-        </div>
-        {/* Pending */}
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-md p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={15} /><span className="text-xs font-bold uppercase tracking-wide">Pending</span>
-          </div>
-          <p className="text-2xl font-bold">₹{(pendingTotal / 1000).toFixed(1)}K</p>
-          <p className="text-xs opacity-75 mt-1">{100 - collectionRate}% outstanding</p>
+          <p className="text-2xl font-bold text-gray-400">—</p>
+          <Link href="/admin/finance/money-in" className="text-xs text-primary underline underline-offset-2 mt-1 inline-block">
+            Money In reads Zoho
+          </Link>
         </div>
         {/* Unique Clients */}
         <div className="bg-gray-900 rounded-md p-4 text-white">
@@ -221,25 +235,7 @@ export default function SalesReportPage() {
         </div>
       </div>
 
-      {/* AR Progress Bar */}
-      {totalBilled > 0 && (
-        <div className="bg-white rounded-md border border-gray-100 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Collection Progress</span>
-            <span className="text-xs text-gray-500">{collectionRate}% collected · ₹{(pendingTotal).toLocaleString('en-IN')} still pending</span>
-          </div>
-          <div className="w-full h-3 bg-red-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 rounded-full transition-all"
-              style={{ width: `${collectionRate}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-xs text-green-600 font-bold">✅ ₹{receivedTotal.toLocaleString('en-IN')} received</span>
-            <span className="text-xs text-red-500 font-bold">🔴 ₹{pendingTotal.toLocaleString('en-IN')} pending</span>
-          </div>
-        </div>
-      )}
+      {/* The collection-progress bar was the same two numbers as a picture. */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         {/* Sales Table */}
@@ -307,6 +303,7 @@ export default function SalesReportPage() {
           </div>
         </div>
       </div>
+      </>)}
     </div>
   );
 }
