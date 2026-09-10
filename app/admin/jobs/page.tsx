@@ -53,6 +53,9 @@ import ProductBadge from '@/components/shared/ProductBadge';
 const _currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 const formatCurrency = (amount: number) => _currencyFormatter.format(amount || 0);
 const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 text-gray-900' : status === 'partial' ? 'bg-gray-100 text-gray-700' : 'bg-destructive/10 text-destructive';
+/** Which columns the user has shut or opened by hand. Per browser, per person. */
+const COLLAPSED_STAGES_KEY = 'aayam.jobs.collapsedStages';
+
 const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
 // UI: strip leading emoji/symbols from advance-stage labels (keeps full wording, e.g. "Move to Brief & Assets")
 const stripEmoji = (label: string) => label.replace(/^[^A-Za-z0-9]+/, '');
@@ -324,6 +327,30 @@ export default function JobsPage() {
 
   const [priorities, setPriorities] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
+
+  // ── Column collapse ────────────────────────────────────────────────────────
+  // Fifteen stages at 320px each made the board 5,000px wide — three screens of
+  // sideways scrolling, half of it empty columns. A column with nothing in it
+  // collapses to a strip by default; anything the user opens or shuts by hand
+  // overrides that and is remembered. undefined = follow the empty rule.
+  const [stageCollapse, setStageCollapse] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(COLLAPSED_STAGES_KEY);
+      if (raw) setStageCollapse(JSON.parse(raw));
+    } catch { /* private window, cleared storage — the empty rule still works */ }
+  }, []);
+  const setCollapsed = useCallback((stageId: string, collapsed: boolean) => {
+    setStageCollapse(prev => {
+      const next = { ...prev, [stageId]: collapsed };
+      try { window.localStorage.setItem(COLLAPSED_STAGES_KEY, JSON.stringify(next)); } catch { }
+      return next;
+    });
+  }, []);
+  const resetColumns = useCallback(() => {
+    setStageCollapse({});
+    try { window.localStorage.removeItem(COLLAPSED_STAGES_KEY); } catch { }
+  }, []);
   const [machines, setMachines] = useState<any[]>([]);
 
   const [editingJob, setEditingJob] = useState<Job | null>(null);
@@ -1005,6 +1032,12 @@ export default function JobsPage() {
               {priorities.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          {/* A way back. Without it, a column shut by hand looks permanent. */}
+          {viewMode === 'kanban' && Object.keys(stageCollapse).length > 0 && (
+            <Button variant="ghost" size="sm" onClick={resetColumns} className="h-9 text-xs text-gray-500" title="Forget my column choices and go back to hiding only empty columns">
+              Reset columns
+            </Button>
+          )}
           <ToggleGroup
             type="single"
             value={viewMode}
@@ -1057,14 +1090,47 @@ export default function JobsPage() {
           <div className="flex gap-2 md:gap-4 overflow-x-auto pb-4 h-[calc(100vh-220px)] items-start">
             {stages.map(stage => {
               const stageJobs = jobsByStage[stage.id] || [];
+              const collapsed = stageCollapse[stage.id] !== undefined
+                ? stageCollapse[stage.id]
+                : stageJobs.length === 0;
+
+              // A shut column is still a column: name, colour and count stay
+              // readable, so nothing is hidden — it just stops eating 320px.
+              if (collapsed) {
+                return (
+                  <button
+                    key={stage.id}
+                    type="button"
+                    onClick={() => setCollapsed(stage.id, false)}
+                    title={`${stage.name} — ${stageJobs.length} job${stageJobs.length === 1 ? '' : 's'}. Click to open.`}
+                    className="w-11 flex-shrink-0 self-stretch max-h-full overflow-hidden bg-white/40 rounded-md border border-dashed border-gray-200 hover:bg-white hover:border-gray-300 transition-colors flex flex-col items-center gap-2 py-3"
+                  >
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${stage.color}`} />
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${stageJobs.length > 0 ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                      {stageJobs.length}
+                    </span>
+                    <span
+                      className="text-[11px] font-medium text-gray-500 whitespace-nowrap overflow-hidden"
+                      style={{ writingMode: 'vertical-rl' }}
+                    >
+                      {stage.name}
+                    </span>
+                  </button>
+                );
+              }
+
               return (
-                <div key={stage.id} className="min-w-[300px] w-80 flex-shrink-0 bg-white/50 rounded-md border border-gray-200 flex flex-col max-h-full ">
+                <div key={stage.id} className="min-w-[260px] w-[260px] flex-shrink-0 bg-white/50 rounded-md border border-gray-200 flex flex-col max-h-full ">
                   {/* Column Header */}
-                  <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
-                      <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs text-gray-600 font-medium">{stageJobs.length}</span>
+                  <div
+                    className="p-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl sticky top-0 z-10 cursor-pointer select-none hover:bg-gray-50"
+                    onClick={() => setCollapsed(stage.id, true)}
+                    title="Click to shut this column"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${stage.color}`}></div>
+                      <span className="font-bold text-gray-700 text-sm truncate">{stage.name}</span>
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs text-gray-600 font-medium flex-shrink-0">{stageJobs.length}</span>
                       {/* Say out loud what empties this column. Delivered work leaves
                           when it is paid, not on a timer — the old "7d" label said the
                           opposite and the column read as broken. */}
@@ -1072,6 +1138,7 @@ export default function JobsPage() {
                         <span className="text-[10px] text-gray-400 font-normal" title={`Unpaid jobs stay here. Once paid, they drop off after ${RECENTLY_FINISHED_DAYS} days.`}>until paid</span>
                       )}
                     </div>
+                    <ChevronLeft className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
                   </div>
 
                   {/* Cards List */}
