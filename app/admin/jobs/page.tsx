@@ -10,7 +10,7 @@ import {
   AlertCircle, AlertTriangle, ChevronDown, LayoutGrid,
   List, Building2, UserPlus, Loader2,
   Layers, Printer, ArrowRight, Download, Clock, Copy, Send, Paperclip, Upload,
-  ChevronLeft, ChevronRight, CheckCircle
+  ChevronLeft, ChevronRight, CheckCircle, Archive
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible,
@@ -28,6 +28,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import {
   getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType,
   isJobClosed, isAwaitingPayment, isOnActiveBoard, isWorkFinished, finishedAt, RECENTLY_FINISHED_DAYS,
+  getPaymentWatchLabel, isMoneySettled, isManuallyClosed, outstandingBalance,
 } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
@@ -66,10 +67,11 @@ interface JobCardProps {
   onOpenSendToPrinter: (job: Job) => void;
   onStageChange: (id: string, stage: string) => void;
   onAddPayment: (job: Job) => void;
+  onCloseWithoutPayment: (job: Job) => void;
   onDelete: (id: string) => void;
 }
 
-const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, onApproveDesignerProject, onOpenSendToPrinter, onStageChange, onAddPayment, onDelete }: JobCardProps) {
+const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetail, onEdit, onRepeatOrder, onApproveDesignerProject, onOpenSendToPrinter, onStageChange, onAddPayment, onCloseWithoutPayment, onDelete }: JobCardProps) {
   const overdue = useMemo(() => isOverdue(job.client_deadline, job.current_stage), [job.client_deadline, job.current_stage]);
   const headerBg = useMemo(() => overdue ? 'bg-red-600' : job.priority === 'urgent' ? 'bg-gray-900' : job.priority === 'high' ? 'bg-gray-800' : 'bg-gray-700', [overdue, job.priority]);
   return (
@@ -96,6 +98,25 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
             <span className="text-xs text-amber-700">No advance</span>
           </div>
         )}
+        {/* Delivered work still carrying money. This is why the card is still
+            on the board — say so plainly instead of letting it look idle. */}
+        {(() => {
+          const watch = getPaymentWatchLabel(job as any);
+          if (!watch) return null;
+          const tone = watch.tone === 'red'
+            ? 'bg-red-50 border-red-200 text-red-700'
+            : watch.tone === 'amber'
+              ? 'bg-amber-50 border-amber-200 text-amber-700'
+              : 'bg-gray-50 border-gray-200 text-gray-500';
+          const due = outstandingBalance(job as any);
+          return (
+            <div className={`flex items-center gap-1 mb-2 px-2 py-1 border rounded-md ${tone}`}>
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+              <span className="text-xs truncate">{watch.text}</span>
+              {due > 0 && <span className="text-xs font-semibold ml-auto">{formatCurrency(due)}</span>}
+            </div>
+          );
+        })()}
         <h4 className="font-semibold text-gray-900 mb-0.5 line-clamp-2 leading-snug text-sm">{job.project_name}</h4>
         {(job as any).product_category && (
           <div className="flex items-center gap-1 mb-1.5 flex-wrap">
@@ -149,6 +170,11 @@ const JobCard = React.memo(function JobCard({ job, getPriorityBadge, onViewDetai
             );
           })()}
           <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onAddPayment(job); }} title="Payment"><IndianRupee className="w-3.5 h-3.5" /></Button>
+          {/* Free jobs, write-offs and rework never get a payment, so payment
+              can never archive them. This is the way out. */}
+          {isWorkFinished(job as any) && !isMoneySettled(job as any) && (
+            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onCloseWithoutPayment(job); }} title="Close without payment (free job / write-off)"><Archive className="w-3.5 h-3.5" /></Button>
+          )}
           <Button size="icon" variant="destructive" onClick={(e) => { e.stopPropagation(); onDelete(job.id); }} title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </div>
@@ -170,7 +196,7 @@ export default function JobsPage() {
     // cannot tell "delivered yesterday" from "delivered in June".
     // created_at is what "opened this month" counts. JOB_SELECTS.LIST omits it,
     // and a missing column here reads as zero rather than as an error.
-    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, created_at, dispatched_at, completed_date, updated_at, client:clients(id, name, company)',
+    select: 'id, job_number, project_name, client_id, vendor_id, designer_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, design_charge, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, advance_required, advance_collected, files, description, notes, created_at, dispatched_at, delivered_at, completed_date, closed_manually_at, close_reason, updated_at, client:clients(id, name, company)',
     // Closed jobs are still fetched — they feed the counts and the Closed tab.
     // A truncated list here silently under-reports money owed, so keep headroom.
     limit: 2000,
@@ -582,6 +608,26 @@ export default function JobsPage() {
     else toast.success('Job deleted');
   }, [confirm, deleteJob]);
 
+  // Payment is what archives a delivered job. Work we were never going to be
+  // paid for needs a door of its own, or it sits on the board for ever.
+  const handleCloseWithoutPayment = useCallback(async (job: Job) => {
+    const due = outstandingBalance(job as any);
+    const ok = await confirm({
+      title: 'Close without payment?',
+      message: due > 0
+        ? `${job.job_number} still shows ${formatCurrency(due)} outstanding. Closing moves it off the board and out of Awaiting Payment. Use this for free jobs, write-offs and reprints \u2014 not for money you still intend to collect.`
+        : `${job.job_number} has no amount entered. Closing moves it off the board. If it should have been billed, enter the amount instead.`,
+      confirmLabel: 'Close job',
+    });
+    if (!ok) return;
+    const { error } = await supabase
+      .from('jobs')
+      .update({ closed_manually_at: new Date().toISOString(), close_reason: 'Closed without payment from the jobs board' })
+      .eq('id', job.id);
+    if (error) toast.error('Could not close job: ' + error.message);
+    else { toast.success('Job closed'); refetchJobs(); }
+  }, [confirm, refetchJobs]);
+
   const handleStageChange = useCallback(async (jobId: string, newStage: string) => {
     await updateJobStage(jobId, newStage as JobStatus);
   }, [updateJobStage]);
@@ -901,7 +947,7 @@ export default function JobsPage() {
           </button>
         ))}
         <span className="text-xs text-gray-400 ml-1 hidden sm:inline">
-          {boardFilter === 'active' && `finished work drops off after ${RECENTLY_FINISHED_DAYS} days`}
+          {boardFilter === 'active' && `delivered work stays until it is paid, then drops off after ${RECENTLY_FINISHED_DAYS} days`}
           {boardFilter === 'awaiting_payment' && 'work handed over, money not in'}
           {boardFilter === 'closed' && 'done and paid — kept for search and reports'}
         </span>
@@ -1019,10 +1065,11 @@ export default function JobsPage() {
                       <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
                       <span className="font-bold text-gray-700 text-sm">{stage.name}</span>
                       <span className="bg-gray-100 px-2 py-0.5 rounded-md text-xs text-gray-600 font-medium">{stageJobs.length}</span>
-                      {/* Say out loud that this column is a window, not a total —
-                          otherwise the count looks like the job disappeared. */}
+                      {/* Say out loud what empties this column. Delivered work leaves
+                          when it is paid, not on a timer — the old "7d" label said the
+                          opposite and the column read as broken. */}
                       {boardFilter === 'active' && isWorkFinished({ current_stage: stage.id }) && (
-                        <span className="text-[10px] text-gray-400 font-normal">{RECENTLY_FINISHED_DAYS}d</span>
+                        <span className="text-[10px] text-gray-400 font-normal" title={`Unpaid jobs stay here. Once paid, they drop off after ${RECENTLY_FINISHED_DAYS} days.`}>until paid</span>
                       )}
                     </div>
                   </div>
@@ -1042,6 +1089,7 @@ export default function JobsPage() {
                           onOpenSendToPrinter={handleOpenSendToPrinter}
                           onStageChange={handleStageChange}
                           onAddPayment={handleAddPayment}
+                          onCloseWithoutPayment={handleCloseWithoutPayment}
                           onDelete={handleDelete}
                         />
                       ))

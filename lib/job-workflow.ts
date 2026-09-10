@@ -298,14 +298,27 @@ export function getStagesForJobType(
 //   2. the MONEY   — pending → paid
 //
 // Because only the work life had stages, a job that finished in June was still
-// sitting on the kanban in August. 248 of 270 cards were finished work. A board
-// you cannot read in one glance is a board nobody reads.
+// sitting on the kanban in August. A board you cannot read in one glance is a
+// board nobody reads.
 //
-// So: a job leaves the board when the work is done AND the money is settled.
-// Finished-but-unpaid is not a production problem, it is a collection problem —
-// it belongs on the money screen, not in the production column.
+// The first fix gave finished work a 7-day timer. That was wrong in a subtler
+// way: it emptied the Delivered column on a clock, so the one thing the column
+// was good for — remembering who still owes us — expired after a week. Worse,
+// the timer ran off dispatched_at/updated_at, and nothing ever wrote a real
+// dispatch or delivery date, so cards vanished the instant they were marked
+// delivered.
+//
+// Now: PAYMENT empties the Delivered column, not a clock.
+//
+//   delivered + money outstanding  → stays on the board, indefinitely, as the
+//                                    reminder that it is
+//   delivered + settled            → 7-day victory lap, then Closed
+//
+// And "zero balance" is no longer read as "paid". A job with no amount entered
+// is not paid, it is unfilled — it gets flagged so somebody fixes it, instead
+// of quietly archiving itself.
 
-/** How long a finished job stays visible on the board before dropping into Closed. */
+/** How long a finished AND SETTLED job stays visible before dropping into Closed. */
 export const RECENTLY_FINISHED_DAYS = 7;
 
 /** The shape any of the rules below need. Deliberately loose — every job list
@@ -316,7 +329,10 @@ export interface JobCloseState {
     total_amount?: number | null;
     amount_received?: number | null;
     dispatched_at?: string | null;
+    delivered_at?: string | null;
     completed_date?: string | null;
+    closed_manually_at?: string | null;
+    close_reason?: string | null;
     updated_at?: string | null;
 }
 
@@ -325,15 +341,42 @@ export function isWorkFinished(job: JobCloseState): boolean {
     return TERMINAL_STAGES.includes(job.current_stage || '');
 }
 
+/** Somebody actually put a price on this job. */
+export function hasAmountEntered(job: JobCloseState): boolean {
+    return (Number(job.total_amount) || 0) > 0;
+}
+
+/** What is still owed. Never negative — an overpayment is not a debt. */
+export function outstandingBalance(job: JobCloseState): number {
+    return Math.max(0, (Number(job.total_amount) || 0) - (Number(job.amount_received) || 0));
+}
+
 /**
- * Money settled. Paid outright, or nothing was owed in the first place —
- * free/non-billable design work carries a zero balance and must not sit
- * forever on a "waiting for payment" list that nobody can ever clear.
+ * Closed by hand rather than by payment: free work, a write-off, a reprint we
+ * ate the cost of. Cleared automatically if the job is pulled back into
+ * production (see trg_stamp_job_milestones).
+ */
+export function isManuallyClosed(job: JobCloseState): boolean {
+    return !!job.closed_manually_at;
+}
+
+/**
+ * Finished work carrying no amount at all. This is the case that used to read
+ * as "paid" and disappear. It is a data gap, not a settlement.
+ */
+export function isAmountMissing(job: JobCloseState): boolean {
+    return isWorkFinished(job) && !hasAmountEntered(job) && !isManuallyClosed(job);
+}
+
+/**
+ * Money settled. Paid outright, closed by hand with a reason, or billed and
+ * fully received. A zero total is NOT settled — nobody has said what it costs.
  */
 export function isMoneySettled(job: JobCloseState): boolean {
+    if (isManuallyClosed(job)) return true;
     if (job.payment_status === 'paid') return true;
-    const balance = (Number(job.total_amount) || 0) - (Number(job.amount_received) || 0);
-    return balance <= 0;
+    if (!hasAmountEntered(job)) return false;
+    return outstandingBalance(job) <= 0;
 }
 
 /** Closed = work done AND money settled. Cancelled is always closed. */
@@ -349,15 +392,28 @@ export function isAwaitingPayment(job: JobCloseState): boolean {
 }
 
 /**
- * The date the work finished. Prefer the trigger-stamped dispatch date, then the
- * completion date, and only fall back to updated_at — which moves on any edit and
+ * The date the work finished. Delivery first — that is the moment the client
+ * confirmed receipt and the payment clock starts. Then the design-only handover
+ * date, then dispatch, and only then updated_at, which moves on any edit and
  * would otherwise quietly resurrect an old job onto the board.
  */
 export function finishedAt(job: JobCloseState): Date | null {
-    const iso = job.dispatched_at || job.completed_date || job.updated_at || null;
+    const iso = job.delivered_at || job.completed_date || job.dispatched_at || job.updated_at || null;
     if (!iso) return null;
     const d = new Date(iso);
     return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Whole days since the client confirmed receipt. null when no delivery date was
+ * ever recorded — say "not recorded" rather than invent a number.
+ */
+export function daysSinceDelivered(job: JobCloseState): number | null {
+    const iso = job.delivered_at || job.completed_date || null;
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
 }
 
 /** Finished within the last N days — still worth a victory lap on the board. */
@@ -369,14 +425,38 @@ export function isRecentlyFinished(job: JobCloseState, days = RECENTLY_FINISHED_
 
 /**
  * Does this job belong on the live production board?
- * Everything still in progress, plus anything finished in the last week so the
- * board still shows work completing rather than jumping straight to empty.
+ *
+ *   still in production            → yes
+ *   delivered, money still out     → yes, and it stays until the money lands
+ *   delivered and settled          → yes for a week, then Closed
  */
 export function isOnActiveBoard(job: JobCloseState, days = RECENTLY_FINISHED_DAYS): boolean {
     if (job.current_stage === 'cancelled') return false;
     if (!isWorkFinished(job)) return true;
+    // Closed by hand is a decision, not an outcome — it leaves at once. Without
+    // this the legacy cleanup would have parked 154 deliberately-closed jobs in
+    // the Delivered column for a week, which is the clutter we are removing.
+    if (isManuallyClosed(job)) return false;
+    if (!isMoneySettled(job)) return true;
     return isRecentlyFinished(job, days);
 }
+
+/**
+ * One line describing where a delivered job stands on money, for the card.
+ * Returns null for jobs that have nothing to say (still in production, or
+ * settled and just taking their victory lap).
+ */
+export function getPaymentWatchLabel(job: JobCloseState): { text: string; tone: 'amber' | 'red' | 'grey' } | null {
+    if (!isWorkFinished(job)) return null;
+    if (isManuallyClosed(job)) return { text: 'Closed without payment', tone: 'grey' };
+    if (isAmountMissing(job)) return { text: 'Amount not entered', tone: 'amber' };
+    if (isMoneySettled(job)) return null;
+
+    const days = daysSinceDelivered(job);
+    const age = days === null ? 'date not recorded' : days === 0 ? 'delivered today' : `${days}d`;
+    return { text: `Payment pending · ${age}`, tone: days !== null && days > 30 ? 'red' : 'amber' };
+}
+
 
 /** 1-based position + total count of a stage within its type's pipeline (for "Step 3 of 12"). */
 export function getStageProgress(
