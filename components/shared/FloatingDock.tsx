@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Calculator, X, MessageCircle, GripVertical } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import GSTCalculator from './GSTCalculator';
 
 /**
@@ -11,8 +10,6 @@ import GSTCalculator from './GSTCalculator';
  * Vertical offset is persisted in localStorage.
  */
 export default function FloatingDock({ onOpenChat }: { onOpenChat: () => void }) {
-  const pathname = usePathname();
-  const isDashboard = pathname?.includes('/dashboard') ?? false; // dashboard has embedded GST widget
 
   const [calcOpen, setCalcOpen] = useState(false);
   const [offsetY, setOffsetY] = useState(0); // px the dock is lifted above its default bottom
@@ -74,7 +71,7 @@ export default function FloatingDock({ onOpenChat }: { onOpenChat: () => void })
       className="flex flex-col items-end gap-3"
     >
       {/* GST Calculator slide-up panel */}
-      {calcOpen && !isDashboard && (
+      {calcOpen && (
         <div className="bg-background border border-border rounded-2xl shadow-xl p-5 w-80 max-h-[80vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -111,16 +108,14 @@ export default function FloatingDock({ onOpenChat }: { onOpenChat: () => void })
           <MessageCircle size={22} strokeWidth={1.8} />
         </button>
 
-        {/* GST calculator (hidden on dashboard which has the embedded widget) */}
-        {!isDashboard && (
-          <button
-            onClick={() => setCalcOpen(v => !v)}
-            title="GST Calculator"
-            className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95 ${calcOpen ? 'bg-foreground text-background' : 'bg-background border border-border text-foreground hover:bg-muted'}`}
-          >
-            <Calculator className="w-5 h-5" />
-          </button>
-        )}
+        {/* GST calculator — a tool, so it lives in the dock on every screen. */}
+        <button
+          onClick={() => setCalcOpen(v => !v)}
+          title="GST Calculator"
+          className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95 ${calcOpen ? 'bg-foreground text-background' : 'bg-background border border-border text-foreground hover:bg-muted'}`}
+        >
+          <Calculator className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );

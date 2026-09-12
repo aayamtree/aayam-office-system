@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
-    Package, CreditCard, IndianRupee, AlertTriangle, Clock,
+    Package, IndianRupee, AlertTriangle, Clock,
     ArrowRight, Activity, Target, CheckCircle2, TrendingUp,
     Settings, Eye, EyeOff, TrendingDown, Minus,
 } from 'lucide-react';
@@ -27,7 +27,7 @@ import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
 import CMYKDashboardWidget from '@/components/dashboard/CMYKDashboardWidget';
-import GSTCalculator from '@/components/shared/GSTCalculator';
+import MissingRecordsStrip from '@/components/dashboard/MissingRecordsStrip';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
@@ -46,7 +46,6 @@ const WIDGET_LABELS: Record<string, string> = {
     'sales-perf': '📈 Sales Performance',
     'calendar': '📅 Calendar',
     'quick-notes': '🗒️ Quick Notes',
-    'gst-calculator': '🧮 GST Calculator',
     'recent-activity': '⚡ Recent Activity',
 };
 const ALL_WIDGET_KEYS = Object.keys(WIDGET_LABELS);
@@ -223,22 +222,17 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 </Popover>
             </div>
 
+            {/* ── Band B — money on hand, and what is not recorded ──
+                 Deliberately NOT in the widget show/hide list: the one thing on
+                 this page that must never be switched off is the one that says
+                 whether the rest can be trusted. */}
+            <GlobalErrorBoundary>
+                <MissingRecordsStrip data={dashboardStats.completeness} />
+            </GlobalErrorBoundary>
+
             {/* ── KPI Row ── */}
             {isVisible('kpi') && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Link href="/admin/finance">
-                        <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-1">
-                                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                                <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalRevenue)}</div>
-                                <TrendBadge current={dashboardStats.totalRevenue} previous={dashboardStats.lastMonthRevenue} isCurrency />
-                            </CardContent>
-                        </Card>
-                    </Link>
-
+                <div className="grid grid-cols-2 gap-4">
                     <Link href="/admin/jobs">
                         <Card className="hover:shadow-sm transition-shadow">
                             <CardHeader className="flex flex-row items-center justify-between pb-1">
@@ -248,19 +242,6 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                             <CardContent>
                                 <div className="text-2xl font-bold">{dashboardStats.activeJobs}</div>
                                 <p className="text-xs text-muted-foreground mt-1">Currently in production</p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    <Link href="/admin/finance/money-in">
-                        <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-1">
-                                <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-                                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(dashboardStats.pendingPayments)}</div>
-                                <p className="text-xs text-muted-foreground mt-1">Outstanding invoices</p>
                             </CardContent>
                         </Card>
                     </Link>
@@ -524,15 +505,6 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {isVisible('calendar') && <GlobalErrorBoundary><MiniCalendarWidget /></GlobalErrorBoundary>}
                 {isVisible('quick-notes') && <GlobalErrorBoundary><QuickNotesWidget /></GlobalErrorBoundary>}
-                {isVisible('gst-calculator') && (
-                    <GlobalErrorBoundary>
-                        <Card>
-                            <CardContent className="pt-5 pb-5">
-                                <GSTCalculator />
-                            </CardContent>
-                        </Card>
-                    </GlobalErrorBoundary>
-                )}
             </div>
 
             {/* ── Recent Activity (full width) ── */}

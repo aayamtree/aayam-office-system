@@ -1,4 +1,25 @@
 import { createServerSupabase } from './supabase-server';
+import { TERMINAL_STAGES } from './job-workflow';
+import { fetchCompleteness, NO_COMPLETENESS, type Completeness } from './completeness';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WHY THIS FILE NOW IMPORTS job-workflow.ts  (2026-09-12)
+//
+// It never did, and that was the dashboard's biggest bug. lib/job-workflow.ts
+// has always said `file_sent_client` is a TERMINAL stage — a design-only job
+// is finished when the file reaches the client — and the Job Board files those
+// jobs under Closed correctly.
+//
+// This file re-invented the test as "not delivered, not cancelled", which has
+// never heard of `file_sent_client`. So 150 finished design jobs, 148 of them
+// already closed by hand, marched back onto the front page every morning as
+// live, late work: 174 "active" when 24 were live, 94 "delayed" when 13 were.
+//
+// The rule now has one home. Never write a stage list here again — import it.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** PostgREST `in` list built from the one true stage list, never hand-typed. */
+const NOT_IN_PRODUCTION = `(${TERMINAL_STAGES.map(s => `"${s}"`).join(',')})`;
 
 // Types for server-side dashboard data
 export interface DashboardData {
@@ -31,6 +52,8 @@ export interface DashboardData {
     };
     salesPerformance: { month: string; value: number; active?: boolean }[];
     recentJobs: any[];
+    /** What the records are missing, and what we hold. See lib/completeness.ts. */
+    completeness: Completeness;
     // Month-over-month comparison data for KPI trend arrows
     lastMonthOrders: number;
     lastMonthRevenue: number;
@@ -46,6 +69,7 @@ const EMPTY: DashboardData = {
     vendorStats: { jobsAtVendor: 0, dueToday: 0, delayed: 0 },
     salesPerformance: [],
     recentJobs: [],
+    completeness: NO_COMPLETENESS,
     lastMonthOrders: 0,
     lastMonthRevenue: 0,
     lastMonthActiveJobs: 0,
@@ -68,6 +92,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
         try { return await fn(); } catch { return fallback; }
     };
+
+    // Started before the block below so the strip's queries run ALONGSIDE the
+    // rest, not after them. It never throws: one unreadable gap must not take
+    // the whole dashboard down.
+    const completenessPromise = fetchCompleteness(supabase, TERMINAL_STAGES)
+        .catch(() => NO_COMPLETENESS);
 
     try {
         // ── OPTIMIZED: All queries in parallel, consolidated related ones ──
@@ -105,13 +135,13 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             safe(async () => supabase
                 .from('jobs')
                 .select('current_stage, client_deadline, internal_deadline, total_amount, amount_received, payment_status, updated_at')
-                .not('current_stage', 'in', '("delivered","cancelled")'), { data: [] } as any),
+                .not('current_stage', 'in', NOT_IN_PRODUCTION), { data: [] } as any),
 
             // 3. Financial totals (revenue this year)
             safe(async () => supabase
                 .from('jobs')
                 .select('total_amount')
-                .not('current_stage', 'in', '("delivered","cancelled")')
+                .not('current_stage', 'in', NOT_IN_PRODUCTION)
                 .gte('created_at', startOfYear), { data: [] } as any),
 
             // 4. Orders this month
@@ -252,6 +282,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             },
             salesPerformance,
             recentJobs: recentJobsRes.data || [],
+            completeness: await completenessPromise,
             lastMonthOrders: lastMonthOrdersRes.count || 0,
             lastMonthRevenue: (lastMonthRevenueRes.data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0),
             lastMonthActiveJobs: 0, // Snapshot stat — not tracked historically, use 0
