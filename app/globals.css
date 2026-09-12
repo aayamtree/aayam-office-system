@@ -670,6 +670,18 @@ td {
     --chart-4: 23 33% 54%;
     --chart-5: 208 83% 66%;
 
+    /* --- Dashboard zones ---------------------------------------------
+       Which PART OF THE BUSINESS a block belongs to. Used only on section
+       headings; state (good / warning / critical) owns colour everywhere
+       else. Chosen away from red, amber and green so a zone marker can
+       never be mistaken for a warning, and every one clears 4.5:1 on the
+       page background so a 14px icon is actually visible. */
+    --zone-records: 208 100% 43%;    /* Notion blue  - money and records   */
+    --zone-today: 256 44% 52%;       /* violet       - what today asks     */
+    --zone-production: 24 40% 39%;   /* press brown  - jobs in the shop    */
+    --zone-retail: 175 77% 26%;      /* deep teal    - the CMYK counter    */
+    --zone-team: 209 14% 37%;        /* slate        - people and tools    */
+
     /* âââ Sidebar â Mira Inverted (dark warm-stone bg) âââ */
     /* Note: sidebar uses raw CSS values since Tailwind doesn't map --sidebar-* */
     --sidebar: #ffffff;
@@ -702,6 +714,18 @@ td {
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 208 83% 66%;
+
+    --chart-1: 208 83% 66%;
+    --chart-2: 7 84% 65%;
+    --chart-3: 40 90% 62%;
+    --chart-4: 23 40% 62%;
+    --chart-5: 208 70% 72%;
+
+    --zone-records: 208 83% 66%;
+    --zone-today: 256 60% 72%;
+    --zone-production: 24 45% 62%;
+    --zone-retail: 175 50% 55%;
+    --zone-team: 209 15% 65%;
   }
 }
 

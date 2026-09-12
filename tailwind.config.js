@@ -54,6 +54,18 @@ module.exports = {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
+				// Zone hues. These label WHICH PART OF THE BUSINESS a block
+				// belongs to and appear only on section headings — never on a
+				// figure, where colour means good/warning/critical instead.
+				// Deliberately avoids red, amber and green so a zone marker can
+				// never be misread as a state marker.
+				zone: {
+					records: 'hsl(var(--zone-records))',
+					today: 'hsl(var(--zone-today))',
+					production: 'hsl(var(--zone-production))',
+					retail: 'hsl(var(--zone-retail))',
+					team: 'hsl(var(--zone-team))'
+				},
 				chart: {
 					'1': 'hsl(var(--chart-1))',
 					'2': 'hsl(var(--chart-2))',

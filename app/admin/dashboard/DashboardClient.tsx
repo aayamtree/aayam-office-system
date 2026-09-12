@@ -9,6 +9,7 @@ import {
     Package, IndianRupee, AlertTriangle, Clock,
     ArrowRight, Activity, Target, CheckCircle2, TrendingUp,
     Settings, Eye, EyeOff, TrendingDown, Minus,
+    Wallet, Sun, Factory, Store, Users,
 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -28,6 +29,7 @@ import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
 import CMYKDashboardWidget from '@/components/dashboard/CMYKDashboardWidget';
 import MissingRecordsStrip from '@/components/dashboard/MissingRecordsStrip';
+import SectionHeading from '@/components/dashboard/SectionHeading';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
@@ -222,6 +224,8 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 </Popover>
             </div>
 
+            <SectionHeading zone="records" icon={Wallet} title="Money & records" />
+
             {/* ── Band B — money on hand, and what is not recorded ──
                  Deliberately NOT in the widget show/hide list: the one thing on
                  this page that must never be switched off is the one that says
@@ -230,36 +234,8 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 <MissingRecordsStrip data={dashboardStats.completeness} />
             </GlobalErrorBoundary>
 
-            {/* ── KPI Row ── */}
-            {isVisible('kpi') && (
-                <div className="grid grid-cols-2 gap-4">
-                    <Link href="/admin/jobs">
-                        <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-1">
-                                <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{dashboardStats.activeJobs}</div>
-                                <p className="text-xs text-muted-foreground mt-1">Currently in production</p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-
-                    <Link href="/admin/sales/orders">
-                        <Card className="hover:shadow-sm transition-shadow">
-                            <CardHeader className="flex flex-row items-center justify-between pb-1">
-                                <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{dashboardStats.ordersThisMonth}</div>
-                                <TrendBadge current={dashboardStats.ordersThisMonth} previous={dashboardStats.lastMonthOrders} />
-                            </CardContent>
-                        </Card>
-                    </Link>
-                </div>
-            )}
+            <SectionHeading zone="today" icon={Sun} title="Today"
+                show={isVisible('todays-focus') || isVisible('needs-attention')} />
 
             {/* ── Today's Focus + Needs Attention ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -328,6 +304,41 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </GlobalErrorBoundary>
                 )}
             </div>
+
+            <SectionHeading zone="production" icon={Factory} title="Production"
+                show={isVisible('kpi') || isVisible('pipeline') || isVisible('invoice-pending')
+                    || isVisible('recent-orders') || isVisible('overdue')} />
+
+            {/* ── KPI Row ── */}
+            {isVisible('kpi') && (
+                <div className="grid grid-cols-2 gap-4">
+                    <Link href="/admin/jobs">
+                        <Card className="hover:shadow-sm transition-shadow">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
+                                <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{dashboardStats.activeJobs}</div>
+                                <p className="text-xs text-muted-foreground mt-1">Currently in production</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    <Link href="/admin/sales/orders">
+                        <Card className="hover:shadow-sm transition-shadow">
+                            <CardHeader className="flex flex-row items-center justify-between pb-1">
+                                <CardTitle className="text-sm font-medium">Orders This Month</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{dashboardStats.ordersThisMonth}</div>
+                                <TrendBadge current={dashboardStats.ordersThisMonth} previous={dashboardStats.lastMonthOrders} />
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+            )}
 
             {/* ── Pipeline + Invoice Pending ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -460,8 +471,14 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                 {isVisible('overdue') && <GlobalErrorBoundary><OverdueAlertsWidget /></GlobalErrorBoundary>}
             </div>
 
+            <SectionHeading zone="retail" icon={Store} title="CMYK counter" />
+
             {/* ── CMYK Print Station Summary ── */}
             <CMYKDashboardWidget />
+
+            <SectionHeading zone="team" icon={Users} title="Team, tools & history"
+                show={isVisible('daily-summary') || isVisible('team-workload') || isVisible('sales-perf')
+                    || isVisible('calendar') || isVisible('quick-notes') || isVisible('recent-activity')} />
 
             {/* ── Daily Summary + Team Workload + Sales Performance ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

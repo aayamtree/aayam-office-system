@@ -24,7 +24,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, HelpCircle, Wallet } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
 import type { Completeness, Gap, Holding, Severity } from '@/lib/completeness';
 
 /** Text colour per severity. Unknown is muted — never green, never red. */
@@ -119,11 +119,8 @@ export default function MissingRecordsStrip({ data }: { data: Completeness }) {
     return (
         <div className="rounded-md border bg-card overflow-hidden">
             {/* ── header ── */}
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b bg-muted/40">
-                <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-                    <span className="text-sm font-medium">Money on hand &amp; what is not recorded</span>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b bg-zone-records/[0.07]">
+                <span className="text-sm font-medium">On hand, and what is not written up</span>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-[2px]" aria-hidden="true">
                         {gaps.map(g => (
