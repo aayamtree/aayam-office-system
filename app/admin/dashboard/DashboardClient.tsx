@@ -23,13 +23,13 @@ import OverdueAlertsWidget from '@/components/dashboard/OverdueAlertsWidget';
 import QuickNotesWidget from '@/components/dashboard/QuickNotesWidget';
 import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget';
 import TeamWorkloadWidget from '@/components/dashboard/TeamWorkloadWidget';
-import DailySummaryWidget from '@/components/dashboard/DailySummaryWidget';
 import RecentFilesWidget from '@/components/dashboard/RecentFilesWidget';
 import InvoicePendingWidget from '@/components/dashboard/InvoicePendingWidget';
 import RecentActivityWidget from '@/components/dashboard/RecentActivityWidget';
 import CMYKDashboardWidget from '@/components/dashboard/CMYKDashboardWidget';
 import MissingRecordsStrip from '@/components/dashboard/MissingRecordsStrip';
 import SectionHeading from '@/components/dashboard/SectionHeading';
+import HeadlineBar from '@/components/dashboard/HeadlineBar';
 import { GlobalErrorBoundary } from '@/components/ErrorBoundary';
 
 import type { DashboardData } from '@/lib/dashboard-data';
@@ -43,7 +43,6 @@ const WIDGET_LABELS: Record<string, string> = {
     'invoice-pending': '🧾 Invoice Pending',
     'recent-orders': '📋 Recent Orders',
     'overdue': '⏰ Overdue Alerts',
-    'daily-summary': '📝 Daily Summary',
     'team-workload': '👥 Team Workload',
     'sales-perf': '📈 Sales Performance',
     'calendar': '📅 Calendar',
@@ -223,6 +222,15 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                     </PopoverContent>
                 </Popover>
             </div>
+
+            {/* ── Band A — where we are, in one line ──
+                 The page's strongest contrast, at the top, on the five figures
+                 that answer "where are we" without scrolling. Never in the
+                 Widgets menu: a page whose summary can be switched off has no
+                 summary. */}
+            <GlobalErrorBoundary>
+                <HeadlineBar data={dashboardStats.headline} />
+            </GlobalErrorBoundary>
 
             <SectionHeading zone="records" icon={Wallet} title="Money & records" />
 
@@ -477,12 +485,11 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
             <CMYKDashboardWidget />
 
             <SectionHeading zone="team" icon={Users} title="Team, tools & history"
-                show={isVisible('daily-summary') || isVisible('team-workload') || isVisible('sales-perf')
+                show={isVisible('team-workload') || isVisible('sales-perf')
                     || isVisible('calendar') || isVisible('quick-notes') || isVisible('recent-activity')} />
 
             {/* ── Daily Summary + Team Workload + Sales Performance ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {isVisible('daily-summary') && <GlobalErrorBoundary><DailySummaryWidget initialStats={dashboardStats} /></GlobalErrorBoundary>}
                 {isVisible('team-workload') && <GlobalErrorBoundary><TeamWorkloadWidget /></GlobalErrorBoundary>}
 
                 {isVisible('sales-perf') && (

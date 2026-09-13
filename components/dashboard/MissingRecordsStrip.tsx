@@ -27,6 +27,29 @@ import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
 import type { Completeness, Gap, Holding, Severity } from '@/lib/completeness';
 
+/**
+ * The tint LAYER for a cell — painted over an opaque card, never instead of it.
+ * Returns '' for ok, so a clean cell is simply the card.
+ */
+function toneWash(s: Severity): string {
+    switch (s) {
+        case 'bad': return 'bg-destructive/[0.07] group-hover:bg-destructive/[0.11]';
+        case 'warn': return 'bg-amber-500/[0.09] group-hover:bg-amber-500/[0.14]';
+        case 'ok': return 'group-hover:bg-emerald-500/[0.07]';
+        default: return 'bg-muted-foreground/[0.07] group-hover:bg-muted-foreground/[0.12]';
+    }
+}
+
+/** The severity bar down the left edge of a cell. */
+function toneBar(s: Severity): string {
+    switch (s) {
+        case 'bad': return 'bg-destructive';
+        case 'warn': return 'bg-amber-500';
+        case 'ok': return 'bg-emerald-500/40';
+        default: return 'bg-muted-foreground/30';
+    }
+}
+
 /** Text colour per severity. Unknown is muted — never green, never red. */
 function toneText(s: Severity): string {
     switch (s) {
@@ -66,27 +89,47 @@ function StaleNote({ h }: { h: Holding }) {
 }
 
 function HoldingTile({ h }: { h: Holding }) {
+    // A balance nobody has touched in six weeks is not the same fact as one
+    // written up this morning, and it should not look like one.
+    const stale = h.severity === 'bad' || h.severity === 'warn';
     return (
-        <div className="min-w-[8.5rem] flex-1 rounded-md border bg-background px-3 py-2">
-            <p className="text-[11px] text-muted-foreground truncate" title={h.label}>{h.label}</p>
-            <p className="text-base font-semibold tabular-nums leading-tight mt-0.5">{h.value}</p>
+        <div
+            className={`relative min-w-[8.5rem] flex-1 overflow-hidden rounded-md border px-3 py-2 ${stale ? 'border-dashed bg-muted/40' : 'bg-background'
+                }`}
+        >
+            <p className="truncate text-[11px] text-muted-foreground" title={h.label}>{h.label}</p>
+            <p className={`mt-0.5 text-base font-semibold leading-tight tabular-nums ${stale ? 'text-muted-foreground' : ''}`}>
+                {h.value}
+            </p>
             <StaleNote h={h} />
         </div>
     );
 }
 
 function GapCell({ g }: { g: Gap }) {
+    // A critical figure is bigger as well as redder. Size is the one signal
+    // that survives being glanced at from across a desk.
+    const size = g.severity === 'bad' ? 'text-xl' : 'text-lg';
     return (
         <Link
             href={g.href}
-            className={`block bg-card px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${g.failed ? 'bg-muted/40' : ''
-                }`}
+            className="group relative block bg-card py-2.5 pl-4 pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
-            <p className="text-[11px] text-muted-foreground leading-tight">{g.label}</p>
-            <p className={`text-lg font-semibold tabular-nums leading-tight mt-0.5 ${toneText(g.severity)}`}>
-                {g.value}
-            </p>
-            <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">{g.detail}</p>
+            <span
+                className={`pointer-events-none absolute inset-0 transition-colors ${toneWash(g.severity)}`}
+                aria-hidden="true"
+            />
+            <span
+                className={`absolute inset-y-0 left-0 w-[3px] ${toneBar(g.severity)}`}
+                aria-hidden="true"
+            />
+            <div className="relative">
+                <p className="text-[11px] leading-tight text-muted-foreground">{g.label}</p>
+                <p className={`mt-0.5 font-semibold leading-tight tabular-nums ${size} ${toneText(g.severity)}`}>
+                    {g.value}
+                </p>
+                <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{g.detail}</p>
+            </div>
         </Link>
     );
 }
@@ -117,7 +160,7 @@ export default function MissingRecordsStrip({ data }: { data: Completeness }) {
     const allClear = openCount === 0 && failedCount === 0 && !holdingsUnsure && gaps.length > 0;
 
     return (
-        <div className="rounded-md border bg-card overflow-hidden">
+        <div id="records" className="scroll-mt-20 rounded-md border bg-card overflow-hidden">
             {/* ── header ── */}
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b bg-zone-records/[0.07]">
                 <span className="text-sm font-medium">On hand, and what is not written up</span>

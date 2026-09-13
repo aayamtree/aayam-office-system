@@ -114,6 +114,14 @@ export interface Gap {
     href: string;
     /** True when the query did not answer. NEVER render this as ok. */
     failed: boolean;
+    /** How many days behind, where the gap is measured in days. Null otherwise. */
+    days?: number | null;
+    /**
+     * True when this gap is day-measured but has NO starting point at all —
+     * no bill ever entered, no bank line ever loaded, no cash movement ever.
+     * Worse than any number of days, and it must never be summarised as one.
+     */
+    neverStarted?: boolean;
 }
 
 export interface Holding {
@@ -139,6 +147,18 @@ export interface Completeness {
     failedCount: number;
     /** When this snapshot was taken. */
     checkedAt: string;
+    /**
+     * The single "how far behind are the books" number, for the headline bar.
+     * The WORST of the day-measured gaps, never an average — books are only as
+     * current as the thing that stopped first. Null when none could be read.
+     */
+    worstDaysBehind: number | 'never' | null;
+    /** Severity of the gap that worstDaysBehind came from — so the headline
+     *  never re-invents its own thresholds and disagrees with the strip. */
+    worstDaysSeverity: Severity;
+    /** True when the app could not read the records at all. Everything the
+     *  strip and the headline show must be reported as unknown in that case. */
+    blind: boolean;
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -220,7 +240,7 @@ async function billsNotEntered(supabase: SupabaseClient): Promise<Gap> {
         return {
             key: 'bills', label: 'Purchase bills not entered', href,
             value: 'none ever', detail: 'No purchase bill has ever reached the books',
-            severity: 'bad', failed: false,
+            severity: 'bad', failed: false, neverStarted: true,
         };
     }
 
@@ -234,6 +254,7 @@ async function billsNotEntered(supabase: SupabaseClient): Promise<Gap> {
         severity: byDays(days, BILLS_WARN_DAYS, BILLS_BAD_DAYS),
         href,
         failed: false,
+        days,
     };
 }
 
@@ -302,7 +323,7 @@ async function bankFeedReach(supabase: SupabaseClient): Promise<Gap> {
         return {
             key: 'feed', label: 'Bank statement uploaded to', href,
             value: 'nothing', detail: 'No bank line has ever been loaded',
-            severity: 'bad', failed: false,
+            severity: 'bad', failed: false, neverStarted: true,
         };
     }
 
@@ -318,6 +339,7 @@ async function bankFeedReach(supabase: SupabaseClient): Promise<Gap> {
         severity: byDays(days, FEED_WARN_DAYS, FEED_BAD_DAYS),
         href,
         failed: false,
+        days,
     };
 }
 
@@ -444,7 +466,7 @@ async function ownBookStale(supabase: SupabaseClient): Promise<Gap> {
         return {
             key: 'ownbook', label: 'Cash & UPI not written up', href,
             value: 'never', detail: 'No cash or UPI movement has ever been entered',
-            severity: 'bad', failed: false,
+            severity: 'bad', failed: false, neverStarted: true,
         };
     }
 
@@ -463,6 +485,7 @@ async function ownBookStale(supabase: SupabaseClient): Promise<Gap> {
         severity: byDays(worstDays, OWN_WARN_DAYS, OWN_BAD_DAYS),
         href,
         failed: false,
+        days: worstDays,
     };
 }
 
@@ -646,6 +669,25 @@ export async function fetchCompleteness(
             shown.filter(g => g.failed).length +
             holdingsShown.filter(h => h.failed).length,
         checkedAt: new Date().toISOString(),
+        ...(() => {
+            const readable = shown.filter(g => !g.failed);
+            // A book with no starting point beats any number of days.
+            const never = readable.find(g => g.neverStarted);
+            if (never) {
+                return { worstDaysBehind: 'never' as const, worstDaysSeverity: never.severity };
+            }
+            const measured = readable.filter(g => typeof g.days === 'number');
+            if (!measured.length) {
+                return { worstDaysBehind: null, worstDaysSeverity: 'unknown' as Severity };
+            }
+            // The worst gap carries its OWN severity up. Each gap has its own
+            // thresholds — the bank feed turns red at 7 days, the bills at 14 —
+            // so re-thresholding the pooled number would put the headline and
+            // the strip in visible disagreement.
+            const worst = measured.reduce((a, b) => ((b.days as number) > (a.days as number) ? b : a));
+            return { worstDaysBehind: worst.days as number, worstDaysSeverity: worst.severity };
+        })(),
+        blind: !sighted,
     };
 }
 
@@ -656,4 +698,7 @@ export const NO_COMPLETENESS: Completeness = {
     openCount: 0,
     failedCount: 0,
     checkedAt: new Date(0).toISOString(),
+    worstDaysBehind: null,
+    worstDaysSeverity: 'unknown',
+    blind: true,
 };

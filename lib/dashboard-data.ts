@@ -1,6 +1,7 @@
 import { createServerSupabase } from './supabase-server';
 import { TERMINAL_STAGES } from './job-workflow';
 import { fetchCompleteness, NO_COMPLETENESS, type Completeness } from './completeness';
+import { getReceivables } from './receivables';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WHY THIS FILE NOW IMPORTS job-workflow.ts  (2026-09-12)
@@ -54,6 +55,27 @@ export interface DashboardData {
     recentJobs: any[];
     /** What the records are missing, and what we hold. See lib/completeness.ts. */
     completeness: Completeness;
+    /**
+     * The one-line status at the very top of the page — band A.
+     *
+     * Assembled here because it is the only place that already holds all three
+     * sources. Every figure comes from an existing definition; nothing in this
+     * object is computed twice. `owed` is null when Zoho could not be read, and
+     * renders as "—", never as zero.
+     */
+    headline: {
+        liveJobs: number | null;
+        pastDeadline: number | null;
+        owed: number | null;
+        owedInvoices: number;
+        /** Days, or 'never' when a book has no starting point at all. */
+        booksBehindDays: number | 'never' | null;
+        /** Carried up from the gap it came from — never re-thresholded here. */
+        booksSeverity: 'ok' | 'warn' | 'bad' | 'unknown';
+        gapsOpen: number | null;
+        /** Whole days since Zoho last pushed anything. Null when unknown. */
+        owedSyncAgeDays: number | null;
+    };
     // Month-over-month comparison data for KPI trend arrows
     lastMonthOrders: number;
     lastMonthRevenue: number;
@@ -70,6 +92,14 @@ const EMPTY: DashboardData = {
     salesPerformance: [],
     recentJobs: [],
     completeness: NO_COMPLETENESS,
+    // Nulls, not zeros: EMPTY means the whole fetch failed, and "₹0 owed" is a
+    // reassuring lie where "—" is the truth.
+    // EMPTY means the whole fetch failed. Every figure is null, not zero — a
+    // zero here is an all-clear the app has not earned. (audit 2)
+    headline: {
+        liveJobs: null, pastDeadline: null, owed: null, owedInvoices: 0,
+        booksBehindDays: null, booksSeverity: 'unknown', gapsOpen: null, owedSyncAgeDays: null,
+    },
     lastMonthOrders: 0,
     lastMonthRevenue: 0,
     lastMonthActiveJobs: 0,
@@ -98,6 +128,13 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     // the whole dashboard down.
     const completenessPromise = fetchCompleteness(supabase, TERMINAL_STAGES)
         .catch(() => NO_COMPLETENESS);
+
+    // lib/receivables.ts is THE definition of what we are owed — the nightly
+    // Telegram brief reads the same function. It throws on a failed query, so
+    // a failure becomes null and the headline prints a dash.
+    const receivablesPromise = getReceivables(supabase)
+        .then(r => ({ owed: r.totalOwed as number | null, invoices: r.invoiceCount, syncAge: r.syncAgeDays }))
+        .catch(() => ({ owed: null as number | null, invoices: 0, syncAge: null as number | null }));
 
     try {
         // ── OPTIMIZED: All queries in parallel, consolidated related ones ──
@@ -283,6 +320,33 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             salesPerformance,
             recentJobs: recentJobsRes.data || [],
             completeness: await completenessPromise,
+            headline: await (async () => {
+                const c = await completenessPromise;
+                const r = await receivablesPromise;
+                // ⚠ THE BLIND-READ RATCHET, again. getReceivables throws only on
+                // a real error; an RLS refusal hands back an empty set with no
+                // error, so a blind app would print "₹0 owed across 0" in the
+                // loudest place on the page over ₹48.9 lakh of real debt.
+                // lib/completeness.ts already establishes whether we can see
+                // anything at all — one sentinel, every consumer. (audit 1)
+                if (c.blind) {
+                    return {
+                        liveJobs: null, pastDeadline: null, owed: null, owedInvoices: 0,
+                        booksBehindDays: null, booksSeverity: 'unknown' as const,
+                        gapsOpen: null, owedSyncAgeDays: null,
+                    };
+                }
+                return {
+                    liveJobs: activeJobs.length,
+                    pastDeadline: jobsDelayed,
+                    owed: r.owed,
+                    owedInvoices: r.invoices,
+                    booksBehindDays: c.worstDaysBehind,
+                    booksSeverity: c.worstDaysSeverity,
+                    gapsOpen: c.openCount,
+                    owedSyncAgeDays: r.syncAge,
+                };
+            })(),
             lastMonthOrders: lastMonthOrdersRes.count || 0,
             lastMonthRevenue: (lastMonthRevenueRes.data || []).reduce((s: number, j: any) => s + (j.total_amount || 0), 0),
             lastMonthActiveJobs: 0, // Snapshot stat — not tracked historically, use 0
