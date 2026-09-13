@@ -29,6 +29,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { fetchCompleteness } from './completeness';
 import { getReceivables } from './receivables';
 import { TERMINAL_STAGES } from './job-workflow';
+import { todayIST } from './ist-date';
 
 export interface DailyCapture {
     captured_on: string;
@@ -47,13 +48,6 @@ export interface DailyCapture {
     unpriced_jobs: number | null;
     receipts_pending: number | null;
     note: string | null;
-}
-
-/** Today in IST, as a plain date. The office day, not UTC's. */
-function todayIST(): string {
-    const now = new Date();
-    const ist = new Date(now.getTime() + (5.5 * 60 - now.getTimezoneOffset()) * 60_000);
-    return ist.toISOString().slice(0, 10);
 }
 
 /**

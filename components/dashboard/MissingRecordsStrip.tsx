@@ -23,8 +23,14 @@
 // All the counting lives in lib/completeness.ts. This file only draws.
 // ═══════════════════════════════════════════════════════════════════════════
 
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, HelpCircle, Plus } from 'lucide-react';
+import RecordMoneyModal from '@/components/finance/RecordMoneyModal';
+import { useAuth } from '@/lib/auth-context';
 import type { Completeness, Gap, Holding, Severity } from '@/lib/completeness';
 
 /**
@@ -136,6 +142,13 @@ function GapCell({ g }: { g: Gap }) {
 
 export default function MissingRecordsStrip({ data }: { data: Completeness }) {
     const { holdings, gaps, openCount, failedCount } = data;
+    const router = useRouter();
+    const [recording, setRecording] = useState(false);
+    // Only an admin can record money today (there is no finance role yet), and
+    // the route refuses anyone else. Offering the button to the other fifteen
+    // staff would open a modal that can never be used and says nothing.
+    const { profile } = useAuth();
+    const canRecord = profile?.role === 'admin';
 
     // Nothing to draw at all means the whole fetch failed. Say that plainly
     // rather than rendering an empty card that looks like a clean bill.
@@ -165,6 +178,14 @@ export default function MissingRecordsStrip({ data }: { data: Completeness }) {
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b bg-zone-records/[0.07]">
                 <span className="text-sm font-medium">On hand, and what is not written up</span>
                 <div className="flex items-center gap-2">
+                    {canRecord && (
+                        <button
+                            onClick={() => setRecording(true)}
+                            className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-1 text-[11px] font-medium hover:bg-muted"
+                        >
+                            <Plus className="h-3 w-3" /> Record cash / UPI
+                        </button>
+                    )}
                     <div className="flex items-center gap-[2px]" aria-hidden="true">
                         {gaps.map(g => (
                             <span key={g.key} className={`block h-1.5 w-4 rounded-sm ${toneBlock(g.severity)}`} />
@@ -209,6 +230,15 @@ export default function MissingRecordsStrip({ data }: { data: Completeness }) {
                     )}
                 </div>
             )}
+
+            <RecordMoneyModal
+                open={recording && canRecord}
+                onClose={() => setRecording(false)}
+                // The strip is server-rendered, so a fresh reading has to be
+                // asked for — otherwise the balance the person just moved would
+                // sit there unchanged and read as a failed save.
+                onSaved={() => router.refresh()}
+            />
         </div>
     );
 }

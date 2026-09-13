@@ -14,6 +14,8 @@ import { BankAccount } from '@/types/database';
 import { useConfirm } from '@/components/ConfirmModal';
 import { LEGACY_LEDGER_CLOSED } from '@/lib/legacy-ledger';
 import { TransferMenu, RecentTransfers } from '@/components/finance/TransferMenu';
+import RecordMoneyModal from '@/components/finance/RecordMoneyModal';
+import { useAuth } from '@/lib/auth-context';
 
 const accountTypes = ['Current', 'Savings', 'OD', 'CC', 'UPI'];
 
@@ -30,6 +32,12 @@ export default function BankAccountsPage() {
 
   // Bumped after a deposit / withdrawal so the history below re-reads.
   const [cashbookKey, setCashbookKey] = useState(0);
+  // Recording a receipt from a client, or cash paid out — as opposed to
+  // TransferMenu, which only moves money between our OWN accounts. The absence
+  // of this was why every balance on this page still read July.
+  const [recording, setRecording] = useState(false);
+  const { profile } = useAuth();
+  const canRecord = profile?.role === 'admin';
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -173,6 +181,13 @@ export default function BankAccountsPage() {
           {/* Deposits, withdrawals and transfers between our own accounts. This
               is the office cash book, not the Zoho ledger — see the note in
               components/finance/TransferMenu.tsx. */}
+          {canRecord && (
+            <button onClick={() => setRecording(true)}
+              className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 font-medium hover:bg-muted">
+              <Plus className="w-4 h-4" />
+              <span>Record cash / UPI</span>
+            </button>
+          )}
           <TransferMenu
             types={['bank_to_cash', 'cash_to_bank', 'bank_to_bank', 'adjust_balance']}
             onDone={() => { refreshBanks(); setCashbookKey(k => k + 1); }}
@@ -288,6 +303,12 @@ export default function BankAccountsPage() {
       {/* A balance typed by hand needs a record beside it, or a wrong entry is
           invisible. */}
       <RecentTransfers reloadKey={cashbookKey} />
+
+      <RecordMoneyModal
+        open={recording && canRecord}
+        onClose={() => setRecording(false)}
+        onSaved={() => { refreshBanks(); setCashbookKey(k => k + 1); }}
+      />
 
       {filteredBanks.length === 0 && !loading && (
         <div className="text-center py-12 bg-white rounded-md border">
