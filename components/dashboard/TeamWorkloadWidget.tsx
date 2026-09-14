@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useDesigners } from '@/lib/hooks';
-import { Users, CheckCircle2, Briefcase } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 interface DesignerWorkload {
     designer_id: string;
@@ -87,95 +87,151 @@ export default function TeamWorkloadWidget() {
 
     const maxTasks = Math.max(...workloads.map(w => w.tasks_allotted), 1);
 
+    // ═══ 2026-09-14 restyle ═══════════════════════════════════════════
+    // This card was the one Satish photographed: nine rows each reading
+    // "0 / 0", inside a card stretched to match the chart beside it, so the
+    // bottom third was empty. Three changes fix it, and none of them touch
+    // the query above.
+    //
+    //   · A completion RING at the top gives the card a headline figure, so
+    //     it has something to say before the roster begins.
+    //   · Idle people recede — faded avatar, lighter name, empty track — so
+    //     the eye lands on whoever is actually carrying work instead of
+    //     sweeping nine identical zeros.
+    //   · The footer states the split in words. "7 of 8 idle" is the fact he
+    //     wanted from this card; it was previously something you had to
+    //     count for yourself.
+    //
+    // The hardcoded bg-white / text-gray-* of the old version also meant this
+    // card stayed light in dark mode. It is on semantic tokens now.
+    const totalAllotted = workloads.reduce((n, w) => n + w.tasks_allotted, 0);
+    const totalDone = workloads.reduce((n, w) => n + w.tasks_done, 0);
+    const pct = totalAllotted > 0 ? Math.round((totalDone / totalAllotted) * 100) : 0;
+    const idle = workloads.filter(w => w.tasks_allotted === 0);
+    const busy = workloads.filter(w => w.tasks_allotted > 0);
+
+    const R = 27;
+    const C = 2 * Math.PI * R;
+
     return (
-        <div className="bg-white rounded-lg border border-gray-100 p-4 md:p-5">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    Team Workload
-                </h3>
-                <div className="flex gap-1 bg-gray-100 rounded-md p-0.5">
-                    <button
-                        onClick={() => setPeriod('week')}
-                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${period === 'week' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        7 Days
-                    </button>
-                    <button
-                        onClick={() => setPeriod('month')}
-                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${period === 'month' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        30 Days
-                    </button>
+        <div className="flex min-w-0 flex-1 flex-col rounded-xl border bg-card p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="text-[13px] font-semibold tracking-[-0.008em]">Team workload</span>
+                <div className="flex gap-0.5 rounded-full bg-muted p-0.5">
+                    {(['week', 'month'] as const).map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setPeriod(p)}
+                            className={`rounded-full px-2.5 py-1 text-[10.5px] font-semibold transition-colors ${period === p
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            {p === 'week' ? '7 days' : '30 days'}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {loading ? (
                 <div className="space-y-3">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-full bg-gray-100 animate-pulse" />
-                                    <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
-                                </div>
-                                <div className="h-3 w-12 bg-gray-100 rounded animate-pulse" />
-                            </div>
-                            <div className="h-2 bg-gray-100 rounded-full animate-pulse" style={{ width: `${60 + i * 10}%` }} />
+                        <div key={i} className="flex animate-pulse items-center gap-3">
+                            <div className="h-6 w-6 shrink-0 rounded-full bg-muted" />
+                            <div className="h-2.5 flex-1 rounded bg-muted" />
+                            <div className="h-2.5 w-8 rounded bg-muted" />
                         </div>
                     ))}
                 </div>
             ) : workloads.length === 0 ? (
-                <div className="text-center py-6">
-                    <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No designers found</p>
-                    <p className="text-xs text-gray-400">Add designers to see their workload</p>
+                <div className="flex flex-1 flex-col items-center justify-center gap-1.5 py-6 text-center">
+                    <Users className="h-7 w-7 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">No designers found</p>
+                    <p className="text-xs text-muted-foreground/70">Add designers to see their workload</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {workloads.map(w => {
-                        const barWidth = maxTasks > 0 ? (w.tasks_allotted / maxTasks) * 100 : 0;
-                        const doneWidth = w.tasks_allotted > 0 ? (w.tasks_done / w.tasks_allotted) * 100 : 0;
+                <>
+                    {/* ── the headline: how much of what was given out came back ── */}
+                    <div className="mb-3.5 flex items-center gap-4 border-b pb-3.5">
+                        <div className="relative h-16 w-16 shrink-0">
+                            <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
+                                <circle cx="32" cy="32" r={R} fill="none" strokeWidth="8" className="stroke-muted" />
+                                <circle
+                                    cx="32" cy="32" r={R} fill="none" strokeWidth="8" strokeLinecap="round"
+                                    className="stroke-oms-orange transition-[stroke-dashoffset] duration-500"
+                                    strokeDasharray={C}
+                                    strokeDashoffset={C * (1 - pct / 100)}
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[17px] font-bold tabular-nums tracking-[-0.02em]">{pct}%</span>
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[15px] font-semibold tabular-nums">
+                                {totalAllotted} {totalAllotted === 1 ? 'job' : 'jobs'} allotted
+                            </p>
+                            <p className="mt-1 text-[11.5px] leading-snug text-muted-foreground">
+                                {totalAllotted === 0
+                                    ? 'Nothing given out in this period.'
+                                    : totalDone === 0
+                                        ? `None finished yet${busy.length === 1 ? ' — one designer carrying everything.' : '.'}`
+                                        : `${totalDone} finished, ${totalAllotted - totalDone} still open.`}
+                            </p>
+                        </div>
+                    </div>
 
-                        return (
-                            <Link key={w.designer_id} href="/admin/design-tasks" className="group block hover:bg-gray-50 rounded-md px-2 -mx-2 py-1 transition-colors cursor-pointer">
-                                <div className="flex items-center justify-between mb-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
-                                            {w.designer_name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-700">{w.designer_name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-right">
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                                            <CheckCircle2 className="w-3 h-3" />
-                                            {w.tasks_done}
-                                        </span>
-                                        <span className="text-xs text-gray-400">/</span>
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
-                                            <Briefcase className="w-3 h-3" />
-                                            {w.tasks_allotted}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden relative" style={{ width: `${Math.max(barWidth, 20)}%` }}>
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-500 ${w.tasks_done > 0 ? 'bg-green-500' : 'bg-gray-200'}`}
-                                        style={{ width: `${doneWidth}%` }}
-                                    />
-                                </div>
-                            </Link>
-                        );
-                    })}
+                    {/* ── the roster, loaded first ── */}
+                    <div>
+                        {[...busy, ...idle].map(w => {
+                            const load = maxTasks > 0 ? (w.tasks_allotted / maxTasks) * 100 : 0;
+                            const isIdle = w.tasks_allotted === 0;
+                            return (
+                                <Link
+                                    key={w.designer_id}
+                                    href="/admin/design-tasks"
+                                    className="-mx-2 flex items-center gap-3 rounded-md px-2 py-[7px] transition-colors hover:bg-muted/50"
+                                >
+                                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${isIdle
+                                        ? 'bg-muted text-muted-foreground/60'
+                                        : 'bg-foreground text-background'}`}>
+                                        {w.designer_name.charAt(0).toUpperCase()}
+                                    </span>
+                                    <span className={`min-w-0 flex-1 truncate text-[12px] ${isIdle
+                                        ? 'font-normal text-muted-foreground'
+                                        : 'font-medium text-foreground'}`}>
+                                        {w.designer_name}
+                                    </span>
+                                    <span className="h-[5px] w-16 shrink-0 overflow-hidden rounded-full bg-muted">
+                                        {!isIdle && (
+                                            <span
+                                                className="block h-full rounded-full bg-oms-orange transition-all duration-500"
+                                                style={{ width: `${Math.max(load, 12)}%` }}
+                                            />
+                                        )}
+                                    </span>
+                                    <span className={`w-[34px] shrink-0 text-right text-[11.5px] tabular-nums ${isIdle
+                                        ? 'font-medium text-muted-foreground/50'
+                                        : 'font-semibold text-muted-foreground'}`}>
+                                        {w.tasks_done}/{w.tasks_allotted}
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                    </div>
 
-                    {workloads.every(w => w.tasks_allotted === 0) && (
-                        <p className="text-xs text-gray-400 italic text-center mt-2">
-                            No work allotted in this period yet.
+                    {idle.length > 0 && (
+                        <p className="mt-auto border-t pt-3.5 text-[11.5px] leading-snug text-muted-foreground">
+                            <span className="font-semibold text-foreground/75">
+                                {idle.length} of {workloads.length} idle.
+                            </span>{' '}
+                            {busy.length === 0
+                                ? 'Nothing is allotted to anyone in this period.'
+                                : busy.length === 1
+                                    ? `${busy[0].designer_name} is carrying the only work allotted.`
+                                    : `${busy.length} people are carrying all of it.`}
                         </p>
                     )}
-                </div>
+                </>
             )}
         </div>
     );

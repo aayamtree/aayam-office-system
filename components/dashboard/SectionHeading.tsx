@@ -41,6 +41,10 @@ interface Zone {
     icon: string;
     chip: string;
     rule: string;
+    /** The 2026-09-14 restyle: a 5px dot carries the zone instead of an icon
+        chip. Same information, a quarter of the ink — the heading is a
+        signpost and must never compete with the figures under it. */
+    dot: string;
 }
 
 /**
@@ -48,11 +52,11 @@ interface Zone {
  * text, so an interpolated class is simply never generated.
  */
 export const ZONES: Record<ZoneKey, Zone> = {
-    records: { icon: 'text-zone-records', chip: 'bg-zone-records/10', rule: 'bg-zone-records/35' },
-    today: { icon: 'text-zone-today', chip: 'bg-zone-today/10', rule: 'bg-zone-today/35' },
-    production: { icon: 'text-zone-production', chip: 'bg-zone-production/10', rule: 'bg-zone-production/35' },
-    retail: { icon: 'text-zone-retail', chip: 'bg-zone-retail/10', rule: 'bg-zone-retail/35' },
-    team: { icon: 'text-zone-team', chip: 'bg-zone-team/10', rule: 'bg-zone-team/35' },
+    records: { icon: 'text-zone-records', chip: 'bg-zone-records/10', rule: 'bg-zone-records/35', dot: 'bg-zone-records' },
+    today: { icon: 'text-zone-today', chip: 'bg-zone-today/10', rule: 'bg-zone-today/35', dot: 'bg-zone-today' },
+    production: { icon: 'text-zone-production', chip: 'bg-zone-production/10', rule: 'bg-zone-production/35', dot: 'bg-zone-production' },
+    retail: { icon: 'text-zone-retail', chip: 'bg-zone-retail/10', rule: 'bg-zone-retail/35', dot: 'bg-zone-retail' },
+    team: { icon: 'text-zone-team', chip: 'bg-zone-team/10', rule: 'bg-zone-team/35', dot: 'bg-zone-team' },
 };
 
 /**
@@ -69,13 +73,13 @@ export const ZONES: Record<ZoneKey, Zone> = {
  */
 export default function SectionHeading({
     zone,
-    icon: Icon,
     title,
     note,
     show = true,
 }: {
     zone: ZoneKey;
-    icon: LucideIcon;
+    /** Still accepted by every call site; no longer drawn since 2026-09-14. */
+    icon?: LucideIcon;
     title: string;
     /** Optional right-hand line: a count or a date. Never a warning. */
     note?: string;
@@ -84,22 +88,20 @@ export default function SectionHeading({
 }) {
     if (!show) return null;
     const z = ZONES[zone];
+    // The 2026-09-14 layout rebuild: headings are now a rule with a label on
+    // it, not a bar with a boxed icon. Satish's reference dashboards all do
+    // this — the section names itself and then gets out of the way. `icon` is
+    // still accepted (and still typed) so every existing call site keeps
+    // working; it is simply no longer drawn.
     return (
-        <div className="flex items-center gap-2.5 pt-1">
-            <span
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${z.chip}`}
-                aria-hidden="true"
-            >
-                <Icon className={`h-3.5 w-3.5 ${z.icon}`} strokeWidth={2} />
-            </span>
-            <h3 className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-foreground/80">
+        <div className="flex items-center gap-2.5 pt-5">
+            <span className={`h-[5px] w-[5px] shrink-0 rounded-full ${z.dot}`} aria-hidden="true" />
+            <h3 className="min-w-0 shrink-0 truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 {title}
             </h3>
-            <span className={`h-px min-w-[1.5rem] flex-1 rounded-full ${z.rule}`} aria-hidden="true" />
+            <span className="h-px min-w-[1.5rem] flex-1 bg-border" aria-hidden="true" />
             {note && (
-                <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                    {note}
-                </span>
+                <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{note}</span>
             )}
         </div>
     );

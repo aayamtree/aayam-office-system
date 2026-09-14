@@ -59,6 +59,11 @@ module.exports = {
 				// figure, where colour means good/warning/critical instead.
 				// Deliberately avoids red, amber and green so a zone marker can
 				// never be misread as a state marker.
+				// The notes board's text ink — a darkened twin of oms.orange that
+				// is actually legible on the board's own tint. See globals.css.
+				board: {
+					ink: 'hsl(var(--board-ink))'
+				},
 				zone: {
 					records: 'hsl(var(--zone-records))',
 					today: 'hsl(var(--zone-today))',

@@ -682,6 +682,14 @@ td {
     --zone-retail: 175 77% 26%;      /* deep teal    - the CMYK counter    */
     --zone-team: 209 14% 37%;        /* slate        - people and tools    */
 
+    /* --- Notes board --------------------------------------------------
+       The board sits above the fold and must be NOTICED, so it carries the
+       brand orange (oms.orange #E89D01 = hsl(40 99% 46%)). That hue is only
+       ~2.2:1 on its own tint, so text uses this darkened twin instead and
+       the raw orange is kept for fills, bars and badges. Not a zone hue and
+       not a state hue: the board is a channel, not a verdict. */
+    --board-ink: 40 100% 26%;
+
     /* âââ Sidebar â Mira Inverted (dark warm-stone bg) âââ */
     /* Note: sidebar uses raw CSS values since Tailwind doesn't map --sidebar-* */
     --sidebar: #ffffff;
@@ -726,6 +734,8 @@ td {
     --zone-production: 24 45% 62%;
     --zone-retail: 175 50% 55%;
     --zone-team: 209 15% 65%;
+
+    --board-ink: 40 88% 66%;
   }
 }
 

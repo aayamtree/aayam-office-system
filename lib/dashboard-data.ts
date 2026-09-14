@@ -210,7 +210,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
                 .neq('current_stage', 'cancelled'), { data: [] } as any),
 
             // 12. Recent jobs for table
-            safe(async () => supabase.from('jobs').select('id, job_number, project_name, current_stage, total_amount, client:clients(name)').order('created_at', { ascending: false }).limit(5), { data: [] } as any),
+            safe(async () => supabase.from('jobs').select('id, job_number, project_name, current_stage, total_amount, created_at, client:clients(name, company)').order('created_at', { ascending: false }).limit(5), { data: [] } as any),
 
             // 13. Orders last month (for trend comparison)
             safe(async () => supabase.from('jobs').select('id', { count: 'exact', head: true }).gte('created_at', startOfLastMonth).lt('created_at', endOfLastMonth).neq('current_stage', 'cancelled'), { count: 0 } as any),

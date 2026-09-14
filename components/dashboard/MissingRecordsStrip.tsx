@@ -98,16 +98,32 @@ function HoldingTile({ h }: { h: Holding }) {
     // A balance nobody has touched in six weeks is not the same fact as one
     // written up this morning, and it should not look like one.
     const stale = h.severity === 'bad' || h.severity === 'warn';
+    // 2026-09-14: the staleness is now DRAWN as well as written. A sentence
+    // saying "63d old" is read; a bar filling up is seen. Ninety days is the
+    // full bar — past that the point is made and the length stops mattering.
+    const agePct = h.daysStale === null ? null : Math.min(100, (h.daysStale / 90) * 100);
     return (
         <div
-            className={`relative min-w-[8.5rem] flex-1 overflow-hidden rounded-md border px-3 py-2 ${stale ? 'border-dashed bg-muted/40' : 'bg-background'
+            className={`relative min-w-[8.5rem] flex-1 overflow-hidden rounded-lg border px-3.5 py-2.5 ${stale ? 'border-dashed bg-muted/40' : 'bg-background'
                 }`}
         >
-            <p className="truncate text-[11px] text-muted-foreground" title={h.label}>{h.label}</p>
-            <p className={`mt-0.5 text-base font-semibold leading-tight tabular-nums ${stale ? 'text-muted-foreground' : ''}`}>
+            <p className="truncate text-[10px] font-semibold uppercase tracking-[0.085em] text-muted-foreground" title={h.label}>
+                {h.label}
+            </p>
+            <p className={`mt-1.5 text-[20px] font-bold leading-none tabular-nums tracking-[-0.02em] ${stale ? 'text-muted-foreground' : ''}`}>
                 {h.value}
             </p>
-            <StaleNote h={h} />
+            <div className="mt-2 flex items-center gap-2">
+                {agePct !== null && (
+                    <span className="h-[3px] w-14 shrink-0 overflow-hidden rounded-full bg-muted">
+                        <span
+                            className={`block h-full rounded-full ${h.severity === 'bad' ? 'bg-destructive/55' : h.severity === 'warn' ? 'bg-amber-500/55' : 'bg-muted-foreground/35'}`}
+                            style={{ width: `${Math.max(agePct, 4)}%` }}
+                        />
+                    </span>
+                )}
+                <StaleNote h={h} />
+            </div>
         </div>
     );
 }
@@ -115,11 +131,19 @@ function HoldingTile({ h }: { h: Holding }) {
 function GapCell({ g }: { g: Gap }) {
     // A critical figure is bigger as well as redder. Size is the one signal
     // that survives being glanced at from across a desk.
-    const size = g.severity === 'bad' ? 'text-xl' : 'text-lg';
+    // 2026-09-14: the same rule, louder. A critical figure now steps up to
+    // 29px against 20px, because at the old text-xl/text-lg the two were four
+    // pixels apart and the distinction simply did not survive being glanced
+    // at. Severity — never rank — decides this: the fourth-worst gap is not
+    // quieter than the third just for being fourth, and dimming it to break
+    // up "a wall of red" would be the page telling a comfortable lie.
+    const size = g.severity === 'bad'
+        ? 'text-[29px] leading-none tracking-[-0.03em]'
+        : 'text-[20px] leading-none tracking-[-0.02em]';
     return (
         <Link
             href={g.href}
-            className="group relative block bg-card py-2.5 pl-4 pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+            className="group relative block bg-card py-3.5 pl-4 pr-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         >
             <span
                 className={`pointer-events-none absolute inset-0 transition-colors ${toneWash(g.severity)}`}
@@ -129,12 +153,14 @@ function GapCell({ g }: { g: Gap }) {
                 className={`absolute inset-y-0 left-0 w-[3px] ${toneBar(g.severity)}`}
                 aria-hidden="true"
             />
-            <div className="relative">
-                <p className="text-[11px] leading-tight text-muted-foreground">{g.label}</p>
-                <p className={`mt-0.5 font-semibold leading-tight tabular-nums ${size} ${toneText(g.severity)}`}>
+            <div className="relative flex h-full flex-col gap-2">
+                <p className="text-[10px] font-semibold uppercase leading-tight tracking-[0.085em] text-muted-foreground">
+                    {g.label}
+                </p>
+                <p className={`mt-auto font-bold tabular-nums ${size} ${toneText(g.severity)}`}>
                     {g.value}
                 </p>
-                <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">{g.detail}</p>
+                <p className="text-[10.5px] leading-snug text-muted-foreground">{g.detail}</p>
             </div>
         </Link>
     );
@@ -173,7 +199,7 @@ export default function MissingRecordsStrip({ data }: { data: Completeness }) {
     const allClear = openCount === 0 && failedCount === 0 && !holdingsUnsure && gaps.length > 0;
 
     return (
-        <div id="records" className="scroll-mt-20 rounded-md border bg-card overflow-hidden">
+        <div id="records" className="scroll-mt-20 overflow-hidden rounded-xl border bg-card">
             {/* ── header ── */}
             <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b bg-zone-records/[0.07]">
                 <span className="text-sm font-medium">On hand, and what is not written up</span>

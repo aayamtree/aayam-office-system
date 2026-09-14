@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", ".claude", ".next", "_to_delete", "aayam-file-server"]
+}

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, ArrowRight, Activity, CheckSquare, Package, Upload, ArrowRightLeft } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Bell, ArrowRight, Activity, CheckSquare, Package, Upload, ArrowRightLeft, ChevronRight } from 'lucide-react';
 import { createAuditedBrowserClient } from '@/lib/supabase';
 
 const supabase = createAuditedBrowserClient();
@@ -52,6 +50,7 @@ interface RecentActivityWidgetProps {
 export default function RecentActivityWidget({ limit = 8 }: RecentActivityWidgetProps) {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         async function fetch() {
@@ -98,56 +97,87 @@ export default function RecentActivityWidget({ limit = 8 }: RecentActivityWidget
         fetch();
     }, [limit]);
 
+    // ── Satish, 2026-09-14: "recent activity needs to fold down... if we want
+    //    to see it then it shows, otherwise just a one-liner." He is right:
+    //    this is HISTORY, not something to act on, so it costs one line until
+    //    it is asked for. Collapsed is the default on every load — deliberately
+    //    not remembered, because a feed that reopens itself is back to charging
+    //    rent on the page. The fetch still runs while shut, which is what lets
+    //    the summary line say how many and how long ago. ──
+    const newest = items.length > 0 ? items[0].time : null;
+
     return (
-        <Card>
-            <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Activity className="h-4 w-4" /> Recent Activity
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                        <Link href="/admin/activity" className="flex items-center gap-1">
-                            View all <ArrowRight className="h-3 w-3" />
-                        </Link>
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="p-0">
-                {loading ? (
-                    <div className="divide-y divide-border">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="flex items-start gap-3 px-4 py-2.5 animate-pulse">
-                                <div className="mt-1.5 w-2 h-2 rounded-full bg-muted shrink-0" />
-                                <div className="flex-1 space-y-1.5">
-                                    <div className="h-2.5 bg-muted rounded w-3/4" />
-                                    <div className="h-2 bg-muted/60 rounded w-1/3" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : items.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">No recent activity</div>
-                ) : (
-                    <div className="divide-y divide-border">
-                        {items.map(item => (
-                            <div key={item.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors">
-                                {/* Coloured dot */}
-                                <div className="mt-1.5 shrink-0">
-                                    <span className={`block w-2 h-2 rounded-full ${actionDot(item.action)}`} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-foreground line-clamp-2 leading-relaxed">{item.text}</p>
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                        {actionIcon(item.action)}
-                                        {item.user && <span className="text-[10px] text-muted-foreground font-medium">{item.user}</span>}
-                                        <span className="text-[10px] text-muted-foreground ml-auto">{timeAgo(item.time)}</span>
+        <section className="overflow-hidden rounded-xl border bg-card">
+            {/* The toggle and the link are SIBLINGS, never nested: an anchor
+                inside a button is invalid, and it makes the link unreachable
+                by keyboard. */}
+            <div className="flex items-center gap-3 px-5 py-4">
+                <button
+                    type="button"
+                    onClick={() => setOpen(v => !v)}
+                    aria-expanded={open}
+                    className="-my-2 flex min-w-0 flex-1 items-center gap-3 rounded-md py-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    <ChevronRight
+                        className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+                    />
+                    <span className="shrink-0 text-[13px] font-semibold">Recent activity</span>
+                    <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">
+                        {loading
+                            ? 'loading…'
+                            : items.length === 0
+                                ? 'nothing recorded yet'
+                                : `${items.length} ${items.length === 1 ? 'entry' : 'entries'}${newest ? ` · last one ${timeAgo(newest)}` : ''}`}
+                    </span>
+                </button>
+                <Link
+                    href="/admin/activity"
+                    className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-muted-foreground hover:text-foreground"
+                >
+                    View all <ArrowRight className="h-3 w-3" />
+                </Link>
+            </div>
+
+            {open && (
+                <div className="border-t px-5 pb-4 pt-1">
+                    {loading ? (
+                        <div className="grid gap-x-8 sm:grid-cols-2">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex animate-pulse items-start gap-3 border-b py-3 last:border-0">
+                                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-muted" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="h-2.5 w-3/4 rounded bg-muted" />
+                                        <div className="h-2 w-1/3 rounded bg-muted/60" />
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                            ))}
+                        </div>
+                    ) : items.length === 0 ? (
+                        <p className="py-6 text-center text-xs text-muted-foreground">No recent activity</p>
+                    ) : (
+                        <div className="grid gap-x-8 sm:grid-cols-2">
+                            {items.map(item => (
+                                <div key={item.id} className="flex items-start gap-3 border-b py-2.5 last:border-0">
+                                    <span className={`mt-[7px] block h-1.5 w-1.5 shrink-0 rounded-full ${actionDot(item.action)}`} />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-[12.5px] leading-snug text-foreground" title={item.text}>
+                                            {item.text}
+                                        </p>
+                                        <div className="mt-0.5 flex items-center gap-1.5">
+                                            {actionIcon(item.action)}
+                                            {item.user && <span className="truncate text-[10.5px] text-muted-foreground">{item.user}</span>}
+                                            <span className="ml-auto shrink-0 text-[10.5px] tabular-nums text-muted-foreground/70">
+                                                {timeAgo(item.time)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                </div>
+            )}
+        </section>
     );
 }

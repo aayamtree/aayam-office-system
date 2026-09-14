@@ -67,16 +67,19 @@ function Figure({
         <Link
             href={href}
             title={title}
+            // 2026-09-14: the figure now sits ABOVE its label rather than
+            // beside it, which buys the number real size — 32px instead of
+            // 20px — without making the bar taller. This is the strongest
+            // contrast on the page and it should read from across a desk.
             // shrink-0 so a figure is never clipped by the row; the row wraps
             // instead. No separator glyphs — a floating "·" at the start of a
-            // wrapped line reads as a mistake, and spacing separates just as
-            // well. (audit 9)
-            className="group flex shrink-0 items-baseline gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            // wrapped line reads as a mistake. (audit 9)
+            className="group flex shrink-0 flex-col gap-1.5 rounded-lg px-3 py-1.5 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
-            <span className={`font-mono text-xl font-semibold leading-none tabular-nums tracking-tight sm:text-2xl ${valueTone}`}>
+            <span className={`text-[26px] font-extrabold leading-none tabular-nums tracking-[-0.035em] sm:text-[32px] ${valueTone}`}>
                 {value}
             </span>
-            <span className="text-[11px] leading-tight text-white/60 group-hover:text-white/85 sm:text-xs">
+            <span className="text-[10px] font-semibold uppercase leading-tight tracking-[0.085em] text-white/45 group-hover:text-white/70">
                 {label}
             </span>
         </Link>
@@ -107,8 +110,8 @@ export default function HeadlineBar({ data }: { data: Headline }) {
     const blind = liveJobs === null && owed === null && gapsOpen === null;
 
     return (
-        <div className="overflow-hidden rounded-lg bg-[#17181A] shadow-sm ring-1 ring-black/20 dark:bg-[#0A0B0C] dark:ring-white/10">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 py-3 sm:px-3">
+        <div className="overflow-hidden rounded-xl bg-[#17181A] shadow-sm ring-1 ring-black/20 dark:bg-[#0A0B0C] dark:ring-white/10">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-3 px-3 py-4 sm:px-4 [&>a+a]:border-l [&>a+a]:border-white/10 [&>a+a]:pl-5">
                 <Figure
                     value={liveJobs === null ? '—' : String(liveJobs)}
                     label="jobs live"
@@ -153,7 +156,7 @@ export default function HeadlineBar({ data }: { data: Headline }) {
 
             {/* One quiet line of consequence, only when there is one to state. */}
             {(blind || owedStale || booksSeverity === 'bad' || gapsTone === 'bad') && (
-                <div className="flex items-start gap-1.5 border-t border-white/10 bg-white/[0.03] px-3 py-1.5">
+                <div className="flex items-start gap-1.5 border-t border-white/10 bg-white/[0.03] px-4 py-2">
                     <AlertTriangle className="mt-px h-3 w-3 shrink-0 text-[#F5C05A]" />
                     <p className="text-[11px] leading-snug text-white/60">
                         {blind
