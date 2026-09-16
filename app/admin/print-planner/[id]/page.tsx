@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
-import { ArrowLeft, Plus, Trash2, CheckCircle, Printer, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, CheckCircle, Printer, AlertCircle, Pencil } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { syncRunJobsToStage, revertJobsToReadyToPrint } from '@/lib/print-run-sync';
 import type { PrintRun, PrintRunJob, Job } from '@/types/database';
@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/ConfirmModal';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { EditPrintRunModal } from '@/components/print-planner/EditPrintRunModal';
+import { useAuth } from '@/lib/auth-context';
 import { runProductCategory } from '@/lib/product-category';
 
 export default function PrintRunDetailPage() {
@@ -23,6 +25,9 @@ export default function PrintRunDetailPage() {
     const [printRunJobs, setPrintRunJobs] = useState<PrintRunJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddJobsModal, setShowAddJobsModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const { profile } = useAuth();
+    const isAdmin = profile?.role === 'admin';
 
     useEffect(() => {
         if (printRunId) {
@@ -181,9 +186,12 @@ export default function PrintRunDetailPage() {
                             </div>
                             <div className="flex items-center gap-3 md:gap-4 text-sm text-gray-600">
                                 <span><strong>Machine:</strong> {printRun.machine?.name || 'Not set'}</span>
-                                <span><strong>Size:</strong> {printRun.sheet_size?.size || 'Not set'}</span>
+                                <span><strong>Size:</strong> {printRun.sheet_size_label || printRun.sheet_size?.size || 'Not set'}</span>
                                 <span><strong>Material:</strong> {printRun.material?.name || 'Not set'}</span>
                             </div>
+                            {printRun.title && (
+                                <p className="mt-2 text-sm font-semibold text-gray-900">{printRun.title}</p>
+                            )}
                         </div>
 
                         <div className="flex gap-3">
@@ -203,6 +211,16 @@ export default function PrintRunDetailPage() {
                                 >
                                     <CheckCircle size={20} />
                                     Printing Done
+                                </button>
+                            )}
+                            {(printRun.status === 'planned' || isAdmin) && (
+                                <button
+                                    onClick={() => setShowEditModal(true)}
+                                    className="px-4 py-2 border border-gray-200 text-gray-700 rounded-md font-bold hover:bg-gray-100 transition-all flex items-center gap-2"
+                                    title="Edit title, notes and specs"
+                                >
+                                    <Pencil size={18} />
+                                    Edit
                                 </button>
                             )}
                             <button
@@ -341,6 +359,15 @@ export default function PrintRunDetailPage() {
                         setShowAddJobsModal(false);
                         fetchPrintRunDetails();
                     }}
+                />
+            )}
+
+            {/* Edit print run — title, notes, specs */}
+            {showEditModal && (
+                <EditPrintRunModal
+                    runId={printRunId}
+                    onClose={() => setShowEditModal(false)}
+                    onSaved={fetchPrintRunDetails}
                 />
             )}
         </div>

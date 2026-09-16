@@ -7,12 +7,13 @@ import { useAuth } from '@/lib/auth-context';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { EditPrintRunModal } from '@/components/print-planner/EditPrintRunModal';
 import { runProductCategory } from '@/lib/product-category';
 import {
     Printer, Clock, CheckCircle, Truck,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
     ClipboardCheck, MapPin, FileText, AlertTriangle, Building2, Camera,
-    PackageCheck, History, Undo2
+    PackageCheck, History, Undo2, Pencil
 } from 'lucide-react';
 
 // ─── Interfaces ────────────────────────────────────────────
@@ -33,6 +34,7 @@ interface PrintRun {
     id: string;
     print_run_number: string;
     status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'handed_over' | 'dispatched';
+    title: string | null;
     notes: string | null;
     deadline: string | null;
     total_amount: number | null;
@@ -128,6 +130,7 @@ const PREV_STATUS: Record<string, string | null> = {
 // ─── Main Component ────────────────────────────────────────
 export default function PrintRunsPage() {
     const { profile } = useAuth();
+    const [editRunId, setEditRunId] = useState<string | null>(null);
     const confirm = useConfirm();
     const [runs, setRuns] = useState<PrintRun[]>([]);
     const [loading, setLoading] = useState(true);
@@ -198,7 +201,7 @@ export default function PrintRunsPage() {
             const { data: runsData, error } = await supabase
                 .from('print_runs')
                 .select(`
-                    id, print_run_number, status, notes, deadline, total_amount, created_at,
+                    id, print_run_number, status, title, notes, deadline, total_amount, created_at,
                     sheet_size_label, pulling_multiple,
                     paper_qty, paper_rate, paper_gst_percent, paper_total, paper_payment_status,
                     delivery_mode, delivery_address, transporter_name, eway_bill_number,
@@ -230,6 +233,7 @@ export default function PrintRunsPage() {
                 id: r.id,
                 print_run_number: r.print_run_number,
                 status: r.status,
+                title: r.title,
                 notes: r.notes,
                 deadline: r.deadline,
                 total_amount: r.total_amount,
@@ -911,7 +915,7 @@ export default function PrintRunsPage() {
                                     <div>
                                         <p className="text-[10px] text-muted-foreground truncate">{run.vendor_name || 'No vendor'}</p>
                                         <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">
-                                            {run.notes || [run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
+                                            {run.title || run.notes || [run.machine_name, run.sheet_size_label || run.sheet_size, run.material_name].filter(Boolean).join(' · ') || 'No specs'}
                                         </h3>
                                     </div>
 
@@ -1016,6 +1020,7 @@ export default function PrintRunsPage() {
                                     <h2 className="text-foreground font-bold text-base">{viewRun.print_run_number}</h2>
                                     <ProductBadge category={runProductCategory(viewRun.jobs)} size="sm" />
                                 </div>
+                                {viewRun.title && <p className="text-foreground text-sm font-semibold">{viewRun.title}</p>}
                                 <p className="text-muted-foreground text-xs">{viewRun.vendor_name || 'No vendor'}</p>
                             </div>
                             <button onClick={() => setViewRun(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
@@ -1237,9 +1242,20 @@ export default function PrintRunsPage() {
 
                             {/* Footer Actions */}
                             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                                <button onClick={() => deleteRun(viewRun.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-md">
-                                    <Trash2 size={13} /> Delete
-                                </button>
+                                <div className="flex gap-2">
+                                    <button onClick={() => deleteRun(viewRun.id)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-md">
+                                        <Trash2 size={13} /> Delete
+                                    </button>
+                                    {(viewRun.status === 'planned' || isAdmin) && (
+                                        <button
+                                            onClick={() => { setEditRunId(viewRun.id); setViewRun(null); }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-md hover:bg-gray-100"
+                                            title="Edit title, notes and specs"
+                                        >
+                                            <Pencil size={13} /> Edit
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="flex gap-2">
                                     {PREV_STATUS[viewRun.status] && (
                                         <button
@@ -1494,6 +1510,15 @@ export default function PrintRunsPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Edit print run — title, notes, specs */}
+            {editRunId && (
+                <EditPrintRunModal
+                    runId={editRunId}
+                    onClose={() => setEditRunId(null)}
+                    onSaved={fetchRuns}
+                />
             )}
         </div>
     );

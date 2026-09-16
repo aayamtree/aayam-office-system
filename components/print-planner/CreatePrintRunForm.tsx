@@ -48,6 +48,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const [materialId, setMaterialId] = useState('');
     const [deadline, setDeadline] = useState('');
     const [printingCharge, setPrintingCharge] = useState('');
+    const [title, setTitle] = useState('');
     const [notes, setNotes] = useState('');
 
     // Paper supply state
@@ -112,6 +113,10 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
             toast.error('Please select a print vendor.');
             return;
         }
+        if (!title.trim()) {
+            toast.error('Please give the run a title — it is the heading on the print run card.');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -124,6 +129,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 deadline: deadline || null,
                 total_amount: printingCharge ? parseFloat(printingCharge) : null,
                 status: 'planned',
+                title: title.trim() || null,
                 notes: notes || null,
                 sheet_size_label: sheetSize,
                 pulling_multiple: editablePulling,
@@ -572,6 +578,18 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 </div>
 
                 {/* Notes */}
+                <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Run Title *</label>
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g. Pro Job 02 Sept 20x30 Metallic Sticker 1100 St."
+                        className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 outline-none"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">Shown as the heading on the print run card.</p>
+                </div>
+
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Notes</label>
                     <textarea

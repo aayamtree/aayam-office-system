@@ -62,11 +62,11 @@ export default function AllUploadsPage() {
         try {
             const [runsRes, qcRes, paymentsRes, dispatchesRes, billsRes, staffRes] = await Promise.all([
                 supabase.from('print_runs')
-                    .select('id, print_run_number, notes, job_sheet_url, invoice_doc_url, eway_doc_url, created_at')
+                    .select('id, print_run_number, title, notes, job_sheet_url, invoice_doc_url, eway_doc_url, created_at')
                     .or('job_sheet_url.not.is.null,invoice_doc_url.not.is.null,eway_doc_url.not.is.null')
                     .order('created_at', { ascending: false }),
                 supabase.from('qc_records')
-                    .select('id, photos, created_at, print_runs(print_run_number, notes)')
+                    .select('id, photos, created_at, print_runs(print_run_number, title, notes)')
                     .order('created_at', { ascending: false })
                     .limit(1000),
                 supabase.from('payments_received')
@@ -93,7 +93,7 @@ export default function AllUploadsPage() {
             if (runsRes.error) failures++;
             (runsRes.data || []).forEach((r: any) => {
                 const title = r.print_run_number || 'Print run';
-                const subtitle = r.notes || '';
+                const subtitle = r.title || r.notes || '';
                 if (r.job_sheet_url) mapped.push({ key: `job_sheet-${r.id}`, url: r.job_sheet_url, kind: 'job_sheet', title, subtitle, date: r.created_at });
                 if (r.invoice_doc_url) mapped.push({ key: `invoice-${r.id}`, url: r.invoice_doc_url, kind: 'invoice', title, subtitle, date: r.created_at });
                 if (r.eway_doc_url) mapped.push({ key: `eway-${r.id}`, url: r.eway_doc_url, kind: 'eway', title, subtitle, date: r.created_at });
@@ -109,7 +109,7 @@ export default function AllUploadsPage() {
                         url,
                         kind: 'goods_photo',
                         title: rec.print_runs?.print_run_number || 'Print run',
-                        subtitle: rec.print_runs?.notes || '',
+                        subtitle: rec.print_runs?.title || rec.print_runs?.notes || '',
                         date: rec.created_at,
                     });
                 });

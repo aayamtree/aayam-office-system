@@ -1211,6 +1211,7 @@ export interface PrintRun extends BaseEntity {
   material_id?: string;
   vendor_id?: string;
   status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'handed_over' | 'dispatched';
+  title?: string;
   notes?: string;
   created_by?: string;
   deadline?: string;
