@@ -122,7 +122,7 @@ export default function PaymentCapturesPage() {
     const [live, setLive] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [busy, setBusy] = useState<string | null>(null);
-    const [tab, setTab] = useState<'attention' | 'toenter' | 'verified' | 'all'>('attention');
+    const [tab, setTab] = useState<'attention' | 'verified' | 'all'>('attention');
     const [search, setSearch] = useState('');
 
     // silent = a refresh triggered by the live feed rather than by the person.
@@ -363,7 +363,6 @@ export default function PaymentCapturesPage() {
                 // Ticked rows STAY in this tab (dimmed) so the tick reads as a
                 // confirmation rather than the row vanishing, and so Undo is
                 // where the person just clicked.
-                if (tab === 'toenter') return isCashQueue(c);
                 if (tab === 'verified') return c.status === 'verified';
                 return true;
             })
@@ -452,13 +451,13 @@ export default function PaymentCapturesPage() {
                         ({dateless.map((c) => c.direction === 'in'
                             ? `${money(c.amount)} from ${c.paid_from || '?'}`
                             : `${money(c.amount)} to ${c.paid_to || '?'}`).slice(0, 4).join(', ')}
-                        {dateless.length > 4 ? ', …' : ''}). Open the screenshot and set the date, or mark it as cash.
+                        {dateless.length > 4 ? ', …' : ''}). Open the screenshot and set the date.
                     </span>
                 </div>
             )}
 
             <div className="flex items-center gap-2 flex-wrap">
-                {(['attention', 'toenter', 'verified', 'all'] as const).map((t) => (
+                {(['attention', 'verified', 'all'] as const).map((t) => (
                     <button
                         key={t}
                         onClick={() => setTab(t)}
@@ -467,7 +466,6 @@ export default function PaymentCapturesPage() {
                         }`}
                     >
                         {t === 'attention' ? `Needs attention (${captures.filter(needsAttention).length})`
-                            : t === 'toenter' ? `To enter in Zoho (${toEnter.length})`
                             : t === 'verified' ? `Verified (${captures.filter((c) => c.status === 'verified').length})`
                             : `All (${captures.length})`}
                     </button>
@@ -483,17 +481,6 @@ export default function PaymentCapturesPage() {
                 </div>
             </div>
 
-            {tab === 'toenter' && toEnter.length > 0 && (
-                <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground flex gap-2.5">
-                    <Clock size={15} className="shrink-0 mt-0.5" />
-                    <div>
-                        These were paid in cash or outside the bank account, so no statement line
-                        will ever confirm them. Enter each one in Zoho, then tick it off here —
-                        that tick is the only record that it was done.
-                    </div>
-                </div>
-            )}
-
             {loading ? (
                 <div className="text-sm text-muted-foreground p-8 text-center">Loading…</div>
             ) : shown.length === 0 ? (
@@ -501,7 +488,6 @@ export default function PaymentCapturesPage() {
                     <CheckCircle2 size={32} className="mx-auto text-muted-foreground/30 mb-3" />
                     <p className="text-muted-foreground font-medium text-sm">
                         {tab === 'attention' ? 'Nothing waiting. Every capture is matched or closed.'
-                            : tab === 'toenter' ? 'No cash waiting to be entered in Zoho.'
                             : 'Nothing here yet.'}
                     </p>
                 </div>
@@ -514,7 +500,7 @@ export default function PaymentCapturesPage() {
                             <div
                                 key={c.id}
                                 className={`bg-card rounded-md border border-border p-3 flex gap-3 ${
-                                    tab === 'toenter' && c.entered_in_books_at ? 'opacity-55' : ''
+                                    ''
                                 }`}
                             >
                                 {c.image_url ? (
@@ -547,7 +533,6 @@ export default function PaymentCapturesPage() {
                                                 <span>{day(c.txn_date)}</span>
                                                 {c.bank_name && <span>· {c.bank_name}</span>}
                                                 {c.reference_number && <span className="font-mono">· ref {c.reference_number}</span>}
-                                                {!c.needs_bank_match && <span className="font-semibold">· CASH</span>}
                                                 {c.entry_kind === 'text' && <span>· typed, no receipt</span>}
                                                 {c.posted_by_label && <span>· posted by {c.posted_by_label}</span>}
                                             </p>
@@ -583,16 +568,6 @@ export default function PaymentCapturesPage() {
                                         <p className="text-[11px] mt-1 text-green-700 flex items-center gap-1">
                                             <CheckCircle2 size={10} /> Matched to the bank statement
                                             {MATCH_NOTE[c.match_method || ''] || ''}.
-                                        </p>
-                                    )}
-                                    {isCashQueue(c) && !c.entered_in_books_at && (
-                                        <p className="text-[11px] mt-1 text-muted-foreground flex items-center gap-1">
-                                            <Clock size={10} /> Cash — no bank statement will ever show this. Enter it in Zoho, then tick it off.
-                                        </p>
-                                    )}
-                                    {isCashQueue(c) && c.entered_in_books_at && (
-                                        <p className="text-[11px] mt-1 text-green-700 flex items-center gap-1">
-                                            <CheckCircle2 size={10} /> Entered in Zoho on {day(c.entered_in_books_at)}.
                                         </p>
                                     )}
                                     {/* Keyed off the SAME sets the banners use. Computed
@@ -673,36 +648,17 @@ export default function PaymentCapturesPage() {
                                                     Open ledger <ExternalLink size={11} />
                                                 </a>
                                             )}
-                                            {/* Cash is the one case a person confirms by hand, because
-                                                nothing else ever will. Bank payments deliberately have no
-                                                such button: a human must never vouch for money moving. */}
-                                            {isCashQueue(c) && (
-                                                <button
-                                                    onClick={() => patch(c.id, { entered_in_books: !c.entered_in_books_at })}
-                                                    disabled={working}
-                                                    className={`text-xs px-2.5 py-1.5 rounded-md border flex items-center gap-1 disabled:opacity-50 ${
-                                                        c.entered_in_books_at
-                                                            ? 'border-border text-muted-foreground hover:bg-muted'
-                                                            : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
-                                                    }`}
-                                                >
-                                                    <CheckCircle2 size={11} />
-                                                    {c.entered_in_books_at ? 'Undo — not entered' : 'Entered in Zoho'}
-                                                </button>
-                                            )}
-
-                                            {/* When the reader misjudges cash the capture is stranded —
-                                                no tick, and no bank line ever coming. This is the exit. */}
-                                            {!c.zoho_bank_transaction_id && !['rejected', 'duplicate'].includes(c.status) && (
+                                            {/* Cash left this system in September 2026, so nothing may be
+                                                marked AS cash any more. The reverse still shows, because an
+                                                older row wrongly marked cash needs a way back. */}
+                                            {!c.needs_bank_match && !c.zoho_bank_transaction_id && !['rejected', 'duplicate'].includes(c.status) && (
                                                 <button
                                                     onClick={() => patch(c.id, { needs_bank_match: !c.needs_bank_match })}
                                                     disabled={working}
                                                     className="text-xs px-2.5 py-1.5 rounded-md border border-border text-muted-foreground hover:bg-muted disabled:opacity-50"
-                                                    title={c.needs_bank_match
-                                                        ? 'Mark as cash — nothing will arrive on the bank statement'
-                                                        : 'Mark as a bank payment — expect it on the statement'}
+                                                    title="Mark as a bank payment — expect it on the statement"
                                                 >
-                                                    {c.needs_bank_match ? 'This was cash' : 'This went through the bank'}
+                                                    This went through the bank
                                                 </button>
                                             )}
 

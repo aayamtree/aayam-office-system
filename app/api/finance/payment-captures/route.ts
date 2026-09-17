@@ -49,7 +49,19 @@ export async function PATCH(request: NextRequest) {
     // gets it wrong the capture is stranded: no tick, because the app thinks a
     // bank line is coming, and no match, because none ever will. Correcting the
     // flag is the only honest exit — "Not a payment" would be a lie.
-    if ('needs_bank_match' in body) patch.needs_bank_match = Boolean(body.needs_bank_match);
+    // Cash left this system in September 2026. A capture may still be corrected
+    // FROM cash to bank — older rows need that exit — but nothing may be marked
+    // as cash again, or the queue we just closed rebuilds itself one tap at a
+    // time.
+    if ('needs_bank_match' in body) {
+        if (Boolean(body.needs_bank_match) === false) {
+            return NextResponse.json(
+                { error: 'Cash is not recorded in this system — it belongs in Vyapar.' },
+                { status: 400 },
+            );
+        }
+        patch.needs_bank_match = true;
+    }
 
     if ('entered_in_books' in body) {
         if (body.entered_in_books) {

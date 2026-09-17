@@ -52,7 +52,7 @@ import { FileText, ArrowRight } from 'lucide-react';
 const LIVE = [
     { href: '/admin/finance/money-in', label: 'Money In', hint: 'What customers owe us, from Zoho' },
     { href: '/admin/finance/money-out', label: 'Money Out', hint: 'What we owe vendors, from Zoho' },
-    { href: '/admin/finance/bank-cash', label: 'Bank & Cash', hint: 'What actually moved through the bank' },
+    { href: '/admin/finance/bank-cash', label: 'Bank', hint: 'What actually moved through the bank' },
     { href: '/admin/finance/reports', label: 'Finance → Reports', hint: 'Cashflow, categories, billed against collected' },
     { href: '/admin/reports/sales', label: 'Sales Report', hint: 'Orders and billing by client, from jobs' },
 ];

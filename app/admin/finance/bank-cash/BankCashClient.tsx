@@ -62,8 +62,8 @@ export default function BankCashClient({
     return (
         <div className="space-y-4">
             <DoorHeader
-                title="Bank & Cash"
-                question="What the bank shows, and what is still to enter."
+                title="Bank"
+                question="What the bank shows."
                 source="The HDFC feed in Zoho Books."
             />
 

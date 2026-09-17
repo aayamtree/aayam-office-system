@@ -70,7 +70,7 @@ const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     // 5 August, so typing "invoices" landed you on a page holding two of them.
     { title: 'Money In',              subtitle: 'Who owes us, and who paid',        href: '/admin/finance/money-in' },
     { title: 'Money Out',             subtitle: 'Who we owe, and what we paid',     href: '/admin/finance/money-out' },
-    { title: 'Bank & Cash',           subtitle: 'What the bank shows',              href: '/admin/finance/bank-cash' },
+    { title: 'Bank',           subtitle: 'What the bank shows',              href: '/admin/finance/bank-cash' },
     { title: 'Finance To Do',         subtitle: 'Payments to chase, cash to enter', href: '/admin/finance/to-do' },
     { title: 'Finance Reports',       subtitle: 'Money in and out, by month',       href: '/admin/finance/reports' },
     // The screens the doors open — still reachable by name.

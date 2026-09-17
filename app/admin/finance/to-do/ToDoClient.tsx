@@ -83,7 +83,7 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
             <DoorNav
                 links={[
                     { href: '/admin/finance/payment-captures', label: 'Payment proofs' },
-                    { href: '/admin/finance/bank-cash', label: 'Bank & Cash' },
+                    { href: '/admin/finance/bank-cash', label: 'Bank' },
                     { href: '/admin/finance/money-in', label: 'Money In' },
                 ]}
             />

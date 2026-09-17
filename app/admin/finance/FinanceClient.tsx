@@ -135,7 +135,7 @@ export default function FinanceClient({ data, cashToEnter, cashTruncated }: Prop
         {
             href: '/admin/finance/bank-cash',
             icon: CreditCard,
-            title: 'Bank & Cash',
+            title: 'Bank',
             iconColor: 'text-blue-700',
             iconBg: 'bg-blue-50',
             borderColor: 'border-l-blue-500',

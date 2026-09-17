@@ -172,7 +172,7 @@ export default function FinanceGuidePage() {
                     {[
                         ['Money In', 'આપણને કોણ પૈસા આપવાના બાકી છે', 'Who owes us money'],
                         ['Money Out', 'આપણે કોને પૈસા આપવાના બાકી છે', 'Who we owe money to'],
-                        ['Bank & Cash', 'બેન્કમાં શું દેખાય છે', 'What the bank statement shows'],
+                        ['Bank', 'બેન્કમાં શું દેખાય છે', 'What the bank statement shows'],
                         ['To Do', 'બાકી રહેલું કામ', 'Work still unfinished'],
                         ['Reports', 'મહિનાનો હિસાબ', 'The month\u2019s figures'],
                     ].map(([door, gu, en]) => (
