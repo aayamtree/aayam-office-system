@@ -19,7 +19,7 @@ const printReceiptPDF = async (d: any) =>
   (await import('@/components/finance/ReceiptPDF')).printReceiptPDF(await d);
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { shareOnWhatsApp, getInvoiceMessage, getPaymentReminderMessage } from '@/lib/whatsapp';
-import { useInvoices, useClients, useJobs, useBankAccounts, useCashAccounts, useQuotations } from '@/lib/hooks';
+import { useInvoices, useClients, useJobs, useBankAccounts, useQuotations } from '@/lib/hooks';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
 import ItemAutocomplete, { CatalogItem } from '@/components/items/ItemAutocomplete';
 import { Invoice, Client, InvoiceItem } from '@/types/database';
@@ -38,7 +38,6 @@ export default function InvoicesPage() {
   const { invoices, loading: invoicesLoading, error: invoicesError, createInvoice, updateInvoice, saveInvoiceItems, refetch: refetchInvoices } = useInvoices();
   const { clients, refetch: refetchClients } = useClients();
   const { bankAccounts } = useBankAccounts();
-  const { cashAccounts } = useCashAccounts();
   const { quotations } = useQuotations();
   const [showClientModal, setShowClientModal] = useState(false);
 
@@ -111,14 +110,13 @@ export default function InvoicesPage() {
   const openPaymentModal = (inv: Invoice) => {
     const balance = Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0));
     const firstBank = (bankAccounts || []).find((b: any) => b.is_default) || (bankAccounts || [])[0];
-    const firstCash = (cashAccounts || [])[0];
     setPayInvoice(inv);
     setPayForm({
       amount: balance,
       mode: 'bank_transfer',
       date: new Date().toISOString().split('T')[0],
-      accountKind: firstBank ? 'bank' : 'cash',
-      accountId: firstBank ? firstBank.id : (firstCash ? firstCash.id : ''),
+      accountKind: 'bank' as const,
+      accountId: firstBank ? firstBank.id : '',
       reference: '',
       notes: '',
     });
@@ -1774,8 +1772,7 @@ export default function InvoicesPage() {
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Deposit To</label>
                 <select value={payForm.accountId} onChange={(e) => {
                     const id = e.target.value;
-                    const isCash = (cashAccounts || []).some((a: any) => a.id === id);
-                    setPayForm({ ...payForm, accountId: id, accountKind: isCash ? 'cash' : 'bank', mode: isCash ? 'cash' : 'bank_transfer' });
+                    setPayForm({ ...payForm, accountId: id, accountKind: 'bank', mode: 'bank_transfer' });
                   }}
                   className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                   <option value="">Select account…</option>

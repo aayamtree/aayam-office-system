@@ -12,7 +12,6 @@ import StaleLedgerNotice from '@/components/finance/StaleLedgerNotice';
 export default function DailyFinancePage() {
     const [loading, setLoading] = useState(true);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [todayPayments, setTodayPayments] = useState<any[]>([]);
     const [todayExpenses, setTodayExpenses] = useState<any[]>([]);
     const [loadError, setLoadError] = useState<unknown>(null);
@@ -28,8 +27,6 @@ export default function DailyFinancePage() {
             // expensive possible way to be wrong.
             const { data: banks, error: banksErr } = await supabase.from('bank_accounts').select('*').eq('is_active', true);
             if (banksErr) throw banksErr;
-            const { data: cash, error: cashErr } = await supabase.from('cash_accounts').select('*').eq('is_active', true);
-            if (cashErr) throw cashErr;
             const today = new Date().toISOString().split('T')[0];
             const { data: payments, error: payErr } = await supabase.from('payments_received').select('*, clients(name, company)').eq('payment_date', today);
             if (payErr) throw payErr;
@@ -37,14 +34,12 @@ export default function DailyFinancePage() {
             if (vendErr) throw vendErr;
 
             setBankAccounts(banks || []);
-            setCashAccounts(cash || []);
             setTodayPayments(payments || []);
             setTodayExpenses(vendorPays || []);
         } catch (error) {
             console.error('Error loading data:', error);
             setLoadError(error);
             setBankAccounts([]);
-            setCashAccounts([]);
             setTodayPayments([]);
             setTodayExpenses([]);
         } finally {
@@ -55,8 +50,7 @@ export default function DailyFinancePage() {
     useEffect(() => { loadData(); }, []);
 
     const totalBanks = bankAccounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
-    const totalCash = cashAccounts.reduce((sum, acc) => sum + (acc.current_balance || 0), 0);
-    const grandTotal = totalBanks + totalCash;
+    const grandTotal = totalBanks;
     const todayIncome = todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
     const todayExpense = todayExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     const netChange = todayIncome - todayExpense;

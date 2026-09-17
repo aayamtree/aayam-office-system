@@ -7,7 +7,7 @@ import {
   Plus, Search, FileText, Building2, Calendar, X, Eye, Edit, Trash2,
   Package, ArrowLeft, Loader2, Upload, ExternalLink, PlusCircle
 } from 'lucide-react';
-import { usePurchaseBills, useVendors, useJobs, usePurchaseServiceCategories, useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { usePurchaseBills, useVendors, useJobs, usePurchaseServiceCategories, useBankAccounts } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -59,7 +59,6 @@ export default function VendorPurchasesPage() {
   const { jobs } = useJobs();
   const { serviceCategories, createServiceCategory } = usePurchaseServiceCategories();
   const { bankAccounts } = useBankAccounts();
-  const { cashAccounts } = useCashAccounts();
 
   // ── Record Payment (posts to ledger via fn_record_bill_payment) ──
   const [showPayModal, setShowPayModal] = useState(false);
@@ -73,12 +72,11 @@ export default function VendorPurchasesPage() {
   const openBillPayment = (bill: any) => {
     const balance = Math.max(0, (bill.total_amount || 0) - (bill.amount_paid || 0));
     const firstBank = (bankAccounts || []).find((b: any) => b.is_default) || (bankAccounts || [])[0];
-    const firstCash = (cashAccounts || [])[0];
     setPayBill(bill);
     setPayForm({
       amount: balance, mode: 'bank_transfer', date: new Date().toISOString().split('T')[0],
-      accountKind: firstBank ? 'bank' : 'cash',
-      accountId: firstBank ? firstBank.id : (firstCash ? firstCash.id : ''), reference: '',
+      accountKind: 'bank' as const,
+      accountId: firstBank ? firstBank.id : '', reference: '',
     });
     setShowPayModal(true);
   };
@@ -821,8 +819,7 @@ export default function VendorPurchasesPage() {
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Pay From</label>
                 <select value={payForm.accountId} onChange={(e) => {
                     const id = e.target.value;
-                    const isCash = (cashAccounts || []).some((a: any) => a.id === id);
-                    setPayForm({ ...payForm, accountId: id, accountKind: isCash ? 'cash' : 'bank', mode: isCash ? 'cash' : 'bank_transfer' });
+                    setPayForm({ ...payForm, accountId: id, accountKind: 'bank', mode: 'bank_transfer' });
                   }}
                   className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                   <option value="">Select account…</option>

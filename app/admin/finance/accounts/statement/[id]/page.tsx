@@ -15,7 +15,7 @@ export default function AccountStatementPage() {
     const [account, setAccount] = useState<any>(null);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [accountType, setAccountType] = useState<'bank' | 'cash'>('bank');
+    const [accountType] = useState<'bank'>('bank');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
 
@@ -31,21 +31,7 @@ export default function AccountStatementPage() {
 
             if (bankAcc) {
                 setAccount(bankAcc);
-                setAccountType('bank');
                 await loadBankTransactions();
-            } else {
-                // Try as cash account
-                let { data: cashAcc } = await supabase
-                    .from('cash_accounts')
-                    .select('*')
-                    .eq('id', accountId)
-                    .single();
-
-                if (cashAcc) {
-                    setAccount(cashAcc);
-                    setAccountType('cash');
-                    await loadCashTransactions();
-                }
             }
         } catch (error) {
             console.error('Error loading account:', error);
@@ -63,20 +49,6 @@ export default function AccountStatementPage() {
             .from('bank_transactions')
             .select('*')
             .eq('bank_account_id', accountId)
-            .order('transaction_date', { ascending: false });
-
-        if (startDate) query = query.gte('transaction_date', startDate);
-        if (endDate) query = query.lte('transaction_date', endDate);
-
-        const { data } = await query;
-        setTransactions(data || []);
-    };
-
-    const loadCashTransactions = async () => {
-        let query = supabase
-            .from('cash_transactions')
-            .select('*')
-            .eq('cash_account_id', accountId)
             .order('transaction_date', { ascending: false });
 
         if (startDate) query = query.gte('transaction_date', startDate);
@@ -276,9 +248,6 @@ export default function AccountStatementPage() {
                         <h2 className="text-page-title">{account.name} - Statement</h2>
                         {accountType === 'bank' && account.account_number && (
                             <p className="text-sm text-gray-600">Account: {account.account_number}</p>
-                        )}
-                        {accountType === 'cash' && account.location && (
-                            <p className="text-sm text-gray-600">Location: {account.location}</p>
                         )}
                         {(startDate || endDate) && (
                             <p className="text-sm text-gray-600 mt-1">

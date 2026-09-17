@@ -15,12 +15,11 @@ export default function PaymentsPageNew() {
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [paymentType, setPaymentType] = useState<'received' | 'paid'>('received');
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
     const [accountId, setAccountId] = useState('');
     const [clients, setClients] = useState<any[]>([]);
     const [vendors, setVendors] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
 
     // Filter state
     const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'banking'>('all');
@@ -109,11 +108,9 @@ export default function PaymentsPageNew() {
         const { data: clientsData } = await supabase.from('clients').select('id, name, company');
         const { data: vendorsData } = await supabase.from('vendors').select('id, name, company');
         const { data: banksData } = await supabase.from('bank_accounts').select('*').eq('is_active', true);
-        const { data: cashData } = await supabase.from('cash_accounts').select('*').eq('is_active', true);
         setClients(clientsData || []);
         setVendors(vendorsData || []);
         setBankAccounts(banksData || []);
-        setCashAccounts(cashData || []);
     };
 
     useEffect(() => {
@@ -124,9 +121,8 @@ export default function PaymentsPageNew() {
     // Single "Pay From" dropdown: pick an account directly; payment mode is
     // derived automatically (cash account -> cash, bank account -> bank_transfer).
     const handleAccountChange = (id: string) => {
-        const isCash = cashAccounts.some((a) => a.id === id);
         setAccountId(id);
-        setPaymentMethod(isCash ? 'cash' : 'bank_transfer');
+        setPaymentMethod('bank_transfer');
     };
 
     // Filtered payments
@@ -162,8 +158,8 @@ export default function PaymentsPageNew() {
                     p_amount: amount,
                     p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
-                    p_bank_account_id: payMode === 'cash' ? null : accountId,
-                    p_cash_account_id: payMode === 'cash' ? accountId : null,
+                    p_bank_account_id: accountId,
+                    p_cash_account_id: null,
                     p_reference: formData.get('reference') as string,
                     p_notes: formData.get('notes') as string,
                     p_invoice_id: null,
@@ -186,8 +182,8 @@ export default function PaymentsPageNew() {
                     p_amount: amount,
                     p_payment_mode: payMode,
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
-                    p_bank_account_id: payMode === 'cash' ? null : accountId,
-                    p_cash_account_id: payMode === 'cash' ? accountId : null,
+                    p_bank_account_id: accountId,
+                    p_cash_account_id: null,
                     p_reference: formData.get('reference') as string,
                     p_notes: formData.get('notes') as string,
                     p_purchase_bill_id: null,
@@ -208,7 +204,7 @@ export default function PaymentsPageNew() {
             await fetchPayments();
             setShowModal(false);
             setAccountId('');
-            setPaymentMethod('cash');
+            setPaymentMethod('bank_transfer');
             toast.success('Payment recorded successfully!');
         } catch (err: any) {
             toast.error(String('Error: ' + err.message));

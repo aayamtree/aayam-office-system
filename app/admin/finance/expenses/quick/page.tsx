@@ -30,7 +30,6 @@ export default function QuickExpensePage() {
     const [editingExpense, setEditingExpense] = useState<any>(null);
     const [vendors, setVendors] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [recentExpenses, setRecentExpenses] = useState<any[]>([]);
     const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
@@ -38,7 +37,7 @@ export default function QuickExpensePage() {
         category: '',
         amount: '',
         description: '',
-        payment_mode: 'cash',
+        payment_mode: 'bank_transfer',
         vendor_id: '',
         reference_number: '',
         payment_date: new Date().toISOString().split('T')[0],
@@ -80,17 +79,9 @@ export default function QuickExpensePage() {
             .order('name');
         setBankAccounts(bankData || []);
 
-        // Load cash accounts
-        const { data: cashData } = await supabase
-            .from('cash_accounts')
-            .select('*')
-            .eq('is_active', true)
-            .order('name');
-        setCashAccounts(cashData || []);
-
-        // Auto-select first cash account if available
-        if (cashData && cashData.length > 0) {
-            setFormData(prev => ({ ...prev, account_id: cashData[0].id }));
+        // Auto-select the first bank account if there is one.
+        if (bankData && bankData.length > 0) {
+            setFormData(prev => ({ ...prev, account_id: bankData[0].id }));
         }
     };
 
@@ -119,11 +110,11 @@ export default function QuickExpensePage() {
             category: '',
             amount: '',
             description: '',
-            payment_mode: 'cash',
+            payment_mode: 'bank_transfer',
             vendor_id: '',
             reference_number: '',
             payment_date: new Date().toISOString().split('T')[0],
-            account_id: cashAccounts[0]?.id || ''
+            account_id: bankAccounts[0]?.id || ''
         });
     };
 
@@ -138,11 +129,11 @@ export default function QuickExpensePage() {
             category,
             amount: String(expense.amount ?? ''),
             description,
-            payment_mode: expense.payment_mode || (expense.cash_account_id ? 'cash' : 'bank_transfer'),
+            payment_mode: expense.payment_mode || 'bank_transfer',
             vendor_id: expense.vendor_id || '',
             reference_number: ref,
             payment_date: expense.payment_date,
-            account_id: expense.cash_account_id || expense.bank_account_id || ''
+            account_id: expense.bank_account_id || ''
         });
         setEditingExpense(expense);
         setError('');
@@ -220,8 +211,8 @@ export default function QuickExpensePage() {
                 p_amount: parseFloat(formData.amount),
                 p_payment_mode: formData.payment_mode,
                 p_payment_date: formData.payment_date,
-                p_bank_account_id: formData.payment_mode === 'cash' ? null : formData.account_id,
-                p_cash_account_id: formData.payment_mode === 'cash' ? formData.account_id : null,
+                p_bank_account_id: formData.account_id,
+                p_cash_account_id: null,
                 p_reference: formData.reference_number || `${formData.category} - ${formData.description}`,
                 p_notes: `Category: ${formData.category}\n${formData.description}`
             };
@@ -256,11 +247,10 @@ export default function QuickExpensePage() {
     // Single "Pay From" dropdown: pick an account directly; payment mode is
     // derived automatically (cash account -> cash, bank account -> bank_transfer).
     const handleAccountChange = (id: string) => {
-        const isCash = cashAccounts.some((a) => a.id === id);
         setFormData(prev => ({
             ...prev,
             account_id: id,
-            payment_mode: isCash ? 'cash' : 'bank_transfer'
+            payment_mode: 'bank_transfer'
         }));
     };
 

@@ -24,17 +24,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { ArrowLeftRight, ChevronDown, ArrowRight } from 'lucide-react';
-import { useBankAccounts, useCashAccounts } from '@/lib/hooks';
+import { useBankAccounts } from '@/lib/hooks';
 
 export const TRANSFER_TYPES = [
     { key: 'bank_to_bank',   label: 'Bank to Bank Transfer',  from: 'bank', to: 'bank'  },
-    { key: 'cash_to_cash',   label: 'Cash to Cash Transfer',  from: 'cash', to: 'cash'  },
     { key: 'adjust_balance', label: 'Adjust Balance',         from: 'any',  to: null    },
 ];
 
 /**
  * The dropdown itself. `types` narrows the list — the Banks page shows the four
- * that involve a bank; the Accounts page shows all five.
+ * that involve a bank; the Accounts page shows them all.
  */
 export function TransferMenu({
     types,
@@ -46,7 +45,6 @@ export function TransferMenu({
     onDone?: () => void;
 }) {
     const { bankAccounts, refresh: refreshBanks } = useBankAccounts();
-    const { cashAccounts, refresh: refreshCash } = useCashAccounts();
 
     const [open, setOpen] = useState(false);
     const [transferType, setTransferType] = useState<string | null>(null);
@@ -67,7 +65,6 @@ export function TransferMenu({
     const handleSuccess = () => {
         setTransferType(null);
         refreshBanks();
-        refreshCash();
         onDone?.();
     };
 
@@ -106,7 +103,6 @@ export function TransferMenu({
                 <TransferModal
                     transferType={transferType}
                     bankAccounts={bankAccounts}
-                    cashAccounts={cashAccounts}
                     onClose={() => setTransferType(null)}
                     onSuccess={handleSuccess}
                 />
@@ -118,13 +114,11 @@ export function TransferMenu({
 export function TransferModal({
     transferType,
     bankAccounts,
-    cashAccounts,
     onClose,
     onSuccess,
 }: {
     transferType: string;
     bankAccounts: any[];
-    cashAccounts: any[];
     onClose: () => void;
     onSuccess: () => void;
 }) {
@@ -132,16 +126,13 @@ export function TransferModal({
     const isAdjust  = transferType === 'adjust_balance';
 
     const fromAccounts = typeConfig.from === 'bank' ? bankAccounts
-                       : typeConfig.from === 'cash' ? cashAccounts
-                       : [...bankAccounts.map(a => ({ ...a, _type: 'bank' })), ...cashAccounts.map(a => ({ ...a, _type: 'cash' }))];
+                       : bankAccounts.map(a => ({ ...a, _type: 'bank' }));
 
-    const toAccounts   = typeConfig.to === 'bank' ? bankAccounts
-                       : typeConfig.to === 'cash' ? cashAccounts
-                       : [];
+    const toAccounts   = typeConfig.to === 'bank' ? bankAccounts : [];
 
     const [formData, setFormData] = useState({
         from_account_id:   fromAccounts[0]?.id || '',
-        from_account_type: typeConfig.from === 'any' ? (fromAccounts[0]?._type || (bankAccounts.length > 0 ? 'bank' : 'cash')) : typeConfig.from,
+        from_account_type: typeConfig.from === 'any' ? 'bank' : typeConfig.from,
         to_account_id:     toAccounts[0]?.id || '',
         amount:            '',
         adjust_direction:  '+',
@@ -151,12 +142,7 @@ export function TransferModal({
     const [saving, setSaving] = useState(false);
 
     const handleFromChange = (id: string) => {
-        if (isAdjust) {
-            const isBankAcc = bankAccounts.some(a => a.id === id);
-            setFormData(p => ({ ...p, from_account_id: id, from_account_type: isBankAcc ? 'bank' : 'cash' }));
-        } else {
-            setFormData(p => ({ ...p, from_account_id: id }));
-        }
+        setFormData(p => ({ ...p, from_account_id: id, from_account_type: 'bank' }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -229,9 +215,6 @@ export function TransferModal({
                                 <>
                                     {bankAccounts.length > 0 && <optgroup label="Bank Accounts">
                                         {bankAccounts.map(a => <option key={a.id} value={a.id}>{accLabel(a)}</option>)}
-                                    </optgroup>}
-                                    {cashAccounts.length > 0 && <optgroup label="Cash Accounts">
-                                        {cashAccounts.map(a => <option key={a.id} value={a.id}>{accLabel(a)}</option>)}
                                     </optgroup>}
                                 </>
                             ) : (
@@ -342,7 +325,6 @@ export function TransferModal({
  */
 export function RecentTransfers({ reloadKey = 0, limit = 8 }: { reloadKey?: number; limit?: number }) {
     const { bankAccounts } = useBankAccounts();
-    const { cashAccounts } = useCashAccounts();
     const [rows, setRows] = useState<any[] | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -363,10 +345,9 @@ export function RecentTransfers({ reloadKey = 0, limit = 8 }: { reloadKey?: numb
         return () => { cancelled = true; };
     }, [reloadKey, limit]);
 
-    const nameOf = (type: string | null, id: string | null) => {
+    const nameOf = (_type: string | null, id: string | null) => {
         if (!id) return '—';
-        const list = type === 'cash' ? cashAccounts : bankAccounts;
-        return list.find((a: any) => a.id === id)?.name || 'account no longer listed';
+        return bankAccounts.find((a: any) => a.id === id)?.name || 'account no longer listed';
     };
 
     const day = (d: string | null) =>

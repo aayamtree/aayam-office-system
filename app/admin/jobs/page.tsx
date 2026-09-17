@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import {
   useJobs, useClients, useVendors, useDesigners, usePaymentsReceived, autoSetCommissionEligible,
-  useBankAccounts, useCashAccounts
+  useBankAccounts
 } from '@/lib/hooks';
 import { formatDate } from '@/lib/utils';
 import { exportToCSV, JOB_COLUMNS } from '@/lib/csv-export';
@@ -209,7 +209,6 @@ export default function JobsPage() {
   const { designers } = useDesigners();
   const { createPaymentReceived } = usePaymentsReceived();
   const { bankAccounts } = useBankAccounts();
-  const { cashAccounts } = useCashAccounts();
 
   const loading = jobsLoading; // Main loading state
   const confirm = useConfirm();
@@ -689,12 +688,12 @@ export default function JobsPage() {
     setShowPaymentModal(true);
   };
 
-  // Single "Pay To" dropdown: pick the cash/bank account the money actually
-  // landed in; payment mode is derived automatically so the ledger stays in sync.
+  // Single "Pay To" dropdown: pick the bank account the money actually landed
+  // in. Cash left this system in September 2026, so every account here is a
+  // bank account and the mode follows from that.
   const handlePaymentAccountChange = (id: string) => {
-    const isCash = cashAccounts.some((a: any) => a.id === id);
     setPaymentAccountId(id);
-    setPaymentMode(isCash ? 'cash' : 'bank_transfer');
+    setPaymentMode('bank_transfer');
   };
 
   const submitPayment = async () => {
@@ -705,17 +704,15 @@ export default function JobsPage() {
     }
 
     try {
-      const isCash = cashAccounts.some((a: any) => a.id === paymentAccountId);
-      // 1. Record detailed payment history — also posts to the cash/bank
-      // ledger (balance update + transaction row) via record_payment_received.
+      // 1. Record detailed payment history — also posts to the bank ledger
+      // (balance update + transaction row) via record_payment_received.
       await createPaymentReceived({
         job_id: selectedJob.id,
         client_id: selectedJob.client_id,
         amount: paymentAmount,
         payment_mode: paymentMode,
         payment_date: new Date().toISOString().split('T')[0], // today
-        cash_account_id: isCash ? paymentAccountId : undefined,
-        bank_account_id: isCash ? undefined : paymentAccountId,
+        bank_account_id: paymentAccountId,
       } as any);
 
       // 2. Update job aggregate — atomic DB-side increment (prevents race condition on double-click / concurrent payments)
@@ -1373,15 +1370,6 @@ export default function JobsPage() {
                     className="w-full px-3 py-3 border rounded-md bg-white focus:ring-2 focus:ring-gray-400"
                   >
                     <option value="">Select account...</option>
-                    {cashAccounts.length > 0 && (
-                      <optgroup label="Cash">
-                        {cashAccounts.map((acc: any) => (
-                          <option key={acc.id} value={acc.id}>
-                            {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
                     {bankAccounts.length > 0 && (
                       <optgroup label="Bank">
                         {bankAccounts.map((acc: any) => (

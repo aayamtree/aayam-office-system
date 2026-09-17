@@ -37,22 +37,10 @@ export default function ClientStatementPage() {
     const [client, setClient] = useState<any>(null);
     const [jobs, setJobs] = useState<any[]>([]);
     const [bankTxns, setBankTxns] = useState<any[]>([]);
-    const [cashTxns, setCashTxns] = useState<any[]>([]);
     const [bankAccounts, setBankAccounts] = useState<Record<string, string>>({});
-    const [cashAccounts, setCashAccounts] = useState<any[]>([]);
     const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
 
-    // Cash entry modal state
-    const [showCashModal, setShowCashModal] = useState(false);
-    const [cashEntry, setCashEntry] = useState({
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        description: '',
-        cash_account_id: '',
-    });
-    const [savingCash, setSavingCash] = useState(false);
-    const [cashError, setCashError] = useState('');
 
     // Default: current financial year
     const fyStart = new Date().getMonth() >= 3
@@ -68,30 +56,19 @@ export default function ClientStatementPage() {
             { data: clientData },
             { data: jobData },
             { data: txnData },
-            { data: cashTxnData },
             { data: bankData },
-            { data: cashAccData },
             { data: catData },
         ] = await Promise.all([
             supabase.from('clients').select('*').eq('id', clientId).single(),
             supabase.from('jobs').select('id, job_number, project_name, order_date, total_amount, amount_received, current_stage').eq('client_id', clientId).order('order_date', { ascending: true }),
             supabase.from('bank_transactions').select('id, transaction_date, amount, description, reference_number, bank_account_id, income_category_id').eq('client_id', clientId).eq('is_verified', true).order('transaction_date', { ascending: true }),
-            supabase.from('cash_transactions').select('id, transaction_date, amount, description, reference, cash_account_id').eq('client_id', clientId).eq('transaction_type', 'in').order('transaction_date', { ascending: true }),
             supabase.from('bank_accounts').select('id, name'),
-            supabase.from('cash_accounts').select('id, name, current_balance'),
             supabase.from('income_categories').select('id, name'),
         ]);
         if (clientData) setClient(clientData);
         if (jobData) setJobs(jobData);
         if (txnData) setBankTxns(txnData);
-        if (cashTxnData) setCashTxns(cashTxnData);
         if (bankData) setBankAccounts(Object.fromEntries(bankData.map((b: any) => [b.id, b.name])));
-        if (cashAccData) {
-            setCashAccounts(cashAccData);
-            if (cashAccData.length > 0 && !cashEntry.cash_account_id) {
-                setCashEntry(e => ({ ...e, cash_account_id: cashAccData[0].id }));
-            }
-        }
         if (catData) setCategoryMap(Object.fromEntries(catData.map((c: any) => [c.id, c.name])));
         setLoading(false);
     };
@@ -163,25 +140,6 @@ export default function ClientStatementPage() {
             });
         });
 
-        // Cash payments → credit rows
-        cashTxns.forEach(txn => {
-            const d = (txn.transaction_date || '').split('T')[0];
-            if (d < dateFrom || d > dateTo) return;
-            const accName = cashAccounts.find((a: any) => a.id === txn.cash_account_id)?.name || 'Cash';
-            rows.push({
-                id: `cash-${txn.id}`,
-                date: d,
-                type: 'payment',
-                paymentMode: 'cash',
-                description: txn.description || 'Cash Payment Received',
-                subLabel: `Cash · ${accName}`,
-                isAdvance: false,
-                ref: txn.reference || accName,
-                debit: 0,
-                credit: Number(txn.amount) || 0,
-            });
-        });
-
         // Sort by date
         rows.sort((a, b) => a.date.localeCompare(b.date));
 
@@ -191,67 +149,10 @@ export default function ClientStatementPage() {
             balance += row.debit - row.credit;
             return { ...row, balance };
         });
-    }, [jobs, bankTxns, cashTxns, dateFrom, dateTo, bankAccounts, cashAccounts, categoryMap]);
+    }, [jobs, bankTxns, dateFrom, dateTo, bankAccounts, categoryMap]);
 
     const totalBilled = ledger.reduce((s, r) => s + r.debit, 0);
     const totalReceived = ledger.reduce((s, r) => s + r.credit, 0);
-
-    const handleSaveCash = async () => {
-        // Writes cash_transactions AND moves cash_accounts.current_balance —
-        // the same abandoned ledger, reached from a primary-coloured button on
-        // a statement page. Exactly the double-entry path this closure exists
-        // to remove; it was missed on the first pass because the page lives
-        // under /admin/reports, not /admin/finance.
-        if (refuseLegacyWrite('Recording a cash receipt from a client')) return;
-
-        if (!cashEntry.amount || !cashEntry.cash_account_id || !cashEntry.date) {
-            setCashError('Please fill in all required fields.');
-            return;
-        }
-        setSavingCash(true);
-        setCashError('');
-        try {
-            const amt = Number(cashEntry.amount);
-            // Get current balance of selected cash account
-            const { data: accData, error: accErr } = await supabase
-                .from('cash_accounts')
-                .select('current_balance')
-                .eq('id', cashEntry.cash_account_id)
-                .single();
-            if (accErr || !accData) throw new Error('Could not fetch cash account balance.');
-            const newBalance = Number(accData.current_balance) + amt;
-
-            // Insert cash transaction
-            const { error: insertErr } = await supabase.from('cash_transactions').insert({
-                cash_account_id: cashEntry.cash_account_id,
-                client_id: clientId,
-                transaction_type: 'in',
-                amount: amt,
-                description: cashEntry.description || 'Cash received from client',
-                transaction_date: cashEntry.date,
-                balance_after: newBalance,
-                category: 'Client Payment',
-                reference_type: 'client',
-                reference_id: clientId,
-            });
-            if (insertErr) throw new Error(insertErr.message);
-
-            // Update cash account balance
-            const { error: updateErr } = await supabase
-                .from('cash_accounts')
-                .update({ current_balance: newBalance })
-                .eq('id', cashEntry.cash_account_id);
-            if (updateErr) throw new Error(updateErr.message);
-
-            setShowCashModal(false);
-            setCashEntry({ date: new Date().toISOString().split('T')[0], amount: '', description: '', cash_account_id: cashAccounts[0]?.id || '' });
-            await loadData();
-        } catch (err: any) {
-            setCashError(err.message || 'Failed to save cash transaction.');
-        } finally {
-            setSavingCash(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -337,8 +238,8 @@ export default function ClientStatementPage() {
                         className="text-xs text-gray-500 underline">Reset to FY</button>
                 </div>
 
-                {/* The receipts side of this page reads bank_transactions and
-                    cash_transactions — the app's own ledger, closed for writing on
+                {/* The receipts side of this page reads bank_transactions —
+                    the app's own ledger, closed for writing on
                     5 August 2026. The invoice side reads jobs and is current. Saying
                     so is not optional: without it the two totals below look like a
                     matched pair. */}
@@ -369,13 +270,13 @@ export default function ClientStatementPage() {
                         </div>
                         <p className="text-xl font-bold text-green-700">{fmt(totalReceived)}</p>
                         <p className="text-xs text-gray-400 mt-1">
-                            {ledger.filter(r => r.paymentMode === 'bank').length} bank · {ledger.filter(r => r.paymentMode === 'cash').length} cash
+                            {ledger.filter(r => r.paymentMode === 'bank').length} bank
                         </p>
                     </div>
                     {/* This tile said "Outstanding … Amount due" in red, from
                         totalBilled − totalReceived. Billing is LIVE (jobs, current
-                        to today); receipts come from bank_transactions and
-                        cash_transactions, which stopped on 5 August 2026. So the
+                        to today); receipts come from bank_transactions,
+                        which stopped on 5 August 2026. So the
                         subtraction billed a client for five weeks of new work and
                         credited them with nothing they had paid in those weeks —
                         a red "amount due" that Zoho may show as settled, on a page
@@ -400,7 +301,6 @@ export default function ClientStatementPage() {
                         <div className="flex items-center gap-3 text-xs text-gray-400">
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Invoice</span>
                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> Bank/UPI</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400 inline-block" /> Cash</span>
                             <span className="ml-2">{ledger.length} entries</span>
                         </div>
                     </div>
@@ -444,9 +344,6 @@ export default function ClientStatementPage() {
                                                     {row.isAdvance && (
                                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">ADVANCE</span>
                                                     )}
-                                                    {row.paymentMode === 'cash' && (
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-teal-100 text-teal-700 border border-teal-200">CASH</span>
-                                                    )}
                                                 </div>
                                                 <p className="text-xs text-gray-400 mt-0.5 ml-3.5">{row.subLabel}</p>
                                             </td>
@@ -479,132 +376,13 @@ export default function ClientStatementPage() {
 
                 {/* Footer note */}
                 <p className="text-xs text-center text-gray-400 pb-4">
-                    Transaction history, not a statement of account. Received covers bank-verified and cash
-                    entries in the app&rsquo;s own ledger, which stopped on 5 August 2026 — anything paid
+                    Transaction history, not a statement of account. Received covers bank-verified entries
+                    in the app&rsquo;s own ledger, which stopped on 5 August 2026 — anything paid
                     since then is in Zoho and is not shown here. Do not send this to a client as a balance.
                 </p>
             </div>
 
             {/* Cash Entry Modal */}
-            {showCashModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 print:hidden">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-                        <div className="flex items-center justify-between p-5 border-b">
-                            <div className="flex items-center gap-2">
-                                <Banknote className="w-5 h-5 text-teal-600" />
-                                <h2 className="font-bold text-gray-900">Record Cash Payment</h2>
-                            </div>
-                            <button onClick={() => { setShowCashModal(false); setCashError(''); }} className="p-1.5 hover:bg-gray-100 rounded-md">
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                        <div className="p-5 space-y-4">
-                            <p className="text-sm text-gray-500">Cash received from <span className="font-semibold text-gray-800">{client.company || client.name}</span></p>
-
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Date <span className="text-red-500">*</span></label>
-                                <input
-                                    type="date"
-                                    value={cashEntry.date}
-                                    onChange={e => setCashEntry(p => ({ ...p, date: e.target.value }))}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-teal-300 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Amount (₹) <span className="text-red-500">*</span></label>
-                                <input
-                                    type="number"
-                                    placeholder="0"
-                                    value={cashEntry.amount || ''}
-                                    onChange={e => setCashEntry(p => ({ ...p, amount: e.target.value }))}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-teal-300 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Payment for Job #1042"
-                                    value={cashEntry.description}
-                                    onChange={e => setCashEntry(p => ({ ...p, description: e.target.value }))}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-teal-300 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Cash Account <span className="text-red-500">*</span></label>
-                                <select
-                                    value={cashEntry.cash_account_id}
-                                    onChange={e => setCashEntry(p => ({ ...p, cash_account_id: e.target.value }))}
-                                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-teal-300 outline-none bg-white"
-                                >
-                                    {cashAccounts.map((acc: any) => (
-                                        <option key={acc.id} value={acc.id}>
-                                            {acc.name} (Balance: {fmt(Number(acc.current_balance))})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {cashError && (
-                                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{cashError}</p>
-                            )}
-                        </div>
-                        <div className="flex gap-3 p-5 border-t">
-                            <button
-                                onClick={() => { setShowCashModal(false); setCashError(''); }}
-                                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSaveCash}
-                                disabled={savingCash}
-                                className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 disabled:opacity-50"
-                            >
-                                {savingCash ? 'Saving…' : 'Record Payment'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Print styles */}
-            <style jsx global>{`
-                @media print {
-                    body { background: white; }
-
-                    /* Hide all interactive UI chrome */
-                    .print\\:hidden { display: none !important; }
-
-                    /* Hide the sticky top bar inside this page component */
-                    .sticky { display: none !important; }
-
-                    /* Show the Ref column (hidden on mobile, should appear in print) */
-                    .hidden { display: table-cell !important; }
-
-                    /* Content fills full A4 width — no centering constraints */
-                    .min-h-screen { min-height: unset !important; }
-                    .max-w-4xl {
-                        max-width: 100% !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-
-                    /* Remove outer page padding so content uses full margin area */
-                    .py-6 { padding-top: 0 !important; padding-bottom: 0 !important; }
-                    .px-4, .px-6, .px-8 { padding-left: 0 !important; padding-right: 0 !important; }
-
-                    /* Compact summary cards to one row */
-                    .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
-
-                    /* Tighten card padding */
-                    .p-4 { padding: 6px !important; }
-                    .p-5 { padding: 8px !important; }
-                }
-            `}</style>
         </div>
     );
 }
