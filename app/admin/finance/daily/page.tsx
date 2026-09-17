@@ -102,11 +102,6 @@ export default function DailyFinancePage() {
                             <p className="text-lg font-bold">₹{totalBanks.toLocaleString()}</p>
                             <p className="text-xs opacity-75 mt-1">{bankAccounts.length} accounts</p>
                         </div>
-                        <div className="bg-white/10 rounded-md p-3">
-                            <div className="flex items-center gap-2 mb-1"><Wallet className="h-4 w-4" /><p className="text-sm opacity-90">Cash</p></div>
-                            <p className="text-lg font-bold">₹{totalCash.toLocaleString()}</p>
-                            <p className="text-xs opacity-75 mt-1">{cashAccounts.length} registers</p>
-                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -168,24 +163,6 @@ export default function DailyFinancePage() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            <Wallet className="h-4 w-4" /> Cash Registers
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            {cashAccounts.map((acc) => (
-                                <div key={acc.id} className="flex justify-between items-center p-3 rounded-md border hover:bg-muted/50 transition-colors">
-                                    <div><p className="text-sm font-medium">{acc.name}</p><p className="text-xs text-muted-foreground">📍 {acc.location}</p></div>
-                                    <p className="text-sm font-semibold">₹{(acc.current_balance || 0).toLocaleString()}</p>
-                                </div>
-                            ))}
-                            {cashAccounts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No cash accounts</p>}
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Today's Transactions */}

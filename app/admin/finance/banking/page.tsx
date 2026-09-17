@@ -384,16 +384,6 @@ export default function BankingPage() {
                     )}
                 </div>
 
-                {/* Cash account notice */}
-                {selectedIsCash && (
-                    <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-md px-4 py-3">
-                        <span className="text-lg leading-none">💵</span>
-                        <div>
-                            <p className="text-sm font-semibold text-amber-900">Cash Account — Physical Ledger</p>
-                            <p className="text-xs text-amber-700 mt-0.5">This is a cash-on-hand account. Bank reconciliation, statement import, and bank reference fields don&apos;t apply to cash. Transactions recorded here represent physical cash movements only.</p>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Success Message */}
@@ -718,7 +708,7 @@ export default function BankingPage() {
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-semibold text-gray-900 truncate">{acc.name}</p>
                                             {acc.is_default && <span className="text-xs px-1.5 py-0.5 bg-[#B8860B]/10 text-[#B8860B] rounded font-medium">Default</span>}
-                                            {acc.account_type === 'cash' && <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded font-medium">Cash</span>}
+                                            
                                         </div>
                                         {acc.account_type === 'cash'
                                             ? <p className="text-xs text-amber-700">Physical Ledger · No bank data</p>

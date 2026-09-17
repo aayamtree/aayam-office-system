@@ -389,15 +389,6 @@ export default function QuickExpensePage() {
                                     required
                                 >
                                     <option value="">Select account</option>
-                                    {cashAccounts.length > 0 && (
-                                        <optgroup label="Cash">
-                                            {cashAccounts.map((acc) => (
-                                                <option key={acc.id} value={acc.id}>
-                                                    {acc.name} (₹{(acc.current_balance || 0).toLocaleString('en-IN')})
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    )}
                                     {bankAccounts.length > 0 && (
                                         <optgroup label="Bank">
                                             {bankAccounts.map((acc) => (

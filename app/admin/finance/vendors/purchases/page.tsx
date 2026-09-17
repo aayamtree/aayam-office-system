@@ -826,13 +826,6 @@ export default function VendorPurchasesPage() {
                   }}
                   className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                   <option value="">Select account…</option>
-                  {(cashAccounts || []).length > 0 && (
-                    <optgroup label="Cash">
-                      {cashAccounts.map((a: any) => (
-                        <option key={a.id} value={a.id}>{a.name} (₹{(a.current_balance || 0).toLocaleString('en-IN')})</option>
-                      ))}
-                    </optgroup>
-                  )}
                   {(bankAccounts || []).length > 0 && (
                     <optgroup label="Bank">
                       {bankAccounts.map((a: any) => (

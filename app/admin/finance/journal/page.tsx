@@ -35,7 +35,6 @@ interface JournalEntryLine {
 
 const SOURCE_LABELS: Record<string, { label: string; color: string }> = {
     bank_transaction: { label: 'Bank Txn', color: 'bg-blue-100 text-blue-700' },
-    cash_transaction: { label: 'Cash Txn', color: 'bg-amber-100 text-amber-700' },
     manual: { label: 'Manual', color: 'bg-gray-100 text-gray-700' },
     opening_balance: { label: 'Opening Bal.', color: 'bg-purple-100 text-purple-700' },
     transfer: { label: 'Transfer', color: 'bg-green-100 text-green-700' },
@@ -297,7 +296,6 @@ export default function JournalPage() {
                 >
                     <option value="all">All Sources</option>
                     <option value="bank_transaction">Bank Transaction</option>
-                    <option value="cash_transaction">Cash Transaction</option>
                     <option value="manual">Manual</option>
                     <option value="opening_balance">Opening Balance</option>
                 </select>

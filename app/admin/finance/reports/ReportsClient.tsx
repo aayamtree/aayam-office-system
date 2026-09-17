@@ -177,7 +177,6 @@ export default function ReportsClient({ data }: { data: FinanceOverviewData }) {
                 <ul className="mt-1.5 space-y-1">
                     {[
                         ['/admin/finance/reports/payments-old', 'Payment report (was Reports)'],
-                        ['/admin/finance/reports/cashbook', 'Cashbook'],
                         ['/admin/finance/reports/accounting', 'Accounting reports'],
                         ['/admin/finance/daily', 'Daily summary'],
                         

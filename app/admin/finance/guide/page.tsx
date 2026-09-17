@@ -23,7 +23,7 @@ const phases: Phase[] = [
         steps: [
             { label: 'ક્લાયન્ટના બાકી પેમેન્ટ ચેક કરો', labelEn: 'Check pending payments from clients', path: 'Finance → Payments → Pending tab', detail: 'જે જોબમાં બાકી રકમ > 0 હોય', detailEn: 'Jobs with outstanding balance > 0' },
             { label: 'આજે ભરવાના વેન્ડર બિલ ચેક કરો', labelEn: 'Check vendor bills due today', path: 'Finance → Vendors → Bills → Due Today', detail: 'આજે પેમેન્ટ કરવાના વેન્ડર ઇન્વૉઇસ', detailEn: 'Vendor invoices that need payment today' },
-            { label: 'આજની કેશ પોઝિશન જુઓ', labelEn: 'Review daily cash position', path: 'Finance → Daily', detail: 'બધા એકાઉન્ટનું આજનું ઓપનિંગ બેલેન્સ', detailEn: 'Opening balance for today across accounts' },
+            { label: 'આજની બેંક પોઝિશન જુઓ', labelEn: 'Review daily bank position', path: 'Finance → Daily', detail: 'બધા એકાઉન્ટનું આજનું ઓપનિંગ બેલેન્સ', detailEn: 'Opening balance for today across accounts' },
             { label: 'ગઈકાલની બાકી એન્ટ્રી નાખો', labelEn: 'Record yesterday\'s pending entries', path: 'Finance → Daily → Add Entry', detail: 'એન્ટ્રી 1 દિવસથી વધારે બાકી ના રાખો', detailEn: 'Never leave entries pending for more than 1 day' },
         ],
         tip: 'વ્યવહાર (transaction) હંમેશા તે જ દિવસે રેકોર્ડ કરો. મોડી એન્ટ્રીથી રિકન્સિલિએશનમાં ભૂલ થાય.', tipEn: 'Always record transactions on the SAME DAY. Delayed entries cause reconciliation errors.',
@@ -38,8 +38,8 @@ const phases: Phase[] = [
             { label: 'Finance → Payments → New Payment ખોલો', labelEn: 'Open Finance → Payments → New Payment', path: 'Finance → Payments → + New Payment', detail: '' },
             { label: 'જોબ પસંદ કરો', labelEn: 'Select the job', path: 'Payment Form → Select Job', detail: 'પેમેન્ટ સાચી જોબ સાથે લિંક થાય', detailEn: 'Links payment to the correct job' },
             { label: 'મળેલી રકમ નાખો', labelEn: 'Enter amount received', path: 'Amount field', detail: 'આંશિક (partial) કે પૂરું પેમેન્ટ — બંને ચાલે', detailEn: 'Can be partial or full payment' },
-            { label: 'પેમેન્ટ મોડ પસંદ કરો', labelEn: 'Select payment mode', path: 'Mode: Cash / Bank Transfer / UPI / Cheque', detail: 'ક્લાયન્ટે જે રીતે પેમેન્ટ કર્યું તે જ પસંદ કરો', detailEn: 'Pick the actual method client used' },
-            { label: 'કયા એકાઉન્ટમાં આવ્યું તે પસંદ કરો', labelEn: 'Select bank account received into', path: 'Account field', detail: 'કેશ, HDFC Current વગેરે', detailEn: 'Cash, HDFC Current, etc.' },
+            { label: 'પેમેન્ટ મોડ પસંદ કરો', labelEn: 'Select payment mode', path: 'Mode: Bank Transfer / Cheque', detail: 'ક્લાયન્ટે જે રીતે પેમેન્ટ કર્યું તે જ પસંદ કરો', detailEn: 'Pick the actual method client used' },
+            { label: 'કયા એકાઉન્ટમાં આવ્યું તે પસંદ કરો', labelEn: 'Select bank account received into', path: 'Account field', detail: 'HDFC Current વગેરે', detailEn: 'HDFC Current, etc.' },
             { label: 'સેવ કરો', labelEn: 'Save', path: 'Save button', detail: 'જોબની બાકી રકમ ઓટોમેટિક અપડેટ. પૂરું પેમેન્ટ હોય તો કમિશન ઓટોમેટિક ટ્રિગર.', detailEn: 'Job outstanding balance auto-updates. Commission auto-triggers if fully paid.' },
         ],
         tip: 'મળેલી રકમ = જોબની કુલ રકમ થાય એટલે માર્કેટિંગ વ્યક્તિનું કમિશન સ્ટેટસ ઓટોમેટિક Eligible થાય.', tipEn: 'When amount received = job total, commission status auto-changes to Eligible for the marketing person.',
@@ -74,15 +74,15 @@ const phases: Phase[] = [
     {
         id: 'daily_entry',
         icon: <Landmark className="w-5 h-5" />,
-        title: '5. રોજની કેશ અને ખર્ચ એન્ટ્રી', titleEn: '5. Daily Cash & Expense Entries',
-        subtitle: 'પેટી કેશ, નાના ખર્ચા, ઓફિસ ખર્ચ', subtitleEn: 'Petty cash, small expenses, office costs',
+        title: '5. રોજની ખર્ચ એન્ટ્રી', titleEn: '5. Daily Expense Entries',
+        subtitle: 'નાના ખર્ચા, ઓફિસ ખર્ચ', subtitleEn: 'Small expenses, office costs',
         color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', headerBg: 'bg-amber-700',
         steps: [
-            { label: 'Finance → Daily ખોલો', labelEn: 'Open Finance → Daily', path: 'Finance → Daily', detail: 'આજની કેશબુક ઓટોમેટિક ખૂલે', detailEn: 'Today\'s cash book automatically opens' },
+            { label: 'Finance → Daily ખોલો', labelEn: 'Open Finance → Daily', path: 'Finance → Daily', detail: 'આજની બુક ઓટોમેટિક ખૂલે', detailEn: 'Today\'s book automatically opens' },
             { label: 'ખર્ચની એન્ટ્રી ઉમેરો', labelEn: 'Add expense entry', path: 'Add Entry → Expense → Category, Amount, Note', detail: 'ચા, કુરિયર, સ્ટેશનરી વગેરે', detailEn: 'Tea, courier, stationery, etc.' },
-            { label: 'એકાઉન્ટ વચ્ચે ટ્રાન્સફર ઉમેરો', labelEn: 'Add transfer between accounts', path: 'Add Entry → Transfer', detail: 'દા.ત.: કેશમાંથી બેંક, અથવા પેટી કેશ માટે બેંકમાંથી કેશ', detailEn: 'Example: Cash to bank, or bank to cash for petty cash' },
-            { label: 'ક્લોઝિંગ બેલેન્સ કન્ફર્મ કરો', labelEn: 'Confirm closing balance', path: 'Daily screen → Closing balance', detail: 'હાથમાં રહેલી ખરી કેશ સાથે મેચ થવું જોઈએ', detailEn: 'Must match physical cash on hand' },
+            { label: 'એકાઉન્ટ વચ્ચે ટ્રાન્સફર ઉમેરો', labelEn: 'Add transfer between accounts', path: 'Add Entry → Transfer', detail: 'દા.ત.: એક બેંક એકાઉન્ટમાંથી બીજામાં', detailEn: 'Example: one bank account to another' },
         ],
+        tip: 'કેશ અને UPI અહીં રેકોર્ડ થતા નથી — તે Vyapar માં નાખવાના. આ સિસ્ટમ ફક્ત HDFC એકાઉન્ટ સંભાળે છે.', tipEn: 'Cash and UPI are not recorded here — they go in Vyapar. This system tracks the HDFC account only.',
     },
     {
         id: 'accounts',
@@ -91,9 +91,9 @@ const phases: Phase[] = [
         subtitle: 'દરેક એકાઉન્ટની હિસ્ટ્રી જુઓ', subtitleEn: 'View per-account transaction history',
         color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', headerBg: 'bg-violet-700',
         steps: [
-            { label: 'એકાઉન્ટ લિસ્ટ ખોલો', labelEn: 'Open Accounts list', path: 'Finance → Accounts', detail: 'બધા એકાઉન્ટ: કેશ, HDFC Current વગેરે — ચાલુ બેલેન્સ સાથે', detailEn: 'See all accounts: Cash, HDFC Current, etc. with running balance' },
+            { label: 'એકાઉન્ટ લિસ્ટ ખોલો', labelEn: 'Open Accounts list', path: 'Finance → Accounts', detail: 'બધા બેંક એકાઉન્ટ — ચાલુ બેલેન્સ સાથે', detailEn: 'See all bank accounts with running balance' },
             { label: 'એકાઉન્ટ સ્ટેટમેન્ટ ખોલો', labelEn: 'Open account statement', path: 'Finance → Accounts → [Account name] → Statement', detail: 'તે એકાઉન્ટનું આખું લેજર — દરેક ડેબિટ/ક્રેડિટ એન્ટ્રી', detailEn: 'Full ledger for that account — every debit and credit entry' },
-            { label: 'નવું બેંક એકાઉન્ટ ઉમેરો', labelEn: 'Add a new bank account', path: 'Finance → Accounts → Add Account', detail: 'કેશ, બેંક કે બીજું — તેમાં કોઈ વ્યવહાર નાખતા પહેલા ઉમેરો', detailEn: 'Cash, bank, or other — add before recording any transactions against it' },
+            { label: 'નવું બેંક એકાઉન્ટ ઉમેરો', labelEn: 'Add a new bank account', path: 'Finance → Accounts → Add Account', detail: 'તેમાં કોઈ વ્યવહાર નાખતા પહેલા ઉમેરો', detailEn: 'Add it before recording any transactions against it' },
             { label: 'Daily Summary જુઓ', labelEn: 'View Daily Summary', path: 'Finance → Daily Summary', detail: 'ફક્ત એડમિન: કોઈ પણ તારીખના બધા એકાઉન્ટ બેલેન્સ એક સાથે', detailEn: 'Admin-only: overview of all account balances for any selected date' },
         ],
         tip: 'પેમેન્ટ કે ખર્ચ રેકોર્ડ કરતા પહેલા હંમેશા બેંક એકાઉન્ટ ઉમેરો.', tipEn: 'Always add your bank accounts before recording payments or expenses.',
@@ -119,7 +119,7 @@ const phases: Phase[] = [
         subtitle: 'ફાઇનાન્સ પરફોર્મન્સ અને સમરી જુઓ', subtitleEn: 'View financial performance & summaries',
         color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200', headerBg: 'bg-slate-700',
         steps: [
-            { label: 'ફાઇનાન્સ Overview', labelEn: 'Finance overview', path: 'Finance → Overview', detail: 'આ મહિનાની આવક, ખર્ચ, બાકી રકમ, કેશબુક', detailEn: 'Revenue this month, expenses, outstanding, cashbook' },
+            { label: 'ફાઇનાન્સ Overview', labelEn: 'Finance overview', path: 'Finance → Overview', detail: 'આ મહિનાની આવક, ખર્ચ, બાકી રકમ', detailEn: 'Revenue this month, expenses, outstanding' },
             { label: 'ક્લાયન્ટ બાકી રિપોર્ટ', labelEn: 'Client outstanding report', path: 'Finance → Reports → Client Outstanding', detail: 'કોણ કેટલા પૈસા આપવાના બાકી છે', detailEn: 'Who owes us money and how much' },
             { label: 'વેન્ડર પેમેન્ટ રિપોર્ટ', labelEn: 'Vendor payment report', path: 'Finance → Reports → Vendor Reports', detail: 'આપણે વેન્ડરને શું આપવાનું બાકી છે', detailEn: 'What we owe vendors' },
             { label: 'P&L સમરી', labelEn: 'P&L summary', path: 'Finance → Reports → P&L', detail: 'આવક vs ખર્ચ — સમયગાળાનો નફો', detailEn: 'Revenue vs expenses — profit for the period' },
@@ -146,7 +146,7 @@ export default function FinanceGuidePage() {
                     </div>
                     <div>
                         <h1 className="text-xl font-bold">Finance — આ App કેવી રીતે વાપરવી</h1>
-                        <p className="text-green-200 text-sm">પેમેન્ટ, ઇન્વૉઇસ, વેન્ડર, રોજની કેશ, રિપોર્ટ</p>
+                        <p className="text-green-200 text-sm">પેમેન્ટ, ઇન્વૉઇસ, વેન્ડર, રોજના ખર્ચ, રિપોર્ટ</p>
                     </div>
                 </div>
             </div>
@@ -201,8 +201,8 @@ export default function FinanceGuidePage() {
                 </div>
 
                 <p className="text-xs text-blue-900">
-                    રોકડ (cash) આપ્યા કે લીધા પછી: Zoho માં એન્ટ્રી કરો, પછી <b>To Do</b> માં ટીક કરો. ·
-                    After any cash payment: enter it in Zoho, then tick it off under <b>To Do</b>.
+                    રોકડ (cash) અને UPI આ સિસ્ટમમાં નથી — તે <b>Vyapar</b> માં નાખો. અહીં ફક્ત HDFC બેંક એકાઉન્ટ. ·
+                    Cash and UPI are not in this system — enter them in <b>Vyapar</b>. This system tracks the HDFC bank account only.
                 </p>
             </div>
 
