@@ -115,15 +115,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'That date is in the future.' }, { status: 400 });
     }
 
+    // Cash left this system in September 2026: the cash book is closed, both
+    // cash accounts are switched off and cash lives in Vyapar. The screens no
+    // longer offer a cash account, but this endpoint is reachable on its own,
+    // so it refuses here too rather than trusting the UI to hold the line.
     const cashAccountId = body.cashAccountId || null;
     const bankAccountId = body.bankAccountId || null;
-    if (Boolean(cashAccountId) === Boolean(bankAccountId)) {
-        return NextResponse.json({ error: 'Choose one account.' }, { status: 400 });
+    if (cashAccountId) {
+        return NextResponse.json(
+            { error: 'Cash is not recorded in this system — it belongs in Vyapar.' },
+            { status: 400 },
+        );
+    }
+    if (!bankAccountId) {
+        return NextResponse.json({ error: 'Choose a bank account.' }, { status: 400 });
     }
 
     const counterparty = (body.counterparty || '').trim().slice(0, 200);
     const note = (body.note || '').trim().slice(0, 500);
-    const method = body.method || (cashAccountId ? 'cash' : 'upi');
+    const method = body.method === 'cash' ? 'upi' : (body.method || 'upi');
 
     // ── service role for the writes: a lapsed browser session must not turn
     //    a recorded payment into a silent RLS refusal ────────────────────────

@@ -12,7 +12,7 @@ const currentFinancialYear = '2024-25';
 const initialOpeningBalances = {
   financialYear: '2024-25',
   asOfDate: '2024-04-01',
-  cash: 125000,
+  cash: 0,
   banks: [
     { id: 1, name: 'HDFC Current Account', accountNo: 'XXXX4521', balance: 850000 },
     { id: 2, name: 'ICICI Savings', accountNo: 'XXXX7890', balance: 320000 },
@@ -35,7 +35,8 @@ export default function OpeningBalancePage() {
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
   const totalBankBalance = openingBalance.banks.reduce((sum, b) => sum + b.balance, 0);
-  const totalOpeningBalance = openingBalance.cash + totalBankBalance;
+  // Cash left this system in September 2026 — the opening total is the banks alone.
+  const totalOpeningBalance = totalBankBalance;
 
   const handleBankBalanceChange = (bankId: number, value: number) => {
     setEditData({
@@ -115,16 +116,7 @@ export default function OpeningBalancePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
-        <div className="bg-white rounded-md border p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-gray-900" />
-            </div>
-            <span className="text-gray-600">Cash Opening</span>
-          </div>
-          <p className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
         <div className="bg-white rounded-md border p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center">
@@ -143,26 +135,6 @@ export default function OpeningBalancePage() {
           </div>
           <p className="text-page-title text-primary">{formatCurrency(totalOpeningBalance)}</p>
         </div>
-      </div>
-
-      {/* Cash Opening Balance */}
-      <div className="bg-white rounded-md border p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
-            <Wallet className="w-5 h-5 text-gray-900" />
-          </div>
-          <h2 className="text-section text-gray-900">Cash Opening Balance</h2>
-        </div>
-        {isEditing ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Opening Cash Balance (₹)</label>
-            <input type="number" value={editData.cash || ''}
-              onChange={(e) => setEditData({ ...editData, cash: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-3 border rounded-md text-section focus:ring-2 focus:ring-green-500" />
-          </div>
-        ) : (
-          <div className="text-page-title text-gray-900">{formatCurrency(openingBalance.cash)}</div>
-        )}
       </div>
 
       {/* Bank Opening Balances */}

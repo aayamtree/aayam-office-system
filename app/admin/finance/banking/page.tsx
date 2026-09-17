@@ -742,7 +742,7 @@ export default function BankingPage() {
                                 </div>
                             ))}
                             {bankAccounts.length === 0 && (
-                                <p className="text-center text-sm text-gray-400 py-4">No accounts yet. Add a bank or cash account below.</p>
+                                <p className="text-center text-sm text-gray-400 py-4">No accounts yet. Add a bank account below.</p>
                             )}
 
                             {/* Add / Edit form */}
@@ -750,37 +750,9 @@ export default function BankingPage() {
                                 <form onSubmit={handleSaveAccount} className="border border-gray-200 rounded-md p-4 space-y-3 bg-gray-50">
                                     <p className="text-sm font-semibold text-gray-900">{editingAccount ? 'Edit Account' : 'Add New Account'}</p>
 
-                                    {/* Account category selector — only shown when adding new */}
-                                    {!editingAccount && (
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-1">Account Category *</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAccountForm(p => ({ ...p, account_type: 'current', bank_name: '', account_number: '', ifsc_code: '' }))}
-                                                    className={`py-2.5 rounded-md border text-xs font-semibold transition-colors ${!isCash(accountForm.account_type) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200'}`}
-                                                >
-                                                    🏦 Bank Account
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAccountForm(p => ({ ...p, account_type: 'cash', bank_name: '', account_number: '', ifsc_code: '' }))}
-                                                    className={`py-2.5 rounded-md border text-xs font-semibold transition-colors ${isCash(accountForm.account_type) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200'}`}
-                                                >
-                                                    💵 Cash Account
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Cash info notice */}
-                                    {isCash(accountForm.account_type) && (
-                                        <div className="bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                                            <p className="text-xs text-amber-800">
-                                                <strong>Cash Account</strong> — represents physical money on hand. No bank details required. Bank reconciliation and statement import are not applicable.
-                                            </p>
-                                        </div>
-                                    )}
+                                    {/* The cash / bank category picker was removed in September 2026:
+                                        cash left this system for Vyapar, so every account added
+                                        here is a bank account. */}
 
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Name — always shown */}
