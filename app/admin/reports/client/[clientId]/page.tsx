@@ -290,12 +290,6 @@ export default function ClientStatementPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowCashModal(true)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700"
-                    >
-                        <Banknote className="w-4 h-4" /> Record Cash
-                    </button>
-                    <button
                         onClick={() => window.print()}
                         className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800"
                     >

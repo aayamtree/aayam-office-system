@@ -202,12 +202,12 @@ export default function RecordMoneyModal({
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-label="Record cash or UPI"
+                aria-label="Record a bank entry"
                 className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-xl bg-card shadow-xl sm:rounded-xl"
             >
                 {/* header */}
                 <div className="flex items-center justify-between border-b px-4 py-3">
-                    <h2 className="text-sm font-semibold">Record cash or UPI</h2>
+                    <h2 className="text-sm font-semibold">Record a bank entry</h2>
                     <button
                         onClick={onClose}
                         aria-label="Close"

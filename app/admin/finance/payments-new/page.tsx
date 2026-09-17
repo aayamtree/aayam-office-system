@@ -75,7 +75,7 @@ export default function PaymentsPageNew() {
                 const { error } = await supabase.rpc('record_payment_received', {
                     p_client_id: formData.get('client_id'),
                     p_amount: amount,
-                    p_payment_mode: formData.get('payment_mode') || 'cash',
+                    p_payment_mode: formData.get('payment_mode') || 'bank_transfer',
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
                     p_bank_account_id: null,
                     p_reference: formData.get('reference') as string,
@@ -88,7 +88,7 @@ export default function PaymentsPageNew() {
                 const { error } = await supabase.rpc('record_vendor_payment', {
                     p_vendor_id: formData.get('vendor_id'),
                     p_amount: amount,
-                    p_payment_mode: formData.get('payment_mode') || 'cash',
+                    p_payment_mode: formData.get('payment_mode') || 'bank_transfer',
                     p_payment_date: formData.get('payment_date') || new Date().toISOString().split('T')[0],
                     p_bank_account_id: null,
                     p_reference: formData.get('reference') as string,
@@ -229,10 +229,8 @@ export default function PaymentsPageNew() {
 
                             <div>
                                 <label className="block mb-2 font-medium">Payment Method</label>
-                                <select name="payment_mode" className="w-full border rounded p-2" defaultValue="cash">
-                                    <option value="cash">Cash</option>
+                                <select name="payment_mode" className="w-full border rounded p-2" defaultValue="bank_transfer">
                                     <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="upi">UPI</option>
                                     <option value="cheque">Cheque</option>
                                 </select>
                             </div>

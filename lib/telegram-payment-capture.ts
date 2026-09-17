@@ -460,7 +460,6 @@ export async function handlePaymentText(db: SupabaseClient, message: any): Promi
                         `just tap "Not a payment".</i>`,
                         messageId,
                         [
-                            [{ text: `💵 Yes — cash`, callback_data: `pc:${hex}:0:p` }],
                             [{ text: `🏦 Yes — from bank`, callback_data: `pc:${hex}:0:b` }],
                             [{ text: '🚫 Not a payment', callback_data: `pc:${hex}:0:x` }],
                         ],
@@ -473,7 +472,7 @@ export async function handlePaymentText(db: SupabaseClient, message: any): Promi
                         `If it was a payment, tap below and finish it in ` +
                         `Finance → Payment Captures.`,
                         messageId,
-                        [[{ text: '💰 It was a payment', callback_data: `pc:${hex}:0:p` }]],
+                        [[{ text: '💰 It was a payment', callback_data: `pc:${hex}:0:b` }]],
                     );
                 }
             }
@@ -603,6 +602,26 @@ async function finishCapture(
             notes: 'Not a payment receipt (auto)',
             extraction_raw: extracted as any,
         }).eq('id', captureId);
+        return;
+    }
+
+    // Cash and UPI-outside-the-bank are not recorded in this system any more.
+    // The cash book left the app in September 2026: HDFC is the only money the
+    // app tracks, and cash lives in Vyapar. Capturing it here would rebuild the
+    // second set of books we deliberately closed, so the bot says so and stops.
+    if (extracted.is_cash) {
+        await db.from('payment_captures').update({
+            ...extra,
+            status: 'rejected',
+            notes: 'Cash is not recorded in this system — it belongs in Vyapar.',
+            extraction_raw: extracted as any,
+        }).eq('id', captureId);
+        await reply(
+            chatId,
+            `💵 That looks like cash, and cash is not recorded here any more.\n\n` +
+            `Please enter it in <b>Vyapar</b>. This system tracks the HDFC account only.`,
+            messageId,
+        );
         return;
     }
 
@@ -747,8 +766,26 @@ export async function handlePaymentCallback(db: SupabaseClient, query: any): Pro
     // must stay out of the unconfirmed list, while a bank payment must stay IN
     // it until a statement line proves it. Only the person who paid knows which,
     // so the button asks rather than the code guessing.
-    if (action === 'p' || action === 'b') {
-        const wasCash = action === 'p';
+    // 'p' was the old "it was cash" button. Cash is no longer recorded here, but
+    // those buttons still sit in the group's history, so the code must answer
+    // them — by refusing, not by writing a cash row.
+    if (action === 'p') {
+        await db.from('payment_captures').update({
+            status: 'rejected',
+            notes: 'Cash is not recorded in this system — it belongs in Vyapar.',
+            confirmed_by: actorId, confirmed_at: new Date().toISOString(),
+        }).eq('id', captureId);
+        await answer('Cash is not recorded here — please enter it in Vyapar.');
+        if (chatId) await tg('editMessageText', {
+            chat_id: chatId, message_id: query.message.message_id,
+            text: '💵 Cash is not recorded here any more — please enter it in Vyapar.',
+            parse_mode: 'HTML',
+        });
+        return true;
+    }
+
+    if (action === 'b') {
+        const wasCash = false;
         const proposed = (capture as any).extraction_raw?.proposed as
             { amount?: number; description?: string } | undefined;
 

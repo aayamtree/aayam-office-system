@@ -185,11 +185,11 @@ export default function BankAccountsPage() {
             <button onClick={() => setRecording(true)}
               className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 font-medium hover:bg-muted">
               <Plus className="w-4 h-4" />
-              <span>Record cash / UPI</span>
+              <span>Record bank entry</span>
             </button>
           )}
           <TransferMenu
-            types={['bank_to_cash', 'cash_to_bank', 'bank_to_bank', 'adjust_balance']}
+            types={['bank_to_bank', 'adjust_balance']}
             onDone={() => { refreshBanks(); setCashbookKey(k => k + 1); }}
           />
           <button onClick={() => setShowModal(true)}

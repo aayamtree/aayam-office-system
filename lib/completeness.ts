@@ -426,66 +426,51 @@ async function jobsUnpriced(supabase: SupabaseClient, terminalStages: string[]):
 }
 
 /**
- * 6. Our own cash book — the counter, the UPI accounts, cash in the drawer.
+ * 6. Our own bank book — the hand-kept mirror of the HDFC and savings accounts.
  *
  * These are the accounts kept by hand on the Bank Accounts screen, outside
  * Zoho's bank feed. They hold real balances, so a stale one is not an empty
  * one: it is a balance that stopped being true without saying so.
+ *
+ * This used to watch a second book as well — `cash_transactions`, the cash
+ * drawer. That book was closed in September 2026: cash and UPI left this
+ * system for Vyapar, the cash accounts were switched off and the table was
+ * emptied. Watching it now would report a book that no longer exists as
+ * permanently stale, so the check follows the bank book alone.
  */
 async function ownBookStale(supabase: SupabaseClient): Promise<Gap> {
     const href = '/admin/finance/banks';
 
-    // TWO books, not one. `bank_transactions` is the hand-kept mirror of the
-    // bank and UPI accounts; `cash_transactions` is the cash drawer. Reading
-    // only the first would have reported the cash book as 45 days behind when
-    // it was 61 — and would have shown green if the drawer were abandoned while
-    // the UPI accounts stayed current. The gap is the OLDER of the two.
-    const [bankRes, cashRes] = await Promise.all([
-        supabase.from('bank_transactions')
-            .select('transaction_date')
-            .not('transaction_date', 'is', null)
-            .order('transaction_date', { ascending: false }).limit(1),
-        supabase.from('cash_transactions')
-            .select('transaction_date')
-            .not('transaction_date', 'is', null)
-            .order('transaction_date', { ascending: false }).limit(1),
-    ]);
+    const bankRes = await supabase.from('bank_transactions')
+        .select('transaction_date')
+        .not('transaction_date', 'is', null)
+        .order('transaction_date', { ascending: false }).limit(1);
 
-    if (bankRes.error && cashRes.error) {
-        return unreadable('ownbook', 'Cash & UPI not written up', href, bankRes.error.message);
-    }
-    // One book unreadable means we cannot say which is older. Do not guess.
-    if (bankRes.error || cashRes.error) {
-        return unreadable('ownbook', 'Cash & UPI not written up', href, 'one of the two books could not be read');
+    if (bankRes.error) {
+        return unreadable('ownbook', 'Bank book not written up', href, bankRes.error.message);
     }
 
     const bankLast = bankRes.data?.[0]?.transaction_date as string | undefined;
-    const cashLast = cashRes.data?.[0]?.transaction_date as string | undefined;
 
-    if (!bankLast && !cashLast) {
+    if (!bankLast) {
         return {
-            key: 'ownbook', label: 'Cash & UPI not written up', href,
-            value: 'never', detail: 'No cash or UPI movement has ever been entered',
+            key: 'ownbook', label: 'Bank book not written up', href,
+            value: 'never', detail: 'No bank movement has ever been entered',
             severity: 'bad', failed: false, neverStarted: true,
         };
     }
 
-    // The books are only as current as the one that stopped first.
-    const bankDays = daysSince(bankLast ?? null);
-    const cashDays = daysSince(cashLast ?? null);
-    const worstDays = Math.max(bankDays ?? 0, cashDays ?? 0);
-    const olderLabel = (cashDays ?? -1) >= (bankDays ?? -1) ? 'cash' : 'bank/UPI';
-    const olderDate = (cashDays ?? -1) >= (bankDays ?? -1) ? cashLast : bankLast;
+    const bankDays = daysSince(bankLast) ?? 0;
 
     return {
         key: 'ownbook',
-        label: 'Cash & UPI not written up',
-        value: `${worstDays} days`,
-        detail: `Last ${olderLabel} entry ${shortDate(olderDate ?? null)}`,
-        severity: byDays(worstDays, OWN_WARN_DAYS, OWN_BAD_DAYS),
+        label: 'Bank book not written up',
+        value: `${bankDays} days`,
+        detail: `Last bank entry ${shortDate(bankLast)}`,
+        severity: byDays(bankDays, OWN_WARN_DAYS, OWN_BAD_DAYS),
         href,
         failed: false,
-        days: worstDays,
+        days: bankDays,
     };
 }
 

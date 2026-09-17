@@ -995,8 +995,6 @@ export function CategoryModal({ transaction, onClose, onSuccess }: CategoryModal
                         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
                             className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring/20 bg-white">
                             <option value="bank_transfer">Bank Transfer / NEFT / RTGS</option>
-                            <option value="upi">UPI</option>
-                            <option value="cash">Cash</option>
                             <option value="cheque">Cheque</option>
                             <option value="card">Debit / Credit Card</option>
                         </select>

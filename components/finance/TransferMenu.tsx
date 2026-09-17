@@ -27,8 +27,6 @@ import { ArrowLeftRight, ChevronDown, ArrowRight } from 'lucide-react';
 import { useBankAccounts, useCashAccounts } from '@/lib/hooks';
 
 export const TRANSFER_TYPES = [
-    { key: 'bank_to_cash',   label: 'Bank to Cash Transfer',  from: 'bank', to: 'cash'  },
-    { key: 'cash_to_bank',   label: 'Cash to Bank Transfer',  from: 'cash', to: 'bank'  },
     { key: 'bank_to_bank',   label: 'Bank to Bank Transfer',  from: 'bank', to: 'bank'  },
     { key: 'cash_to_cash',   label: 'Cash to Cash Transfer',  from: 'cash', to: 'cash'  },
     { key: 'adjust_balance', label: 'Adjust Balance',         from: 'any',  to: null    },

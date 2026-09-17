@@ -18,8 +18,6 @@ const JOB_TYPES = ['Design Only', 'Print Only', 'Design + Print'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const GST_RATES = [0, 5, 12, 18, 28];
 const PAYMENT_MODES = [
-    { value: 'cash', label: 'Cash' },
-    { value: 'upi', label: 'UPI / GPay' },
     { value: 'bank_transfer', label: 'Bank Transfer' },
     { value: 'cheque', label: 'Cheque' },
 ];
@@ -104,7 +102,7 @@ export default function UnifiedJobForm({
 
     const [advance, setAdvance] = useState({
         amount: 0,
-        payment_mode: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque',
+        payment_mode: 'bank_transfer' as 'bank_transfer' | 'cheque',
         reference_number: '',
         received_by: '',
     });

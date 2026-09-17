@@ -132,7 +132,7 @@ export default function OrdersPage() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceData, setAdvanceData] = useState({
     amount: 0,
-    paymentMode: 'cash' as 'cash' | 'upi' | 'bank_transfer',
+    paymentMode: 'bank_transfer' as 'bank_transfer' | 'cheque',
     referenceNumber: '',
     receivedBy: '',
     proofFile: null as File | null,
@@ -237,7 +237,7 @@ export default function OrdersPage() {
       notes: ''
     });
     setShowAdvance(false);
-    setAdvanceData({ amount: 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
+    setAdvanceData({ amount: 0, paymentMode: 'bank_transfer', referenceNumber: '', receivedBy: '', proofFile: null });
     setCategorySearch('');
     setIsEditing(false);
     setShowModal(true);
@@ -271,7 +271,7 @@ export default function OrdersPage() {
     });
     setCategorySearch('');
     setShowAdvance((j.amount_received || 0) > 0);
-    setAdvanceData({ amount: j.amount_received || 0, paymentMode: 'cash', referenceNumber: '', receivedBy: '', proofFile: null });
+    setAdvanceData({ amount: j.amount_received || 0, paymentMode: 'bank_transfer', referenceNumber: '', receivedBy: '', proofFile: null });
     setSelectedJob(j);
     setIsEditing(true);
     setShowModal(true);
