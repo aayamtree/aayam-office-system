@@ -61,14 +61,14 @@ function MoreThanShown({ children }: { children: React.ReactNode }) {
 
 export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
     const {
-        awaitingBankConfirmation, dateless, unannouncedOutflows, cashToEnter,
+        awaitingBankConfirmation, dateless, unannouncedOutflows,
         feedThrough, feedReadFailed, feedBlind, truncated, failed, errors,
     } = todo;
 
-    const anyFailed = failed.stale || failed.dateless || failed.outflows || failed.cash;
+    const anyFailed = failed.stale || failed.dateless || failed.outflows;
     const total =
         awaitingBankConfirmation.length + dateless.length +
-        unannouncedOutflows.length + cashToEnter.length;
+        unannouncedOutflows.length;
 
     const OUTFLOWS_SHOWN = 40;
 
@@ -76,8 +76,8 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
         <div className="space-y-4">
             <DoorHeader
                 title="To Do"
-                question="Payments to chase, receipts to check, cash to enter."
-                source="The same four lists the nightly message sends to Telegram — read from one place, so the two can never disagree."
+                question="Payments to chase and receipts to check."
+                source="The same three lists the nightly message sends to Telegram — read from one place, so the two can never disagree."
             />
 
             <DoorNav
@@ -147,12 +147,6 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
                     value={tileValue(failed.outflows, unannouncedOutflows.length, truncated.outflows)}
                     note={failed.outflows ? 'incomplete — see below' : 'nobody posted a screenshot'}
                     tone={tileTone(failed.outflows, unannouncedOutflows.length)}
-                />
-                <Figure
-                    label="Cash to enter in Zoho"
-                    value={tileValue(failed.cash, cashToEnter.length, truncated.cash)}
-                    note={failed.cash ? 'could not be read' : 'type it in, then tick it off'}
-                    tone={tileTone(failed.cash, cashToEnter.length)}
                 />
             </div>
 
@@ -268,45 +262,6 @@ export default function ToDoClient({ todo }: { todo: FinanceTodo }) {
                 )}
             </DoorSection>
 
-            {/* ── 4 ── */}
-            <DoorSection
-                title="Cash still to enter in Zoho"
-                note="Paid in cash or outside the bank account, so no statement line will ever confirm them. Enter each one in Zoho, then tick it off in Payment Proofs."
-                right={
-                    <Link
-                        href="/admin/finance/payment-captures"
-                        className="text-xs font-medium text-primary hover:underline"
-                    >
-                        Tick them off →
-                    </Link>
-                }
-            >
-                {cashToEnter.length === 0 ? (
-                    <Empty failed={failed.cash}>No cash waiting to be entered.</Empty>
-                ) : (
-                    <>
-                        {cashToEnter.map((c) => (
-                            <Row
-                                key={c.id}
-                                left={<>{c.direction === 'in' ? 'from' : 'to'} <b>{counterparty(c)}</b></>}
-                                sub={
-                                    <>
-                                        {day(c.txn_date)}
-                                        {c.payment_method ? ` · ${c.payment_method}` : ''}
-                                    </>
-                                }
-                                right={rupees(Number(c.amount) || 0)}
-                            />
-                        ))}
-                        {truncated.cash && (
-                            <MoreThanShown>
-                                This list is full at {cashToEnter.length}. Payment Proofs counts them all —
-                                open it for the true number.
-                            </MoreThanShown>
-                        )}
-                    </>
-                )}
-            </DoorSection>
         </div>
     );
 }

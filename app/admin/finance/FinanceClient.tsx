@@ -152,12 +152,12 @@ export default function FinanceClient({ data, cashToEnter, cashTruncated }: Prop
             iconColor: 'text-amber-700',
             iconBg: 'bg-amber-50',
             borderColor: 'border-l-amber-500',
-            // Only the cash queue is counted here, from the one shared
-            // definition. A made-up total that disagrees with the Telegram
-            // message would be worse than no total at all.
-            stat1: cashToEnter === null ? 'Open the list' : `${cashToEnter}${cashTruncated ? '+' : ''} cash to enter`,
-            stat2: 'plus payments to chase',
-            stat2Red: (cashToEnter ?? 0) > 0,
+            // The cash queue used to be counted here. Cash left this system in
+            // September 2026, so the count would read zero for ever — an idle
+            // number is worse than no number at all.
+            stat1: 'Open the list',
+            stat2: 'payments to chase, receipts to check',
+            stat2Red: false,
             action: 'What is unfinished',
             actionHref: '/admin/finance/to-do',
         },

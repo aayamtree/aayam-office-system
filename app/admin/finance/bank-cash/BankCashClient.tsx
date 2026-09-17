@@ -64,12 +64,12 @@ export default function BankCashClient({
             <DoorHeader
                 title="Bank & Cash"
                 question="What the bank shows, and what is still to enter."
-                source="The HDFC feed in Zoho Books · plus the cash inbox, which no statement will ever confirm."
+                source="The HDFC feed in Zoho Books."
             />
 
             <DoorNav
                 links={[
-                    { href: '/admin/finance/payment-captures', label: 'Payment proofs', count: cashUnknown ? null : cashToEnter },
+                    { href: '/admin/finance/payment-captures', label: 'Payment proofs' },
                     { href: '/admin/finance/to-do', label: 'What is unfinished' },
                     { href: '/admin/finance/banks', label: 'Bank accounts', count: accountCount },
                     { href: '/admin/finance/zoho', label: 'The full feed in Zoho' },
@@ -122,14 +122,6 @@ export default function BankCashClient({
                         ? 'could not be read'
                         : (inMonth - outMonth >= 0 ? 'more in than out' : 'more out than in')}
                     tone={bankUnknown ? 'plain' : (inMonth - outMonth >= 0 ? 'good' : 'warn')}
-                />
-                <Figure
-                    label="Cash still to enter in Zoho"
-                    value={cashUnknown ? '—' : `${cashToEnter}${cashTruncated ? '+' : ''}`}
-                    note={cashUnknown
-                        ? 'could not be read'
-                        : (cashToEnter > 0 ? 'no statement will ever confirm these' : 'nothing waiting')}
-                    tone={cashUnknown ? 'plain' : (cashToEnter > 0 ? 'warn' : 'good')}
                 />
             </div>
 

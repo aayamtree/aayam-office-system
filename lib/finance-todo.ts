@@ -355,7 +355,6 @@ export function todoCount(t: FinanceTodo): number {
     return (
         t.awaitingBankConfirmation.length +
         t.dateless.length +
-        t.unannouncedOutflows.length +
-        t.cashToEnter.length
+        t.unannouncedOutflows.length
     );
 }
