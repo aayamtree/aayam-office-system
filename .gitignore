@@ -49,3 +49,7 @@ next-env.d.ts
 # local secret scratch — never commit
 ZOHO_WEBHOOK_URL.local.txt
 *.local.txt
+
+# Stray git lock files quarantined by the desktop bridge. 424 of them sit in
+# the Changes list permanently and hide real work behind noise.
+_to_delete/
