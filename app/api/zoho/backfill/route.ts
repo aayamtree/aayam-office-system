@@ -184,10 +184,13 @@ export async function GET(request: NextRequest) {
     // honour, but the date is ALSO enforced below rather than trusted, because a
     // silently ignored filter is not something to find out about twice.
     //
-    // TWO PASSES: the default list returns only lines already IN the books
-    // (categorized / matched / manually_added). Uncategorised statement lines
-    // come back ONLY when `filter_by` asks for them, so without the second call
-    // this route silently skipped every line Satish had not categorised yet.
+    // TWO PASSES. The default list returns only lines already IN the books
+    // (categorized / matched / manually_added). A line nobody has categorised yet
+    // comes back only for filter_by=Status.Uncategorized, and only when the
+    // account is named - without account_id Zoho answers "The account does not
+    // exist." Without that second pass this route silently skipped every
+    // uncategorised line, which is how the app showed bank data to 15 September
+    // while Zoho's Banking screen showed the 27th.
     // Status.Uncategorized, not Status.All: Status.All would also pull `excluded`
     // lines, which isSettled() would then show as "not yet categorised".
     const listed = await fetchAll(
@@ -198,17 +201,27 @@ export async function GET(request: NextRequest) {
         'transaction_id',
         { date_start: from }
     );
-    const uncategorised = listed
-        ? await fetchAll(
-              accessToken,
-              orgId,
-              '/banktransactions',
-              'banktransactions',
-              'transaction_id',
-              { date_start: from, filter_by: 'Status.Uncategorized' }
-          )
-        : null;
-    const txnsRaw = listed && uncategorised ? [...listed, ...uncategorised] : null;
+    let txnsRaw: Record<string, unknown>[] | null = listed;
+    if (listed) {
+        const accountsJson = await zohoGet(accessToken, orgId, '/bankaccounts', { per_page: '200' });
+        const bankAccountIds = accountsJson
+            ? ((accountsJson.bankaccounts || []) as Record<string, unknown>[])
+                  .map((a) => str(a.account_id))
+                  .filter(Boolean) as string[]
+            : (Array.from(new Set(listed.map((t) => str(t.account_id)).filter(Boolean))) as string[]);
+        for (const accountId of bankAccountIds) {
+            const uncategorised = await fetchAll(
+                accessToken,
+                orgId,
+                '/banktransactions',
+                'banktransactions',
+                'transaction_id',
+                { date_start: from, account_id: accountId, filter_by: 'Status.Uncategorized' }
+            );
+            // Additive: one unreadable account must not throw away the rest.
+            if (uncategorised) txnsRaw = [...(txnsRaw || []), ...uncategorised];
+        }
+    }
     const txns = txnsRaw?.filter((t) => {
         const d = str(t.date);
         return !d || d >= from;
