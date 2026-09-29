@@ -40,7 +40,11 @@ const PRINT_RUN_STAGE_MAP: Record<string, string | null> = {
     // leaves anything already further along untouched. Mapping this to null also
     // dropped every handed-over run out of fn_system_health_check's stale-stage
     // alert — precisely where drift would hide.
-    handed_over: 'quality_check',
+    // Handing a run over no longer decides warehouse-vs-direct: that is chosen per
+    // job on the Dispatch board. Jobs stay at material_received until the dispatch
+    // team acts on each one (the rank guard never moves a job backwards, so runs
+    // handed over via the old warehouse path keep their jobs at quality_check).
+    handed_over: 'material_received',
     dispatched: 'dispatched',
 };
 

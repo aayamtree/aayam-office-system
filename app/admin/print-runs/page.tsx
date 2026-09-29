@@ -96,9 +96,9 @@ const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
 // therefore ends at `handed_over` and each client's consignment is dispatched
 // per job on the Dispatch board, which already keys its records by job + client.
 //
-// `dispatched` survives for one case only: direct-to-client, where the printer
-// ships and the run genuinely IS the shipment. That path is restricted to
-// single-client runs (see handleDeliverySubmit) so one e-way bill is honest.
+// `dispatched` is now legacy: it was written by the old run-level "Direct to
+// Client" popup. Direct-to-client is decided PER JOB on the Dispatch board
+// ("Printer → Client"), so old runs keep their history but new ones never use it.
 const NEXT_STATUS: Record<string, string | null> = {
     planned: 'at_printer',
     at_printer: 'printing_done',
@@ -149,7 +149,6 @@ export default function PrintRunsPage() {
 
     // Modals
     const [viewRun, setViewRun] = useState<PrintRun | null>(null);
-    const [deliveryModal, setDeliveryModal] = useState<PrintRun | null>(null);
 
     const [docsModal, setDocsModal] = useState<PrintRun | null>(null);
 
@@ -172,15 +171,6 @@ export default function PrintRunsPage() {
     // only ever one physical job sheet per run. Uploaded immediately on file
     // select (no separate file-picker state needed).
     const [uploadingJobSheet, setUploadingJobSheet] = useState(false);
-
-    // Delivery modal state
-    const [deliveryMode, setDeliveryMode] = useState<'warehouse' | 'direct_to_client'>('warehouse');
-    const [deliveryAddress, setDeliveryAddress] = useState('');
-    // Goods photos (packaging / transport slip) snapped before a direct-to-client
-    // dispatch — up to 4, uploaded immediately like the job sheet image so the
-    // thumbnails are visible before Mark Dispatched is even clicked.
-    const [directPhotos, setDirectPhotos] = useState<string[]>([]);
-    const [uploadingDirectPhotos, setUploadingDirectPhotos] = useState(false);
 
     // Dispatch modal state
     const [ewayBill, setEwayBill] = useState('');
@@ -345,94 +335,6 @@ export default function PrintRunsPage() {
         // name read as single-client and slip past the direct-to-client guard.
         if (names.some(n => !n)) return Math.max(2, new Set(names.filter(Boolean)).size + 1);
         return new Set(names).size;
-    };
-
-    // Cancelling used to leave deliveryMode / address / photos set, so the
-    // NEXT run opened in this modal inherited them — one Cancel on run A could
-    // send run B straight past QC with run A's address and photos.
-    const closeDeliveryModal = () => {
-        setDeliveryModal(null);
-        setDeliveryAddress('');
-        setDeliveryMode('warehouse');
-        setDirectPhotos([]);
-    };
-
-    // Goods photos (packaging / transport slip) for a direct-to-client dispatch —
-    // uploaded immediately, same pattern as the job sheet image, capped at 4.
-    const handleDirectPhotosUpload = async (files: FileList) => {
-        if (!deliveryModal) return;
-        const remaining = 4 - directPhotos.length;
-        if (remaining <= 0) {
-            toast.error('Maximum 4 photos.');
-            return;
-        }
-        const toUpload = Array.from(files).slice(0, remaining);
-        setUploadingDirectPhotos(true);
-        try {
-            const urls: string[] = [];
-            for (const file of toUpload) {
-                const url = await uploadDoc(deliveryModal.id, file, 'dispatch-photo');
-                if (url) urls.push(url);
-            }
-            setDirectPhotos(prev => [...prev, ...urls]);
-        } catch (err: any) {
-            toast.error('Could not upload photo: ' + (err.message || 'Unknown error'));
-        } finally {
-            setUploadingDirectPhotos(false);
-        }
-    };
-
-    // ─── Delivery Mode Handler ──────────────────────────────
-    const handleDeliverySubmit = async () => {
-        if (!deliveryModal) return;
-        const data: Record<string, any> = {
-            delivery_mode: deliveryMode,
-        };
-        if (deliveryMode === 'direct_to_client') {
-            // Shipping direct records ONE address, ONE invoice and ONE e-way bill
-            // on the run. That is only honest when the whole sheet goes to one
-            // client; a 3-client sheet is 3 consignments and must go through the
-            // Dispatch board, which keys its paperwork per job + client.
-            const n = clientCount(deliveryModal);
-            if (n > 1) {
-                toast.error(`${deliveryModal.print_run_number} carries ${n} clients — that is ${n} consignments with ${n} e-way bills. Send it to the warehouse and dispatch each client separately.`);
-                return;
-            }
-            data.delivery_address = deliveryAddress;
-            data.dispatch_date = new Date().toISOString().split('T')[0];
-            const ok = await updateStatus(deliveryModal.id, 'dispatched', data);
-            if (!ok) return; // keep the modal open with the operator's input intact
-
-            // Save remote QC record (photos). Direct-to-client is the normal way
-            // this shop ships, not an exception that needs a typed-in reason — the
-            // photos ARE the evidence. This is the ONLY trace that physical QC was
-            // waived, so a silent failure here is not acceptable.
-            try {
-                const { error: qcErr } = await supabase.from('qc_records').insert({
-                    print_run_id: deliveryModal.id,
-                    qc_type: 'remote',
-                    checklist: {},
-                    result: 'passed',
-                    notes: 'Direct to client — dispatched from printer, physical QC skipped.',
-                    photos: directPhotos,
-                    performed_by: profile?.id || null,
-                    performed_by_name: profile?.full_name || 'Unknown',
-                });
-                if (qcErr) throw qcErr;
-            } catch (err: any) {
-                // Supabase returns { error } rather than throwing, so this used to
-                // pass silently and the promised audit record never existed.
-                toast.warning('Dispatched, but the QC-waiver record did not save: ' + (err.message || 'Unknown error'));
-            }
-        } else {
-            // Warehouse path — the run moves to its OWN `qc` status. It used to be
-            // re-written as 'printing_done', i.e. the status it already had, so the
-            // card never changed and a warehouse run could never reach dispatch.
-            // updateStatus() then syncs the linked jobs to quality_check.
-            const ok = await updateStatus(deliveryModal.id, 'qc', data);
-            if (!ok) return;
-        }
-        closeDeliveryModal();
     };
 
     // ─── Late paperwork (dispatched, docs arrive afterwards) ─
@@ -678,11 +580,9 @@ export default function PrintRunsPage() {
     const handOver = async (run: PrintRun) => {
         const n = clientCount(run);
         const { confirmed } = await confirm({
-            title: 'Hand over to Dispatch',
-            message: n > 1
-                ? `${run.print_run_number} carries ${n} clients, so it ships as ${n} separate consignments. Handing over closes this run and archives it — the ${run.jobs.length} jobs continue on the Dispatch board, where each client gets its own transporter, e-way bill and invoice.`
-                : `Handing over closes ${run.print_run_number} and archives it. Its ${run.jobs.length} job${run.jobs.length !== 1 ? 's' : ''} continue on the Dispatch board, where the consignment paperwork is recorded.`,
-            confirmLabel: 'Hand over →',
+            title: 'Send to Dispatch',
+            message: `${run.print_run_number} is printed. Its ${run.jobs.length} job${run.jobs.length !== 1 ? 's' : ''} will appear on the Dispatch board, where each job is either received into the warehouse for QC or sent straight from the printer to the client.${n > 1 ? ` This run carries ${n} clients, so each client ships as its own consignment.` : ''} This run is then closed and archived.`,
+            confirmLabel: 'Send to Dispatch →',
         });
         if (!confirmed) return;
         await updateStatus(run.id, 'handed_over');
@@ -691,8 +591,9 @@ export default function PrintRunsPage() {
     // ─── Handle next step button click ──────────────────────
     const handleNextStep = (run: PrintRun) => {
         if (run.status === 'printing_done') {
-            // Show delivery mode modal
-            setDeliveryModal(run);
+            // No warehouse / direct choice here any more: that is decided PER JOB
+            // on the Dispatch board (a run can carry jobs that go to different places).
+            handOver(run);
         } else if (run.status === 'qc') {
             handOver(run);
         } else {
@@ -745,7 +646,7 @@ export default function PrintRunsPage() {
     };
 
     const getNextLabel = (status: string) => {
-        if (status === 'printing_done') return 'Delivery →';
+        if (status === 'printing_done') return 'Send to Dispatch →';
         if (status === 'qc') return 'Hand to Dispatch →';
         const next = NEXT_STATUS[status];
         if (!next) return null;
@@ -1283,127 +1184,6 @@ export default function PrintRunsPage() {
                     </div>
                 </div>
             )}
-
-            {/* ═══════════════════════════════════════════════════════ */}
-            {/* DELIVERY MODE MODAL (after printing_done)             */}
-            {/* ═══════════════════════════════════════════════════════ */}
-            {deliveryModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeDeliveryModal}>
-                    <div className="bg-white rounded-lg w-full max-w-md" onClick={e => e.stopPropagation()}>
-                        <div className="bg-blue-600 px-4 py-3 rounded-t-lg">
-                            <h2 className="text-white font-bold text-base">Printing Done — Delivery Mode</h2>
-                            <p className="text-white/70 text-xs">{deliveryModal.print_run_number} · Where should it go?</p>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            {/* Two big choice buttons */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setDeliveryMode('warehouse')}
-                                    className={`p-4 rounded-md border-2 text-center transition-all ${deliveryMode === 'warehouse'
-                                        ? 'border-purple-500 bg-purple-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <Building2 size={28} className={`mx-auto mb-2 ${deliveryMode === 'warehouse' ? 'text-purple-600' : 'text-gray-400'}`} />
-                                    <p className="font-bold text-sm">Warehouse</p>
-                                    <p className="text-xs text-gray-500 mt-1">QC by dispatch team</p>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setDeliveryMode('direct_to_client')}
-                                    className={`p-4 rounded-md border-2 text-center transition-all ${deliveryMode === 'direct_to_client'
-                                        ? 'border-green-500 bg-green-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <MapPin size={28} className={`mx-auto mb-2 ${deliveryMode === 'direct_to_client' ? 'text-green-600' : 'text-gray-400'}`} />
-                                    <p className="font-bold text-sm">Direct to Client</p>
-                                    <p className="text-xs text-gray-500 mt-1">Skip QC, dispatch now</p>
-                                </button>
-                            </div>
-
-                            {/* Client address (only for direct) */}
-                            {deliveryMode === 'direct_to_client' && (
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Client Delivery Address</label>
-                                        <textarea
-                                            value={deliveryAddress}
-                                            onChange={e => setDeliveryAddress(e.target.value)}
-                                            rows={2}
-                                            placeholder="Enter client delivery address..."
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm resize-none focus:ring-2 focus:ring-gray-400 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">
-                                            <Camera size={12} className="inline mr-1" />
-                                            Goods Photos (packaging / transport slip)
-                                        </label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {directPhotos.map((url, idx) => (
-                                                <div key={url} className="relative group">
-                                                    <a href={url} target="_blank" rel="noopener noreferrer">
-                                                        <img
-                                                            src={url}
-                                                            alt={`Goods photo ${idx + 1}`}
-                                                            className="w-16 h-16 object-cover rounded-md border border-gray-200 hover:border-gray-400 transition-colors"
-                                                        />
-                                                    </a>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setDirectPhotos(prev => prev.filter((_, i) => i !== idx))}
-                                                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        aria-label="Remove photo"
-                                                    >×</button>
-                                                </div>
-                                            ))}
-                                            {directPhotos.length < 4 && (
-                                                <label className="w-16 h-16 flex flex-col items-center justify-center gap-0.5 border-2 border-dashed border-gray-200 rounded-md cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors text-gray-400 hover:text-gray-600">
-                                                    {uploadingDirectPhotos ? (
-                                                        <span className="text-[9px] font-medium">Uploading…</span>
-                                                    ) : (
-                                                        <>
-                                                            <Camera size={16} />
-                                                            <span className="text-[9px] font-medium">Add</span>
-                                                        </>
-                                                    )}
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        className="hidden"
-                                                        disabled={uploadingDirectPhotos}
-                                                        onChange={e => { if (e.target.files?.length) handleDirectPhotosUpload(e.target.files); e.target.value = ''; }}
-                                                    />
-                                                </label>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-1">{directPhotos.length}/4 · snap the packed goods or transport slip before dispatch</p>
-                                    </div>
-                                    <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 text-xs text-amber-700 flex items-start gap-2">
-                                        <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                                        <span>Physical QC will be skipped. A remote QC record will be saved with your name for traceability.</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button onClick={closeDeliveryModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md">Cancel</button>
-                                <button
-                                    onClick={handleDeliverySubmit}
-                                    className="px-6 py-2 bg-gray-900 text-white text-sm font-bold rounded-md hover:bg-gray-800"
-                                >
-                                    {deliveryMode === 'warehouse' ? 'Send to QC →' : 'Mark Dispatched →'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
 
             {/* ═══════════════════════════════════════════════════════ */}
             {/* DOCUMENTS MODAL (paperwork that arrives after dispatch) */}

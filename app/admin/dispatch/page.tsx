@@ -119,6 +119,39 @@ export default function DispatchPage() {
   });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
+  // "Printer → Client": the job ships straight from the printer, never touching
+  // our warehouse, so physical QC is skipped. The goods photos (packaging /
+  // transport slip) are the only evidence, so they are captured in the dispatch
+  // form and saved with a "QC skipped" record against THIS job.
+  const [fromPrinter, setFromPrinter] = useState(false);
+  const [printerPhotos, setPrinterPhotos] = useState<string[]>([]);
+  const [uploadingPrinterPhotos, setUploadingPrinterPhotos] = useState(false);
+
+  const handlePrinterPhotosUpload = async (files: FileList) => {
+    const job = selectedJobs[0];
+    if (!job) return;
+    const remaining = 4 - printerPhotos.length;
+    if (remaining <= 0) { toast.error('Maximum 4 photos.'); return; }
+    setUploadingPrinterPhotos(true);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files).slice(0, remaining)) {
+        const dot = file.name.lastIndexOf('.');
+        const ext = (dot > 0 ? file.name.slice(dot + 1) : 'jpg').toLowerCase();
+        const path = `printer-direct/${job.id}/photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('attachments').upload(path, file);
+        if (upErr) throw upErr;
+        const url = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl;
+        if (url) urls.push(url);
+      }
+      setPrinterPhotos(prev => [...prev, ...urls]);
+    } catch (err: any) {
+      toast.error('Could not upload photo: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingPrinterPhotos(false);
+    }
+  };
+
   // Which fields this mode asks for. Local Transport is the odd one: a local
   // driver has no LR number and no tracking, so all we can record is who drove.
   const modeFields = DISPATCH_MODE_FIELDS[dispatchForm.dispatch_mode];
@@ -240,8 +273,10 @@ export default function DispatchPage() {
   // ─── Handlers ─────────────────────────────────────────────
   const handleOpenDispatch = (jobsToDispatch: Job[], pkg?: {
     id: string; consignment_no: string; package_type: string; package_count: number; approx_weight_kg?: number | null;
-  } | null) => {
+  } | null, opts?: { fromPrinter?: boolean }) => {
     if (jobsToDispatch.length === 0) return;
+    setFromPrinter(!!opts?.fromPrinter);
+    setPrinterPhotos([]);
     setSelectedJobs(jobsToDispatch);
     setActivePackage(pkg || null);
     const qty: Record<string, string> = {};
@@ -432,7 +467,7 @@ export default function DispatchPage() {
 
         if (fullyShipped) {
           await updateJobStage(j.id, 'dispatched',
-            `Dispatched via ${modeLabel}${who}${tracking}.${qtyNote}${consignNote} Paperwork verified by ${profile?.full_name || 'dispatcher'}.`
+            `${fromPrinter ? 'Direct from printer to client (warehouse QC skipped). ' : ''}Dispatched via ${modeLabel}${who}${tracking}.${qtyNote}${consignNote} Paperwork verified by ${profile?.full_name || 'dispatcher'}.`
           );
         } else {
           // Partial: the job STAYS in Ready with the remainder — the DB
@@ -456,19 +491,34 @@ export default function DispatchPage() {
           .update({ dispatch_mode: dispatchForm.dispatch_mode, dispatch_receipt_url: receiptUrl })
           .eq('id', j.id);
 
-        // Save QC record for traceability
+        // Save QC record for traceability. A job shipped straight from the
+        // printer gets a "remote" record saying physical QC was skipped — with
+        // the goods photos and the user's name — because that is the only trace.
         try {
-          await supabase.from('qc_records').insert({
-            job_id: j.id,
-            qc_type: 'post_print',
-            checklist: { paperwork_verified: true },
-            result: 'passed',
-            notes: `Dispatched via ${modeLabel}.${qtyNote}${consignNote} Invoice / e-way bill checked by ${profile?.full_name || 'dispatcher'}.`,
-            performed_by: profile?.id || null,
-            performed_by_name: profile?.full_name || 'Unknown',
-          });
-        } catch (err) {
+          const { error: qcErr } = fromPrinter
+            ? await supabase.from('qc_records').insert({
+                job_id: j.id,
+                qc_type: 'remote',
+                checklist: { paperwork_verified: true, qc_skipped: true },
+                result: 'passed',
+                notes: `Printer → Client — dispatched straight from the printer, physical QC skipped.${qtyNote}${consignNote} Invoice / e-way bill checked by ${profile?.full_name || 'dispatcher'}.`,
+                photos: printerPhotos,
+                performed_by: profile?.id || null,
+                performed_by_name: profile?.full_name || 'Unknown',
+              })
+            : await supabase.from('qc_records').insert({
+                job_id: j.id,
+                qc_type: 'post_print',
+                checklist: { paperwork_verified: true },
+                result: 'passed',
+                notes: `Dispatched via ${modeLabel}.${qtyNote}${consignNote} Invoice / e-way bill checked by ${profile?.full_name || 'dispatcher'}.`,
+                performed_by: profile?.id || null,
+                performed_by_name: profile?.full_name || 'Unknown',
+              });
+          if (qcErr) throw qcErr;
+        } catch (err: any) {
           console.warn('Could not save dispatch QC record:', err);
+          if (fromPrinter) toast.warning('Dispatched, but the QC-skipped record did not save: ' + (err.message || 'Unknown error'));
         }
       }
 
@@ -593,7 +643,7 @@ export default function DispatchPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">
                   {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
-                  <span className="text-[9px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded font-semibold uppercase">Material In</span>
+                  <span className="text-[9px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded font-semibold uppercase">From Printer</span>
                 </div>
               </div>
               <div className="px-3 pt-2 pb-3 space-y-2">
@@ -610,7 +660,12 @@ export default function DispatchPage() {
                 <div className="flex gap-1.5">
                   <button onClick={() => updateJobStage(job.id, 'quality_check')}
                     className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-600 text-white rounded text-xs font-medium hover:bg-teal-700 transition-colors">
-                    <ShieldCheck className="w-3 h-3" /> Material OK → QC
+                    <ShieldCheck className="w-3 h-3" /> Received → QC
+                  </button>
+                  <button onClick={() => handleOpenDispatch([job], null, { fromPrinter: true })}
+                    title="Goods ship straight from the printer to the client — warehouse QC is skipped"
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-900 text-white rounded text-xs font-medium hover:bg-gray-800 transition-colors">
+                    <Truck className="w-3 h-3" /> Printer → Client
                   </button>
                 </div>
               </div>
@@ -820,7 +875,7 @@ export default function DispatchPage() {
           <div className="bg-white rounded-md w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
-                <h2 className="text-section">Create Dispatch</h2>
+                <h2 className="text-section">{fromPrinter ? 'Printer → Client Dispatch' : 'Create Dispatch'}</h2>
                 <p className="text-sm text-gray-500">
                   {activePackage
                     ? `${activePackage.consignment_no} · ${activePackage.package_count} ${activePackage.package_type}(s) · ${selectedJobs.length} job${selectedJobs.length > 1 ? 's' : ''}`
@@ -1024,6 +1079,41 @@ export default function DispatchPage() {
                     <input type="tel" inputMode="tel" placeholder="Optional"
                       value={dispatchForm.driver_phone} onChange={e => setDispatchForm({ ...dispatchForm, driver_phone: e.target.value })}
                       className="w-full px-3 py-2 border rounded-md text-sm" />
+                  </div>
+                </div>
+              )}
+
+              {fromPrinter && (
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      <Camera className="w-3.5 h-3.5 inline mr-1" />
+                      Goods photos (packaging / transport slip)
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {printerPhotos.map((url, idx) => (
+                        <div key={url} className="relative group">
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <img src={url} alt={`Goods photo ${idx + 1}`} className="w-16 h-16 object-cover rounded-md border border-gray-200" />
+                          </a>
+                          <button type="button" onClick={() => setPrinterPhotos(prev => prev.filter((_, i) => i !== idx))}
+                            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Remove photo">×</button>
+                        </div>
+                      ))}
+                      {printerPhotos.length < 4 && (
+                        <label className="w-16 h-16 flex flex-col items-center justify-center gap-0.5 border-2 border-dashed border-gray-200 rounded-md cursor-pointer hover:border-gray-400 hover:bg-gray-50 text-gray-400">
+                          {uploadingPrinterPhotos ? <span className="text-[9px] font-medium">Uploading…</span> : (<><Camera className="w-4 h-4" /><span className="text-[9px] font-medium">Add</span></>)}
+                          <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingPrinterPhotos}
+                            onChange={e => { if (e.target.files?.length) handlePrinterPhotosUpload(e.target.files); e.target.value = ''; }} />
+                        </label>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">{printerPhotos.length}/4 · these photos are the record that physical QC was skipped</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 text-xs text-amber-700 flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Goods go straight from the printer to the client. Physical QC is skipped and a &quot;QC skipped&quot; record is saved with your name.</span>
                   </div>
                 </div>
               )}
