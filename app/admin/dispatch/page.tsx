@@ -119,6 +119,11 @@ export default function DispatchPage() {
   });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
+  // Which stat card is "on". The four cards at the top double as filters for
+  // the board below: click one to see only that pile, click it again to see
+  // everything. Mirrors the Print Runs screen, which already works this way.
+  const [focus, setFocus] = useState<'qc' | 'ready' | 'dispatched' | 'delayed' | null>(null);
+
   // "Printer → Client": the job ships straight from the printer, never touching
   // our warehouse, so physical QC is skipped. The goods photos (packaging /
   // transport slip) are the only evidence, so they are captured in the dispatch
@@ -237,11 +242,40 @@ export default function DispatchPage() {
   // Delayed count
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const delayedCount = jobs.filter(j => {
+  const isDelayed = (j: Job) => {
     if (!j.client_deadline) return false;
     const deadline = new Date(j.client_deadline);
     return deadline < today && !['delivered', 'completed', 'cancelled', 'dispatched'].includes(j.current_stage);
-  }).length;
+  };
+  const delayedCount = jobs.filter(isDelayed).length;
+
+  // ─── Stat-card filter ─────────────────────────────────────
+  // Which SECTIONS are on screen. Null means the whole board, as before.
+  // 'delayed' is the odd one: late jobs are scattered across QC and Ready
+  // rather than sitting in a pile of their own, so it keeps both sections and
+  // narrows the cards inside them instead of hiding a section outright.
+  const showQCSection = focus === null || focus === 'qc' || focus === 'delayed';
+  const showReadySection = focus === null || focus === 'ready' || focus === 'delayed';
+  const showDispatchedSection = focus === null || focus === 'dispatched';
+
+  const onlyLate = focus === 'delayed';
+  const viewMaterialReceived = onlyLate ? materialReceived.filter(isDelayed) : materialReceived;
+  const viewPendingQC = onlyLate ? pendingQC.filter(isDelayed) : pendingQC;
+  const viewAwaitingPacking = onlyLate ? awaitingPacking.filter(isDelayed) : awaitingPacking;
+  const viewPackedGroups = onlyLate
+    ? packedGroups.filter(g => g.jobs.some(isDelayed))
+    : packedGroups;
+
+  // A filter that hides everything reads as "there is no work", which on an
+  // operations board is a dangerous thing to imply. Say which filter is on and
+  // offer the way out.
+  const filteredToNothing =
+    focus !== null &&
+    viewMaterialReceived.length === 0 &&
+    viewPendingQC.length === 0 &&
+    viewAwaitingPacking.length === 0 &&
+    viewPackedGroups.length === 0 &&
+    !(focus === 'dispatched' && recentGroups.length > 0);
 
   const stats = [
     { label: 'Material Received', value: materialReceived.length.toString(), sub: `${materialReceived.length} awaiting material QC`, icon: ShieldCheck, color: 'bg-teal-500' },
@@ -594,48 +628,105 @@ export default function DispatchPage() {
         </div>
       </div>
 
-      {/* Stats Cards — Job Queue style */}
+      {/* Stats Cards — Job Queue style.
+          Each card is a filter: press one to show only that pile, press it
+          again to go back to the whole board. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        <div className="bg-gray-900 border border-gray-800 rounded-md p-2 md:p-3">
+        <button
+          type="button"
+          onClick={() => setFocus(focus === 'qc' ? null : 'qc')}
+          aria-pressed={focus === 'qc'}
+          title={focus === 'qc' ? 'Show the whole board again' : 'Show only jobs waiting for QC'}
+          className={`text-left bg-gray-900 border rounded-md p-2 md:p-3 transition-all hover:opacity-90 ${focus === 'qc' ? 'border-white ring-2 ring-gray-900 ring-offset-1' : 'border-gray-800'}`}
+        >
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <ClipboardCheck className="w-4 h-4 text-white" />
             <span className="text-xs text-white font-medium">Pending QC</span>
           </div>
           <p className="text-page-title text-white">{loading ? '...' : pendingQC.length}</p>
-        </div>
-        <div className="bg-muted border border-border rounded-md p-2 md:p-3">
+        </button>
+        <button
+          type="button"
+          onClick={() => setFocus(focus === 'ready' ? null : 'ready')}
+          aria-pressed={focus === 'ready'}
+          title={focus === 'ready' ? 'Show the whole board again' : 'Show only jobs ready to dispatch'}
+          className={`text-left bg-muted border rounded-md p-2 md:p-3 transition-all hover:opacity-90 ${focus === 'ready' ? 'border-foreground ring-2 ring-foreground ring-offset-1' : 'border-border'}`}
+        >
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <Package className="w-4 h-4 text-foreground" />
             <span className="text-xs text-foreground font-medium">Ready to Dispatch</span>
           </div>
           <p className="text-page-title text-foreground">{loading ? '...' : readyToDispatch.length}</p>
-        </div>
-        <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
+        </button>
+        <button
+          type="button"
+          onClick={() => setFocus(focus === 'dispatched' ? null : 'dispatched')}
+          aria-pressed={focus === 'dispatched'}
+          title={focus === 'dispatched' ? 'Show the whole board again' : 'Show only what has already gone out'}
+          className={`text-left bg-white border rounded-md p-2 md:p-3 transition-all hover:opacity-90 ${focus === 'dispatched' ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-1' : 'border-gray-300'}`}
+        >
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <Truck className="w-4 h-4 text-gray-900" />
             <span className="text-xs text-gray-900 font-medium">Dispatched</span>
           </div>
           <p className="text-page-title text-gray-900">{loading ? '...' : dispatches.length}</p>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3">
+        </button>
+        <button
+          type="button"
+          onClick={() => setFocus(focus === 'delayed' ? null : 'delayed')}
+          aria-pressed={focus === 'delayed'}
+          title={focus === 'delayed' ? 'Show the whole board again' : 'Show only jobs past their deadline'}
+          className={`text-left bg-red-50 border rounded-md p-2 md:p-3 transition-all hover:opacity-90 ${focus === 'delayed' ? 'border-red-500 ring-2 ring-red-400 ring-offset-1' : 'border-red-200'}`}
+        >
           <div className="flex items-center gap-1 md:gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-red-600" />
             <span className="text-xs text-red-600 font-medium">Delayed</span>
           </div>
           <p className="text-page-title text-red-700">{loading ? '...' : delayedCount}</p>
-        </div>
+        </button>
       </div>
 
-      {materialReceived.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
+      {/* A filter is on — say so, and give one obvious way back to everything. */}
+      {focus !== null && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/50 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            Showing only{' '}
+            <span className="font-semibold text-foreground">
+              {focus === 'qc' ? 'jobs waiting for QC'
+                : focus === 'ready' ? 'jobs ready to dispatch'
+                : focus === 'dispatched' ? 'recent dispatches'
+                : 'jobs past their deadline'}
+            </span>.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFocus(null)}
+            className="shrink-0 text-xs font-semibold text-foreground underline underline-offset-2 hover:no-underline"
+          >
+            Show everything
+          </button>
+        </div>
+      )}
+
+      {focus === null && materialReceived.length === 0 && pendingQC.length === 0 && readyToDispatch.length === 0 && (
         <div className="text-center py-10 text-gray-500">No jobs pending QC or dispatch</div>
+      )}
+
+      {filteredToNothing && (
+        <div className="text-center py-10 text-gray-500">
+          Nothing in this filter right now.{' '}
+          <button type="button" onClick={() => setFocus(null)} className="font-semibold text-foreground underline underline-offset-2 hover:no-underline">
+            Show everything
+          </button>
+        </div>
       )}
 
       {/* Pre Print QC + QC & Dispatch — card grid (Ready jobs get their own
           sections below, split by whether they've been packed yet) */}
-      {(materialReceived.length > 0 || pendingQC.length > 0) && (
+      {showQCSection && (viewMaterialReceived.length > 0 || viewPendingQC.length > 0) && (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
         {/* ── Printing Material Received → QC ── */}
-        {materialReceived.map((job) => {
+        {viewMaterialReceived.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
             <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-teal-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
@@ -674,7 +765,7 @@ export default function DispatchPage() {
         })}
 
         {/* ── QC & Dispatch ── */}
-        {pendingQC.map((job) => {
+        {viewPendingQC.map((job) => {
           const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
           return (
             <div key={job.id} ref={job.id === focusJobId ? focusCardRef : undefined} className={`bg-card rounded-md border border-border border-l-4 border-l-violet-400 hover:shadow-sm transition-shadow ${job.id === focusJobId ? 'ring-2 ring-amber-400' : isOverdue ? 'ring-1 ring-red-200' : ''}`}>
@@ -710,14 +801,14 @@ export default function DispatchPage() {
           QC-passed, not yet boxed. Dispatch one job as-is (mints a
           package-of-one), or send several of the same client to Pack to
           box them together first. */}
-      {awaitingPacking.length > 0 && (
+      {showReadySection && viewAwaitingPacking.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-section text-gray-900 font-semibold">Awaiting Packing ({awaitingPacking.length})</h2>
+            <h2 className="text-section text-gray-900 font-semibold">Awaiting Packing ({viewAwaitingPacking.length})</h2>
             <Link href="/admin/dispatch/pack" className="text-sm text-gray-500 hover:text-gray-700">Pack jobs together →</Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-            {awaitingPacking.map((job) => {
+            {viewAwaitingPacking.map((job) => {
               const hasInvoice = hasInvoiceAttached(job as any);
               const invoiceAlreadyRequested = !!(job as any).invoice_requested_at;
               const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
@@ -787,11 +878,11 @@ export default function DispatchPage() {
           One card per package: everything QC'd, boxed and grouped at the
           Pack step. One "Dispatch" opens the shared shipment form for the
           whole box — box type/count/consignment number are already decided. */}
-      {packedGroups.length > 0 && (
+      {showReadySection && viewPackedGroups.length > 0 && (
         <div>
-          <h2 className="text-section text-gray-900 font-semibold mb-3">Packed — Ready to Dispatch ({packedGroups.length})</h2>
+          <h2 className="text-section text-gray-900 font-semibold mb-3">Packed — Ready to Dispatch ({viewPackedGroups.length})</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-            {packedGroups.map(({ key, jobs: groupJobs, package: pkg }) => {
+            {viewPackedGroups.map(({ key, jobs: groupJobs, package: pkg }) => {
               const clientName = groupJobs[0]?.client?.company || groupJobs[0]?.client?.name || '';
               const anyOverdue = groupJobs.some(j => j.client_deadline && new Date(j.client_deadline) < new Date());
               const allInvoiced = groupJobs.every(j => hasInvoiceAttached(j as any));
@@ -829,7 +920,7 @@ export default function DispatchPage() {
       )}
 
       {/* Recent Dispatches — one card per consignment */}
-      {recentGroups.length > 0 && (
+      {showDispatchedSection && recentGroups.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-section text-gray-900 font-semibold">Recent Dispatches</h2>
