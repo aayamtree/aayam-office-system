@@ -78,64 +78,62 @@ export async function GET(request: NextRequest) {
     const dateAfter = from.toISOString().slice(0, 10);
 
     const rows: Record<string, unknown>[] = [];
-    let page = 1;
-    let hasMore = true;
-
-    // Zoho ignored `date_after` here and returned a decade of history, so the
-    // window is enforced in code below and pagination stops once a page brings
-    // nothing new — otherwise this runs twice a day re-reading ten years.
     const seenIds = new Set<string>();
-    while (hasMore && page <= 20) {
-        const json = await zohoGet(accessToken, orgId, '/banktransactions', {
-            date_start: dateAfter,
-            per_page: '200',
-            page: String(page),
-        });
-        if (!json) {
-            await logSyncRun(supabase, 'bank', false, rows.length, `Fetch failed on page ${page}`);
-            return NextResponse.json({ error: 'Zoho fetch failed' }, { status: 502 });
-        }
-        const batch: Record<string, unknown>[] = json.banktransactions || [];
 
-        let fresh = 0;
-        for (const row of batch) {
-            const id = str(row.transaction_id);
-            if (!id || seenIds.has(id)) continue;
-            seenIds.add(id);
-            const d = str(row.date);
-            if (d && d < dateAfter) continue;
-            rows.push(row);
-            fresh += 1;
-        }
+    // TWO PASSES, and the second one is the whole point.
+    //
+    // The default /banktransactions list returns only lines that are already IN
+    // the books - categorized, matched or manually_added. A statement line
+    // nobody has dealt with yet is returned ONLY when `filter_by` asks for it.
+    // Without the second pass every uncategorised line is invisible here, which
+    // is exactly how this app came to show 15 September while Zoho's own Banking
+    // screen showed the 27th and counted 49 uncategorised on the same account.
+    //
+    // What used to sit here instead was a GET on /banktransactions/uncategorized.
+    // Zoho serves no such LIST endpoint (only /uncategorized/{id}/... actions),
+    // so the call came back without a `banktransactions` key, the code read
+    // `json.banktransactions || []`, and it silently added nothing - twice a day,
+    // for weeks, while reporting ok.
+    //
+    // Status.Uncategorized rather than Status.All on purpose: Status.All would
+    // also drag in `excluded` lines, which Satish excluded deliberately, and
+    // isSettled() would then show each one as "not yet categorised".
+    const passes: Record<string, string>[] = [{}, { filter_by: 'Status.Uncategorized' }];
 
-        if (batch.length === 0 || fresh === 0) break;
-        hasMore = Boolean(json.page_context?.has_more_page);
-        page += 1;
-    }
+    for (const extra of passes) {
+        let page = 1;
+        let hasMore = true;
 
-    // ---- The genuinely unhandled lines ---------------------------------------
-    // /banktransactions only returns what is already IN the books. Statement
-    // lines nobody has dealt with sit in a separate endpoint — which is why the
-    // app once claimed 57 uncategorised while Zoho's own screen said 12.
-    // Those 12 are the ones that actually want Satish's attention.
-    const bankAccountIds = Array.from(
-        new Set(rows.map((t) => str(t.account_id)).filter(Boolean) as string[])
-    );
+        // Zoho ignored `date_after` here and returned a decade of history, so the
+        // window is enforced in code below and pagination stops once a page brings
+        // nothing new - otherwise this runs twice a day re-reading ten years.
+        while (hasMore && page <= 20) {
+            const json = await zohoGet(accessToken, orgId, '/banktransactions', {
+                date_start: dateAfter,
+                per_page: '200',
+                page: String(page),
+                ...extra,
+            });
+            if (!json) {
+                await logSyncRun(supabase, 'bank', false, rows.length, `Fetch failed on page ${page}`);
+                return NextResponse.json({ error: 'Zoho fetch failed' }, { status: 502 });
+            }
+            const batch: Record<string, unknown>[] = json.banktransactions || [];
 
-    for (const accountId of bankAccountIds) {
-        const json = await zohoGet(accessToken, orgId, '/banktransactions/uncategorized', {
-            account_id: accountId,
-            per_page: '200',
-        });
-        if (!json) continue; // never let this optional extra fail the whole sync
-        const batch: Record<string, unknown>[] = json.banktransactions || [];
-        for (const row of batch) {
-            const id = str(row.transaction_id);
-            if (!id || seenIds.has(id)) continue;
-            seenIds.add(id);
-            // Force the status: this endpoint does not always set one, and the
-            // whole point of these rows is that they are NOT settled.
-            rows.push({ ...row, status: 'uncategorized', account_id: row.account_id ?? accountId });
+            let fresh = 0;
+            for (const row of batch) {
+                const id = str(row.transaction_id);
+                if (!id || seenIds.has(id)) continue;
+                seenIds.add(id);
+                const d = str(row.date);
+                if (d && d < dateAfter) continue;
+                rows.push(row);
+                fresh += 1;
+            }
+
+            if (batch.length === 0 || fresh === 0) break;
+            hasMore = Boolean(json.page_context?.has_more_page);
+            page += 1;
         }
     }
 

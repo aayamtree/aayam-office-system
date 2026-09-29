@@ -183,7 +183,14 @@ export async function GET(request: NextRequest) {
     // everything from 2016. `date_start` is the parameter the other endpoints
     // honour, but the date is ALSO enforced below rather than trusted, because a
     // silently ignored filter is not something to find out about twice.
-    const txnsRaw = await fetchAll(
+    //
+    // TWO PASSES: the default list returns only lines already IN the books
+    // (categorized / matched / manually_added). Uncategorised statement lines
+    // come back ONLY when `filter_by` asks for them, so without the second call
+    // this route silently skipped every line Satish had not categorised yet.
+    // Status.Uncategorized, not Status.All: Status.All would also pull `excluded`
+    // lines, which isSettled() would then show as "not yet categorised".
+    const listed = await fetchAll(
         accessToken,
         orgId,
         '/banktransactions',
@@ -191,6 +198,17 @@ export async function GET(request: NextRequest) {
         'transaction_id',
         { date_start: from }
     );
+    const uncategorised = listed
+        ? await fetchAll(
+              accessToken,
+              orgId,
+              '/banktransactions',
+              'banktransactions',
+              'transaction_id',
+              { date_start: from, filter_by: 'Status.Uncategorized' }
+          )
+        : null;
+    const txnsRaw = listed && uncategorised ? [...listed, ...uncategorised] : null;
     const txns = txnsRaw?.filter((t) => {
         const d = str(t.date);
         return !d || d >= from;
