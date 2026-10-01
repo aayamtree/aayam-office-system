@@ -64,6 +64,26 @@ export default function DispatchPaperwork({ job, verified, onVerifiedChange }: P
             use <strong>Request Invoice</strong> on the job card.
           </span>
         </div>
+      ) : null}
+
+      {/* Nothing attached: the dispatcher can still go ahead (client collect,
+          paperwork to follow, etc.) but must say so explicitly. Without this
+          tick the Create Dispatch button could never be enabled. */}
+      {paper.isEmpty ? (
+        <label className="flex items-start gap-2 cursor-pointer select-none pt-1 border-t border-border/60">
+          <input
+            type="checkbox"
+            checked={verified}
+            onChange={(e) => onVerifiedChange(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded border-gray-300 accent-gray-900 shrink-0"
+          />
+          <span className="text-xs text-foreground">
+            I am dispatching this job without invoice / e-way bill paperwork.
+            <span className="block text-[10px] text-muted-foreground mt-0.5">
+              Recorded against this dispatch with your name and the time.
+            </span>
+          </span>
+        </label>
       ) : (
         <div className="space-y-3">
           {/* ── Invoice ── */}
