@@ -13,7 +13,7 @@ import {
     Printer, Clock, CheckCircle, Truck,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
     ClipboardCheck, MapPin, FileText, AlertTriangle, Building2, Camera,
-    PackageCheck, History, Undo2, Pencil
+    PackageCheck, History, Undo2, Pencil, Scissors
 } from 'lucide-react';
 
 // ─── Interfaces ────────────────────────────────────────────
@@ -33,7 +33,7 @@ interface PrintRunJob {
 interface PrintRun {
     id: string;
     print_run_number: string;
-    status: 'planned' | 'at_printer' | 'printing_done' | 'qc' | 'handed_over' | 'dispatched';
+    status: 'planned' | 'at_printer' | 'printing_done' | 'after_print' | 'qc' | 'handed_over' | 'dispatched';
     title: string | null;
     notes: string | null;
     deadline: string | null;
@@ -84,6 +84,7 @@ const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
     planned: { label: 'Planned', icon: Clock, color: 'bg-amber-100 text-amber-800', borderColor: 'border-l-amber-400', tintBg: 'bg-amber-50/60', dot: 'bg-amber-500' },
     at_printer: { label: 'At Printer', icon: Printer, color: 'bg-orange-100 text-orange-800', borderColor: 'border-l-orange-400', tintBg: 'bg-orange-50/60', dot: 'bg-orange-500' },
     printing_done: { label: 'Printing Done', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', borderColor: 'border-l-blue-400', tintBg: 'bg-blue-50/60', dot: 'bg-blue-500' },
+    after_print: { label: 'After Print Process', icon: Scissors, color: 'bg-violet-100 text-violet-800', borderColor: 'border-l-violet-400', tintBg: 'bg-violet-50/60', dot: 'bg-violet-500' },
     qc: { label: 'In QC', icon: ClipboardCheck, color: 'bg-cyan-100 text-cyan-800', borderColor: 'border-l-cyan-400', tintBg: 'bg-cyan-50/60', dot: 'bg-cyan-500' },
     handed_over: { label: 'Handed Over', icon: PackageCheck, color: 'bg-stone-200 text-stone-700', borderColor: 'border-l-stone-400', tintBg: 'bg-stone-50', dot: 'bg-stone-500' },
     dispatched: { label: 'Dispatched', icon: Truck, color: 'bg-green-100 text-green-800', borderColor: 'border-l-green-400', tintBg: 'bg-green-50/60', dot: 'bg-green-500' },
@@ -102,7 +103,8 @@ const STATUS_CONFIG: Record<string, typeof DEFAULT_STATUS> = {
 const NEXT_STATUS: Record<string, string | null> = {
     planned: 'at_printer',
     at_printer: 'printing_done',
-    printing_done: null,   // delivery modal: warehouse -> qc, direct -> dispatched
+    printing_done: 'after_print',  // cutting / creasing / pinning / lamination at outside vendors
+    after_print: 'qc',
     qc: 'handed_over',
     handed_over: null,     // terminal — the Dispatch board owns it from here
     dispatched: null,      // terminal — direct-to-client only
@@ -120,7 +122,8 @@ const PREV_STATUS: Record<string, string | null> = {
     planned: null,
     at_printer: 'planned',
     printing_done: 'at_printer',
-    qc: 'printing_done',
+    after_print: 'printing_done',
+    qc: 'after_print',
     handed_over: 'qc',
     dispatched: 'printing_done', // direct-to-client jumped from printing_done
 };
@@ -590,11 +593,7 @@ export default function PrintRunsPage() {
 
     // ─── Handle next step button click ──────────────────────
     const handleNextStep = (run: PrintRun) => {
-        if (run.status === 'printing_done') {
-            // No warehouse / direct choice here any more: that is decided PER JOB
-            // on the Dispatch board (a run can carry jobs that go to different places).
-            handOver(run);
-        } else if (run.status === 'qc') {
+        if (run.status === 'qc') {
             handOver(run);
         } else {
             const next = NEXT_STATUS[run.status];
@@ -606,7 +605,7 @@ export default function PrintRunsPage() {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const DONE_PRINTING = ['printing_done', 'qc', ...ARCHIVED];
+    const DONE_PRINTING = ['printing_done', 'after_print', 'qc', ...ARCHIVED];
     const overdueCount = runs.filter(r =>
         r.deadline &&
         new Date(r.deadline) < today &&
@@ -635,6 +634,7 @@ export default function PrintRunsPage() {
         planned: runs.filter(r => r.status === 'planned').length,
         at_printer: runs.filter(r => r.status === 'at_printer').length,
         printing_done: runs.filter(r => r.status === 'printing_done').length,
+        after_print: runs.filter(r => r.status === 'after_print').length,
         qc: runs.filter(r => r.status === 'qc').length,
         docs_pending: runs.filter(needsDocs).length,
         closed: runs.filter(r => ARCHIVED.includes(r.status)).length,
@@ -646,7 +646,6 @@ export default function PrintRunsPage() {
     };
 
     const getNextLabel = (status: string) => {
-        if (status === 'printing_done') return 'Send to Dispatch →';
         if (status === 'qc') return 'Hand to Dispatch →';
         const next = NEXT_STATUS[status];
         if (!next) return null;
@@ -680,7 +679,7 @@ export default function PrintRunsPage() {
             </div>
 
             {/* Stat Cards — Job Queue style */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 md:gap-3">
                 <button
                     onClick={() => setFilter(filter === 'planned' ? 'all' : 'planned')}
                     className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'planned'
@@ -716,6 +715,18 @@ export default function PrintRunsPage() {
                         <span className={`text-xs font-medium ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>Printing Done</span>
                     </div>
                     <p className={`text-page-title ${filter === 'printing_done' ? 'text-white' : 'text-foreground'}`}>{counts.printing_done}</p>
+                </button>
+                <button
+                    onClick={() => setFilter(filter === 'after_print' ? 'all' : 'after_print')}
+                    className={`text-left rounded-md p-2 md:p-3 border transition-all ${filter === 'after_print'
+                        ? 'bg-gray-900 border-gray-800'
+                        : 'bg-violet-50 border-violet-200'}`}
+                >
+                    <div className="flex items-center gap-1 md:gap-2 mb-1">
+                        <Scissors className={`w-4 h-4 ${filter === 'after_print' ? 'text-white' : 'text-violet-700'}`} />
+                        <span className={`text-xs font-medium ${filter === 'after_print' ? 'text-white' : 'text-violet-700'}`}>After Print Process</span>
+                    </div>
+                    <p className={`text-page-title ${filter === 'after_print' ? 'text-white' : 'text-violet-800'}`}>{counts.after_print}</p>
                 </button>
                 <button
                     onClick={() => setFilter(filter === 'qc' ? 'all' : 'qc')}

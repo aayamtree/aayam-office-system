@@ -35,6 +35,7 @@ const PRINT_RUN_STAGE_MAP: Record<string, string | null> = {
     planned: null,                 // run still being assembled — leave jobs alone
     at_printer: 'printing',         // sent to printer → In Print Process
     printing_done: 'material_received',
+    after_print: null,              // at outside vendors for cutting/creasing/etc — jobs stay as they are
     qc: 'quality_check',            // warehouse delivery chosen → dispatch team QC
     // The dispatch team owns the material once it is handed over; the rank guard
     // leaves anything already further along untouched. Mapping this to null also
