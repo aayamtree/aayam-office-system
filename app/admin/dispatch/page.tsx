@@ -14,13 +14,14 @@ import { DISPATCH_MODE_FIELDS, type DispatchMode } from '@/types/database';
 import ActionButton from '@/components/ActionButton';
 import LoadError from '@/components/LoadError';
 import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
+import { shareDocsAcrossPackages } from '@/lib/job-documents';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { createPackage } from '@/lib/packages';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
-  const { jobs, loading: jobsLoading, error: jobsError, updateJobStage, refetch: refetchJobs } = useJobs({
+  const { jobs: rawJobs, loading: jobsLoading, error: jobsError, updateJobStage, refetch: refetchJobs } = useJobs({
     // Explicit select so the dispatch card can see the invoice signals.
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
@@ -32,6 +33,9 @@ export default function DispatchPage() {
     // a board silently showing a third of the queue reads as "all caught up".
     limit: 500
   });
+  // One box = one invoice + one e-way bill: paperwork attached to any job in a
+  // package is visible on every job in it.
+  const jobs = useMemo(() => shareDocsAcrossPackages(rawJobs as any[]) as typeof rawJobs, [rawJobs]);
   const { dispatches, loading: dispatchesLoading, error: dispatchesError, createDispatchGroup, refetch: refetchDispatches } = useDispatches();
 
   // Jobs are not on the realtime channel (perf), so an already-open dispatch
@@ -805,7 +809,7 @@ export default function DispatchPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-section text-gray-900 font-semibold">Awaiting Packing ({viewAwaitingPacking.length})</h2>
-            <Link href="/admin/dispatch/pack" className="text-sm text-gray-500 hover:text-gray-700">Pack jobs together →</Link>
+            <span className="flex items-center gap-4"><Link href="/admin/dispatch/by-client" className="text-sm font-medium text-gray-900 hover:underline">Dispatch by client →</Link><Link href="/admin/dispatch/pack" className="text-sm text-gray-500 hover:text-gray-700">Pack jobs together →</Link></span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {viewAwaitingPacking.map((job) => {
@@ -905,6 +909,26 @@ export default function DispatchPage() {
                       </p>
                     )}
                     {anyOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
+                    {!allInvoiced && pkg?.id && (
+                      <ActionButton
+                        done={groupJobs.every(j => !!(j as any).invoice_requested_at)}
+                        doneLabel="Invoice requested"
+                        loadingLabel="Sending…"
+                        successToast="One invoice requested for the whole package ✓"
+                        errorToast="Could not send invoice request"
+                        onAction={async () => {
+                          const res = await fetch(`/api/packages/${pkg.id}/request-invoice`, { method: 'POST' });
+                          const data = await res.json().catch(() => ({}));
+                          if (!res.ok) throw new Error(data.error || 'Request failed');
+                          refetchJobs?.();
+                          return data;
+                        }}
+                        className="w-full flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded transition-colors bg-card border border-border text-muted-foreground hover:text-foreground"
+                        doneClassName="bg-green-100 text-green-700 border-green-200"
+                      >
+                        <span className="inline-flex items-center gap-1"><FileText className="w-3 h-3" /> Request single invoice</span>
+                      </ActionButton>
+                    )}
                     <button
                       onClick={() => handleOpenDispatch(groupJobs, pkg)}
                       className={`w-full flex items-center justify-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium rounded ${allInvoiced ? 'bg-foreground hover:opacity-90' : 'bg-amber-500 hover:bg-amber-600'}`}
@@ -999,7 +1023,13 @@ export default function DispatchPage() {
                       <DispatchPaperwork
                         job={job as any}
                         verified={!!docsVerifiedByJob[job.id]}
-                        onVerifiedChange={v => setDocsVerifiedByJob(prev => ({ ...prev, [job.id]: v }))}
+                        onVerifiedChange={v => setDocsVerifiedByJob(prev => {
+                          // One box, one set of paperwork: ticking it once covers every job in the same package.
+                          const next = { ...prev, [job.id]: v };
+                          const pkgId = (job as any).package_id;
+                          if (pkgId) for (const j of selectedJobs) if ((j as any).package_id === pkgId) next[j.id] = v;
+                          return next;
+                        })}
                       />
                       {rem != null && (
                         <div>

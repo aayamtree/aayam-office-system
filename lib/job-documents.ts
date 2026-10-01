@@ -139,3 +139,54 @@ export function formatFileSize(bytes?: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+
+/**
+ * One box / sack carries ONE invoice and ONE e-way bill for everything inside.
+ * Accounts attaches them to any one job of the package; every other job in the
+ * same package should see them too. Returns the same jobs, with each packed
+ * job's files / invoice_reference / eway_bill_number / invoices topped up from
+ * its package-mates. Jobs not in a package are returned untouched.
+ */
+export function shareDocsAcrossPackages<T extends {
+  package_id?: string | null;
+  files?: any[] | null;
+  invoice_reference?: string | null;
+  eway_bill_number?: string | null;
+  invoices?: { id: string }[] | null;
+}>(jobs: T[]): T[] {
+  const byPackage = new Map<string, T[]>();
+  for (const j of jobs) {
+    if (!j.package_id) continue;
+    const list = byPackage.get(j.package_id) || [];
+    list.push(j);
+    byPackage.set(j.package_id, list);
+  }
+  if (byPackage.size === 0) return jobs;
+
+  const merged = new Map<string, { files: any[]; invoice_reference: string | null; eway_bill_number: string | null; invoices: { id: string }[] }>();
+  byPackage.forEach((mates, pkgId) => {
+    const urls = new Set<string>();
+    const files: any[] = [];
+    const invoices: { id: string }[] = [];
+    let invoice_reference: string | null = null;
+    let eway_bill_number: string | null = null;
+    for (const m of mates) {
+      for (const f of Array.isArray(m.files) ? m.files : []) {
+        const key = f?.url || f?.name;
+        if (key && !urls.has(key)) { urls.add(key); files.push(f); }
+      }
+      for (const inv of Array.isArray(m.invoices) ? m.invoices : []) invoices.push(inv);
+      if (!invoice_reference && m.invoice_reference?.trim()) invoice_reference = m.invoice_reference.trim();
+      if (!eway_bill_number && m.eway_bill_number?.trim()) eway_bill_number = m.eway_bill_number.trim();
+    }
+    merged.set(pkgId, { files, invoice_reference, eway_bill_number, invoices });
+  });
+
+  return jobs.map(j => {
+    if (!j.package_id) return j;
+    const m = merged.get(j.package_id);
+    if (!m) return j;
+    return { ...j, files: m.files, invoice_reference: j.invoice_reference?.trim() || m.invoice_reference, eway_bill_number: j.eway_bill_number?.trim() || m.eway_bill_number, invoices: m.invoices };
+  });
+}
