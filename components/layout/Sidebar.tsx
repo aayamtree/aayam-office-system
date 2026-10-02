@@ -51,7 +51,6 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { hasCapabilityForHref } from '@/lib/permissions';
 import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
-import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 interface MenuItem {
   name: string;
