@@ -10,6 +10,7 @@ import {
   type Receivables,
 } from '@/lib/receivables';
 import { getPayables, buildPositionBlock, type Payables } from '@/lib/payables';
+import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 /**
  * Telegram Digest Cron — runs twice daily, Mon–Sat:
@@ -354,7 +355,7 @@ async function runJob(request: NextRequest) {
     service
       .from('leads')
       .select('id, name, company, next_follow_up, assigned_to')
-      .neq('status', 'converted')
+      .not('status', 'in', CLOSED_STATUS_FILTER)
       .not('next_follow_up', 'is', null)
       .lte('next_follow_up', new Date().toISOString()),
   ]);

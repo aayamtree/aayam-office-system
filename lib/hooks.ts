@@ -16,6 +16,7 @@ import { autoProgressJob } from './job-auto-progress';
 import { getProjectTypeCode } from './job-workflow';
 import { upsertAutoCalendarEvent } from './calendar-auto-events';
 import { refuseLegacyWriteAsError } from '@/lib/legacy-ledger';
+import { CLOSED_STATUS_FILTER } from './lead-status';
 
 // Generic hook for fetching data
 export interface UseSupabaseQueryOptions {
@@ -891,52 +892,25 @@ export function useLeads() {
     return { data, error: error?.message };
   };
 
-  const convertToClient = async (leadId: string, userId: string) => {
+  // Instant update after a status change / follow-up: swap the returned row into
+  // the cached list (no reload), then refresh quietly in the background.
+  const patchLead = (updated: Partial<Lead> & { id: string }) => {
+    if (!updated?.id) { refetch(); return; }
+    refetch(
+      (current: Lead[] | undefined) => (current || []).map(l => (l.id === updated.id ? { ...l, ...updated } : l)),
+      { revalidate: false }
+    );
+    setTimeout(() => { refetch(); }, 300);
+  };
+
+  // Old "Convert to Client": now uses the one shared database function
+  // (same company name -> existing client, otherwise a new one) and marks the deal done.
+  const convertToClient = async (leadId: string, _userId?: string) => {
     if (!isSupabaseConfigured()) return { error: 'Database not configured' };
-
-    // Get lead data
-    const { data: lead } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('id', leadId)
-      .single();
-
-    if (!lead) return { error: 'Lead not found' };
-
-    // Create client from lead
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .insert([{
-        name: lead.name,
-        company: lead.company,
-        email: lead.email,
-        phone: lead.phone,
-        notes: lead.notes,
-        is_active: true,
-        outstanding_balance: 0,
-        assigned_to: lead.assigned_to || userId,
-        created_by: userId,
-        // ✅ Mark as marketing-sourced with full traceability
-        source: 'marketing',
-        assigned_marketing_user_id: lead.assigned_to || userId,
-        source_lead_id: leadId,
-      }])
-      .select()
-      .single();
-
-    if (clientError) return { error: clientError.message };
-
-    // Update lead status
-    await supabase
-      .from('leads')
-      .update({
-        status: 'converted',
-        converted_to_client_id: client.id
-      })
-      .eq('id', leadId);
-
+    const { data, error } = await supabase.rpc('make_client_from_lead', { p_lead_id: leadId, p_mark_won: true });
+    if (error) return { error: error.message };
     refetch();
-    return { data: client, error: null };
+    return { data: data?.client, error: null };
   };
 
   const deleteLead = async (id: string) => {
@@ -958,6 +932,7 @@ export function useLeads() {
     refetch,
     createLead,
     updateLead,
+    patchLead,
     convertToClient,
     deleteLead
   };
@@ -1475,7 +1450,7 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', today).then(r => r), { count: 0 } as any),
       // Alerts
       safe(() => supabase.from('invoices').select('id', { count: 'exact', head: true }).neq('payment_status', 'paid').not('due_date', 'is', null).lt('due_date', today).then(r => r), { count: 0 } as any),
-      safe(() => supabase.from('leads').select('id', { count: 'exact', head: true }).not('next_follow_up', 'is', null).lte('next_follow_up', today).not('status', 'in', '("won","lost")').then(r => r), { count: 0 } as any),
+      safe(() => supabase.from('leads').select('id', { count: 'exact', head: true }).not('next_follow_up', 'is', null).lte('next_follow_up', today).not('status', 'in', CLOSED_STATUS_FILTER).then(r => r), { count: 0 } as any),
       safe(() => supabase.from('follow_ups').select('id', { count: 'exact', head: true }).not('follow_up_date', 'is', null).lte('follow_up_date', today).then(r => r), { count: 0 } as any),
       safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'approval').then(r => r), { count: 0 } as any),
       // Vendor stats

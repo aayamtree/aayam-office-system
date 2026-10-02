@@ -24,10 +24,10 @@ export default function MarketingDashboard() {
   const isToday = (dateString?: string) => dateString ? dateString.split('T')[0] === today : false;
   const isOverdue = (dateString?: string) => dateString ? dateString.split('T')[0] < today : false;
 
-  const newLeads = myLeads.filter(l => l.status === 'new');
-  const todayFollowUps = myLeads.filter(l => l.status === 'follow_up' && isToday(l.next_follow_up));
-  const overdueFollowUps = myLeads.filter(l => l.status === 'follow_up' && isOverdue(l.next_follow_up));
-  const convertedLeads = myLeads.filter(l => l.status === 'converted');
+  const newLeads = myLeads.filter(l => l.status === 'fresh_lead');
+  const todayFollowUps = myLeads.filter(l => l.status === 'in_followup' && isToday(l.next_follow_up));
+  const overdueFollowUps = myLeads.filter(l => l.status === 'in_followup' && isOverdue(l.next_follow_up));
+  const convertedLeads = myLeads.filter(l => l.status === 'deal_done');
 
   if (loading) {
     return <div className="p-10 text-center text-muted-foreground">Loading Dashboard...</div>;

@@ -6,6 +6,7 @@ import { useDashboardStats, useJobs, useLeads, useQuotations } from '@/lib/hooks
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { isClosedStatus } from '@/lib/lead-status';
 
 export default function SalesPage() {
   const { stats: dashboardStats, loading: statsLoading } = useDashboardStats();
@@ -18,7 +19,7 @@ export default function SalesPage() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 
-  const activeLeadsCount = leads.filter(l => l.status !== 'converted' && l.status !== 'lost').length;
+  const activeLeadsCount = leads.filter(l => !isClosedStatus(l.status)).length;
   const pendingQuotesCount = quotations.filter(q => q.status === 'draft' || q.status === 'sent' || q.status === 'viewed').length;
 
   const getStatusColor = (status: string) => {

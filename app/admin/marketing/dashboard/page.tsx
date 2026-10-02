@@ -42,8 +42,8 @@ export default function AdminMarketingDashboard() {
         todayFollowUps: followUps?.filter(f => f.follow_up_date === today).length || 0,
         overdueTasks: followUps?.filter(f => f.follow_up_date < today && !f.completed).length || 0,
         newLeads: leads?.filter(l => l.created_at >= sevenDaysAgo).length || 0,
-        convertedLeads: leads?.filter(l => l.status === 'converted').length || 0,
-        leadsWaiting: leads?.filter(l => ['follow_up', 'quoted', 'negotiating'].includes(l.status)).length || 0,
+        convertedLeads: leads?.filter(l => l.status === 'deal_done').length || 0,
+        leadsWaiting: leads?.filter(l => ['in_followup', 'in_review'].includes(l.status)).length || 0,
         activeQuotations: 0,
     };
 
@@ -54,7 +54,7 @@ export default function AdminMarketingDashboard() {
             acc[ownerId] = { name: owner, leads: 0, followUps: 0, converted: 0, commission: 0 };
         }
         acc[ownerId].leads++;
-        if (lead.status === 'converted') acc[ownerId].converted++;
+        if (lead.status === 'deal_done') acc[ownerId].converted++;
         return acc;
     }, {});
 

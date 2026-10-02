@@ -22,6 +22,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirm } from '@/components/ConfirmModal';
 import ClientQuickAddModal from '@/components/shared/ClientQuickAddModal';
+import CustomerOrLeadSelect from '@/components/quotation/CustomerOrLeadSelect';
+import { makeClientFromLead } from '@/lib/lead-actions';
+import { canEditLeads, isClosedStatus } from '@/lib/lead-status';
 import ItemAutocomplete, { CatalogItem } from '@/components/items/ItemAutocomplete';
 import { supabase } from '@/lib/supabase';
 
@@ -242,7 +245,9 @@ export default function QuotationsPage() {
         }
 
         if (clientIdParam) {
-          setFormData(prev => ({ ...prev, clientId: clientIdParam, leadId: '' }));
+          // "Make quotation" on a lead sends BOTH: the customer and the lead to link.
+          setFormData(prev => ({ ...prev, clientId: clientIdParam, leadId: leadIdParam || '' }));
+          refetchClients(); // the customer may have just been created
         } else if (leadIdParam) {
           setFormData(prev => ({ ...prev, leadId: leadIdParam, clientId: '' }));
         }
@@ -550,8 +555,21 @@ export default function QuotationsPage() {
     setSubmitting(true);
 
     try {
+      // A lead was picked: make (or link) the customer NOW, with the same rule the
+      // Sr. menu uses. The database function returns the same customer if called
+      // again for this lead, and we remember it in the form, so retrying a failed
+      // save can never create a second customer.
+      let clientIdToUse = formData.clientId;
+      if (!isEditing && !clientIdToUse && formData.leadId) {
+        const made = await makeClientFromLead(formData.leadId);
+        if (made.error || !made.data) throw new Error(made.error || 'Could not make the customer from the lead');
+        clientIdToUse = made.data.client.id;
+        setFormData(prev => ({ ...prev, clientId: clientIdToUse }));
+        refetchClients();
+      }
+
       const { items, ...quoteFields } = {
-        client_id: formData.clientId || null,
+        client_id: clientIdToUse || null,
         lead_id: formData.leadId || null,
         order_type: formData.orderType,
         product_category: formData.productCategory || undefined,
@@ -1047,35 +1065,19 @@ export default function QuotationsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Client / Lead *</label>
                 <div className="flex gap-2">
-                  <select
-                    required
-                    value={formData.clientId ? `client_${formData.clientId}` : formData.leadId ? `lead_${formData.leadId}` : ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) {
-                        setFormData({ ...formData, clientId: '', leadId: '' });
-                        return;
-                      }
-                      if (val.startsWith('client_')) {
-                        setFormData({ ...formData, clientId: val.replace('client_', ''), leadId: '' });
-                      } else if (val.startsWith('lead_')) {
-                        setFormData({ ...formData, leadId: val.replace('lead_', ''), clientId: '' });
-                      }
-                    }}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white"
-                  >
-                    <option value="">Select Client or Lead</option>
-                    <optgroup label="Leads (Potential)">
-                      {leads?.map(l => (
-                        <option key={`lead_${l.id}`} value={`lead_${l.id}`}>LEAD: {l.name} {l.company ? `(${l.company})` : ''}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Clients (Existing)">
-                      {clients?.map(c => (
-                        <option key={`client_${c.id}`} value={`client_${c.id}`}>{c.company} ({c.name})</option>
-                      ))}
-                    </optgroup>
-                  </select>
+                  <div className="min-w-0 flex-1">
+                    <CustomerOrLeadSelect
+                      clients={clients || []}
+                      leads={!isEditing && canEditLeads(profile?.role)
+                        ? (leads || []).filter(l => !isClosedStatus(l.status)) as any
+                        : []}
+                      clientId={formData.clientId}
+                      lead={formData.leadId && !formData.clientId ? ((allLeads || []).find(l => l.id === formData.leadId) as any || null) : null}
+                      onPickClient={(id) => setFormData({ ...formData, clientId: id, leadId: '' })}
+                      onPickLead={(l) => setFormData({ ...formData, leadId: l.id, clientId: '' })}
+                      onClear={() => setFormData({ ...formData, clientId: '', leadId: '' })}
+                    />
+                  </div>
                   <button
                     type="button"
                     title="Add New Client"

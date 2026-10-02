@@ -10,6 +10,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import LeadStatusButton from '@/components/leads/LeadStatusButton';
+import LeadSrMenu from '@/components/leads/LeadSrMenu';
+import LeadSwitchDialog from '@/components/leads/LeadSwitchDialog';
+import LeadFollowUpDialog from '@/components/leads/LeadFollowUpDialog';
+import LeadHistoryDialog from '@/components/leads/LeadHistoryDialog';
+import { makeClientFromLead } from '@/lib/lead-actions';
+import {
+    LEAD_STATUS_LIST, OPEN_STATUS_KEYS, isClosedStatus, isFollowUpDue,
+    leadStatusLabel, canEditLeads, sortClosedLast,
+} from '@/lib/lead-status';
 import { useLeads, useFollowUps } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { Lead } from '@/types/database';
@@ -20,7 +31,8 @@ import { useConfirm } from '@/components/ConfirmModal';
 
 export default function LeadsPage() {
     const { user, profile } = useAuth();
-    const { leads, loading: leadsLoading, createLead, updateLead, deleteLead, refetch, convertToClient } = useLeads();
+    const { leads, loading: leadsLoading, createLead, updateLead, patchLead, refetch } = useLeads();
+    const router = useRouter();
     const { createFollowUp } = useFollowUps();
     const confirm = useConfirm();
 
@@ -28,48 +40,31 @@ export default function LeadsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     // ... (rest of state)
 
-    const handleMoveToFollowUp = async (lead: Lead) => {
-        const { confirmed } = await confirm({ title: 'Move to Follow-ups', message: `Move "${lead.name}" to Follow-ups?`, confirmLabel: 'Move' });
-        if (!confirmed) return;
-        try {
-            // 1. Create Follow-up Entry
-            const { error } = await createFollowUp({
-                lead_id: lead.id,
-                follow_up_date: new Date().toISOString().split('T')[0],
-                notes: `Moved from Leads list. Requirement: ${lead.requirement || 'N/A'}`,
-                status: 'pending'
-            });
+    const canEdit = canEditLeads(profile?.role);
 
-            if (error) throw new Error(error);
+    // Dialog targets for the status button and the Sr. menu
+    const [switchTarget, setSwitchTarget] = useState<{ lead: Lead; status: string } | null>(null);
+    const [followUpLead, setFollowUpLead] = useState<Lead | null>(null);
+    const [historyLead, setHistoryLead] = useState<Lead | null>(null);
+    const [makingQuotation, setMakingQuotation] = useState(false);
 
-            // 2. Update Status
-            await updateLead(lead.id, { status: 'follow_up' });
+    const openLead = (lead: Lead) => { setSelectedLead(lead); setShowViewModal(true); };
 
-            await refetch();
-            toast.success('Moved to Follow-ups successfully');
-        } catch (e: any) {
-            toast.error(String('Operation failed: ' + e.message));
-        }
+    // Make quotation: find-or-create the client (one shared database function),
+    // then open a new quotation with the client filled in and this lead linked.
+    const handleMakeQuotation = async (lead: Lead) => {
+        if (makingQuotation) return;
+        setMakingQuotation(true);
+        const res = await makeClientFromLead(lead.id);
+        setMakingQuotation(false);
+        if (res.error || !res.data) { toast.error(res.error || 'Could not make the quotation.'); return; }
+        toast.success(res.data.created ? 'Client created from this lead' : 'Linked to the existing client');
+        await refetch();
+        const base = profile?.role === 'marketing' ? '/admin/marketing/quotations' : '/admin/sales/quotations';
+        router.push(`${base}?new=true&clientId=${res.data.client.id}&leadId=${lead.id}`);
     };
 
-    const handleConvertToClient = async (lead: Lead) => {
-        const { confirmed: convertConfirmed } = await confirm({ title: 'Convert to Client', message: `Convert "${lead.name}" to Client?`, confirmLabel: 'Convert' });
-        if (!convertConfirmed) return;
-        try {
-            const currentUserId = profile?.id || user?.id;
-            if (!currentUserId) { toast.info('User not authenticated'); return; }
-
-            const res = await convertToClient(lead.id, currentUserId);
-            if (res.error) throw new Error(res.error);
-
-            await refetch();
-            toast.info(`Converted ${lead.name} to Client! You can now manage them in CRM > Clients.`);
-        } catch (e: any) {
-            toast.error(String('Conversion failed: ' + e.message));
-        }
-    };
-
-    const [statusFilter, setStatusFilter] = useState<string>('active'); // Default: hide moved/converted leads
+    const [statusFilter, setStatusFilter] = useState<string>('all'); // Closed leads show at the bottom; pick 'Active' to hide them
     const [showModal, setShowModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -83,7 +78,7 @@ export default function LeadsPage() {
         email: '',
         phone: '',
         source: 'website' as Lead['source'],
-        status: 'new' as Lead['status'],
+        status: 'fresh_lead' as Lead['status'],
         value: '',
         leadType: 'printing_only' as Lead['lead_type'],
         billingPreference: 'gst' as Lead['billing_preference'],
@@ -140,7 +135,7 @@ export default function LeadsPage() {
             email: '',
             phone: '',
             source: 'website',
-            status: 'new',
+            status: 'fresh_lead',
             value: '',
             leadType: 'printing_only',
             billingPreference: 'gst',
@@ -178,17 +173,6 @@ export default function LeadsPage() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        const { confirmed: deleteConfirmed } = await confirm({ title: 'Delete Lead', message: `Delete lead "${name}"?`, variant: 'danger', confirmLabel: 'Delete' });
-        if (!deleteConfirmed) return;
-        try {
-            await deleteLead(id);
-            await refetch();
-        } catch (e) {
-            toast.error('Failed to delete lead');
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -208,14 +192,14 @@ export default function LeadsPage() {
                 email: formData.email || undefined,
                 phone: formData.phone,
                 source: formData.source,
-                status: formData.status,
+                // Editing never changes status here — use the status button, so a note and history are kept.
+                status: isEditing ? undefined : formData.status,
                 lead_type: formData.leadType || undefined,
                 billing_preference: formData.billingPreference || undefined,
-                lost_reason: formData.status === 'lost' ? formData.lostReason : undefined,
                 expected_value: parseFloat(formData.value) || 0,
                 requirement: formData.requirement || undefined,
                 next_follow_up:
-                    ['follow_up', 'new', 'contacted'].includes(formData.status)
+                    !isClosedStatus(formData.status)
                         ? (formData.nextFollowUp || undefined)
                         : undefined,
                 notes: formData.notes || undefined
@@ -254,9 +238,9 @@ export default function LeadsPage() {
             if (result.error) throw new Error(result.error);
 
             // Auto-create a follow_ups record when status is set to follow_up via edit form
-            // (handleMoveToFollowUp already does this, but direct edit doesn't)
+            // (new leads only; later changes go through the status button)
             const savedLeadId = isEditing ? selectedLead!.id : result.data?.id;
-            if (formData.status === 'follow_up' && savedLeadId) {
+            if (!isEditing && formData.status === 'in_followup' && savedLeadId) {
                 await createFollowUp({
                     lead_id: savedLeadId,
                     follow_up_date: formData.nextFollowUp || new Date().toISOString().split('T')[0],
@@ -284,7 +268,7 @@ export default function LeadsPage() {
 
     // --- FILTERING ---
 
-    const filteredLeads = leads.filter(lead => {
+    const filteredLeads = sortClosedLast(leads.filter(lead => {
         const s = searchQuery.toLowerCase();
         const matchSearch =
             (lead.name || '').toLowerCase().includes(s) ||
@@ -292,8 +276,8 @@ export default function LeadsPage() {
             lead.phone?.includes(s) ||
             (lead.lead_number || '').toLowerCase().includes(s);
 
-        // 'active' filter = new + contacted + quotation_shared + follow_up (all pipeline statuses, NOT converted/lost)
-        const ACTIVE_STATUSES = ['new', 'contacted', 'quotation_shared', 'follow_up'];
+        // 'active' filter = every open status (closed ones are hidden)
+        const ACTIVE_STATUSES = OPEN_STATUS_KEYS;
         const matchStatus =
             statusFilter === 'all'
                 ? true
@@ -302,7 +286,7 @@ export default function LeadsPage() {
                     : lead.status === statusFilter;
 
         return matchSearch && matchStatus;
-    });
+    }));
 
     // --- RENDER ---
 
@@ -317,9 +301,9 @@ export default function LeadsPage() {
 
     // Stat counts
     const totalLeads = leads.length;
-    const followUpCount = leads.filter(l => l.status === 'follow_up').length;
-    const convertedCount = leads.filter(l => l.status === 'converted').length;
-    const lostCount = leads.filter(l => l.status === 'lost').length;
+    const followUpCount = leads.filter(l => isFollowUpDue(l)).length;
+    const convertedCount = leads.filter(l => l.status === 'deal_done').length;
+    const lostCount = leads.filter(l => ['cancelled', 'not_interested', 'not_in_product'].includes(l.status)).length;
 
     return (
         <div className="space-y-2 md:space-y-4 lg:space-y-3 px-2 pb-12 md:pb-20 animate-fade-in">
@@ -353,21 +337,21 @@ export default function LeadsPage() {
                 <div className="bg-muted border border-border rounded-md p-2 md:p-3">
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
                         <Clock className="w-4 h-4 text-foreground" />
-                        <span className="text-xs text-foreground font-medium">Follow-ups</span>
+                        <span className="text-xs text-foreground font-medium">Follow-ups due</span>
                     </div>
                     <p className="text-page-title text-foreground">{followUpCount}</p>
                 </div>
                 <div className="bg-white border border-gray-300 rounded-md p-2 md:p-3">
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
                         <CheckCircle className="w-4 h-4 text-gray-900" />
-                        <span className="text-xs text-gray-900 font-medium">Converted</span>
+                        <span className="text-xs text-gray-900 font-medium">Deal Done</span>
                     </div>
                     <p className="text-page-title text-gray-900">{convertedCount}</p>
                 </div>
                 <div className="bg-red-50 border border-red-200 rounded-md p-2 md:p-3">
                     <div className="flex items-center gap-1 md:gap-2 mb-1">
                         <AlertCircle className="w-4 h-4 text-red-600" />
-                        <span className="text-xs text-red-600 font-medium">Lost</span>
+                        <span className="text-xs text-red-600 font-medium">Not won</span>
                     </div>
                     <p className="text-page-title text-red-700">{lostCount}</p>
                 </div>
@@ -392,17 +376,14 @@ export default function LeadsPage() {
                     <SelectContent>
                         <SelectItem value="active">🟢 Active Leads</SelectItem>
                         <SelectItem value="all">All Leads</SelectItem>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="contacted">Contacted</SelectItem>
-                        <SelectItem value="quotation_shared">Quotation Sent</SelectItem>
-                        <SelectItem value="follow_up">Follow Up</SelectItem>
-                        <SelectItem value="converted">Converted</SelectItem>
-                        <SelectItem value="lost">Lost</SelectItem>
+                        {LEAD_STATUS_LIST.map(st => (
+                            <SelectItem key={st.key} value={st.key}>{st.label}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
 
-            {/* LEAD LIST */}
+            {/* LEAD LIST — closed leads sit at the bottom */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredLeads.length === 0 ? (
                     <div className="col-span-full py-8 md:py-12 text-center text-sm text-gray-400 bg-gray-50 rounded-md border border-dashed border-gray-200">
@@ -411,176 +392,105 @@ export default function LeadsPage() {
                     </div>
                 ) : (
                     filteredLeads.map((lead) => {
-                        // All headers use neutral Shadcn background
-                        const headerBg = 'bg-muted border-b border-border';
-                        const headerTextColor = 'text-foreground';
+                        const closed = isClosedStatus(lead.status);
+                        const due = isFollowUpDue(lead);
+                        const ago = (() => {
+                            const diff = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / 86400000);
+                            if (diff <= 0) return 'Today';
+                            if (diff === 1) return 'Yesterday';
+                            if (diff < 7) return `${diff} days ago`;
+                            return new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                        })();
 
                         return (
-                            <div key={lead.id} className="bg-white rounded-md overflow-hidden hover:shadow-sm transition-all border border-gray-200">
-                                {/* ── MOBILE layout (< md) ── */}
-                                <div className="md:hidden">
-                                    {/* Row 1: name + status */}
-                                    <div className="flex items-center justify-between px-3 py-2 bg-muted border-b border-border">
-                                        <span className="font-bold text-gray-900 text-sm truncate max-w-[160px]">{lead.name}</span>
-                                        <span className="text-xs px-2 py-0.5 bg-white/70 rounded capitalize text-gray-700 font-medium shrink-0">
-                                            {lead.status.replace('_', ' ')}
-                                        </span>
-                                    </div>
-                                    {/* Row 2: company + phone */}
-                                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 gap-2">
-                                        <span className="text-xs text-gray-500 truncate">{lead.company || <span className="italic text-gray-300">No company</span>}</span>
-                                        <a href={`tel:${lead.phone}`} className="text-xs font-medium text-gray-700 shrink-0 flex items-center gap-1">
-                                            <Phone className="w-3 h-3" />{lead.phone}
-                                        </a>
-                                    </div>
-                                    {/* Row 3: date + actions */}
-                                    <div className="flex items-center justify-between px-3 py-2 gap-2">
-                                        <span className="text-[11px] text-gray-400">
-                                            {(() => {
-                                                const diff = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / 86400000);
-                                                if (diff === 0) return 'Today';
-                                                if (diff === 1) return 'Yesterday';
-                                                if (diff < 7) return `${diff} days ago`;
-                                                return new Date(lead.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-                                            })()}
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="View">
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => handleEdit(lead)} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Edit">
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            {lead.status !== 'converted' && lead.status !== 'follow_up' && (
-                                                <button onClick={() => handleMoveToFollowUp(lead)} className="p-2 text-white bg-gray-900 hover:bg-gray-800 rounded-md min-h-[44px] flex items-center justify-center gap-1 px-3 text-xs font-medium" aria-label="Follow-up">
-                                                    <CheckCircle className="w-3 h-3" /> Follow-up
-                                                </button>
-                                            )}
-                                        </div>
+                            <div key={lead.id} className={`bg-white rounded-md border border-gray-200 hover:shadow-sm transition-all ${closed ? 'opacity-80' : ''}`}>
+                                {/* Header: Sr. menu (left) and status button (right) */}
+                                <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted border-b border-border rounded-t-md">
+                                    <LeadSrMenu
+                                        lead={lead}
+                                        canEdit={canEdit}
+                                        onOpen={() => openLead(lead)}
+                                        onHistory={() => setHistoryLead(lead)}
+                                        onAddFollowUp={() => setFollowUpLead(lead)}
+                                        onEdit={() => handleEdit(lead)}
+                                        onMakeQuotation={() => handleMakeQuotation(lead)}
+                                    />
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        {profile?.role === 'admin' && lead.assigned_to && (
+                                            <span className="hidden md:inline truncate text-xs text-gray-700 px-2 py-1 bg-white/70 rounded-md font-medium">
+                                                👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
+                                            </span>
+                                        )}
+                                        <LeadStatusButton
+                                            lead={lead}
+                                            canEdit={canEdit}
+                                            onAddFollowUp={() => setFollowUpLead(lead)}
+                                            onSwitch={(s) => setSwitchTarget({ lead, status: s })}
+                                        />
                                     </div>
                                 </div>
 
-                                {/* ── DESKTOP layout (md+) ── */}
-                                <div className="hidden md:block">
-                                    {/* Colored Header */}
-                                    <div className={`${headerBg} px-3 py-2.5 flex items-center justify-between`}>
-                                        <span className={`${headerTextColor} font-mono text-sm font-bold`}>
-                                            {lead.lead_number}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                            {/* Assigned To — visible for admin */}
-                                            {profile?.role === 'admin' && lead.assigned_to && (
-                                                <span className="text-white/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium">
-                                                    👤 {staffList.find(s => s.id === lead.assigned_to)?.full_name || 'Unassigned'}
-                                                </span>
-                                            )}
-                                            <span className={`${headerTextColor}/90 text-xs px-3 py-1 bg-white/20 rounded-md font-medium capitalize`}>
-                                                {lead.status.replace('_', ' ')}
+                                {/* Body */}
+                                <div className="p-3 md:p-4">
+                                    <h3 className="font-bold text-gray-900 text-base md:text-lg leading-tight">{lead.name}</h3>
+                                    {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
+
+                                    {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
+                                        <div className="mt-1.5">
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
                                             </span>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    {/* White Card Body */}
-                                    <div className="p-4">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{lead.name}</h3>
-                                                {lead.company && <p className="text-gray-500 text-sm font-medium">{lead.company}</p>}
-
-                                                {/* Origin Badge — shows when lead was assigned by someone else */}
-                                                {lead.created_by && lead.assigned_to && lead.created_by !== lead.assigned_to && (
-                                                    <div className="mt-1.5">
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                                            📌 Assigned by {staffList.find(s => s.id === lead.created_by)?.full_name || 'Admin'}
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                {/* Project Type Badge */}
-                                                {lead.project_type && (
-                                                    <div className="mt-2">
-                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' :
-                                                            lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' :
-                                                                'bg-gray-900 text-white'
-                                                            }`}>
-                                                            {lead.project_type === 'print' ? '🖨️ Print Only' :
-                                                                lead.project_type === 'design' ? '🎨 Design Only' :
-                                                                    '✨ Design + Print'}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button onClick={() => { setSelectedLead(lead); setShowViewModal(true); }} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="View lead details">
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleEdit(lead)} className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" aria-label="Edit lead">
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" aria-label="Delete lead">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                    {lead.project_type && (
+                                        <div className="mt-2">
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold ${lead.project_type === 'print' ? 'bg-gray-900 text-white' : lead.project_type === 'design' ? 'bg-pink-100 text-pink-700' : 'bg-gray-900 text-white'}`}>
+                                                {lead.project_type === 'print' ? '🖨️ Print Only' : lead.project_type === 'design' ? '🎨 Design Only' : '✨ Design + Print'}
+                                            </span>
                                         </div>
+                                    )}
 
-                                        {/* Project Details Summary */}
-                                        {(lead.quantity || lead.estimated_amount || lead.deadline) && (
-                                            <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
-                                                {lead.quantity && (
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-gray-500 font-medium">Qty</p>
-                                                        <p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p>
-                                                    </div>
-                                                )}
-                                                {lead.estimated_amount && (
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-gray-500 font-medium">Amount</p>
-                                                        <p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p>
-                                                    </div>
-                                                )}
-                                                {lead.deadline && (
-                                                    <div className="text-center">
-                                                        <p className="text-xs text-gray-500 font-medium">Deadline</p>
-                                                        <p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p>
-                                                    </div>
-                                                )}
+                                    {(lead.quantity || lead.estimated_amount || lead.deadline) && (
+                                        <div className="grid grid-cols-3 gap-2 mt-3 p-2 bg-gray-50 rounded-lg">
+                                            {lead.quantity && (<div className="text-center"><p className="text-xs text-gray-500 font-medium">Qty</p><p className="text-sm font-bold text-gray-900">{lead.quantity.toLocaleString()}</p></div>)}
+                                            {lead.estimated_amount && (<div className="text-center"><p className="text-xs text-gray-500 font-medium">Amount</p><p className="text-sm font-bold text-gray-900">₹{lead.estimated_amount.toLocaleString()}</p></div>)}
+                                            {lead.deadline && (<div className="text-center"><p className="text-xs text-gray-500 font-medium">Deadline</p><p className="text-xs font-bold text-gray-900">{formatDate(lead.deadline)}</p></div>)}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2 mt-3">
+                                        <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-gray-700 min-h-[32px]">
+                                            <Phone className="w-4 h-4 shrink-0" />
+                                            <span className="font-medium">{lead.phone}</span>
+                                        </a>
+                                        {lead.next_follow_up && !closed && (
+                                            <div className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-bold ${due ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-gray-200 text-gray-600'}`}>
+                                                <Clock className="w-4 h-4" />
+                                                <span>Follow up: {formatDate(lead.next_follow_up)}{due ? ' (due)' : ''}</span>
                                             </div>
                                         )}
+                                        {lead.requirement && (
+                                            <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">&quot;{lead.requirement}&quot;</p>
+                                        )}
+                                    </div>
 
-                                        <div className="space-y-2 mt-4">
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center text-gray-900 shrink-0">
-                                                    <Phone className="w-4 h-4" />
-                                                </div>
-                                                <span className="font-medium">{lead.phone}</span>
-                                            </div>
-
-                                            {lead.next_follow_up && (
-                                                <div className="flex items-center gap-2 text-gray-600 bg-white p-2 rounded-lg border border-gray-200">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span className="text-xs font-bold">Follow up: {formatDate(lead.next_follow_up)}</span>
-                                                </div>
-                                            )}
-
-                                            {lead.requirement && (
-                                                <p className="text-sm text-gray-500 line-clamp-2 bg-gray-50 p-2 rounded-lg italic">
-                                                    &quot;{lead.requirement}&quot;
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* Action Footer */}
-                                        <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                            {lead.status !== 'converted' && lead.status !== 'follow_up' && (
-                                                <button
-                                                    onClick={() => handleMoveToFollowUp(lead)}
-                                                    className="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm"
-                                                >
-                                                    <CheckCircle className="w-4 h-4" /> Move to Follow-up
+                                    {/* Footer */}
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                                        <span className="text-[11px] text-gray-400">{ago}</span>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => openLead(lead)} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="View lead details">
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            {canEdit && (
+                                                <button onClick={() => handleEdit(lead)} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Edit lead">
+                                                    <Edit className="w-4 h-4" />
                                                 </button>
                                             )}
-                                            {(lead.status === 'converted' || lead.status === 'follow_up') && (
-                                                <span className="text-sm text-gray-500">—</span>
+                                            {canEdit && !closed && (
+                                                <button onClick={() => setFollowUpLead(lead)} className="text-white bg-gray-900 hover:bg-gray-800 rounded-md min-h-[44px] flex items-center justify-center gap-1 px-3 text-xs font-medium">
+                                                    <CheckCircle className="w-3 h-3" /> Follow-up
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -674,16 +584,20 @@ export default function LeadsPage() {
                             <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Current Status</label>
-                                    <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium">
-                                        <option value="new">New Lead</option>
-                                        <option value="contacted">Contacted</option>
-                                        <option value="quotation_shared">Quotation Sent</option>
-                                        <option value="follow_up">Needs Follow Up</option>
-                                        <option value="converted">Converted (Won)</option>
-                                        <option value="lost">Lost</option>
-                                    </select>
+                                    {isEditing ? (
+                                        <p className="text-sm font-semibold text-gray-800 py-2">
+                                            {leadStatusLabel(formData.status)}
+                                            <span className="block text-xs font-normal text-gray-400">To change it, use the status button on the lead.</span>
+                                        </p>
+                                    ) : (
+                                        <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium">
+                                            {LEAD_STATUS_LIST.filter(st => !st.closed).map(st => (
+                                                <option key={st.key} value={st.key}>{st.label}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
-                                {['new', 'contacted', 'follow_up'].includes(formData.status) && (
+                                {!isClosedStatus(formData.status) && (
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Next Follow-up</label>
                                         <input type="date" value={formData.nextFollowUp} onChange={e => setFormData({ ...formData, nextFollowUp: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm" />
@@ -732,7 +646,7 @@ export default function LeadsPage() {
                         <div className="space-y-4">
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Phone</span> <span className="font-medium font-mono">{selectedLead.phone}</span></div>
                             <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Company</span> <span className="font-medium">{selectedLead.company || '-'}</span></div>
-                            <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold capitalize text-primary">{selectedLead.status}</span></div>
+                            <div className="flex justify-between border-b pb-2"><span className="text-gray-500">Status</span> <span className="font-bold text-primary">{leadStatusLabel(selectedLead.status)}</span></div>
 
                             <div className="bg-gray-50 p-4 rounded-lg mt-4">
                                 <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Requirement</h4>
@@ -740,10 +654,18 @@ export default function LeadsPage() {
                             </div>
                         </div>
 
-                        <button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-md font-semibold hover:bg-gray-800 shadow-sm">Edit Details</button>
+                        {canEdit && (<button onClick={() => { setShowViewModal(false); handleEdit(selectedLead); }} className="w-full mt-3 md:mt-6 bg-gray-900 text-white py-2 rounded-md font-semibold hover:bg-gray-800 shadow-sm">Edit Details</button>)}
                     </div>
                 </div>
             )}
+            <LeadSwitchDialog
+                lead={switchTarget?.lead || null}
+                newStatus={switchTarget?.status || null}
+                onClose={() => setSwitchTarget(null)}
+                onSaved={(u) => patchLead(u)}
+            />
+            <LeadFollowUpDialog lead={followUpLead} onClose={() => setFollowUpLead(null)} onSaved={(u) => patchLead(u)} />
+            <LeadHistoryDialog lead={historyLead} onClose={() => setHistoryLead(null)} />
         </div>
     );
 }

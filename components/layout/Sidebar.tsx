@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/Badge';
 import { hasCapabilityForHref } from '@/lib/permissions';
+import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 interface MenuItem {
   name: string;
@@ -417,7 +418,7 @@ export default function Sidebar({ isOpen, onClose, onCollapsedChange }: SidebarP
 
     const today = new Date().toISOString().split('T')[0];
     Promise.all([
-      supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', '(converted,lost)'),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).not('status', 'in', CLOSED_STATUS_FILTER),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).in('current_stage', ['printing', 'finishing']),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).lt('client_deadline', today).not('current_stage', 'in', '(delivered,cancelled,completed,file_sent_client)'),
       supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'file_sent_client').eq('design_billing', 'billable').neq('payment_status', 'paid'),

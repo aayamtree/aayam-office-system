@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { getStageName } from '@/lib/job-workflow';
 import { getRecordLocations, RecordLocation } from '@/lib/record-locations';
+import { leadStatusLabel } from '@/lib/lead-status';
 
 interface SearchResult {
     id: string;
@@ -335,7 +336,7 @@ export default function CommandPalette() {
             if (leadsRes.data) leadsRes.data.forEach(l => dbResults.push({
                 id: l.id, type: 'lead',
                 title: `${l.lead_number} — ${l.name}`,
-                subtitle: l.status || '',
+                subtitle: leadStatusLabel(l.status),
                 href: `/admin/marketing/leads?open=${l.id}`,
             }));
 

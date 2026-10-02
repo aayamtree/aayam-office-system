@@ -59,7 +59,7 @@ export default function MarketingFollowUpsPage() {
     date: f.follow_up_date ? new Date(f.follow_up_date).toLocaleDateString('en-CA') : '',
     time: f.follow_up_date ? new Date(f.follow_up_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '',
     notes: f.notes || '',
-    status: f.quotation ? 'quoted' : 'pending', // ← Detect quoted follow-ups
+    status: f.status === 'closed' ? 'closed' : f.quotation ? 'quoted' : 'pending', // quoted = has a quotation; closed = its lead was closed
     quotation: f.quotation,
     quotationNumber: f.quotation?.quote_number,
   }));

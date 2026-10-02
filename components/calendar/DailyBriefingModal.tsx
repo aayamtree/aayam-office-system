@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { OPEN_STATUS_KEYS } from '@/lib/lead-status';
 
 interface DailyBriefingModalProps {
     onClose: () => void;
@@ -195,7 +196,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
             supabase
                 .from('leads')
                 .select('id, lead_number, name, company, status, created_at, source')
-                .in('status', ['new', 'contacted', 'follow_up', 'quotation_shared'])
+                .in('status', OPEN_STATUS_KEYS)
                 .order('created_at', { ascending: false })
                 .limit(10),
         ]);

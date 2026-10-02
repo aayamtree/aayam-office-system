@@ -6,6 +6,7 @@ import { X, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 type ActiveForm = null | 'lead' | 'followup' | 'eod';
 
@@ -45,7 +46,7 @@ function AddLeadForm({ onBack, onClose }: { onBack: () => void; onClose: () => v
                 phone: phone.replace(/\D/g, ''),
                 company: company || undefined,
                 source,
-                status: 'new',
+                status: 'fresh_lead',
                 created_by: userId,
                 assigned_to: userId,
             });
@@ -138,7 +139,7 @@ function AddFollowUpForm({ onBack, onClose }: { onBack: () => void; onClose: () 
             .from('leads')
             .select('id, name, company')
             .eq('assigned_to', userId) // Filter by assigned_to
-            .not('status', 'in', '(converted,lost)')
+            .not('status', 'in', CLOSED_STATUS_FILTER)
             .order('created_at', { ascending: false })
             .limit(100)
             .then(({ data }) => {

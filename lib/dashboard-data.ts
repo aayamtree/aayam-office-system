@@ -2,6 +2,7 @@ import { createServerSupabase } from './supabase-server';
 import { TERMINAL_STAGES } from './job-workflow';
 import { fetchCompleteness, NO_COMPLETENESS, type Completeness } from './completeness';
 import { getReceivables } from './receivables';
+import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // WHY THIS FILE NOW IMPORTS job-workflow.ts  (2026-09-12)
@@ -194,7 +195,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
             safe(async () => supabase.from('invoices').select('id', { count: 'exact', head: true }).neq('payment_status', 'paid').not('due_date', 'is', null).lt('due_date', today), { count: 0 } as any),
 
             // 8. Follow-ups due (leads)
-            safe(async () => supabase.from('leads').select('id', { count: 'exact', head: true }).not('next_follow_up', 'is', null).lte('next_follow_up', today).not('status', 'in', '("won","lost")'), { count: 0 } as any),
+            safe(async () => supabase.from('leads').select('id', { count: 'exact', head: true }).not('next_follow_up', 'is', null).lte('next_follow_up', today).not('status', 'in', CLOSED_STATUS_FILTER), { count: 0 } as any),
 
             // 9. Follow-ups due (follow_ups table)
             safe(async () => supabase.from('follow_ups').select('id', { count: 'exact', head: true }).not('follow_up_date', 'is', null).lte('follow_up_date', today), { count: 0 } as any),

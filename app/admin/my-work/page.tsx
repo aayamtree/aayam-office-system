@@ -12,6 +12,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, Briefcase, ArrowRight,
   Loader2, Star, Users, Layers, Calendar, X,
 } from 'lucide-react';
+import { CLOSED_STATUS_FILTER } from '@/lib/lead-status';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -578,7 +579,7 @@ function MarketingWork({ userId }: { userId: string }) {
           .from('leads')
           .select('id, company, name, next_follow_up, status')
           .eq('assigned_to', userId)
-          .not('status', 'in', '("converted","lost","closed")')
+          .not('status', 'in', CLOSED_STATUS_FILTER)
           .order('next_follow_up', { ascending: true, nullsFirst: false })
           .limit(30);
         // An empty "my work" list reads as "nothing assigned to me", which is a
