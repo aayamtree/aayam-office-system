@@ -130,7 +130,7 @@ export default function RecentFilesWidget({ showAll = false, limit = 15, compact
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {entries.map((entry) => {
+                    {entries.map((entry) => { /* bounded: query is .limit(limit) */
                         const FileIconComponent = getFileIcon(entry.fileType);
 
                         // Notification-sourced entries

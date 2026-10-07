@@ -99,3 +99,13 @@ Component-level hardcoded hex (not routed through tokens) was left alone in this
 ---
 
 **Source:** Notion style guide via Refero Styles (styles.refero.design) — colors, spacing (4px base), and radii adapted; typography and layout density kept as-is (this is a dense ops tool, not a marketing site, so Notion's large display type scale wasn't imported).
+
+
+## Cards never grow with their data (added 2026-10-07)
+
+A grid row is as tall as its tallest card, so one long list stretches every
+neighbour (the calendar with ~100 dispatches did exactly this). Rule: any list
+whose length depends on data goes inside `<ScrollList size="sm|md|lg">`
+(`components/ui/ScrollList.tsx`). A list that is capped by its query or is a
+fixed set may instead carry `/* bounded: reason */` on its `.map(` line.
+`npm run audit:layout` checks the dashboard widgets and fails otherwise.

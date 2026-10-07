@@ -36,6 +36,11 @@
 //      rainbow is gone — it made colour meaningless, and only the bottleneck
 //      stage now carries the accent.
 //
+//   6. A CARD NEVER GROWS WITH ITS DATA (2026-10-07). A calendar day with ~100
+//      dispatches made one card ~3000px tall and the whole row followed.
+//      Any list of unknown length goes in <ScrollList> (components/ui), and
+//      `npm run audit:layout` fails if one doesn't.
+//
 // The notes board is deliberately NOT in the Widgets menu and deliberately
 // sits above Money & records. See components/dashboard/NotesBoard.tsx.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -697,7 +702,7 @@ export default function DashboardClient({ serverData }: DashboardClientProps) {
                                 {/* A real column chart — the old version was a
                                     stack of thin horizontal bars that left most
                                     of this card empty. */}
-                                <div className="flex min-h-[140px] flex-1 items-end gap-2 pt-5">
+                                <div className="flex min-h-[140px] max-h-[260px] flex-1 items-end gap-2 pt-5">
                                     {sales.map(month => {
                                         const pct = (month.value / salesMax) * 100;
                                         const bar = month.active

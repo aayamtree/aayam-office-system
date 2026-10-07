@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useDesigners } from '@/lib/hooks';
 import { Users } from 'lucide-react';
+import { ScrollList } from '@/components/ui/ScrollList';
 
 interface DesignerWorkload {
     designer_id: string;
@@ -181,7 +182,7 @@ export default function TeamWorkloadWidget() {
                     </div>
 
                     {/* ── the roster, loaded first ── */}
-                    <div>
+                    <ScrollList size="md">
                         {[...busy, ...idle].map(w => {
                             const load = maxTasks > 0 ? (w.tasks_allotted / maxTasks) * 100 : 0;
                             const isIdle = w.tasks_allotted === 0;
@@ -217,7 +218,7 @@ export default function TeamWorkloadWidget() {
                                 </Link>
                             );
                         })}
-                    </div>
+                    </ScrollList>
 
                     {idle.length > 0 && (
                         <p className="mt-auto border-t pt-3.5 text-[11.5px] leading-snug text-muted-foreground">

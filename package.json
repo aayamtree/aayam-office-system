@@ -9,6 +9,7 @@
     "lint": "next lint",
     "audit:selects": "node scripts/audit-select-contracts.js",
     "audit:manifest": "node scripts/extract-query-manifest.js",
+    "audit:layout": "node scripts/check-card-growth.mjs",
     "audit:health": "node scripts/test-health-checks.mjs",
     "audit:dispatch": "node scripts/test-dispatch-rules.mjs",
     "audit:query": "node scripts/test-query-failure.mjs",

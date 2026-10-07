@@ -9,6 +9,7 @@ import { fetchCalendarBusinessData, CalendarItem } from '@/lib/calendar-data';
 import NewEventModal from '@/components/calendar/NewEventModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ScrollList } from '@/components/ui/ScrollList';
 import { Calendar, ArrowRight, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import {
     format,
@@ -246,7 +247,7 @@ export default function MiniCalendarWidget() {
                                 <p className="text-xs">Nothing on this day</p>
                             </div>
                         ) : (
-                            <div className="space-y-1.5 pb-1">
+                            <ScrollList size="md" className="space-y-1.5 pb-1">
                                 {selectedDayItems.map(item => {
                                     const bgClass = item.color.split(' ')[0];
                                     const dotColor = dotSolid[bgClass] || 'bg-gray-400';
@@ -272,7 +273,7 @@ export default function MiniCalendarWidget() {
                                         </div>
                                     );
                                 })}
-                            </div>
+                            </ScrollList>
                         )}
                     </div>
 

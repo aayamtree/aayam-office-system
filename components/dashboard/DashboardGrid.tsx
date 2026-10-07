@@ -411,8 +411,8 @@ export default function DashboardGrid({ defaultLayouts, isLocked, storageKey, ch
             {/* Grid background lines when unlocked (shows drop zones) */}
             {!isLocked && (
                 <div className="absolute inset-0 pointer-events-none z-0" style={{ height: totalHeight }}>
-                    {Array.from({ length: Math.ceil(totalHeight / (rowHeight + gap)) }).map((_, row) => (
-                        Array.from({ length: cols }).map((_, col) => {
+                    {Array.from({ length: Math.ceil(totalHeight / (rowHeight + gap)) }).map((_, row) => ( /* bounded: fixed background grid cells */
+                        Array.from({ length: cols }).map((_, col) => { /* bounded: fixed background grid cells */
                             const left = col * (colWidth + gap);
                             const top = row * (rowHeight + gap);
                             return (
