@@ -65,11 +65,12 @@ export async function uploadToDrive(
     file: File,
     folderId?: string,
     fileName?: string,
-    context?: { uploadedTo: string; resourceId?: string }
+    context?: { uploadedTo: string; resourceId?: string },
+    onProgress?: (percent: number) => void
 ): Promise<DriveUploadResult> {
     try {
         if (USE_SEAFILE) {
-            const up = await uploadFileToSeafile(file, folderId || 'Uploads', fileName);
+            const up = await uploadFileToSeafile(file, folderId || 'Uploads', fileName, onProgress);
             if (!up.success || !up.path || !up.url) return { success: false, error: up.error || 'Upload failed' };
             if (context) {
                 await logFileUpload({

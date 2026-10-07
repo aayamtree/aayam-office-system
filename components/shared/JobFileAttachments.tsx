@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Paperclip, Upload, X, FileText, Image as ImageIcon,
     File as FileIcon, Loader2, ExternalLink, HardDrive,
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { logFileUpload, logFileDownload } from '@/lib/activity-logger';
-import { uploadToDrive, getProjectFolder } from '@/lib/google-drive-upload';
+import { uploadToDrive, getProjectFolder, USE_SEAFILE } from '@/lib/google-drive-upload';
 import type { FileAttachment } from '@/types/database';
 
 // ── Config ────────────────────────────────────────────────────
@@ -93,7 +93,8 @@ async function uploadToLocal(file: File, jobNumber: string): Promise<{ url: stri
 async function uploadToGoogleDrive(
     file: File,
     jobNumber: string,
-    projectName: string
+    projectName: string,
+    onProgress?: (percent: number) => void
 ): Promise<{ url: string; fileId: string } | null> {
     // Get org access token
     const tokenRes = await fetch('/api/drive/token');
@@ -104,7 +105,7 @@ async function uploadToGoogleDrive(
     // Get or create folder
     const { folderId } = await getProjectFolder(accessToken, jobNumber || 'misc', projectName || 'Project');
 
-    const result = await uploadToDrive(accessToken, file, folderId || undefined, file.name);
+    const result = await uploadToDrive(accessToken, file, folderId || undefined, file.name, undefined, onProgress);
     if (!result.success || !result.webViewLink) return null;
 
     return { url: result.webViewLink, fileId: result.fileId || '' };
@@ -115,10 +116,22 @@ export default function JobFileAttachments({
 }: JobFileAttachmentsProps) {
     const [storage, setStorage] = useState<StorageType>('local');
     const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState<{ name: string; pct: number; index: number; count: number } | null>(null);
+    const [notice, setNotice] = useState('');
+    const failedRef = useRef<File[]>([]);
+    const [failedCount, setFailedCount] = useState(0);
     const [movingToDrive, setMovingToDrive] = useState<number | null>(null);
     const [error, setError] = useState('');
     const [localOnline, setLocalOnline] = useState<boolean | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Warn before leaving the page while a file is still uploading
+    useEffect(() => {
+        if (!uploading) return;
+        const warn = (ev: BeforeUnloadEvent) => { ev.preventDefault(); ev.returnValue = ''; };
+        window.addEventListener('beforeunload', warn);
+        return () => window.removeEventListener('beforeunload', warn);
+    }, [uploading]);
 
     // Check local server when switching to local tab
     const handleStorageSwitch = async (type: StorageType) => {
@@ -134,19 +147,31 @@ export default function JobFileAttachments({
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = e.target.files;
         if (!selectedFiles || selectedFiles.length === 0) return;
+        await runUpload(Array.from(selectedFiles));
+    };
+
+    const runUpload = async (fileList: File[]) => {
         if (!isSupabaseConfigured()) { setError('Storage not configured'); return; }
 
         setUploading(true);
         setError('');
+        setNotice('');
+        failedRef.current = [];
+        setFailedCount(0);
+        let okCount = 0;
 
         const newFiles: FileAttachment[] = [...files];
 
-        for (const file of Array.from(selectedFiles)) {
+        for (let fileIndex = 0; fileIndex < fileList.length; fileIndex++) {
+            const file = fileList[fileIndex];
+            setProgress({ name: file.name, pct: 0, index: fileIndex + 1, count: fileList.length });
+            const report = (pct: number) => setProgress({ name: file.name, pct, index: fileIndex + 1, count: fileList.length });
+            const countBefore = newFiles.length;
             // Size check
-            const maxSize = storage === 'local' ? MAX_LOCAL_SIZE : MAX_DRIVE_SIZE;
-            const maxLabel = storage === 'local' ? '500 MB' : '100 MB';
+            const maxSize = storage === 'local' ? MAX_LOCAL_SIZE : (USE_SEAFILE ? 2048 * 1024 * 1024 : MAX_DRIVE_SIZE);
+            const maxLabel = storage === 'local' ? '500 MB' : (USE_SEAFILE ? '2 GB' : '100 MB');
             if (file.size > maxSize) {
-                setError(`${file.name} exceeds ${maxLabel} limit`);
+                setError(`${file.name} is too big (limit ${maxLabel})`);
                 continue;
             }
 
@@ -170,7 +195,7 @@ export default function JobFileAttachments({
 
                 } else {
                     // ── Google Drive upload ──────────────────
-                    const result = await uploadToGoogleDrive(file, jobNumber, projectName);
+                    const result = await uploadToGoogleDrive(file, jobNumber, projectName, report);
                     if (!result) {
                         setError(`Failed to upload ${file.name} to Google Drive — check Drive connection in Settings`);
                         continue;
@@ -190,7 +215,10 @@ export default function JobFileAttachments({
                 console.error('Upload error:', err);
                 setError(`Failed to upload ${file.name}`);
             }
+            if (newFiles.length > countBefore) okCount++;
+            else failedRef.current.push(file);
         }
+        setFailedCount(failedRef.current.length);
 
         // Save file list to job
         const { error: updateError } = await supabase
@@ -201,6 +229,10 @@ export default function JobFileAttachments({
         if (updateError) setError('Failed to save file reference');
         else onFilesUpdated(newFiles);
 
+        if (!updateError && okCount > 0) {
+            setNotice(okCount === 1 ? 'File uploaded successfully' : `${okCount} files uploaded successfully`);
+        }
+        setProgress(null);
         setUploading(false);
         if (inputRef.current) inputRef.current.value = '';
     };
@@ -322,12 +354,12 @@ export default function JobFileAttachments({
                         : 'bg-blue-50 text-blue-600 border-blue-300 hover:bg-blue-100'
                     }`}>
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    {uploading ? 'Uploading...' : `Upload to ${storage === 'local' ? 'Local Drive' : 'Google Drive'}`}
+                    {uploading ? 'Uploading... please keep this page open' : `Upload to ${storage === 'local' ? 'Local Drive' : (USE_SEAFILE ? 'Office Cloud' : 'Google Drive')}`}
                     <input
                         ref={inputRef}
                         type="file"
                         multiple
-                        accept={storage === 'local'
+                        accept={(storage === 'local' || USE_SEAFILE)
                             ? '*'  // all types for local (print files: .ai, .psd, .indd, .pdf, etc.)
                             : 'image/*,.pdf,.doc,.docx,.xlsx,.xls,.csv'
                         }
@@ -338,10 +370,40 @@ export default function JobFileAttachments({
                 </label>
             </div>
 
-            {error && (
-                <p className="text-xs text-red-500 mb-2 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /> {error}
+            {progress && (
+                <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                    <div className="flex items-center justify-between text-xs text-blue-700 mb-1.5 gap-2">
+                        <span className="truncate font-medium">
+                            {progress.count > 1 ? `(${progress.index}/${progress.count}) ` : ''}{progress.name}
+                        </span>
+                        <span className="font-semibold flex-shrink-0">{progress.pct}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-blue-100 overflow-hidden">
+                        <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${progress.pct}%` }} />
+                    </div>
+                </div>
+            )}
+
+            {notice && !uploading && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-2 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" /> {notice}
                 </p>
+            )}
+
+            {error && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-2 flex items-center gap-1.5 flex-wrap">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="flex-1">{error}</span>
+                    {failedCount > 0 && !uploading && (
+                        <button
+                            type="button"
+                            onClick={() => runUpload([...failedRef.current])}
+                            className="font-semibold underline hover:no-underline"
+                        >
+                            Retry
+                        </button>
+                    )}
+                </div>
             )}
 
             {/* File list */}
