@@ -19,7 +19,6 @@ import {
 import ProjectNotesLog from '@/components/ProjectNotesLog';
 import DesignBriefEditor from '@/components/DesignBriefEditor';
 import { useConfirm } from '@/components/ConfirmModal';
-import PairDropBanner from '@/components/layout/PairDropBanner';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 import ProductBadge from '@/components/shared/ProductBadge';
@@ -986,8 +985,6 @@ export default function DesignerWorkspace() {
                   </div>
                 </div>
 
-                {/* PairDrop quick-link — shows only when URL is configured */}
-                <PairDropBanner />
 
                 {/* View Tabs - Color Blocks */}
                 <div className="grid grid-cols-4 gap-1 mt-4 px-1">

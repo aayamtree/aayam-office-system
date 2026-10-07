@@ -266,12 +266,6 @@ const menuItems: MenuItem[] = [
     allowedRoles: ['admin', 'finance'],
   },
   {
-    name: 'Team Files',
-    icon: Share2,
-    href: '/admin/team/files',
-    allowedRoles: ['admin', 'finance', 'designer', 'marketing', 'dispatch', 'cmyk'],
-  },
-  {
     // Cross-cutting gallery of every uploaded file in the system — job
     // sheets, invoices, e-way bills, goods photos, receipts, purchase bills,
     // staff ID docs. Restricted to admin/finance since staff ID documents
@@ -304,7 +298,7 @@ const menuItems: MenuItem[] = [
       { name: 'Telegram Groups', href: '/admin/settings/telegram-groups' },
       { name: 'Preferences', href: '/admin/settings/preferences' },
       { name: 'Production Settings', href: '/admin/settings/production' },
-      { name: 'Google Drive', href: '/admin/settings/drive' },
+      { name: 'Office Cloud', href: '/admin/settings/drive' },
       { name: 'Vendor Categories', href: '/admin/settings/vendor-categories' },
       { name: 'Product Categories', href: '/admin/settings/product-categories' },
       { name: 'System Health', href: '/admin/system-health' },

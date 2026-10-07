@@ -1,23 +1,18 @@
 'use client';
 
-import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
 import PiStatusCard from '@/components/drive/PiStatusCard';
 
-const PI_MODE = process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile';
-
-export default function GoogleDrivePage() {
+// Office Cloud (Raspberry Pi) is the only file store. No Google sign-in here.
+export default function OfficeCloudPage() {
     return (
         <div className="space-y-4 max-w-2xl">
             <div>
-                <h1 className="text-page-title text-gray-900">{PI_MODE ? 'Office Cloud (Raspberry Pi)' : 'Google Drive Integration'}</h1>
+                <h1 className="text-page-title text-gray-900">Office Cloud (Raspberry Pi)</h1>
                 <p className="text-gray-500 text-sm mt-1">
-                    {PI_MODE
-                        ? 'Where your project files are stored, and whether it is online right now'
-                        : 'Manage organization-wide Google Drive connection for file uploads'}
+                    Where your project files are stored, and whether it is online right now
                 </p>
             </div>
-
-            {PI_MODE ? <PiStatusCard /> : <GoogleDriveSettings />}
+            <PiStatusCard />
         </div>
     );
 }

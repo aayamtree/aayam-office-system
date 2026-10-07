@@ -148,28 +148,6 @@ export default function Header({ onMenuClick, sidebarExpanded }: HeaderProps) {
         });
       }
 
-      // 4. Google Drive status — admin only
-      if (isAdmin) {
-        try {
-          const driveRes = await fetch('/api/drive/connect');
-          const driveData = await driveRes.json();
-          if (!driveData.connected || driveData.isExpired) {
-            items.unshift({
-              id: 'drive-disconnect',
-              title: driveData.isExpired ? '🔴 Google Drive Expired' : '🔴 Google Drive Disconnected',
-              desc: driveData.isExpired
-                ? 'Token expired — file uploads disabled for all users'
-                : 'Not connected — file uploads disabled for all users',
-              time: 'Now',
-              type: 'danger' as const,
-              href: '/admin/settings/drive',
-            });
-          }
-        } catch {
-          // silent
-        }
-      }
-
       // 5. @mention notifications for this user (last 48h)
       if (profile?.id) {
         const twoDaysAgo = new Date(Date.now() - 172800000).toISOString();

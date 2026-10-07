@@ -926,16 +926,6 @@ export default function NewProjectPage() {
                                     ))}
                                 </div>
                             )}
-
-                            {/* Warning if not signed in */}
-                            {!orgDriveToken && !session?.accessToken && formData.files.length > 0 && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start gap-2">
-                                    <Info size={14} className="text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-xs text-amber-800">
-                                        Connect Google Drive to upload files. Without connection, files won&apos;t be uploaded.
-                                    </p>
-                                </div>
-                            )}
                         </div>
 
                         {/* Description */}

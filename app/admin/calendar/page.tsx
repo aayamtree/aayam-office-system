@@ -6,7 +6,6 @@ import { useConfirm } from '@/components/ConfirmModal';
 import { useAuth } from '@/lib/auth-context';
 import { useCalendarEvents } from '@/lib/hooks';
 import { fetchCalendarBusinessData, CalendarItem } from '@/lib/calendar-data';
-import GoogleConnectionStatus from '@/components/google/GoogleConnectionStatus';
 import DailyBriefingModal from '@/components/calendar/DailyBriefingModal';
 import NewEventModal from '@/components/calendar/NewEventModal';
 import EventCard from '@/components/calendar/EventCard';
@@ -197,7 +196,6 @@ export default function CalendarPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <GoogleConnectionStatus />
                     <button
                         onClick={() => setShowBriefing(true)}
                         className="hidden sm:block px-3 py-2 text-sm font-medium bg-white border border-gray-200 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
