@@ -1007,6 +1007,22 @@ export default function DispatchPage() {
                    fields: each job keeps its own invoice and e-way bill even
                    inside a shared box, so each one is verified — and can be
                    part-shipped — on its own. */}
+              {selectedJobs.length > 1 && (
+                <div className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${allDocsVerified ? 'border-green-200 bg-green-50 text-green-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+                  <span className="font-semibold">
+                    Paperwork ticked: {selectedJobs.filter(j => docsVerifiedByJob[j.id]).length} of {selectedJobs.length} jobs
+                  </span>
+                  {!allDocsVerified && (
+                    <button
+                      type="button"
+                      onClick={() => setDocsVerifiedByJob(Object.fromEntries(selectedJobs.map(j => [j.id, true])))}
+                      className="px-2.5 py-1 rounded-md bg-gray-900 text-white font-semibold hover:bg-gray-800"
+                    >
+                      Tick all {selectedJobs.length} jobs
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="space-y-3">
                 {selectedJobs.map(job => {
                   const rem = remainingFor(job);
@@ -1255,6 +1271,11 @@ export default function DispatchPage() {
                 </span>
               </div>
 
+              {!allDocsVerified && selectedJobs.length > 0 && (
+                <p className="text-xs text-red-600 font-medium">
+                  Create Dispatch is locked: tick the paperwork box for {selectedJobs.filter(j => !docsVerifiedByJob[j.id]).length} more job(s) — scroll up and check every job.
+                </p>
+              )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-md text-sm">Cancel</button>
                 <button
