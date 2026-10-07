@@ -130,9 +130,7 @@ export async function migrateJobsBatch(budgetMs: number): Promise<BatchResult> {
                     migrate_error: undefined,
                 };
                 out.moved++; touched = true;
-                // save after every file so a timeout never loses finished work
-                const msg = await saveJob(client, job.id, files, print, null);
-                if (msg) { out.note = `Could not save job ${job.job_number}: ${msg}`; return; }
+                // saved once per job (below): a timeout only means the last file is simply moved again next run
             }
         };
         await handle(files);
