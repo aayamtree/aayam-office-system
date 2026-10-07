@@ -21,6 +21,11 @@ export default function PiStatusCard() {
 
     useEffect(() => { check(); }, [check]);
 
+    const [mig, setMig] = useState<{ running: boolean; pending: number; moved: number; failed: number; pendingGB: number; movedGB: number } | null>(null);
+    useEffect(() => {
+        fetch('/api/admin/drive-migration', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(setMig).catch(() => { });
+    }, []);
+
     return (
         <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -47,6 +52,12 @@ export default function PiStatusCard() {
                 Files are stored on the office Raspberry Pi (4 TB disk). The app checks it every 5 minutes and sends
                 a Telegram message to the admin group if it stays offline for about 10 minutes, and again when it is back.
             </p>
+            {mig && (mig.moved > 0 || mig.pending > 0) && (
+                <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-700 space-y-1">
+                    <p className="font-semibold text-gray-900">Move from Google Drive {mig.running ? '(running in the background)' : '(not running)'}</p>
+                    <p>Moved: {mig.moved} files ({mig.movedGB} GB) · Waiting: {mig.pending} files ({mig.pendingGB} GB){mig.failed > 0 ? ` · Need attention: ${mig.failed}` : ''}</p>
+                </div>
+            )}
             <a href="https://files.aayamfiles.com" target="_blank" rel="noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline">
                 Open the file website <ExternalLink className="w-3.5 h-3.5" />

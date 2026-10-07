@@ -164,3 +164,47 @@ export async function uploadBufferToSeafile(
         return { ok: false, error: e?.message || 'Pi upload failed' };
     }
 }
+
+/** Server-side upload of a file of any size (pieces of 40 MB so Cloudflare's 100 MB limit is never hit). */
+export async function uploadLargeToSeafile(
+    dir: string,
+    fileName: string,
+    data: ArrayBuffer
+): Promise<{ ok: boolean; path?: string; size?: number; error?: string }> {
+    try {
+        const rel = dir.split('/').filter(Boolean).join('/');
+        const total = data.byteLength;
+        const PIECE = 40 * 1024 * 1024;
+        const link = forceHttps(await getUploadLink());
+        const url = `${link}${link.includes('?') ? '&' : '?'}ret-json=1`;
+        let finalName = fileName;
+        let finalSize = total;
+        const chunked = total > 80 * 1024 * 1024;
+        for (let start = 0; start < total || (total === 0 && start === 0); start += PIECE) {
+            const end = Math.min(start + PIECE, total) - 1;
+            const form = new FormData();
+            form.append('parent_dir', '/');
+            if (rel) form.append('relative_path', rel);
+            form.append('replace', '1');
+            form.append('file', new Blob([chunked ? data.slice(start, end + 1) : data]), fileName);
+            const headers: Record<string, string> = {};
+            if (chunked) {
+                headers['Content-Range'] = `bytes ${start}-${end}/${total}`;
+                headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(fileName)}"`;
+            }
+            const res = await fetch(url, { method: 'POST', body: form, headers });
+            if (!res.ok) return { ok: false, error: `Pi upload failed (${res.status}) at ${Math.round((start / Math.max(total, 1)) * 100)}%` };
+            if (!chunked || end + 1 >= total) {
+                const body = await res.json().catch(() => null);
+                if (Array.isArray(body) && body[0]) {
+                    finalName = String(body[0].name || fileName);
+                    if (typeof body[0].size === 'number') finalSize = body[0].size;
+                }
+            }
+            if (!chunked) break;
+        }
+        return { ok: true, path: '/' + [rel, finalName].filter(Boolean).join('/'), size: finalSize };
+    } catch (e: any) {
+        return { ok: false, error: e?.message || 'Pi upload failed' };
+    }
+}
