@@ -58,7 +58,7 @@ export async function uploadFileToSeafile(
         if (!linkRes.ok || !linkJson.uploadLink) {
             return { success: false, error: linkJson.error || 'Could not get an upload link from the file server.' };
         }
-        const base: string = linkJson.uploadLink;
+        const base: string = String(linkJson.uploadLink).replace(/^http:\/\/files\.aayamfiles\.com/, 'https://files.aayamfiles.com');
         const uploadUrl = base + (base.includes('?') ? '&' : '?') + 'ret-json=1';
 
         const send = async (blob: Blob, extraHeaders: Record<string, string>) => {
@@ -87,6 +87,7 @@ export async function uploadFileToSeafile(
                 const end = Math.min(start + CHUNK_SIZE, total) - 1;
                 const res = await send(file.slice(start, end + 1), {
                     'Content-Range': `bytes ${start}-${end}/${total}`,
+                    'Content-Disposition': `attachment; filename="${encodeURIComponent(name)}"`,
                 });
                 if (!res.ok) return { success: false, error: `Upload failed at ${Math.round((start / total) * 100)}% (${res.status})` };
                 if (end + 1 >= total) await readName(res);

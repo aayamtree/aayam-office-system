@@ -15,7 +15,8 @@ R=$(curl -s -H "$H" "$API/repo-info/"); echo "$R" | grep -q '"repo_name":"aayam-
 
 echo "2) Upload link"
 L=$(curl -s -H "$H" "$API/upload-link/?path=/&from=api" | tr -d '"')
-case "$L" in https://files.aayamfiles.com/seafhttp/*) ok "upload link is on your domain";; *) bad "upload-link" "$L";; esac
+L=$(echo "$L" | sed 's#^http://files.aayamfiles.com#https://files.aayamfiles.com#')
+case "$L" in https://files.aayamfiles.com/seafhttp/*) ok "upload link is on your domain (made https)";; *) bad "upload-link" "$L";; esac
 
 echo "3) Small file into a NEW folder (relative_path)"
 echo "hello from test $(date)" > "$TMP/small.txt"
@@ -32,7 +33,7 @@ L2=$(curl -s -H "$H" "$API/upload-link/?path=/&from=api" | tr -d '"')
 SZ=$((120*1048576)); PC=$((40*1048576)); S=0; LASTR=""
 while [ $S -lt $SZ ]; do
   E=$((S+PC-1)); dd if="$TMP/big.bin" of="$TMP/part" bs=1048576 skip=$((S/1048576)) count=40 2>/dev/null
-  LASTR=$(curl -s -w ' [HTTP %{http_code}]' -H "Content-Range: bytes $S-$E/$SZ" -F parent_dir=/ -F relative_path="_pi_test" -F replace=0 -F "file=@$TMP/part;filename=big.bin" "$L2?ret-json=1")
+  LASTR=$(curl -s -w ' [HTTP %{http_code}]' -H "Content-Range: bytes $S-$E/$SZ" -H "Content-Disposition: attachment; filename=\"big.bin\"" -F parent_dir=/ -F relative_path="_pi_test" -F replace=0 -F "file=@$TMP/part;filename=big.bin" "$L2?ret-json=1")
   echo "     piece $((S/PC+1))/3 -> $LASTR"
   S=$((E+1))
 done
@@ -42,7 +43,7 @@ SIZE=$(curl -s "$BIGDL" | wc -c | tr -d ' ')
 [ "$SIZE" = "$SZ" ] && ok "big file downloads with exactly the same size ($SIZE bytes)" || bad "big file size" "got $SIZE, expected $SZ"
 
 echo "6) Browser permission check (CORS) — needed for uploads straight from the app"
-CORS=$(curl -s -i -X OPTIONS -H "Origin: https://example.vercel.app" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-range,content-type" "$L" | tr -d '\r' | grep -i '^access-control' | tr '\n' ' ')
+CORS=$(curl -s -i -X OPTIONS -H "Origin: https://example.vercel.app" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-range,content-disposition,content-type" "$L" | tr -d '\r' | grep -i '^access-control' | tr '\n' ' ')
 echo "$CORS" | grep -qi 'allow-origin' && ok "$CORS" || bad "CORS" "none ($CORS)"
 
 echo "7) Delete the test files"
