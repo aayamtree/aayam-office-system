@@ -38,6 +38,7 @@ export default function DriveDisconnectBanner() {
     }, [profile?.role, checkDriveStatus]);
 
     // Only show to admins, only when disconnected/expired, only if not dismissed
+    if (process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile') return null; // Pi mode: see PiStatusBanner
     if (profile?.role !== 'admin') return null;
     if (status === null || status === 'connected') return null;
     if (dismissed) return null;

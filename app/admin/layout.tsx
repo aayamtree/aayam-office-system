@@ -22,6 +22,7 @@ const CommandPalette = dynamic(() => import('@/components/shared/CommandPalette'
 const DailyBriefingTrigger = dynamic(() => import('@/components/calendar/DailyBriefingTrigger'), { ssr: false });
 const EODNudge = dynamic(() => import('@/components/eod/EODNudge'), { ssr: false });
 const NotificationPopup = dynamic(() => import('@/components/NotificationPopup').then(m => ({ default: m.NotificationPopup })), { ssr: false });
+const PiStatusBanner = dynamic(() => import('@/components/drive/PiStatusBanner'), { ssr: false });
 const DriveDisconnectBanner = dynamic(() => import('@/components/drive/DriveDisconnectBanner'), { ssr: false });
 const FloatingDock = dynamic(() => import('@/components/shared/FloatingDock'), { ssr: false });
 const ChatPanel = dynamic(() => import('@/components/ChatPanel'), { ssr: false });
@@ -98,6 +99,7 @@ export default function AdminLayout({
           {/* Google Drive Disconnect Banner — shows for admins when Drive is not connected */}
           <div className={`fixed top-16 left-0 right-0 z-20 transition-[left] duration-300 ease-in-out ${sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'}`}>
             <DriveDisconnectBanner />
+            <PiStatusBanner />
           </div>
 
           {/* Main Content — RouteGuard enforces RBAC per role before rendering */}

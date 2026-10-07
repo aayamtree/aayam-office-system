@@ -14,6 +14,7 @@ import type { FileAttachment } from '@/types/database';
 // ── Config ────────────────────────────────────────────────────
 const LOCAL_SERVER_URL = 'http://192.168.1.200:3001';
 const LOCAL_API_KEY = 'aayam-local-2025';
+const CLOUD_NAME = USE_SEAFILE ? 'Office Cloud' : 'Google Drive';
 const MAX_LOCAL_SIZE = 500 * 1024 * 1024;   // 500 MB
 const MAX_DRIVE_SIZE = 100 * 1024 * 1024;   // 100 MB
 
@@ -51,7 +52,7 @@ function getStorageBadge(file: FileAttachment) {
     if (storage === 'google_drive') {
         return (
             <span className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-full">
-                <Cloud className="w-2.5 h-2.5" /> Drive
+                <Cloud className="w-2.5 h-2.5" /> {USE_SEAFILE ? 'Cloud' : 'Drive'}
             </span>
         );
     }
@@ -197,7 +198,7 @@ export default function JobFileAttachments({
                     // ── Google Drive upload ──────────────────
                     const result = await uploadToGoogleDrive(file, jobNumber, projectName, report);
                     if (!result) {
-                        setError(`Failed to upload ${file.name} to Google Drive — check Drive connection in Settings`);
+                        setError(USE_SEAFILE ? `Failed to upload ${file.name} to the Office Cloud — check that the cloud is online and try again` : `Failed to upload ${file.name} to Google Drive — check Drive connection in Settings`);
                         continue;
                     }
                     newFiles.push({
@@ -209,7 +210,7 @@ export default function JobFileAttachments({
                         storage: 'google_drive',
                         driveFileId: result.fileId,
                     } as any);
-                    logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: result.url, uploadedTo: `Job ${jobNumber} (Google Drive)`, resourceId: jobId });
+                    logFileUpload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: result.url, uploadedTo: `Job ${jobNumber} (${CLOUD_NAME})`, resourceId: jobId });
                 }
             } catch (err) {
                 console.error('Upload error:', err);
@@ -323,7 +324,7 @@ export default function JobFileAttachments({
                         }`}
                 >
                     <Cloud className="w-3.5 h-3.5" />
-                    ☁️ Google Drive
+                    ☁️ {CLOUD_NAME}
                 </button>
             </div>
 
@@ -341,7 +342,7 @@ export default function JobFileAttachments({
             )}
             {storage === 'google_drive' && (
                 <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3 bg-blue-50 text-blue-700 border border-blue-200">
-                    <Cloud className="w-3.5 h-3.5 flex-shrink-0" /> Saves to Google Drive · Accessible anywhere · Up to 100 MB
+                    <Cloud className="w-3.5 h-3.5 flex-shrink-0" /> Saves to {CLOUD_NAME} · Accessible anywhere · Up to {USE_SEAFILE ? '2 GB' : '100 MB'}
                 </div>
             )}
 
@@ -427,12 +428,12 @@ export default function JobFileAttachments({
                                     <button
                                         onClick={() => handleMoveToDrive(i)}
                                         disabled={movingToDrive === i}
-                                        title="Move to Google Drive (for client sharing)"
+                                        title={`Move to ${CLOUD_NAME} (for client sharing)`}
                                         className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                                     >
                                         {movingToDrive === i
                                             ? <Loader2 className="w-3 h-3 animate-spin" />
-                                            : <><MoveRight className="w-3 h-3" /> Drive</>
+                                            : <><MoveRight className="w-3 h-3" /> {USE_SEAFILE ? 'Cloud' : 'Drive'}</>
                                         }
                                     </button>
                                 )}
@@ -442,7 +443,7 @@ export default function JobFileAttachments({
                                         href={file.url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        title={isDriveFile(file) ? 'Open in Google Drive' : 'Open file'}
+                                        title={isDriveFile(file) ? `Open in ${CLOUD_NAME}` : 'Open file'}
                                         className="p-1 hover:bg-gray-200 rounded"
                                         onClick={() => logFileDownload({ fileName: file.name, fileSize: file.size, fileType: file.type, fileUrl: file.url, downloadedFrom: `Job ${jobId}`, resourceId: jobId })}
                                     >

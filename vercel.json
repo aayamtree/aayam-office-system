@@ -37,7 +37,7 @@
         },
         {
             "path": "/api/cron/backup",
-            "schedule": "30 20 * * 6"
+            "schedule": "30 20 * * *"
         },
         {
             "path": "/api/cron/telegram-digest",
@@ -86,6 +86,10 @@
         {
             "path": "/api/cron/daily-metrics",
             "schedule": "30 5 * * *"
+        },
+        {
+            "path": "/api/cron/pi-health",
+            "schedule": "*/5 * * * *"
         }
     ]
 }

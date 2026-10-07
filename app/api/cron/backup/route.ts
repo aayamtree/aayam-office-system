@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getServiceAccountToken } from '@/lib/google-service-account';
 import { withCronLog } from '@/lib/cron-log';
+import { uploadBufferToSeafile, seafileConfigured } from '@/lib/seafile-server';
+
+const PI_MODE = process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile';
 
 /**
- * Weekly DB Backup Cron
+ * DB Backup Cron (nightly; Pi copy every night, Drive copy Saturdays)
  * Exports every public table as JSON and uploads a single dated file to the
  * company Shared Drive under "Aayam Projects/DB Backups/".
  * Backups older than 180 days are pruned.
@@ -120,14 +123,6 @@ async function runJob(request: NextRequest) {
             rowCounts[name] = rows.length;
         }
 
-        // 3. Upload one dated JSON file to the Shared Drive
-        const sa = await getServiceAccountToken();
-        if (!sa.success || !sa.accessToken) {
-            return NextResponse.json({ error: `Drive token failed: ${sa.error}` }, { status: 500 });
-        }
-        const root = await findOrCreateFolder(sa.accessToken, 'Aayam Projects', SHARED_DRIVE_ID);
-        const folder = await findOrCreateFolder(sa.accessToken, 'DB Backups', root);
-
         const stamp = new Date().toISOString().split('T')[0];
         const fileName = `aayam-db-backup-${stamp}.json`;
         const payload = JSON.stringify({
@@ -136,15 +131,42 @@ async function runJob(request: NextRequest) {
             rowCounts,
             tables: dump,
         });
-        const fileId = await uploadJson(sa.accessToken, folder, fileName, payload);
 
-        // 4. Prune old backups (best-effort)
-        await pruneOldBackups(sa.accessToken, folder);
+        // 3a. Pi mode: save the dated file on the office Raspberry Pi (every run = every night).
+        let piPath: string | null = null;
+        if (PI_MODE) {
+            if (!seafileConfigured()) throw new Error('Pi backup failed: Seafile is not configured');
+            const up = await uploadBufferToSeafile('Aayam Projects/DB Backups', fileName, payload, 'application/json');
+            if (!up.ok) throw new Error(`Pi backup failed: ${up.error}`);
+            piPath = up.path || null;
+        }
+
+        // 3b. Google Drive copy. Pi mode: only on Saturdays, as the off-site second copy,
+        //     and a Drive problem (e.g. Drive full) never fails the run. Drive mode: every run.
+        const isSaturdayUtc = new Date().getUTCDay() === 6;
+        let fileId: string | null = null;
+        let driveError: string | null = null;
+        if (!PI_MODE || isSaturdayUtc) {
+            try {
+                const sa = await getServiceAccountToken();
+                if (!sa.success || !sa.accessToken) throw new Error(`Drive token failed: ${sa.error}`);
+                const root = await findOrCreateFolder(sa.accessToken, 'Aayam Projects', SHARED_DRIVE_ID);
+                const folder = await findOrCreateFolder(sa.accessToken, 'DB Backups', root);
+                fileId = await uploadJson(sa.accessToken, folder, fileName, payload);
+                // 4. Prune old backups on Drive (best-effort)
+                await pruneOldBackups(sa.accessToken, folder);
+            } catch (e: any) {
+                driveError = e?.message || 'Drive copy failed';
+                if (!PI_MODE) throw e;
+            }
+        }
 
         return NextResponse.json({
             ok: true,
             file: fileName,
             fileId,
+            piPath,
+            driveError,
             tables: Object.keys(dump).length,
             totalRows: Object.values(rowCounts).reduce((s, n) => s + n, 0),
             sizeKb: Math.round(payload.length / 1024),

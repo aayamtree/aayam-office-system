@@ -102,3 +102,65 @@ export async function downloadSeafileForScan(
         return { ok: false, status: 502, error: e?.message || 'File download failed' };
     }
 }
+
+/** Make sure a Seafile-issued link uses https (Seafile itself believes it is on http behind the tunnel). */
+export function forceHttps(link: string): string {
+    return String(link).replace(/^http:\/\/files\.aayamfiles\.com/, 'https://files.aayamfiles.com');
+}
+
+export type SeafileHealth = { ok: boolean; ms: number; detail: string };
+
+/**
+ * Is the Pi file server reachable AND will it accept our token?
+ * Step 1: public ping (is the Pi + tunnel alive).  Step 2: ask for an upload link
+ * (proves the library token works and Seafile can do real work).
+ */
+export async function checkSeafileHealth(timeoutMs = 8000): Promise<SeafileHealth> {
+    const started = Date.now();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+        const ping = await fetch(`${BASE}/api2/ping/`, { cache: 'no-store', signal: ctrl.signal });
+        if (!ping.ok) return { ok: false, ms: Date.now() - started, detail: `File server answered with error ${ping.status}` };
+        if (!TOKEN) return { ok: false, ms: Date.now() - started, detail: 'Access key (SEAFILE_API_TOKEN) is not set' };
+        const res = await fetch(`${BASE}/api/v2.1/via-repo-token/upload-link/?path=/&from=api`, {
+            headers: { Authorization: `Token ${TOKEN}` },
+            cache: 'no-store',
+            signal: ctrl.signal,
+        });
+        if (!res.ok) return { ok: false, ms: Date.now() - started, detail: `Access key refused (${res.status})` };
+        return { ok: true, ms: Date.now() - started, detail: 'OK' };
+    } catch (e: any) {
+        const timedOut = e?.name === 'AbortError';
+        return {
+            ok: false,
+            ms: Date.now() - started,
+            detail: timedOut ? 'File server did not answer in time (Pi, internet or tunnel may be down)' : `Cannot reach file server (${e?.message || 'network error'})`,
+        };
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+/** Upload a file from the server itself (used by the nightly backup). dir has no leading slash. */
+export async function uploadBufferToSeafile(
+    dir: string,
+    fileName: string,
+    data: ArrayBuffer | Uint8Array | string,
+    mime = 'application/octet-stream'
+): Promise<{ ok: boolean; path?: string; error?: string }> {
+    try {
+        const link = forceHttps(await getUploadLink());
+        const form = new FormData();
+        form.append('parent_dir', '/');
+        const rel = dir.split('/').filter(Boolean).join('/');
+        if (rel) form.append('relative_path', rel);
+        form.append('replace', '1');
+        form.append('file', new Blob([data as any], { type: mime }), fileName);
+        const res = await fetch(`${link}${link.includes('?') ? '&' : '?'}ret-json=1`, { method: 'POST', body: form });
+        if (!res.ok) return { ok: false, error: `Pi upload failed (${res.status})` };
+        return { ok: true, path: '/' + [rel, fileName].filter(Boolean).join('/') };
+    } catch (e: any) {
+        return { ok: false, error: e?.message || 'Pi upload failed' };
+    }
+}
