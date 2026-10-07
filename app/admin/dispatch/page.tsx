@@ -14,7 +14,7 @@ import { DISPATCH_MODE_FIELDS, type DispatchMode } from '@/types/database';
 import ActionButton from '@/components/ActionButton';
 import LoadError from '@/components/LoadError';
 import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
-import { shareDocsAcrossPackages } from '@/lib/job-documents';
+import { shareDocsAcrossPackages, getDispatchPaperwork } from '@/lib/job-documents';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { createPackage } from '@/lib/packages';
@@ -447,7 +447,14 @@ export default function DispatchPage() {
       };
       const items = selectedJobs.map(j => {
         const rem = freshRemFor(j);
-        return { job_id: j.id, dispatched_qty: rem == null ? null : parseInt(qtyByJob[j.id], 10) };
+        // The dispatcher ticked "dispatching without invoice" for a job that has
+        // none: the DB only allows that when who + when is recorded on the row.
+        const noInvoice = !getDispatchPaperwork(j as any).hasInvoice;
+        return {
+          job_id: j.id,
+          dispatched_qty: rem == null ? null : parseInt(qtyByJob[j.id], 10),
+          ...(noInvoice && profile?.id ? { invoice_waived_by: profile.id, invoice_waived_at: new Date().toISOString() } : {}),
+        };
       });
 
       // Consignment number: an already-packed group has one from Pack time;

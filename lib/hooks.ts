@@ -1306,7 +1306,7 @@ export function useDispatches() {
   // calling this.
   const createDispatchGroup = async (
     shared: Omit<Dispatch, 'id' | 'created_at' | 'updated_at' | 'dispatch_number' | 'client' | 'job' | 'job_id' | 'dispatched_qty' | 'consignment_no'>,
-    items: { job_id: string; dispatched_qty: number | null }[],
+    items: { job_id: string; dispatched_qty: number | null; invoice_waived_by?: string; invoice_waived_at?: string }[],
     consignment_no: string
   ): Promise<{ consignment_no: string; created: string[]; failed: { job_id: string; error: string }[] }> => {
     if (!isSupabaseConfigured()) {
