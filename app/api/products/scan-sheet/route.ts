@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
+import { seafilePathFromUrl, downloadSeafileForScan } from '@/lib/seafile-server';
 import { rateLimit } from '@/lib/rate-limit';
 import { hashBuffer } from '@/lib/file-hash';
 
@@ -126,6 +127,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const sfPath = seafilePathFromUrl(body.file_url || null);
+    if (sfPath) {
+      const dl = await downloadSeafileForScan(sfPath, MAX_BYTES);
+      if (!dl.ok) return NextResponse.json({ error: dl.error }, { status: dl.status });
+      fileBuffer = dl.buffer;
+      mediaType = normalizeMediaType(dl.mime, body.file_name || null);
+    } else {
     const fileId = driveFileId(body.file_url || null);
     if (!fileId) return NextResponse.json({ error: 'file or file_url is required' }, { status: 400 });
     const sa = await getServiceAccountToken();
@@ -137,6 +145,7 @@ export async function POST(request: NextRequest) {
     const dlRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`, { headers: { Authorization: `Bearer ${sa.accessToken}` } });
     if (!dlRes.ok) return NextResponse.json({ error: `Drive download failed (${dlRes.status})` }, { status: 502 });
     fileBuffer = await dlRes.arrayBuffer();
+    }
   }
 
   const supported = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];

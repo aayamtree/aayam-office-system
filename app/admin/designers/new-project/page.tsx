@@ -9,7 +9,7 @@ import { getProjectTypeCode } from '@/lib/job-workflow';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { extractFileIdFromLink, verifyDriveFile, formatBytes, getFileIcon, DriveFileInfo } from '@/lib/google-drive';
-import { uploadToDrive, getProjectFolder } from '@/lib/google-drive-upload';
+import { uploadToDrive, getProjectFolder, getDriveFolderLink } from '@/lib/google-drive-upload';
 import { createCalendarEvent, createProjectCalendarEvent } from '@/lib/google-calendar';
 import { format } from 'date-fns';
 
@@ -369,7 +369,7 @@ export default function NewProjectPage() {
                 if (uploadedFiles.length > 0) {
                     // Files go into files[]; drive_link holds ONLY the project folder link
                     // (plus any link the user typed), never the individual file links.
-                    const folderLink = projectFolderId ? `https://drive.google.com/drive/folders/${projectFolderId}` : '';
+                    const folderLink = projectFolderId ? getDriveFolderLink(projectFolderId) : '';
                     const driveLinkValue = [formData.driveLink, folderLink].filter(Boolean).join('\n') || null;
                     await supabase
                         .from('jobs')

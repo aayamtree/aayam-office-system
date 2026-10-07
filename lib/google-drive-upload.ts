@@ -4,6 +4,16 @@
  */
 
 import { logFileUpload } from './activity-logger';
+import { uploadFileToSeafile, sanitizeSegment, seafileFileUrl, seafileFolderLink } from './seafile-client';
+
+/**
+ * Storage switch. Default = Google Drive (nothing changes).
+ * Set NEXT_PUBLIC_STORAGE_BACKEND=seafile to send everything to the Raspberry Pi
+ * file server instead. The function names below stay the same on purpose, so the
+ * screens that call them need no change. In Pi mode a "folder id" is a folder path
+ * like "Aayam Projects/AAY-0012 - Name" and a "file id" is the full file path.
+ */
+export const USE_SEAFILE = process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile';
 
 // The company Shared Drive that files are stored in. Not a secret (it's an ID).
 // Override with NEXT_PUBLIC_GOOGLE_SHARED_DRIVE_ID if the drive ever changes.
@@ -58,6 +68,22 @@ export async function uploadToDrive(
     context?: { uploadedTo: string; resourceId?: string }
 ): Promise<DriveUploadResult> {
     try {
+        if (USE_SEAFILE) {
+            const up = await uploadFileToSeafile(file, folderId || 'Uploads', fileName);
+            if (!up.success || !up.path || !up.url) return { success: false, error: up.error || 'Upload failed' };
+            if (context) {
+                await logFileUpload({
+                    fileName: fileName || file.name,
+                    fileSize: file.size,
+                    fileType: file.type,
+                    fileUrl: up.url,
+                    uploadedTo: context.uploadedTo,
+                    resourceId: context.resourceId
+                });
+            }
+            return { success: true, fileId: up.path, webViewLink: up.url, webContentLink: up.url };
+        }
+
         if (!accessToken) {
             return { success: false, error: 'No access token provided' };
         }
@@ -133,6 +159,11 @@ export async function findOrCreateFolder(
     folderName: string,
     parentFolderId?: string
 ): Promise<{ folderId: string | null; error?: string }> {
+    if (USE_SEAFILE) {
+        // Folders are created automatically when a file is uploaded into them.
+        const parent = parentFolderId && parentFolderId !== SHARED_DRIVE_ID ? parentFolderId : '';
+        return { folderId: [parent, sanitizeSegment(folderName)].filter(Boolean).join('/') };
+    }
     try {
         // Search for existing folder
         let query = `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
@@ -193,6 +224,9 @@ export async function getProjectFolder(
     jobNumber: string,
     projectName: string
 ): Promise<{ folderId: string | null; error?: string }> {
+    if (USE_SEAFILE) {
+        return { folderId: `Aayam Projects/${sanitizeSegment(`${jobNumber} - ${projectName}`.slice(0, 100))}` };
+    }
     // 1. Find or create "Aayam Projects" root folder
     const root = await findOrCreateFolder(accessToken, 'Aayam Projects', SHARED_DRIVE_ID);
     if (!root.folderId) return root;
@@ -231,6 +265,7 @@ async function makeFilePublic(accessToken: string, fileId: string): Promise<void
  * Get direct thumbnail/preview URL for a Drive file
  */
 export function getDrivePreviewUrl(fileId: string): string {
+    if (USE_SEAFILE) return seafileFileUrl(fileId);
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
 }
 
@@ -238,6 +273,7 @@ export function getDrivePreviewUrl(fileId: string): string {
  * Get shareable link for a Drive file
  */
 export function getDriveShareLink(fileId: string): string {
+    if (USE_SEAFILE) return seafileFileUrl(fileId);
     return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
@@ -267,4 +303,12 @@ export async function deleteFromDrive(
     } catch (error: any) {
         return { success: false, error: error.message };
     }
+}
+
+/**
+ * Link to open a whole project folder (saved in jobs.drive_link).
+ */
+export function getDriveFolderLink(folderId: string): string {
+    if (USE_SEAFILE) return seafileFolderLink(folderId);
+    return `https://drive.google.com/drive/folders/${folderId}`;
 }

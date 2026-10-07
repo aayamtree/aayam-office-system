@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+async function getDriveToken() {
     // This hands out a live org-wide Google Drive token — staff only.
     const gate = await requireUser();
     if (!gate.ok) return gate.response;
@@ -41,4 +41,19 @@ export async function GET() {
         console.error('Token fetch error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
+}
+
+/**
+ * In Pi-storage mode (NEXT_PUBLIC_STORAGE_BACKEND=seafile) uploads no longer need a
+ * Google token. The real Google token is still returned when available (the
+ * Calendar feature uses it); if Google is unavailable we answer with a placeholder
+ * so file uploads to the Pi are never blocked by a Google problem.
+ */
+export async function GET() {
+    const res = await getDriveToken();
+    if (process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile' && !res.ok) {
+        const gate = await requireUser(); // only for logged-in staff
+        if (gate.ok) return NextResponse.json({ accessToken: 'pi-storage', mode: 'pi' });
+    }
+    return res;
 }

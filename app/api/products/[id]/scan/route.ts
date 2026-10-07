@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { getServiceAccountToken } from '@/lib/google-service-account';
+import { seafilePathFromUrl, downloadSeafileForScan } from '@/lib/seafile-server';
 import { runMasterChecks } from '@/lib/product-masters-server';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -140,6 +141,13 @@ export async function POST(
       .select('file_url, file_name')
       .eq('id', versionId)
       .single();
+    const sfPath = seafilePathFromUrl(version?.file_url || null);
+    if (sfPath) {
+      const dl = await downloadSeafileForScan(sfPath, MAX_BYTES);
+      if (!dl.ok) return NextResponse.json({ error: dl.error }, { status: dl.status });
+      fileBuffer = dl.buffer;
+      mediaType = normalizeMediaType(dl.mime, version?.file_name || null);
+    } else {
     const fileId = driveFileId(version?.file_url || null);
     if (!fileId) return NextResponse.json({ error: 'No Drive file found on this version' }, { status: 400 });
 
@@ -163,6 +171,7 @@ export async function POST(
     );
     if (!dlRes.ok) return NextResponse.json({ error: `Drive download failed (${dlRes.status})` }, { status: 502 });
     fileBuffer = await dlRes.arrayBuffer();
+    }
   }
 
   const supported = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];

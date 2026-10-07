@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { getServiceAccountToken } from '@/lib/google-service-account';
 import { deleteFromDrive } from '@/lib/google-drive-upload';
+import { deleteSeafileFile, seafilePathFromUrl, seafileConfigured } from '@/lib/seafile-server';
 
 /** Shared helper — service-role client for job file operations.
  *  Privileged writes must bypass the browser anon/authenticated client,
@@ -117,7 +118,11 @@ export async function DELETE(
 
   // Also remove the underlying file from the Shared Drive (best-effort: never
   // block the app-side removal if Drive is briefly unavailable).
-  if (removed?.fileId) {
+  // Files stored on the Pi file server: remove them there too (best-effort).
+  const piPath = seafilePathFromUrl(removed?.url) || (typeof removed?.fileId === 'string' && removed.fileId.startsWith('/') ? removed.fileId : null);
+  if (piPath && seafileConfigured()) {
+    await deleteSeafileFile(piPath);
+  } else if (removed?.fileId) {
     try {
       const sa = await getServiceAccountToken();
       if (sa.success && sa.accessToken) {

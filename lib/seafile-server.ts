@@ -1,0 +1,104 @@
+/**
+ * Seafile (Raspberry Pi file server) — SERVER-SIDE helpers.
+ *
+ * Talks to the Seafile "library API token" endpoints. The token is a secret and
+ * must only ever be read here, on the server (env SEAFILE_API_TOKEN). Browsers
+ * never see it — they get short-lived, one-time links from our own API routes.
+ */
+
+const BASE = (process.env.SEAFILE_URL || 'https://files.aayamfiles.com').replace(/\/$/, '');
+const TOKEN = process.env.SEAFILE_API_TOKEN || '';
+
+export function seafileConfigured(): boolean {
+    return !!TOKEN;
+}
+
+/** Normalise + validate a library path. Returns null if it looks unsafe. */
+export function cleanSeafilePath(p: string | null | undefined): string | null {
+    if (!p) return null;
+    let s = String(p).replace(/\\/g, '/');
+    if (!s.startsWith('/')) s = '/' + s;
+    if (s.split('/').some((seg) => seg === '..')) return null;
+    if (s.includes('\0')) return null;
+    return s;
+}
+
+/** Our stored file URLs look like /api/storage/file?p=%2FAayam%20Projects%2F... — get the path back. */
+export function seafilePathFromUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    const m = String(url).match(/\/api\/storage\/file\?(?:[^#]*&)?p=([^&#]+)/);
+    if (!m) return null;
+    try {
+        return cleanSeafilePath(decodeURIComponent(m[1]));
+    } catch {
+        return null;
+    }
+}
+
+async function sf(path: string, init: RequestInit = {}): Promise<Response> {
+    if (!TOKEN) throw new Error('Seafile is not configured (SEAFILE_API_TOKEN missing).');
+    return fetch(`${BASE}/api/v2.1/via-repo-token${path}`, {
+        ...init,
+        headers: { Authorization: `Token ${TOKEN}`, ...(init.headers || {}) },
+        cache: 'no-store',
+    });
+}
+
+/** One-time upload link (used by the browser to send a file straight to the Pi). */
+export async function getUploadLink(): Promise<string> {
+    const res = await sf('/upload-link/?path=/&from=api');
+    if (!res.ok) throw new Error(`Seafile upload-link failed (${res.status})`);
+    const link = await res.json();
+    if (typeof link !== 'string' || !link) throw new Error('Seafile returned no upload link');
+    return link;
+}
+
+/** Short-lived download link for one file. */
+export async function getDownloadLink(path: string): Promise<string> {
+    const p = cleanSeafilePath(path);
+    if (!p) throw new Error('Bad file path');
+    const res = await sf(`/download-link/?path=${encodeURIComponent(p)}`);
+    if (!res.ok) throw new Error(`Seafile download-link failed (${res.status})`);
+    const link = await res.json();
+    if (typeof link !== 'string' || !link) throw new Error('Seafile returned no download link');
+    return link;
+}
+
+/** Delete one file. Best effort — returns ok:false instead of throwing. */
+export async function deleteSeafileFile(path: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+        const p = cleanSeafilePath(path);
+        if (!p) return { ok: false, error: 'Bad file path' };
+        const res = await sf(`/file/?path=${encodeURIComponent(p)}`, { method: 'DELETE' });
+        return res.ok ? { ok: true } : { ok: false, error: `Seafile delete failed (${res.status})` };
+    } catch (e: any) {
+        return { ok: false, error: e?.message || 'Seafile delete failed' };
+    }
+}
+
+/** Download a file to memory for AI scanning, refusing anything over maxBytes. */
+export async function downloadSeafileForScan(
+    path: string,
+    maxBytes: number
+): Promise<
+    | { ok: true; buffer: ArrayBuffer; mime: string }
+    | { ok: false; status: number; error: string }
+> {
+    try {
+        const link = await getDownloadLink(path);
+        const res = await fetch(link, { cache: 'no-store' });
+        if (!res.ok) return { ok: false, status: 502, error: `File download failed (${res.status})` };
+        const len = parseInt(res.headers.get('content-length') || '0', 10);
+        if (len && len > maxBytes) {
+            return { ok: false, status: 413, error: 'This file is too large to scan (over 22 MB). Export a compressed PDF or JPG.' };
+        }
+        const buffer = await res.arrayBuffer();
+        if (buffer.byteLength > maxBytes) {
+            return { ok: false, status: 413, error: 'This file is too large to scan (over 22 MB). Export a compressed PDF or JPG.' };
+        }
+        const mime = (res.headers.get('content-type') || '').split(';')[0].trim();
+        return { ok: true, buffer, mime };
+    } catch (e: any) {
+        return { ok: false, status: 502, error: e?.message || 'File download failed' };
+    }
+}
