@@ -19,6 +19,7 @@ interface Profile {
 
 import ProductionSettings from './production/page';
 import GoogleDriveSettings from '@/components/settings/GoogleDriveSettings';
+import PiStatusCard from '@/components/drive/PiStatusCard';
 import VendorCategoriesManager from '@/components/settings/VendorCategoriesManager';
 import ProductCategoriesManager from '@/components/settings/ProductCategoriesManager';
 import PairDropSettings from '@/components/settings/PairDropSettings';
@@ -168,7 +169,7 @@ export default function UserManagementPage() {
                 : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
-              Google Drive
+              {process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile' ? 'Office Cloud' : 'Google Drive'}
             </button>
             <button
               onClick={() => setActiveTab('vendor-categories')}
@@ -400,7 +401,7 @@ export default function UserManagementPage() {
           <PairDropSettings />
         </div>
       ) : (
-        <GoogleDriveSettings />
+        process.env.NEXT_PUBLIC_STORAGE_BACKEND === 'seafile' ? <PiStatusCard /> : <GoogleDriveSettings />
       )}
     </div>
   );
