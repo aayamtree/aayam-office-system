@@ -10,7 +10,7 @@ import NewEventModal from '@/components/calendar/NewEventModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ScrollList } from '@/components/ui/ScrollList';
-import { Calendar, ArrowRight, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Calendar, ArrowRight, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Plus } from 'lucide-react';
 import {
     format,
     startOfWeek,
@@ -99,6 +99,8 @@ export default function MiniCalendarWidget() {
 
     const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
     const [showNewEvent, setShowNewEvent] = useState(false);
+    // Fold = hide the day's list entirely, leaving a compact card.
+    const [folded, setFolded] = useState(false);
 
     const handleDayClick = (dateStr: string) => {
         setSelectedDate(dateStr);
@@ -234,19 +236,31 @@ export default function MiniCalendarWidget() {
                                         : `${selectedDayItems.length} item${selectedDayItems.length !== 1 ? 's' : ''}`}
                                 </p>
                             </div>
+                            <div className="flex items-center gap-1.5">
+                            {selectedDayItems.length > 0 && (
+                                <button
+                                    onClick={() => setFolded(f => !f)}
+                                    className="flex items-center gap-1 px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg border border-border"
+                                    aria-expanded={!folded}
+                                >
+                                    {folded ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+                                    {folded ? 'Show' : 'Fold'}
+                                </button>
+                            )}
                             <button
                                 onClick={() => setShowNewEvent(true)}
                                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-foreground text-background rounded-lg"
                             >
                                 <Plus size={13} /> Add
                             </button>
+                            </div>
                         </div>
 
                         {selectedDayItems.length === 0 ? (
                             <div className="py-4 text-center text-muted-foreground">
                                 <p className="text-xs">Nothing on this day</p>
                             </div>
-                        ) : (
+                        ) : folded ? null : (
                             <ScrollList size="md" className="space-y-1.5 pb-1">
                                 {selectedDayItems.map(item => {
                                     const bgClass = item.color.split(' ')[0];
