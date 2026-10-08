@@ -94,6 +94,10 @@
         {
             "path": "/api/cron/migrate-drive",
             "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/drive-cleanup",
+            "schedule": "*/5 * * * *"
         }
     ]
 }

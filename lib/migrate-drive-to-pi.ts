@@ -10,7 +10,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { getServiceAccountToken } from '@/lib/google-service-account';
-import { uploadLargeToSeafile, seafileConfigured } from '@/lib/seafile-server';
+import { uploadLargeToSeafile, seafileConfigured, getDownloadLink, forceHttps } from '@/lib/seafile-server';
 import { sanitizeSegment, seafileFileUrl, seafileFolderLink } from '@/lib/seafile-client';
 
 const MAX_ATTEMPTS = 3;
@@ -207,6 +207,89 @@ export async function migrateProductsBatch(budgetMs: number): Promise<{ moved: n
             if (f) patch.file_url = f;
             if (t) patch.thumbnail_url = t;
             if (Object.keys(patch).length) await client.from(table).update(patch).eq('id', row.id);
+        }
+    }
+    return out;
+}
+
+/**
+ * Free up Google Drive: move the OLD copies of already-moved files to the Drive TRASH.
+ * Safe by design:
+ *  - Only items that were moved (have old_drive_id) and whose Pi copy has exactly the same size as the Drive file.
+ *  - A Drive file that is still used by any unmoved item is never touched.
+ *  - It goes to the Drive trash (recoverable for 30 days) — never permanently deleted by the app.
+ *  - Every handled item is marked with drive_trashed_at so it is not handled twice.
+ */
+async function piSize(path: string): Promise<number | null> {
+    try {
+        const link = forceHttps(await getDownloadLink(path));
+        const r = await fetch(link, { headers: { Range: 'bytes=0-0' }, cache: 'no-store' });
+        if (r.status !== 206 && r.status !== 200) return null;
+        const cr = r.headers.get('content-range');
+        const total = cr ? Number(cr.split('/')[1]) : Number(r.headers.get('content-length'));
+        try { await r.arrayBuffer(); } catch { /* ignore */ }
+        return Number.isFinite(total) ? total : null;
+    } catch { return null; }
+}
+
+export async function cleanupDriveBatch(budgetMs: number): Promise<{ trashed: number; skipped: number; gone: number; left: number; note?: string }> {
+    const started = Date.now();
+    const out = { trashed: 0, skipped: 0, gone: 0, left: 0 } as { trashed: number; skipped: number; gone: number; left: number; note?: string };
+    const sa = await getServiceAccountToken();
+    if (!sa.success || !sa.accessToken) { out.note = 'Google service account unavailable'; return out; }
+    const auth = { Authorization: `Bearer ${sa.accessToken}` };
+    const client = db();
+    const { data: jobs } = await client.from('jobs').select('id,job_number,files,print_files');
+    // Drive ids still in use by items that have NOT been moved: never touch these.
+    const inUse = new Set<string>();
+    for (const j of (jobs || []) as any[]) for (const it of [...(j.files || []), ...(j.print_files || [])]) {
+        if (it && isDriveUrl(it.url)) { const id = driveIdOf(it); if (id) inUse.add(id); }
+    }
+    const verdict = new Map<string, 'trashed' | 'gone' | 'skip'>();
+    const eligible = (it: any) => it && it.old_drive_id && it.storage === 'seafile' && !it.drive_trashed_at && !inUse.has(it.old_drive_id);
+
+    for (const job of (jobs || []) as any[]) {
+        if (!([...(job.files || []), ...(job.print_files || [])].some(eligible))) continue;
+        if (Date.now() - started > budgetMs) { out.left++; continue; }
+        let touched = false;
+        const handle = async (arr: any[]) => {
+            for (let i = 0; i < arr.length; i++) {
+                const it = arr[i];
+                if (!eligible(it)) continue;
+                if (Date.now() - started > budgetMs) return;
+                const id = it.old_drive_id as string;
+                let v = verdict.get(id);
+                if (!v) {
+                    const base = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`;
+                    const m = await fetch(`${base}?fields=size,trashed,mimeType&supportsAllDrives=true`, { headers: auth });
+                    if (m.status === 404) v = 'gone';
+                    else if (!m.ok) v = 'skip';
+                    else {
+                        const meta = await m.json();
+                        if (meta.trashed) v = 'gone';
+                        else if (meta.mimeType === 'application/vnd.google-apps.folder') v = 'skip';
+                        else {
+                            const pi = await piSize(String(it.fileId));
+                            if (pi == null || (meta.size != null && Number(meta.size) !== pi)) v = 'skip';
+                            else {
+                                const t = await fetch(`${base}?supportsAllDrives=true`, { method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
+                                v = t.ok ? 'trashed' : 'skip';
+                            }
+                        }
+                    }
+                    verdict.set(id, v);
+                    if (v === 'trashed') out.trashed++; else if (v === 'gone') out.gone++; else out.skipped++;
+                }
+                if (v === 'trashed' || v === 'gone') { arr[i] = { ...it, drive_trashed_at: new Date().toISOString() }; touched = true; }
+                else out.left++;
+            }
+        };
+        const files: any[] = Array.isArray(job.files) ? [...job.files] : [];
+        const print: any[] = Array.isArray(job.print_files) ? [...job.print_files] : [];
+        await handle(files); await handle(print);
+        if (touched) {
+            const msg = await saveJob(client, job.id, files, print, null);
+            if (msg) { out.note = `Could not save job ${job.job_number}: ${msg}`; break; }
         }
     }
     return out;
