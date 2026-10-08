@@ -12,7 +12,10 @@ export const maxDuration = 300;
 export async function GET(request: NextRequest) {
     const gate = await authorizeCron(request);
     if (!gate.ok) return gate.response;
-    if (process.env.DRIVE_CLEANUP !== 'on') return NextResponse.json({ skipped: 'DRIVE_CLEANUP is not on' });
+    if (String(process.env.DRIVE_CLEANUP || '').trim().toLowerCase() !== 'on') {
+        await logCronRun('drive-cleanup', { ok: true, durationMs: 0, message: 'skipped: DRIVE_CLEANUP is not set to on' });
+        return NextResponse.json({ skipped: 'DRIVE_CLEANUP is not on' });
+    }
     const started = Date.now();
     const r = await cleanupDriveBatch(200_000);
     await logCronRun('drive-cleanup', { ok: !r.note, durationMs: Date.now() - started, message: `trashed ${r.trashed}, already gone ${r.gone}, skipped ${r.skipped}, left ${r.left}` + (r.note ? ` — ${r.note}` : '') });
