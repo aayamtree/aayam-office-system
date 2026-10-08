@@ -60,9 +60,18 @@ export default function OrdersPage() {
         (job.client && job.client.created_by === profile.id)
       );
     }
-    // Admin/other roles: all orders, on every page (Sales and Marketing alike).
+    // Marketing > Orders (admin view): only orders entered/owned by marketing people.
+    if (isMarketingView) {
+      const marketingIds = new Set(allProfiles.filter(p => p.role === 'marketing').map(p => p.id));
+      return allJobs.filter(job =>
+        (job.sales_person_id && marketingIds.has(job.sales_person_id)) ||
+        (job.created_by && marketingIds.has(job.created_by)) ||
+        (job.client?.created_by && marketingIds.has(job.client.created_by))
+      );
+    }
+    // Sales > Orders (admin view): every order.
     return allJobs;
-  }, [allJobs, profile]);
+  }, [allJobs, profile, isMarketingView, allProfiles]);
 
   const { clients: allClients } = useClients();
 
