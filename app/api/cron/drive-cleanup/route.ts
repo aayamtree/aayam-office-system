@@ -18,6 +18,6 @@ export async function GET(request: NextRequest) {
     }
     const started = Date.now();
     const r = await cleanupDriveBatch(200_000);
-    await logCronRun('drive-cleanup', { ok: !r.note, durationMs: Date.now() - started, message: `trashed ${r.trashed}, already gone ${r.gone}, skipped ${r.skipped}, left ${r.left}` + (r.note ? ` — ${r.note}` : '') });
+    await logCronRun('drive-cleanup', { ok: !r.note, durationMs: Date.now() - started, message: `trashed ${r.trashed}, already gone ${r.gone}, skipped ${r.skipped} ${JSON.stringify(r.reasons || {})}, left ${r.left}` + (r.note ? ` — ${r.note}` : '') });
     return NextResponse.json(r);
 }

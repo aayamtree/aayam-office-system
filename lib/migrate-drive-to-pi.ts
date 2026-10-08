@@ -232,9 +232,10 @@ async function piSize(path: string): Promise<number | null> {
     } catch { return null; }
 }
 
-export async function cleanupDriveBatch(budgetMs: number): Promise<{ trashed: number; skipped: number; gone: number; left: number; note?: string }> {
+export async function cleanupDriveBatch(budgetMs: number): Promise<{ trashed: number; skipped: number; gone: number; left: number; note?: string; reasons?: Record<string, number> }> {
     const started = Date.now();
-    const out = { trashed: 0, skipped: 0, gone: 0, left: 0 } as { trashed: number; skipped: number; gone: number; left: number; note?: string };
+    const out = { trashed: 0, skipped: 0, gone: 0, left: 0, reasons: {} as Record<string, number> } as { trashed: number; skipped: number; gone: number; left: number; note?: string; reasons: Record<string, number> };
+    const why = (r: string) => { out.reasons[r] = (out.reasons[r] || 0) + 1; };
     const sa = await getServiceAccountToken();
     if (!sa.success || !sa.accessToken) { out.note = 'Google service account unavailable'; return out; }
     const auth = { Authorization: `Bearer ${sa.accessToken}` };
@@ -263,17 +264,18 @@ export async function cleanupDriveBatch(budgetMs: number): Promise<{ trashed: nu
                     const base = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`;
                     const m = await fetch(`${base}?fields=size,trashed,mimeType&supportsAllDrives=true`, { headers: auth });
                     if (m.status === 404) v = 'gone';
-                    else if (!m.ok) v = 'skip';
+                    else if (!m.ok) { v = 'skip'; why(`drive-meta-${m.status}`); }
                     else {
                         const meta = await m.json();
                         if (meta.trashed) v = 'gone';
                         else if (meta.mimeType === 'application/vnd.google-apps.folder') v = 'skip';
                         else {
                             const pi = await piSize(String(it.fileId));
-                            if (pi == null || (meta.size != null && Number(meta.size) !== pi)) v = 'skip';
+                            if (pi == null) { v = 'skip'; why('pi-copy-missing'); }
+                            else if (meta.size != null && Number(meta.size) !== pi) { v = 'skip'; why('size-mismatch'); }
                             else {
                                 const t = await fetch(`${base}?supportsAllDrives=true`, { method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
-                                v = t.ok ? 'trashed' : 'skip';
+                                if (t.ok) v = 'trashed'; else { v = 'skip'; why(`trash-denied-${t.status}-pi-verified`); }
                             }
                         }
                     }
