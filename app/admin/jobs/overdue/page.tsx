@@ -7,6 +7,8 @@ import { getStageName, ALL_WORKFLOW_STAGES } from '@/lib/job-workflow';
 import { toast } from '@/lib/toast';
 import { DELAY_REASONS, type DelayReason } from '@/types/database';
 import ProductBadge from '@/components/shared/ProductBadge';
+import PageSearch from '@/components/shared/PageSearch';
+import { matchesQuery } from '@/lib/page-search';
 import {
   AlertTriangle, Clock, User, Building2,
   RefreshCw, Loader2, ArrowRight, ChevronDown, ChevronUp, X, Filter
@@ -74,12 +76,14 @@ export default function OverduePage() {
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [filterJobType, setFilterJobType] = useState<string | null>(null);
   // 'unset' surfaces the jobs nobody has explained yet — usually the ones worth chasing.
+  const [query, setQuery] = useState('');
   const [filterReason, setFilterReason] = useState<DelayReason | 'unset' | null>(null);
   const [savingReason, setSavingReason] = useState<string | null>(null);
 
-  const hasAnyFilter = filterDesigner || filterUrgency !== 'all' || filterStage || filterPriority || filterJobType || filterReason;
+  const hasAnyFilter = query.trim() || filterDesigner || filterUrgency !== 'all' || filterStage || filterPriority || filterJobType || filterReason;
 
   const clearAllFilters = () => {
+    setQuery('');
     setFilterDesigner(null);
     setFilterUrgency('all');
     setFilterStage(null);
@@ -200,6 +204,8 @@ export default function OverduePage() {
   // ── Filtered + sorted ────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let arr = [...jobs];
+    const q = query.trim();
+    if (q) arr = arr.filter(j => matchesQuery([j.job_number, j.project_name, j.client_name, j.designer_name, j.product_category, j.job_type, j.delay_note], q));
     if (filterDesigner) arr = arr.filter(j => j.designer_name === filterDesigner);
     if (filterUrgency === 'critical') arr = arr.filter(j => j.days_overdue >= 7);
     else if (filterUrgency === 'warning') arr = arr.filter(j => j.days_overdue >= 3 && j.days_overdue < 7);
@@ -222,7 +228,7 @@ export default function OverduePage() {
       return sortAsc ? -cmp : cmp;
     });
     return arr;
-  }, [jobs, filterDesigner, filterUrgency, filterStage, filterPriority, filterJobType, filterReason, sortBy, sortAsc]);
+  }, [jobs, filterDesigner, filterUrgency, filterStage, filterPriority, filterJobType, filterReason, sortBy, sortAsc, query]);
 
   // How the overdue pile splits by who we're waiting on.
   const reasonCounts = useMemo(() => {
@@ -269,6 +275,13 @@ export default function OverduePage() {
           Refresh
         </button>
       </div>
+
+      <PageSearch
+        value={query}
+        onChange={setQuery}
+        placeholder="Search job no., client, job name or designer…  ( / )"
+        resultText={`${filtered.length} of ${jobs.length} overdue jobs`}
+      />
 
       {loading ? (
         <div className="flex justify-center py-20">

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { Package, Layers, ChevronLeft, ChevronRight, ScanLine, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import ProductBadge from '@/components/shared/ProductBadge';
+import { matchesQuery } from '@/lib/page-search';
 
 interface PendingJob {
     id: string;
@@ -148,8 +149,8 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
         // Filter by product_category (POUCH/BOX/STICKER), not job_type (print_only/design_print)
         const productCat = (job.product_category || '').toUpperCase();
         const matchesFilter = filter === 'ALL' || productCat === filter;
-        const matchesSearch = job.job_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        // job no., client AND job name; punctuation is ignored ("dp2809009" finds "DP-2809009")
+        const matchesSearch = matchesQuery([job.job_number, job.client_name, job.project_name], searchTerm.trim());
         return matchesFilter && matchesSearch;
     });
 
@@ -182,7 +183,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                 <div className="flex gap-2">
                     <input
                         type="text"
-                        placeholder="Search jobs or clients..."
+                        placeholder="Search job no., client or job name..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-gray-400 transition-all outline-none text-sm"

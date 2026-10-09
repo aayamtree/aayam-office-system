@@ -21,6 +21,7 @@ export function jobMatches(job: any, query: string): boolean {
       job.project_name,
       job.client?.company,
       job.client?.name,
+      job.designer?.full_name,
       job.product_category,
       job.job_type,
       job.package?.consignment_no,

@@ -9,6 +9,8 @@ import { toast } from '@/lib/toast';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { EditPrintRunModal } from '@/components/print-planner/EditPrintRunModal';
 import { runProductCategory } from '@/lib/product-category';
+import PageSearch from '@/components/shared/PageSearch';
+import { matchesQuery } from '@/lib/page-search';
 import {
     Printer, Clock, CheckCircle, Truck,
     Calendar, IndianRupee, Trash2, RefreshCw, ArrowRight, Eye, X,
@@ -138,6 +140,7 @@ export default function PrintRunsPage() {
     const [runs, setRuns] = useState<PrintRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string>('all');
+    const [query, setQuery] = useState('');
     const [updating, setUpdating] = useState<string | null>(null);
     const [focusJobId, setFocusJobId] = useState<string | null>(null);
     const focusRunRef = useRef<HTMLDivElement>(null);
@@ -614,7 +617,7 @@ export default function PrintRunsPage() {
 
     // 'all' means all ACTIVE work. A handed-over run is history: it would
     // otherwise pile up here exactly like the 270-card job board did.
-    const filteredRuns = filter === 'all' ? runs.filter(r => !ARCHIVED.includes(r.status))
+    const statusRuns = filter === 'all' ? runs.filter(r => !ARCHIVED.includes(r.status))
         : filter === 'overdue'
             ? runs.filter(r => r.deadline && new Date(r.deadline) < today && !DONE_PRINTING.includes(r.status))
             : filter === 'docs_pending'
@@ -624,6 +627,17 @@ export default function PrintRunsPage() {
                 : filter === 'closed'
                     ? runs.filter(r => ARCHIVED.includes(r.status))
                     : runs.filter(r => r.status === filter);
+
+    // Search looks through EVERY run (closed ones too) so an old run can still be found.
+    const searchQ = query.trim();
+    const searching = searchQ !== '';
+    const filteredRuns = searching
+        ? runs.filter(r => matchesQuery([
+            r.print_run_number, r.title, r.vendor_name, r.machine_name, r.material_name,
+            r.paper_vendor_name, r.transporter_name, r.invoice_reference, r.eway_bill_number,
+            ...(r.jobs || []).flatMap(j => [j.job_number, j.client_name, j.item_name, j.product_category]),
+        ], searchQ))
+        : statusRuns;
 
     // ?job=<id> — arrived from ⌘K's "where does this appear" list. A job isn't a
     // row here, it's a line inside a run, so highlight the RUN that carries it.
@@ -778,12 +792,19 @@ export default function PrintRunsPage() {
                 </button>
             </div>
 
+            <PageSearch
+                value={query}
+                onChange={setQuery}
+                placeholder="Search run no., job no., client, job name or printer…  ( / )"
+                resultText={`${filteredRuns.length} of ${runs.length} print runs (all statuses)`}
+            />
+
             {/* Cards Grid */}
             {filteredRuns.length === 0 ? (
                 <div className="bg-card rounded-md border border-border p-12 text-center">
                     <Printer size={36} className="mx-auto text-muted-foreground/30 mb-3" />
-                    <p className="text-muted-foreground font-medium text-sm">No print runs found</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">Create a print run from the Print Planner</p>
+                    <p className="text-muted-foreground font-medium text-sm">{searching ? `Nothing matches "${searchQ}"` : 'No print runs found'}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">{searching ? 'Try fewer words, or a job number' : 'Create a print run from the Print Planner'}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">

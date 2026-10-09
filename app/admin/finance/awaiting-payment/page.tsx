@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import DispatchedUnpaid from '@/components/finance/DispatchedUnpaid';
+import PageSearch from '@/components/shared/PageSearch';
+import { matchesQuery } from '@/lib/page-search';
 import {
   IndianRupee, Building2, User, RefreshCw, Loader2, CheckCircle2, Clock,
 } from 'lucide-react';
@@ -25,6 +27,7 @@ interface PayJob {
 export default function AwaitingPaymentPage() {
   const [jobs, setJobs] = useState<PayJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +120,8 @@ export default function AwaitingPaymentPage() {
     [jobs]
   );
   const partPaid = jobs.filter(j => j.amount_received > 0).length;
+  const searchQ = query.trim();
+  const viewJobs = searchQ ? jobs.filter(j => matchesQuery([j.job_number, j.project_name, j.client_name, j.designer_name], searchQ)) : jobs;
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -130,10 +135,17 @@ export default function AwaitingPaymentPage() {
         </p>
       </div>
 
+      <PageSearch
+        value={query}
+        onChange={setQuery}
+        placeholder="Search job no., client, job name or invoice no.…  ( / )"
+        resultText={`${viewJobs.length} of ${jobs.length} design files`}
+      />
+
       {/* Print / production work that has already shipped. Listed first
           because the goods are gone: that money is at more risk than a
           design file we could still withhold. */}
-      <DispatchedUnpaid />
+      <DispatchedUnpaid query={query} />
 
       <hr className="border-gray-200" />
 
@@ -197,7 +209,10 @@ export default function AwaitingPaymentPage() {
             <span />
           </div>
           <div className="divide-y">
-            {jobs.map((job) => (
+            {viewJobs.length === 0 && (
+              <p className="px-4 py-6 text-center text-sm text-gray-500">No design files match &quot;{searchQ}&quot;.</p>
+            )}
+            {viewJobs.map((job) => (
               <div
                 key={job.id}
                 className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr_150px_120px] gap-2 md:gap-0 px-4 py-3 items-center hover:bg-black/[0.02]"

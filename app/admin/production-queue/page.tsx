@@ -8,6 +8,8 @@ import type { Job, ProductionSummary } from '@/types/database';
 import { ShareToChat } from '@/components/ShareToChat';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 import ProductBadge from '@/components/shared/ProductBadge';
+import PageSearch from '@/components/shared/PageSearch';
+import { jobMatches } from '@/lib/page-search';
 
 export default function ProductionQueuePage() {
 
@@ -23,6 +25,7 @@ export default function ProductionQueuePage() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<string | null>(null);
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [query, setQuery] = useState('');
     const [categories, setCategories] = useState<string[]>([]);
 
     // ?job=<id> — arrived here from ⌘K's "where does this appear" list. This
@@ -110,7 +113,7 @@ export default function ProductionQueuePage() {
     const filteredJobs = getFilteredJobs().filter(job => {
         if (categoryFilter === 'all') return true;
         return job.product_category === categoryFilter;
-    });
+    }).filter(job => !query.trim() || jobMatches(job, query.trim()));
 
     const getStageBadge = (job: Job) => {
         if (job.print_ready && job.client_approval) {
@@ -299,6 +302,12 @@ export default function ProductionQueuePage() {
                         ))}
                     </div>
                 </div>
+                <PageSearch
+                    value={query}
+                    onChange={setQuery}
+                    placeholder="Search job no., client or job name…  ( / )"
+                    resultText={`${filteredJobs.length} of ${jobs.length} jobs`}
+                />
                 {/* Jobs Table */}
                 <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
                     <div className="p-4 border-b border-gray-100">
@@ -316,7 +325,7 @@ export default function ProductionQueuePage() {
                             <TrendingUp className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                             <p className="text-gray-500 font-medium">No jobs found</p>
                             <p className="text-sm text-gray-400 mt-1">
-                                {filter ? 'Try clearing the filter' : 'All jobs are completed'}
+                                {query.trim() ? 'Nothing matches your search — try fewer words' : filter ? 'Try clearing the filter' : 'All jobs are completed'}
                             </p>
                         </div>
                     ) : (

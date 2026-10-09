@@ -18,6 +18,7 @@ import {
   type PendingPayment, type PendingPaymentsSnapshot,
 } from '@/lib/pending-payments';
 import { Truck, Building2, Loader2, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { matchesQuery } from '@/lib/page-search';
 
 function ageClass(days: number): string {
   if (days > 60) return 'bg-red-50 border-l-red-600';
@@ -33,7 +34,7 @@ function ageBadge(days: number): string {
   return 'bg-emerald-100 text-emerald-700';
 }
 
-export default function DispatchedUnpaid() {
+export default function DispatchedUnpaid({ query = '' }: { query?: string }) {
   const [snap, setSnap] = useState<PendingPaymentsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +76,9 @@ export default function DispatchedUnpaid() {
     }
   };
 
-  const items = snap?.items.filter(i => !filterBucket || i.bucket === filterBucket) || [];
+  const q = query.trim();
+  const items = (snap?.items.filter(i => !filterBucket || i.bucket === filterBucket) || [])
+    .filter(i => !q || matchesQuery([i.job_number, i.project_name, i.client_name, i.invoice_reference, i.client_ref_no], q));
 
   return (
     <section className="space-y-3">

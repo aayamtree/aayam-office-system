@@ -12,6 +12,8 @@ import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPa
 import { getVerifiedQty } from '@/lib/packing-display';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
+import PageSearch from '@/components/shared/PageSearch';
+import { jobMatches } from '@/lib/page-search';
 
 // Jobs land here the moment QC passes them — before anyone has decided
 // which box they go in. Packing several small jobs of one client together
@@ -75,6 +77,12 @@ export default function PackPage() {
   }, [packedJobs]);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Search box: narrows the cards on screen only — selection and packing logic still use the full lists.
+  const [query, setQuery] = useState('');
+  const searchQ = query.trim();
+  const searching = searchQ !== '';
+  const viewUnpacked = searching ? unpacked.filter(j => jobMatches(j, searchQ)) : unpacked;
+  const viewPackedGroups = searching ? packedGroups.filter(g => g.jobs.some(j => jobMatches(j, searchQ))) : packedGroups;
 
   // Selection hygiene: a job can leave "Awaiting Packing" (packed by someone
   // else in another tab, or bounced back for rework) while its id sits here.
@@ -316,6 +324,13 @@ export default function PackPage() {
         </Link>
       </div>
 
+      <PageSearch
+        value={query}
+        onChange={setQuery}
+        placeholder="Search job no., client or job name…  ( / )"
+        resultText={`${viewUnpacked.length} of ${unpacked.length} awaiting · ${viewPackedGroups.length} of ${packedGroups.length} packed boxes`}
+      />
+
       {selectedJobs.length > 0 && (
         <div className="sticky top-2 z-40 flex flex-wrap items-center gap-2 bg-gray-900 text-white rounded-md px-3 py-2.5 shadow-lg">
           <Package className="w-4 h-4 shrink-0" />
@@ -341,13 +356,13 @@ export default function PackPage() {
 
       <div>
         <h2 className="text-section text-gray-900 font-semibold mb-2">Awaiting Packing ({unpacked.length})</h2>
-        {unpacked.length === 0 ? (
+        {viewUnpacked.length === 0 ? (
           <div className="text-center py-10 text-gray-500 border border-dashed rounded-md">
-            Nothing waiting to be packed — QC-passed jobs land here.
+            {searching ? <>Nothing awaiting packing matches &quot;{searchQ}&quot;.</> : 'Nothing waiting to be packed — QC-passed jobs land here.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-            {unpacked.map(job => {
+            {viewUnpacked.map(job => {
               const isSelected = selectedIds.has(job.id);
               const selectDisabled = !isSelected && !!anchorClientId && job.client_id !== anchorClientId;
               const isOverdue = job.client_deadline && new Date(job.client_deadline) < new Date();
@@ -389,11 +404,11 @@ export default function PackPage() {
         )}
       </div>
 
-      {packedGroups.length > 0 && (
+      {viewPackedGroups.length > 0 && (
         <div>
           <h2 className="text-section text-gray-900 font-semibold mb-2">Packed — Ready to Dispatch ({packedJobs.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {packedGroups.map(({ key, jobs: groupJobs }) => {
+            {viewPackedGroups.map(({ key, jobs: groupJobs }) => {
               const pkg = (groupJobs[0] as any).package;
               return (
                 <div key={key} className="bg-white rounded-md overflow-hidden border border-gray-200">
@@ -408,9 +423,14 @@ export default function PackPage() {
                     <p className="text-xs text-gray-700">
                       📦 {pkg?.package_count} {pkg?.package_type}(s){pkg?.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
                     </p>
-                    <p className="text-[11px] text-gray-500">
-                      {groupJobs.length} job{groupJobs.length > 1 ? 's' : ''}: {groupJobs.map(j => j.job_number).join(', ')}
-                    </p>
+                    <div className="space-y-1 pt-0.5">
+                      {groupJobs.map(j => (
+                        <div key={j.id} className="border-l-2 border-gray-300 pl-2">
+                          <p className="text-[10px] font-mono font-semibold text-gray-500">#{j.job_number}</p>
+                          <p className="text-xs font-semibold text-gray-900 leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</p>
+                        </div>
+                      ))}
+                    </div>
                     <button
                       onClick={() => openEdit({ key, jobs: groupJobs })}
                       className="mt-1 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 font-medium"
