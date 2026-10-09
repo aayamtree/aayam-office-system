@@ -18,6 +18,8 @@ import { shareDocsAcrossPackages, getDispatchPaperwork } from '@/lib/job-documen
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { createPackage } from '@/lib/packages';
+import PageSearch from '@/components/shared/PageSearch';
+import { jobMatches, matchesQuery } from '@/lib/page-search';
 
 export default function DispatchPage() {
   const { profile } = useAuth();
@@ -127,6 +129,10 @@ export default function DispatchPage() {
   // the board below: click one to see only that pile, click it again to see
   // everything. Mirrors the Print Runs screen, which already works this way.
   const [focus, setFocus] = useState<'qc' | 'ready' | 'dispatched' | 'delayed' | null>(null);
+  // Typed in the search box — narrows every card on this page (⌘K stays global).
+  const [query, setQuery] = useState('');
+  const searchQ = query.trim();
+  const searching = searchQ !== '';
 
   // "Printer → Client": the job ships straight from the printer, never touching
   // our warehouse, so physical QC is skipped. The goods photos (packaging /
@@ -240,8 +246,16 @@ export default function DispatchPage() {
       if (!byKey.has(key)) { byKey.set(key, []); order.push(key); }
       byKey.get(key)!.push(d);
     }
-    return order.slice(0, 6).map(key => ({ key, rows: byKey.get(key)! }));
-  }, [dispatches]);
+    const all = order.map(key => ({ key, rows: byKey.get(key)! }));
+    // Searching looks through every past dispatch, not just the latest 6.
+    if (searching) {
+      return all.filter(({ rows }) => rows.some(d => matchesQuery(
+        [d.consignment_no, d.dispatch_number, d.client?.company, d.client?.name, d.transporter_name, d.job?.job_number, d.job?.project_name],
+        searchQ,
+      )));
+    }
+    return all.slice(0, 6);
+  }, [dispatches, searching, searchQ]);
 
   // Delayed count
   const today = new Date();
@@ -263,23 +277,29 @@ export default function DispatchPage() {
   const showDispatchedSection = focus === null || focus === 'dispatched';
 
   const onlyLate = focus === 'delayed';
-  const viewMaterialReceived = onlyLate ? materialReceived.filter(isDelayed) : materialReceived;
-  const viewPendingQC = onlyLate ? pendingQC.filter(isDelayed) : pendingQC;
-  const viewAwaitingPacking = onlyLate ? awaitingPacking.filter(isDelayed) : awaitingPacking;
-  const viewPackedGroups = onlyLate
+  const bySearch = (list: Job[]) => (searching ? list.filter(j => jobMatches(j, searchQ)) : list);
+  const viewMaterialReceived = bySearch(onlyLate ? materialReceived.filter(isDelayed) : materialReceived);
+  const viewPendingQC = bySearch(onlyLate ? pendingQC.filter(isDelayed) : pendingQC);
+  const viewAwaitingPacking = bySearch(onlyLate ? awaitingPacking.filter(isDelayed) : awaitingPacking);
+  const viewPackedGroups = (onlyLate
     ? packedGroups.filter(g => g.jobs.some(isDelayed))
-    : packedGroups;
+    : packedGroups
+  ).filter(g => !searching || g.jobs.some(j => jobMatches(j, searchQ)));
 
   // A filter that hides everything reads as "there is no work", which on an
   // operations board is a dangerous thing to imply. Say which filter is on and
   // offer the way out.
   const filteredToNothing =
-    focus !== null &&
+    (focus !== null || searching) &&
     viewMaterialReceived.length === 0 &&
     viewPendingQC.length === 0 &&
     viewAwaitingPacking.length === 0 &&
     viewPackedGroups.length === 0 &&
-    !(focus === 'dispatched' && recentGroups.length > 0);
+    !(showDispatchedSection && recentGroups.length > 0);
+
+  const boardTotal = materialReceived.length + pendingQC.length + readyToDispatch.length;
+  const boardShown = viewMaterialReceived.length + viewPendingQC.length + viewAwaitingPacking.length
+    + viewPackedGroups.reduce((n, g) => n + g.jobs.length, 0);
 
   const stats = [
     { label: 'Material Received', value: materialReceived.length.toString(), sub: `${materialReceived.length} awaiting material QC`, icon: ShieldCheck, color: 'bg-teal-500' },
@@ -639,6 +659,13 @@ export default function DispatchPage() {
         </div>
       </div>
 
+      <PageSearch
+        value={query}
+        onChange={setQuery}
+        placeholder="Search job no., client or job name…  ( / )"
+        resultText={`${boardShown} of ${boardTotal} jobs${recentGroups.length ? ` · ${recentGroups.length} past dispatch${recentGroups.length > 1 ? 'es' : ''}` : ''}`}
+      />
+
       {/* Stats Cards — Job Queue style.
           Each card is a filter: press one to show only that pile, press it
           again to go back to the whole board. */}
@@ -725,9 +752,9 @@ export default function DispatchPage() {
 
       {filteredToNothing && (
         <div className="text-center py-10 text-gray-500">
-          Nothing in this filter right now.{' '}
-          <button type="button" onClick={() => setFocus(null)} className="font-semibold text-foreground underline underline-offset-2 hover:no-underline">
-            Show everything
+          {searching ? <>Nothing matches &quot;{searchQ}&quot; here.{' '}</> : <>Nothing in this filter right now.{' '}</>}
+          <button type="button" onClick={() => { setFocus(null); setQuery(''); }} className="font-semibold text-foreground underline underline-offset-2 hover:no-underline">
+            {searching ? 'Clear search' : 'Show everything'}
           </button>
         </div>
       )}
