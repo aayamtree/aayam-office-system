@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     if (jobs.done) products = await migrateProductsBatch(40_000);
     const status = await migrationStatus();
 
-    const message = `moved ${jobs.moved}, failed ${jobs.failed}, left ${status.pending} (${status.pendingGB} GB)` + (jobs.note ? ` — ${jobs.note}` : '');
+    const message = `moved ${jobs.moved}, failed ${jobs.failed}${jobs.partial ? ', in progress ' + jobs.partial : ''}, left ${status.pending} (${status.pendingGB} GB)` + (jobs.note ? ` — ${jobs.note}` : '');
     await logCronRun('migrate-drive', { ok: !jobs.note, durationMs: Date.now() - started, message });
     return NextResponse.json({ jobs, products, status });
 }

@@ -10,11 +10,13 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { getServiceAccountToken } from '@/lib/google-service-account';
-import { uploadLargeToSeafile, seafileConfigured, getDownloadLink, forceHttps } from '@/lib/seafile-server';
+import { uploadLargeToSeafile, seafileConfigured, getDownloadLink, getUploadLink, forceHttps } from '@/lib/seafile-server';
 import { sanitizeSegment, seafileFileUrl, seafileFolderLink } from '@/lib/seafile-client';
 
 const MAX_ATTEMPTS = 3;
-const MAX_FILE_BYTES = 400 * 1024 * 1024;
+const MAX_FILE_BYTES = 400 * 1024 * 1024;       // files up to this size are moved in one go
+const MAX_BIG_BYTES = 4 * 1024 * 1024 * 1024;  // bigger files (up to 4 GB) are moved in 40 MB pieces, across several runs if needed
+const PIECE = 40 * 1024 * 1024;
 const isDriveUrl = (u: unknown) => typeof u === 'string' && /drive\.google\.com/.test(u);
 
 function db() {
@@ -41,6 +43,63 @@ async function downloadFromDrive(token: string, id: string): Promise<DriveGet> {
     const res = await fetch(`${base}?alt=media&supportsAllDrives=true`, { headers: auth });
     if (!res.ok) return { ok: false, error: `Drive download failed (${res.status})` };
     return { ok: true, buffer: await res.arrayBuffer(), name: meta.name };
+}
+
+type BigResult =
+    | { ok: true; done: true; path: string; size: number }
+    | { ok: true; done: false; offset: number }
+    | { ok: false; error: string };
+
+/**
+ * Move a large Drive file to the Pi WITHOUT holding it in memory: read 40 MB from Drive, send 40 MB to the Pi, repeat.
+ * If the time budget runs out it stops cleanly and reports how far it got, so the next run carries on from there.
+ */
+async function moveBig(token: string, driveId: string, dir: string, nameHint: string | undefined, startOffset: number, deadline: number): Promise<BigResult> {
+    const base = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveId)}`;
+    const auth = { Authorization: `Bearer ${token}` };
+    const metaRes = await fetch(`${base}?fields=name,size&supportsAllDrives=true`, { headers: auth });
+    if (!metaRes.ok) return { ok: false, error: `Drive says ${metaRes.status} (file not found or no access)` };
+    const meta = await metaRes.json();
+    const total = Number(meta.size);
+    if (!Number.isFinite(total) || total <= 0) return { ok: false, error: 'Drive did not report a file size' };
+    if (total > MAX_BIG_BYTES) return { ok: false, error: 'File is too large for the automatic move' };
+    const name = sanitizeSegment(nameHint || meta.name || `file-${driveId}`);
+    const rel = dir.split('/').filter(Boolean).join('/');
+    let link: string;
+    try { link = forceHttps(await getUploadLink()); } catch (e: any) { return { ok: false, error: e?.message || 'Pi upload link failed' }; }
+    const url = `${link}${link.includes('?') ? '&' : '?'}ret-json=1`;
+    let start = Math.max(0, Math.min(startOffset || 0, total - 1));
+    let finalName = name;
+    let finalSize = total;
+    while (start < total) {
+        if (Date.now() > deadline) return { ok: true, done: false, offset: start };
+        const end = Math.min(start + PIECE, total) - 1;
+        const dl = await fetch(`${base}?alt=media&supportsAllDrives=true`, { headers: { ...auth, Range: `bytes=${start}-${end}` } });
+        if (dl.status !== 206 && !(dl.status === 200 && start === 0 && end + 1 >= total)) return { ok: false, error: `Drive download failed (${dl.status}) at ${Math.round((start / total) * 100)}%` };
+        const buf = await dl.arrayBuffer();
+        if (buf.byteLength !== end - start + 1) return { ok: false, error: `Drive piece was the wrong size at ${Math.round((start / total) * 100)}%` };
+        const form = new FormData();
+        form.append('parent_dir', '/');
+        if (rel) form.append('relative_path', rel);
+        form.append('replace', '1');
+        form.append('file', new Blob([buf]), name);
+        const up = await fetch(url, {
+            method: 'POST',
+            body: form,
+            headers: { 'Content-Range': `bytes ${start}-${end}/${total}`, 'Content-Disposition': `attachment; filename="${encodeURIComponent(name)}"` },
+        });
+        if (!up.ok) return { ok: false, error: `Pi upload failed (${up.status}) at ${Math.round((start / total) * 100)}%` };
+        if (end + 1 >= total) {
+            const body = await up.json().catch(() => null);
+            if (Array.isArray(body) && body[0]) {
+                finalName = String(body[0].name || name);
+                if (typeof body[0].size === 'number') finalSize = body[0].size;
+            }
+        }
+        start = end + 1;
+    }
+    if (finalSize !== total) return { ok: false, error: `Size mismatch (Drive ${total} vs Pi ${finalSize})` };
+    return { ok: true, done: true, path: '/' + [rel, finalName].filter(Boolean).join('/'), size: finalSize };
 }
 
 /** Move one Drive file to the Pi. Returns the new Pi path. */
@@ -70,7 +129,7 @@ async function saveJob(client: ReturnType<typeof db>, id: string, files: any[], 
 const pendingItems = (arr: any[]) =>
     (arr || []).filter((it) => it && isDriveUrl(it.url) && !it.old_drive_url && (it.migrate_attempts || 0) < MAX_ATTEMPTS);
 
-export type BatchResult = { moved: number; failed: number; jobsTouched: number; bytes: number; done: boolean; note?: string };
+export type BatchResult = { moved: number; failed: number; jobsTouched: number; bytes: number; done: boolean; note?: string; partial?: number };
 
 /** Work through jobs until the time budget is used up. */
 export async function migrateJobsBatch(budgetMs: number): Promise<BatchResult> {
@@ -97,6 +156,7 @@ export async function migrateJobsBatch(budgetMs: number): Promise<BatchResult> {
         let files: any[] = Array.isArray(job.files) ? [...job.files] : [];
         let print: any[] = Array.isArray(job.print_files) ? [...job.print_files] : [];
         const seen = new Map<string, string>(); // driveId -> Pi path (same file listed twice = copied once)
+        const seenSame = new Map<string, string>(); // same name + same size inside one job = same file, copied once
         let touched = false;
 
         const handle = async (arr: any[]) => {
@@ -106,17 +166,36 @@ export async function migrateJobsBatch(budgetMs: number): Promise<BatchResult> {
                 if (Date.now() - started > budgetMs) return;
                 const id = driveIdOf(it);
                 if (!id) { arr[i] = { ...it, migrate_attempts: MAX_ATTEMPTS, migrate_error: 'No Drive file id in link' }; out.failed++; touched = true; continue; }
-                let path = seen.get(id);
+                const sameKey = `${it.name || ''}|${it.size || ''}`;
+                let path = seen.get(id) || (it.size && it.name ? seenSame.get(sameKey) : undefined);
                 let size = it.size;
                 if (!path) {
-                    const r = await moveOne(sa.accessToken!, id, dir, it.name);
-                    if (!r.ok) {
-                        arr[i] = { ...it, migrate_attempts: (it.migrate_attempts || 0) + 1, migrate_error: r.error };
-                        out.failed++; touched = true;
-                        continue;
+                    const big = Number(it.size) > MAX_FILE_BYTES;
+                    if (big) {
+                        const r = await moveBig(sa.accessToken!, id, dir, it.name, Number(it.migrate_offset) || 0, started + budgetMs);
+                        if (!r.ok) {
+                            // a resumed upload that the Pi refuses starts again from the beginning next time
+                            arr[i] = { ...it, migrate_attempts: (it.migrate_attempts || 0) + 1, migrate_error: r.error, migrate_offset: 0 };
+                            out.failed++; touched = true;
+                            continue;
+                        }
+                        if (!r.done) {
+                            arr[i] = { ...it, migrate_offset: r.offset, migrate_error: undefined };
+                            out.partial = (out.partial || 0) + 1; touched = true;
+                            return; // out of time: carry on from here next run
+                        }
+                        path = r.path; size = r.size; out.bytes += r.size;
+                    } else {
+                        const r = await moveOne(sa.accessToken!, id, dir, it.name);
+                        if (!r.ok) {
+                            arr[i] = { ...it, migrate_attempts: (it.migrate_attempts || 0) + 1, migrate_error: r.error };
+                            out.failed++; touched = true;
+                            continue;
+                        }
+                        path = r.path; size = r.size; out.bytes += r.size;
                     }
-                    path = r.path; size = r.size; out.bytes += r.size;
                     seen.set(id, path);
+                    if (it.size && it.name) seenSame.set(sameKey, path);
                 }
                 arr[i] = {
                     ...it,
@@ -128,6 +207,7 @@ export async function migrateJobsBatch(budgetMs: number): Promise<BatchResult> {
                     old_drive_id: id,
                     migrated_at: new Date().toISOString(),
                     migrate_error: undefined,
+                    migrate_offset: undefined,
                 };
                 out.moved++; touched = true;
                 // saved once per job (below): a timeout only means the last file is simply moved again next run
