@@ -3,8 +3,9 @@
 -- fn_rollback_print_run did not know the after_print status.
 -- ALREADY APPLIED to the live database on 2026-10-08 (migration rollback_print_run_after_print).
 -- Kept here as a record only.
--- Steps back: after_print -> printing_done; qc -> after_print if the run came from there,
--- otherwise printing_done. fn_print_run_implied_stage is deliberately left returning null
+-- Steps back: after_print -> printing_done; qc -> after_print OR printing_done (runs already
+-- in QC before the new stage never passed through after_print). Final version: migration
+-- rollback_print_run_qc_accepts_both. fn_print_run_implied_stage is deliberately left returning null
 -- for after_print (jobs stay where Printing Done left them), matching sync-stage/route.ts.
 CREATE OR REPLACE FUNCTION public.fn_rollback_print_run(p_run_id uuid, p_to_status text, p_reason text)
  RETURNS text

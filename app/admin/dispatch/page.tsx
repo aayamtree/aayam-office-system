@@ -906,9 +906,19 @@ export default function DispatchPage() {
                   <div className="px-3 pt-2 pb-3 space-y-2">
                     <div>
                       <p className="text-[10px] text-muted-foreground truncate">{clientName}</p>
-                      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">
-                        {groupJobs.length} job{groupJobs.length > 1 ? 's' : ''}: {groupJobs.map(j => `#${j.job_number}`).join(', ')}
-                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{groupJobs.length} job{groupJobs.length > 1 ? 's' : ''} in this box</p>
+                    </div>
+                    {/* Each job: number + full job title, so nobody has to ⌘K to find out what's in the box */}
+                    <div className="space-y-1.5">
+                      {groupJobs.map(j => (
+                        <div key={j.id} className="border-l-2 border-blue-200 pl-2">
+                          <p className="text-[10px] font-mono font-semibold text-muted-foreground">#{j.job_number}</p>
+                          <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</h3>
+                          {(j.client?.company || j.client?.name) && (j.client?.company || j.client?.name) !== clientName && (
+                            <p className="text-[10px] text-muted-foreground truncate">{j.client?.company || j.client?.name}</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                     {pkg && (
                       <p className="text-[10px] text-blue-700 font-medium">
