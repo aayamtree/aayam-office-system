@@ -166,3 +166,89 @@ export async function removeJobsFromPackage(
   }
   return { removed };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Rollback and moving between packages.
+//
+// The DB trigger check_job_repack refuses package A -> package B in one
+// write (and refuses any unpack once the job has shipped). So a "move" is
+// two writes: take the job out, then put it in the target. If the second
+// write fails, the job is put back where it was — a move never leaves a
+// job unpacked by accident.
+// ─────────────────────────────────────────────────────────────
+
+/** Delete a package row only if no job points at it any more. Best-effort: an empty row is harmless (the Pack page groups by jobs). */
+async function deletePackageIfEmpty(packageId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('jobs')
+    .select('id', { count: 'exact', head: true })
+    .eq('package_id', packageId);
+  if (error || (count ?? 1) > 0) return false;
+  const { error: delErr } = await supabase.from('packages').delete().eq('id', packageId);
+  return !delErr;
+}
+
+/**
+ * Roll back a whole package: every job goes back to Awaiting Packing and the
+ * empty package is removed. Refused by the DB for any job already dispatched.
+ */
+export async function unpackPackage(
+  packageId: string,
+  consignmentNo: string,
+  by?: string
+): Promise<{ ok: boolean; removed: number; error?: string }> {
+  const { data: rows, error: readErr } = await supabase.from('jobs').select('id').eq('package_id', packageId);
+  if (readErr) return { ok: false, removed: 0, error: readErr.message };
+  const ids = (rows || []).map((r: any) => r.id as string);
+  if (ids.length === 0) {
+    await deletePackageIfEmpty(packageId);
+    return { ok: true, removed: 0 };
+  }
+  const res = await removeJobsFromPackage(packageId, ids, by);
+  if (res.error) return { ok: false, removed: res.removed.length, error: res.error };
+  await deletePackageIfEmpty(packageId);
+  logActivity('Unpacked Package', 'Package', packageId, `${consignmentNo} unpacked — ${res.removed.length} job(s) back to Awaiting Packing`, undefined, by);
+  return { ok: true, removed: res.removed.length };
+}
+
+/**
+ * Move jobs from one package into another package of the same client.
+ * Source package is removed if it ends up empty.
+ */
+export async function moveJobsBetweenPackages(
+  fromPackageId: string,
+  toPackageId: string,
+  jobIds: string[],
+  labels: { from: string; to: string },
+  by?: string
+): Promise<{ moved: string[]; error?: string }> {
+  if (jobIds.length === 0 || fromPackageId === toPackageId) return { moved: [] };
+
+  const out = await removeJobsFromPackage(fromPackageId, jobIds, by);
+  if (out.removed.length === 0) {
+    return { moved: [], error: out.error || 'Could not take the job(s) out of the old package.' };
+  }
+
+  const inn = await addJobsToPackage(toPackageId, out.removed, by);
+  // Anything that did not make it into the target goes back to where it was.
+  const stranded = out.removed.filter(id => !inn.added.includes(id));
+  let restoreFailed = false;
+  if (stranded.length > 0) {
+    const back = await addJobsToPackage(fromPackageId, stranded, by);
+    restoreFailed = back.added.length < stranded.length;
+  }
+
+  if (inn.added.length > 0) {
+    logActivity('Moved Jobs Between Packages', 'Package', toPackageId, `Moved ${inn.added.length} job(s) from ${labels.from} to ${labels.to}`, undefined, by);
+    await deletePackageIfEmpty(fromPackageId);
+  }
+
+  const problems: string[] = [];
+  if (out.error) problems.push(out.error);
+  if (stranded.length > 0) {
+    problems.push(restoreFailed
+      ? `${stranded.length} job(s) could not be moved and are now in Awaiting Packing — pack them again.`
+      : `${stranded.length} job(s) could not be moved and stayed in ${labels.from}.`);
+  }
+  return { moved: inn.added, error: problems.length ? problems.join(' ') : undefined };
+}

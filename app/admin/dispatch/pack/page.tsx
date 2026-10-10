@@ -3,17 +3,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { toast } from '@/lib/toast';
-import { Package, Loader2, X, CheckCircle, ArrowRight, Pencil } from 'lucide-react';
+import { Package, Loader2, X, CheckCircle, ArrowRight, Pencil, Undo2 } from 'lucide-react';
 import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job } from '@/types/database';
 import { supabase } from '@/lib/supabase';
-import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPackage, type PackageType } from '@/lib/packages';
+import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPackage, unpackPackage, moveJobsBetweenPackages, type PackageType } from '@/lib/packages';
 import { getVerifiedQty } from '@/lib/packing-display';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
 import PageSearch from '@/components/shared/PageSearch';
 import { jobMatches } from '@/lib/page-search';
+import { useConfirm } from '@/components/ConfirmModal';
 
 // Jobs land here the moment QC passes them — before anyone has decided
 // which box they go in. Packing several small jobs of one client together
@@ -21,6 +22,7 @@ import { jobMatches } from '@/lib/page-search';
 // transporter; Dispatch then ships an already-packed box.
 export default function PackPage() {
   const { profile } = useAuth();
+  const confirm = useConfirm();
   const { jobs, loading, error: jobsError, refetch: refetchJobs } = useJobs({
     select: 'id, job_number, project_name, client_id, priority, current_stage, product_category, client_deadline, quantity, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes, created_at), client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['ready'], op: 'in' }],
@@ -130,6 +132,9 @@ export default function PackPage() {
   const [editRemoveIds, setEditRemoveIds] = useState<Set<string>>(new Set());
   const [editAddIds, setEditAddIds] = useState<Set<string>>(new Set());
   const [editSubmitting, setEditSubmitting] = useState(false);
+  // jobId -> target package id: jobs the user chose to move into another packed box.
+  const [editMoves, setEditMoves] = useState<Record<string, string>>({});
+  const [unpackingKey, setUnpackingKey] = useState<string | null>(null);
 
   const openModal = () => {
     if (selectedJobs.length === 0) return;
@@ -192,6 +197,39 @@ export default function PackPage() {
     return unpacked.filter(j => j.client_id === clientId);
   }, [editing, unpacked]);
 
+  // Other packed boxes of the SAME client — the places a job can be moved to.
+  const moveTargets = useMemo(() => {
+    if (!editing) return [] as { key: string; label: string }[];
+    const clientId = editing.jobs[0]?.client_id;
+    return packedGroups
+      .filter(g => g.key !== editing.key && g.jobs[0]?.client_id === clientId)
+      .map(g => ({ key: g.key, label: (g.jobs[0] as any).package?.consignment_no as string }));
+  }, [editing, packedGroups]);
+
+  const handleUnpack = async (group: { key: string; jobs: Job[] }) => {
+    const pkg = (group.jobs[0] as any).package;
+    const no = pkg?.consignment_no || 'this package';
+    const { confirmed } = await confirm({
+      title: `Unpack ${no}?`,
+      message: `${group.jobs.length} job(s) go back to "Awaiting Packing".`,
+      consequences: ['Packing them again creates a new consignment number.', 'Not possible once a job has been dispatched.'],
+      variant: 'danger',
+      confirmLabel: 'Unpack',
+    });
+    if (!confirmed) return;
+    setUnpackingKey(group.key);
+    try {
+      const res = await unpackPackage(group.key, no, profile?.id);
+      if (!res.ok) toast.error(res.error || 'Could not unpack.');
+      else toast.info(`${no} unpacked — ${res.removed} job(s) back in Awaiting Packing.`);
+    } catch (err: any) {
+      toast.error('Could not unpack: ' + (err?.message || String(err)));
+    } finally {
+      setUnpackingKey(null);
+      refetchJobs?.();
+    }
+  };
+
   const openEdit = (group: { key: string; jobs: Job[] }) => {
     const pkg = (group.jobs[0] as any).package;
     setEditing({ key: group.key, pkg, jobs: group.jobs });
@@ -203,6 +241,7 @@ export default function PackPage() {
     });
     setEditRemoveIds(new Set());
     setEditAddIds(new Set());
+    setEditMoves({});
   };
 
   const toggleEditRemove = (jobId: string) => {
@@ -228,9 +267,12 @@ export default function PackPage() {
     // A package that would end up with zero jobs isn't an edit, it's a
     // delete — not something this form does. Block it instead of silently
     // leaving an empty, undispatchable package row behind.
-    const remainingCount = editing.jobs.length - editRemoveIds.size + editAddIds.size;
-    if (remainingCount < 1) {
-      toast.error('A package needs at least one job — untick a removal or add a job before saving.');
+    const movingIds = Object.keys(editMoves).filter(id => editMoves[id] && !editRemoveIds.has(id));
+    const remainingCount = editing.jobs.length - editRemoveIds.size - movingIds.length + editAddIds.size;
+    // Emptying a package by moving ALL its jobs elsewhere is fine (the empty package is removed);
+    // emptying it by only unticking is not — that is what the Unpack button is for.
+    if (remainingCount < 1 && movingIds.length === 0) {
+      toast.error('A package needs at least one job — to roll the whole package back, close this window and use the Unpack button.');
       return;
     }
     const count = parseInt(editForm.package_count, 10);
@@ -278,8 +320,24 @@ export default function PackPage() {
         if (res.error) errors.push(res.error);
       }
 
+      // Moves: group by target so each target gets one call.
+      const byTarget = new Map<string, string[]>();
+      for (const id of movingIds) {
+        const t = editMoves[id];
+        if (!byTarget.has(t)) byTarget.set(t, []);
+        byTarget.get(t)!.push(id);
+      }
+      let movedCount = 0;
+      for (const [targetKey, ids] of Array.from(byTarget.entries())) {
+        const toNo = moveTargets.find(t => t.key === targetKey)?.label || 'the other package';
+        const res = await moveJobsBetweenPackages(editing.key, targetKey, ids, { from: editing.pkg?.consignment_no, to: toNo }, profile?.id);
+        movedCount += res.moved.length;
+        if (res.error) errors.push(res.error);
+        else if (res.moved.length > 0) toast.info(`Moved ${res.moved.length} job(s) to ${toNo}.`);
+      }
+
       if (editRemoveIds.size > 0) {
-        const safeToRemove = editing.jobs.length + addedCount - editRemoveIds.size >= 1;
+        const safeToRemove = editing.jobs.length + addedCount - movedCount - editRemoveIds.size >= 1;
         if (!safeToRemove) {
           errors.push('Could not remove those jobs — doing so would leave the package empty (fewer jobs were added than expected). Reload and try again with fewer removals.');
         } else {
@@ -290,7 +348,7 @@ export default function PackPage() {
 
       if (errors.length > 0) {
         toast.error(errors.join(' '));
-      } else {
+      } else if (movedCount === 0) {
         toast.info('Package updated.');
       }
       setEditing(null);
@@ -431,12 +489,22 @@ export default function PackPage() {
                         </div>
                       ))}
                     </div>
-                    <button
-                      onClick={() => openEdit({ key, jobs: groupJobs })}
-                      className="mt-1 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 font-medium"
-                    >
-                      <Pencil className="w-3 h-3" /> Edit
-                    </button>
+                    <div className="mt-1 flex items-center gap-4">
+                      <button
+                        onClick={() => openEdit({ key, jobs: groupJobs })}
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 font-medium"
+                      >
+                        <Pencil className="w-3 h-3" /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleUnpack({ key, jobs: groupJobs })}
+                        disabled={unpackingKey === key}
+                        title="Roll back — send these jobs back to Awaiting Packing"
+                        className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-medium disabled:opacity-40"
+                      >
+                        {unpackingKey === key ? <Loader2 className="w-3 h-3 animate-spin" /> : <Undo2 className="w-3 h-3" />} Unpack
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -585,12 +653,24 @@ export default function PackPage() {
                           className="w-3.5 h-3.5 accent-gray-900 shrink-0"
                         />
                         <span className="font-mono text-muted-foreground shrink-0">#{job.job_number}</span>
-                        <span className="truncate">{job.project_name}</span>
+                        <span className="truncate flex-1">{job.project_name}</span>
+                        {!marked && moveTargets.length > 0 && (
+                          <select
+                            value={editMoves[job.id] || ''}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => setEditMoves(m => ({ ...m, [job.id]: e.target.value }))}
+                            title="Move this job into another box of the same client"
+                            className="shrink-0 border rounded px-1 py-0.5 text-[11px] bg-white"
+                          >
+                            <option value="">Stay here</option>
+                            {moveTargets.map(t => <option key={t.key} value={t.key}>Move to {t.label}</option>)}
+                          </select>
+                        )}
                       </label>
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-gray-400 mt-1">Untick a job to move it back to Awaiting Packing.</p>
+                <p className="text-[11px] text-gray-400 mt-1">Untick a job to send it back to Awaiting Packing, or choose &quot;Move to…&quot; to put it in another box of this client.</p>
               </div>
 
               {addCandidates.length > 0 && (
