@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
+import { canShareSheet, printFamily, runProductCategory } from '@/lib/product-category';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
 import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle, Ruler } from 'lucide-react';
@@ -66,9 +67,18 @@ export default function PrintPlannerPage() {
     const handleAddJob = (job: PendingJob) => {
         if (selectedJobs.length > 0) {
             const existingCategory = selectedJobs[0].product_category;
-            if (job.product_category !== existingCategory) {
-                toast.error(`Cannot mix product types in one print run.\n\nExisting: ${existingCategory || 'Unknown'}, Adding: ${job.product_category || 'Unknown'}\n\nOnly same product type (e.g. all POUCH or all BOX) can be batched together.`);
+            if (!canShareSheet(job.product_category, existingCategory)) {
+                if (!job.product_category || !existingCategory) {
+                    toast.error(`This job has no product type, so it cannot share a sheet.\n\nSet its product type first, then add it.`);
+                } else {
+                    toast.error(`Cannot mix these in one print run.\n\nOn this sheet: ${printFamily(existingCategory)} (${existingCategory}). Adding: ${printFamily(job.product_category)} (${job.product_category}).\n\nOnly jobs of the same print family can share a sheet (e.g. Letterhead + Pamphlet, or Label + Sticker).`);
+                }
                 return;
+            }
+            // Same family but a different product type (e.g. Letterhead + Pamphlet): allowed, but say so.
+            if ((job.product_category || '').toLowerCase() !== (existingCategory || '').toLowerCase()
+                && !selectedJobs.some(j => (j.product_category || '').toLowerCase() === (job.product_category || '').toLowerCase())) {
+                toast.info(`Mixing ${existingCategory} + ${job.product_category}: same print family — check that the paper and print set-up match.`, 6000);
             }
         }
         setSelectedJobs(prev => [...prev, job]);
@@ -248,7 +258,7 @@ export default function PrintPlannerPage() {
                             {selectedJobType && (
                                 <div className="mt-2 flex items-center gap-2">
                                     <span className="px-2 py-0.5 bg-gray-900 text-white rounded text-xs font-bold">
-                                        {selectedJobType}
+                                        {runProductCategory(selectedJobs) || selectedJobType}
                                     </span>
                                     {isMultiClient && (
                                         <span className="flex items-center gap-1 text-xs font-medium text-gray-600">

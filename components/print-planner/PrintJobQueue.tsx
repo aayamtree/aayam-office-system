@@ -6,6 +6,7 @@ import { toast } from '@/lib/toast';
 import { Package, Layers, ChevronLeft, ChevronRight, ScanLine, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { matchesQuery } from '@/lib/page-search';
+import { canShareSheet, printFamily } from '@/lib/product-category';
 
 interface PendingJob {
     id: string;
@@ -159,7 +160,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
     const isAdded = (job: PendingJob) => disabledJobIds.has(job.id);
     // "Locked" = wrong product_category for the current print run (grayed out)
     const isLocked = (job: PendingJob) =>
-        !disabledJobIds.has(job.id) && !!selectedJobType && job.product_category !== selectedJobType;
+        !disabledJobIds.has(job.id) && !!selectedJobType && !canShareSheet(job.product_category, selectedJobType);
     const isJobDisabled = (job: PendingJob) => isAdded(job) || isLocked(job);
 
     return (
@@ -362,7 +363,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                                         locked ? 'bg-gray-100 text-gray-300 cursor-not-allowed' :
                                                  'bg-gray-900 text-white hover:bg-gray-700'
                                     }`}
-                                    title={locked && selectedJobType ? `Only ${selectedJobType} jobs can be added` : ''}
+                                    title={locked && selectedJobType ? (job.product_category ? `This sheet takes ${printFamily(selectedJobType)} jobs only` : 'Set this job\'s product type first — jobs with no type cannot share a sheet') : ''}
                                 >
                                     {added ? '✓' : 'Add'}
                                 </button>
@@ -378,7 +379,7 @@ export function PrintJobQueue({ onAddJob, selectedJobType, disabledJobIds }: Pri
                     <div className="flex items-center gap-2 text-sm">
                         <Layers size={16} className="text-gray-700" />
                         <span className="font-medium text-gray-900">
-                            Locked to: <span className="font-bold">{selectedJobType}</span> jobs only
+                            Locked to: <span className="font-bold">{printFamily(selectedJobType)}</span> jobs only
                         </span>
                     </div>
                 </div>

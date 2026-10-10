@@ -70,7 +70,8 @@ export function productCategoryLabel(raw?: string | null): string | null {
 
 /** Tailwind classes for a category chip. Stable for a given name. */
 export function productCategoryStyle(raw?: string | null): string {
-    const v = normalizeProductCategory(raw);
+    // A mixed run reads "Letterhead + Pamphlet" — colour it by its first type.
+    const v = normalizeProductCategory((raw || '').split(' + ')[0]);
     if (!v) return 'bg-stone-100 text-stone-600 border-stone-200';
     const known = STYLES[v.toLowerCase()];
     if (known) return known;
@@ -79,16 +80,54 @@ export function productCategoryStyle(raw?: string | null): string {
     return FALLBACK[hash];
 }
 
+// ── Print families ───────────────────────────────────────────
+// Which product types may share ONE printing sheet. Types in the same family
+// use the same kind of paper / print set-up, so a Letterhead and a Pamphlet can
+// go on one sheet — but a Box and a Pouch never can. Change the groups here
+// and the Print Planner follows. A type that is not listed (or any new one
+// added in Settings) is its own family, so it only ever matches itself.
+export const PRINT_FAMILIES: Record<string, string[]> = {
+    'Flexible packaging': ['pouch'],
+    'Rigid packaging': ['box', 'carton'],
+    'Labels': ['label', 'sticker'],
+    'Commercial print': ['letterhead', 'pamphlet', 'brochure', 'poster', 'menu', 'visiting card', 'i card', 'flyer', 'post', 'banner', 'envelope'],
+};
+
+/** Family name for a product type, or null when the job has NO product type. */
+export function printFamily(raw?: string | null): string | null {
+    const v = normalizeProductCategory(raw);
+    if (!v) return null;
+    const key = v.toLowerCase();
+    for (const [family, types] of Object.entries(PRINT_FAMILIES)) {
+        if (types.includes(key)) return family;
+    }
+    return v; // unlisted type = its own family
+}
+
 /**
- * The product type of a whole print run. A run is locked to one category by
- * the planner, so the first job that has one speaks for the sheet.
+ * May these two jobs share one sheet? Same family, yes. Two jobs with no
+ * product type may sit together (as before), but a blank never mixes with a
+ * real type — blank types are how mistakes get in.
+ */
+export function canShareSheet(a?: string | null, b?: string | null): boolean {
+    const fa = printFamily(a), fb = printFamily(b);
+    if (!fa && !fb) return true;
+    if (!fa || !fb) return false;
+    return fa.toLowerCase() === fb.toLowerCase();
+}
+
+/**
+ * The product type of a whole print run. One type → that type. A run that
+ * mixes types of one family reads "Letterhead + Pamphlet" so nobody takes it
+ * for a pamphlet-only sheet.
  */
 export function runProductCategory(
     jobs: Array<{ product_category?: string | null }> | null | undefined
 ): string | null {
+    const seen: string[] = [];
     for (const j of jobs || []) {
         const v = normalizeProductCategory(j?.product_category);
-        if (v) return v;
+        if (v && !seen.some(x => x.toLowerCase() === v.toLowerCase())) seen.push(v);
     }
-    return null;
+    return seen.length ? seen.join(' + ') : null;
 }
