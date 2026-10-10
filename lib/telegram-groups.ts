@@ -142,34 +142,58 @@ export async function sendToChatResult(
     );
     return { ok: false, error };
   }
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: html,
-        parse_mode: 'HTML',
-        ...(appPath
-          ? {
-              reply_markup: {
-                inline_keyboard: [[{ text: '🚀 Open in app', url: `${APP_URL}${appPath}` }]],
-              },
-            }
-          : {}),
-      }),
-    });
-    const json = await res.json();
-    if (json?.ok) return { ok: true };
+  // Telegram answers "Too Many Requests: retry after N" (HTTP 429) when many
+  // messages go out at once — e.g. a batch of jobs moving stage together. That is
+  // not a failure, it is an instruction to wait N seconds. We wait (capped, so a
+  // serverless function is never held hostage) and try again, up to 3 sends.
+  const MAX_ATTEMPTS = 3;
+  const MAX_WAIT_S = 25;
+  let waitedS = 0;
+  let lastError = 'unknown error';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: html,
+          parse_mode: 'HTML',
+          ...(appPath
+            ? {
+                reply_markup: {
+                  inline_keyboard: [[{ text: '🚀 Open in app', url: `${APP_URL}${appPath}` }]],
+                },
+              }
+            : {}),
+        }),
+      });
+      const json = await res.json();
+      if (json?.ok) return { ok: true };
 
-    const error = json?.description || `HTTP ${res.status}`;
-    console.error(`[telegram] send to chat ${chatId} failed: ${error}`);
-    return { ok: false, error };
-  } catch (e: any) {
-    const error = e?.message || String(e);
-    console.error(`[telegram] send to chat ${chatId} threw: ${error}`);
-    return { ok: false, error };
+      lastError = json?.description || `HTTP ${res.status}`;
+      const retryAfter = Number(json?.parameters?.retry_after);
+      const rateLimited = res.status === 429 || /too many requests/i.test(lastError);
+      if (rateLimited && attempt < MAX_ATTEMPTS) {
+        const waitS = (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 5) + 1;
+        if (waitedS + waitS <= MAX_WAIT_S) {
+          waitedS += waitS;
+          console.warn(`[telegram] rate-limited on chat ${chatId} — waiting ${waitS}s (attempt ${attempt}/${MAX_ATTEMPTS})`);
+          await new Promise(r => setTimeout(r, waitS * 1000));
+          continue;
+        }
+      }
+      break; // a real failure (bad chat, bot kicked) or out of patience — do not hammer
+    } catch (e: any) {
+      lastError = e?.message || String(e);
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise(r => setTimeout(r, 1500)); // brief network blip — one more go
+        continue;
+      }
+    }
   }
+  console.error(`[telegram] send to chat ${chatId} failed: ${lastError}`);
+  return { ok: false, error: lastError };
 }
 
 /** Boolean convenience wrapper — failures are still logged by sendToChatResult. */

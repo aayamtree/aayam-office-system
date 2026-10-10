@@ -398,23 +398,10 @@ export default function QCCheckPage() {
       console.warn('Could not save QC record:', err);
     }
 
-    // Rich notification to admin with packing details
-    try {
-      const checkedCount = activeItems.filter(cp => checkpoints[cp.id]?.checked).length;
-      await supabase.from('broadcast_notifications').insert({
-        message: `📋 ${selectedJob.job_number} passed QC — Invoice & E-Way Bill needed\n` +
-          `Client: ${selectedJob.client?.company || selectedJob.client?.name || 'N/A'}\n` +
-          `Project: ${selectedJob.project_name}\n` +
-          `Qty: ${qty} pcs\n` +
-          `QC: ${checkedCount}/${activeItems.length} checks passed\n` +
-          `QC By: ${profile?.full_name || 'Unknown'}`,
-        target_audience: 'admin',
-        priority: 'urgent',
-        link: `/admin/jobs/${selectedJob.id}`,
-      });
-    } catch (err) {
-      console.warn('Could not send invoice notification:', err);
-    }
+    // The admin's "invoice & e-way bill needed" alert is NOT sent from here any
+    // more: the database refuses dispatch logins writing to a role, so it never
+    // arrived. It is now sent by the server when the job reaches 'ready'
+    // (app/api/telegram/notify-stage), together with the Telegram alert.
 
     // Log QC pass
     logActivity('qc', 'Dispatch', selectedJob.id,

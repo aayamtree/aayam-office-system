@@ -56,6 +56,10 @@
             "schedule": "30 14 * * 6"
         },
         {
+            "path": "/api/cron/telegram-health",
+            "schedule": "*/30 * * * *"
+        },
+        {
             "path": "/api/cron/watchman",
             "schedule": "*/15 * * * *"
         },

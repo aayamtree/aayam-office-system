@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getStageName } from '@/lib/job-workflow';
 import { STAGE_DEPARTMENT, STAGE_EMOJI, escapeHtml, mentionStaff, sendToChatResult } from '@/lib/telegram-groups';
 import { rateLimit } from '@/lib/rate-limit';
+import { pushToRole } from '@/lib/push-server';
 
 /**
  * POST /api/telegram/notify-stage — auto-alert the right department group
@@ -19,6 +20,8 @@ import { rateLimit } from '@/lib/rate-limit';
  */
 
 export const dynamic = 'force-dynamic';
+// A rate-limited Telegram send may wait up to ~25s before retrying (see sendToChatResult).
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   // This route is intentionally unauthenticated (the Postgres trigger calls it
@@ -61,9 +64,12 @@ export async function POST(req: NextRequest) {
       .order('sent_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+    // True only the FIRST time this job is announced at this stage — a retry of a
+    // failed Telegram send must not repeat the admin's "invoice needed" alert.
+    const firstAnnouncement = lastAlert?.stage !== stage;
     if (lastAlert?.stage === stage) {
       const previouslyFailed =
-        (lastAlert.groups_targeted || 0) > 0 && (lastAlert.telegram_sent || 0) === 0;
+        (lastAlert.groups_targeted || 0) > 0 && (lastAlert.telegram_sent || 0) < (lastAlert.groups_targeted || 0);
       if (!previouslyFailed) return NextResponse.json({ skipped: 'duplicate' });
       console.warn(`[telegram] retrying stage alert for job ${jobId} at ${stage} — previous attempt reached no group`);
     }
@@ -151,6 +157,49 @@ export async function POST(req: NextRequest) {
       mirrored = !mirrorErr;
     }
 
+    // 6b. QC just passed (stage 'ready'): tell Accounts/admin an invoice and
+    //     e-way bill are needed. This used to be written by the dispatch person's
+    //     BROWSER, which the database refused (dispatch may not notify a role) —
+    //     the alert silently never arrived. It is a system message, so the system
+    //     sends it: in-app bell + phone push, with the service key.
+    let adminAlert: { inApp: boolean; push: number } | null = null;
+    if (stage === 'ready' && firstAnnouncement) {
+      try {
+        // The QC page moves the job to 'ready' first and saves the QC record a
+        // moment later, so give that write a few seconds to land before reading it.
+        await new Promise(r => setTimeout(r, 4000));
+        const { data: pj } = await service.from('jobs').select('packing_info').eq('id', jobId).maybeSingle();
+        const verifiedQty = Number((pj?.packing_info as any)?.verified_qty) || job.quantity || 0;
+        const { data: qc } = await service
+          .from('qc_records')
+          .select('checklist, performed_by_name')
+          .eq('job_id', jobId)
+          .eq('qc_type', 'post_print')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const checks = qc?.checklist && typeof qc.checklist === 'object' ? Object.values(qc.checklist as Record<string, boolean>) : [];
+        const message =
+          `📋 ${job.job_number} passed QC — Invoice & E-Way Bill needed\n` +
+          `Client: ${clientName}\n` +
+          `Project: ${job.project_name || 'N/A'}\n` +
+          (verifiedQty ? `Qty: ${verifiedQty} pcs\n` : '') +
+          (checks.length ? `QC: ${checks.filter(Boolean).length}/${checks.length} checks passed\n` : '') +
+          `QC By: ${qc?.performed_by_name || 'Dispatch'}`;
+        const { error: nErr } = await service.from('broadcast_notifications').insert({
+          message,
+          target_audience: 'admin',
+          priority: 'urgent',
+          link: `/admin/jobs/${job.id}`,
+        });
+        const push = await pushToRole('admin', { title: '🚨 Urgent — Aayam', body: message, url: `/admin/jobs/${job.id}` });
+        adminAlert = { inApp: !nErr, push: push.sent };
+        if (nErr) console.error('[notify-stage] admin invoice alert insert failed:', nErr.message);
+      } catch (e: any) {
+        console.error('[notify-stage] admin invoice alert failed:', e?.message || e);
+      }
+    }
+
     // 7. Log what ACTUALLY happened.
     //
     // This row used to be written whenever Telegram OR the in-app mirror
@@ -169,7 +218,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ sent, targeted, mirrored, error: firstError });
+    return NextResponse.json({ sent, targeted, mirrored, error: firstError, adminAlert });
   } catch (err) {
     console.error('notify-stage error:', err);
     return NextResponse.json({ ok: false }, { status: 200 });

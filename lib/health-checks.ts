@@ -675,6 +675,7 @@ export async function checkRealtimePublication(db: any): Promise<Finding[]> {
 
 export const EXPECTED_CRONS = [
     { job: 'health', maxAgeHours: 26 },
+    { job: 'telegram-health', maxAgeHours: 3 },
     { job: 'telegram-digest', maxAgeHours: 50 },
     { job: 'eod-report', maxAgeHours: 50 },
     { job: 'backup', maxAgeHours: 8 * 24 },
