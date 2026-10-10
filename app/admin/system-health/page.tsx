@@ -8,6 +8,7 @@ import {
     AlertTriangle, Loader2, Server, Zap, Clock,
     Shield, HardDrive, BarChart3
 } from 'lucide-react';
+import TelegramHealthCard from '@/components/admin/TelegramHealthCard';
 
 interface HealthData {
     status: string;
@@ -208,6 +209,9 @@ export default function SystemHealthPage() {
                             </>
                         )}
                     </div>
+
+                    {/* Telegram alert system */}
+                    <TelegramHealthCard />
 
                     {/* Table Stats */}
                     <div className="bg-white rounded-md border border-gray-100 overflow-hidden">
