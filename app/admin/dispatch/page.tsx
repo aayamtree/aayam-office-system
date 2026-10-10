@@ -19,6 +19,7 @@ import DispatchContactInput, { invalidateContactCache } from '@/components/dispa
 import ProductBadge from '@/components/shared/ProductBadge';
 import { createPackage } from '@/lib/packages';
 import PageSearch from '@/components/shared/PageSearch';
+import JobThumb from '@/components/shared/JobThumb';
 import { jobMatches, matchesQuery } from '@/lib/page-search';
 
 export default function DispatchPage() {
@@ -28,7 +29,7 @@ export default function DispatchPage() {
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
     // We fetch both so "Invoice ready" reflects reality either way.
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes), invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, thumbnail_url, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes), invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true },
     // useJobs defaults to 50, but 150+ jobs can sit in these stages at once —
@@ -776,9 +777,12 @@ export default function DispatchPage() {
                 </div>
               </div>
               <div className="px-3 pt-2 pb-3 space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                <div className="flex items-start gap-2.5">
+                  <JobThumb job={job as any} size={64} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                    <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{job.project_name}</h3>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   <ProductBadge category={(job as any).product_category} />
@@ -815,9 +819,12 @@ export default function DispatchPage() {
                 </div>
               </div>
               <div className="px-3 pt-2 pb-3 space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
-                  <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                <div className="flex items-start gap-2.5">
+                  <JobThumb job={job as any} size={64} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                    <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{job.project_name}</h3>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   <ProductBadge category={(job as any).product_category} />
@@ -861,9 +868,12 @@ export default function DispatchPage() {
                     </div>
                   </div>
                   <div className="px-3 pt-2 pb-3 space-y-2">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
-                      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                    <div className="flex items-start gap-2.5">
+                      <JobThumb job={job as any} size={64} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{job.project_name}</h3>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       <ProductBadge category={(job as any).product_category} />
@@ -938,12 +948,15 @@ export default function DispatchPage() {
                     {/* Each job: number + full job title, so nobody has to ⌘K to find out what's in the box */}
                     <div className="space-y-1.5">
                       {groupJobs.map(j => (
-                        <div key={j.id} className="border-l-2 border-blue-200 pl-2">
+                        <div key={j.id} className="border-l-2 border-blue-200 pl-2 flex items-start gap-2">
+                          <JobThumb job={j as any} size={44} />
+                          <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-mono font-semibold text-muted-foreground">#{j.job_number}</p>
                           <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</h3>
                           {(j.client?.company || j.client?.name) && (j.client?.company || j.client?.name) !== clientName && (
                             <p className="text-[10px] text-muted-foreground truncate">{j.client?.company || j.client?.name}</p>
                           )}
+                          </div>
                         </div>
                       ))}
                     </div>

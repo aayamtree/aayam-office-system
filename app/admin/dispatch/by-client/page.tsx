@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { createPackage, type PackageType } from '@/lib/packages';
 import LoadError from '@/components/LoadError';
+import JobThumb from '@/components/shared/JobThumb';
 import ProductBadge from '@/components/shared/ProductBadge';
 
 // Dispatch by client.
@@ -29,7 +30,7 @@ const PACK_TYPES: { value: PackageType; label: string }[] = [
 export default function DispatchByClientPage() {
   const { profile } = useAuth();
   const { jobs, loading, error: jobsError, refetch: refetchJobs } = useJobs({
-    select: 'id, job_number, project_name, client_id, priority, current_stage, product_category, client_deadline, quantity, package_id, client:clients(id, name, company)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, product_category, client_deadline, quantity, thumbnail_url, files, package_id, client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true },
     limit: 500,
@@ -237,6 +238,7 @@ export default function DispatchByClientPage() {
                   <li key={j.id}>
                     <label className={`flex items-start gap-3 py-2 px-1 cursor-pointer rounded ${on ? 'bg-green-50/60' : 'hover:bg-muted/40'}`}>
                       <input type="checkbox" checked={on} onChange={() => toggle(j.id)} className="mt-1 w-4 h-4 accent-gray-900 shrink-0" />
+                      <JobThumb job={j as any} size={44} />
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-medium text-foreground truncate">{j.project_name}</span>
                         <span className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">

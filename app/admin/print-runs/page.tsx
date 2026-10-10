@@ -18,6 +18,8 @@ import {
     PackageCheck, History, Undo2, Pencil, Scissors
 } from 'lucide-react';
 import CutSheetModal from '@/components/print-runs/CutSheetModal';
+import JobThumb from '@/components/shared/JobThumb';
+import { pickJobThumbnail } from '@/lib/job-thumbnail';
 
 // ─── Interfaces ────────────────────────────────────────────
 interface PrintRunJob {
@@ -31,6 +33,8 @@ interface PrintRunJob {
     product_category?: string | null; // PRODUCT type: Label / Pouch / Box
     job_number?: string;
     received_qty?: number;
+    // Live job row (joined) — carries the product picture.
+    jobs?: { thumbnail_url?: string | null; files?: unknown } | null;
 }
 
 interface PrintRun {
@@ -180,6 +184,16 @@ export default function PrintRunsPage() {
     const [uploadingJobSheet, setUploadingJobSheet] = useState(false);
     // "Cut product pictures" — one picture per job, cropped from the job sheet.
     const [cutRun, setCutRun] = useState<PrintRun | null>(null);
+    // After "Cut product pictures" saves, the runs list is re-fetched; keep the
+    // open run window showing the fresh pictures instead of the old copy.
+    useEffect(() => {
+        setViewRun(prev => {
+            if (!prev) return prev;
+            const fresh = runs.find(r => r.id === prev.id);
+            return fresh && fresh !== prev ? fresh : prev;
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [runs]);
 
     // Dispatch modal state
     const [ewayBill, setEwayBill] = useState('');
@@ -220,7 +234,7 @@ export default function PrintRunsPage() {
             if (runIds.length > 0) {
                 const { data: jd, error: jdErr } = await supabase
                     .from('print_run_jobs')
-                    .select('*, jobs(job_number, product_category, thumbnail_url)')
+                    .select('*, jobs(job_number, product_category, thumbnail_url, files)')
                     .in('print_run_id', runIds);
                 // Without this, a failure here silently produced print runs with
                 // no jobs on them — a sheet that looks empty rather than broken.
@@ -1150,6 +1164,15 @@ export default function PrintRunsPage() {
                                         <Camera size={12} /> Cut product pictures
                                     </button>
                                 )}
+                                {viewRun.job_sheet_url && viewRun.jobs.length > 0 && (() => {
+                                    const done = viewRun.jobs.filter(j => !!pickJobThumbnail(j.jobs)).length;
+                                    const all = done === viewRun.jobs.length;
+                                    return (
+                                        <p className={`mt-1.5 text-[11px] font-medium ${all ? 'text-green-700' : 'text-amber-700'}`}>
+                                            {all ? '✓' : '●'} Product pictures: {done} of {viewRun.jobs.length} jobs
+                                        </p>
+                                    );
+                                })()}
                             </div>
 
                             {/* Notes */}
@@ -1165,8 +1188,12 @@ export default function PrintRunsPage() {
                                 <p className="text-xs font-bold text-gray-600 mb-2">Jobs ({viewRun.jobs.length})</p>
                                 <div className="space-y-1.5">
                                     {viewRun.jobs.map(job => (
-                                        <div key={job.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-md">
-                                            <div className="flex items-center gap-3">
+                                        <div key={job.id} className="flex items-center justify-between gap-3 p-2.5 bg-gray-50 rounded-md">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <JobThumb
+                                                    size={52}
+                                                    job={{ ...(job.jobs || {}), job_number: job.job_number, project_name: job.item_name, quantity: job.quantity_needed, client: { name: job.client_name } }}
+                                                />
                                                 <span className="font-mono text-xs font-bold text-gray-900">{job.job_number}</span>
                                                 <ProductBadge category={job.product_category} />
                                                 <span className="text-xs text-gray-600">{job.client_name}</span>

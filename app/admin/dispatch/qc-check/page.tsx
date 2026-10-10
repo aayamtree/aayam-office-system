@@ -15,6 +15,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import { logActivity } from '@/lib/logger';
 import LoadError from '@/components/LoadError';
 import { toast } from '@/lib/toast';
+import JobThumb from '@/components/shared/JobThumb';
 import ProductBadge from '@/components/shared/ProductBadge';
 import { normalizeProductCategory } from '@/lib/product-category';
 
@@ -52,7 +53,7 @@ export default function QCCheckPage() {
   // quantity and notes are shown on the QC card and read by the QC form; neither
   // is in the default select, so both rendered empty.
   const { jobs, loading, error: jobsError, updateJobStage, updateJob, refetch: refetchJobs } = useJobs({
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, thumbnail_url, files, client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['finishing', 'quality_check', 'ready'], op: 'in' }],
     limit: 500,
   });
@@ -261,7 +262,7 @@ export default function QCCheckPage() {
     const openJob = async () => {
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, client:clients(id, name, company)')
+        .select('id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, notes, total_amount, amount_received, payment_status, thumbnail_url, files, client:clients(id, name, company)')
         .eq('id', focusJobId)
         .maybeSingle();
       if (cancelled) return;
@@ -548,8 +549,13 @@ export default function QCCheckPage() {
               </div>
 
               {/* Middle: info */}
-              <p className="text-sm text-gray-600 truncate">{job.client?.company || job.client?.name}{job.client?.company && job.client?.name ? ` • ${job.client.name}` : ''}</p>
-              <p className="text-sm text-gray-900 font-medium mt-0.5 truncate">{job.project_name}</p>
+              <div className="flex items-start gap-2.5">
+                <JobThumb job={job as any} size={56} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-600 truncate">{job.client?.company || job.client?.name}{job.client?.company && job.client?.name ? ` • ${job.client.name}` : ''}</p>
+                  <p className="text-sm text-gray-900 font-medium mt-0.5 line-clamp-2">{job.project_name}</p>
+                </div>
+              </div>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-gray-500">Qty: {job.quantity}</p>
                 <p className="text-xs text-gray-500">Due: <span className="font-medium text-gray-700">{job.client_deadline ? new Date(job.client_deadline).toLocaleDateString() : 'N/A'}</span></p>
@@ -615,7 +621,7 @@ export default function QCCheckPage() {
                     {activeQCType === 'pre_print' ? 'Pre-Print QC' : 'QC-Dispatch'}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500">{selectedJob.project_name}</p>
+                <div className="flex items-center gap-2.5"><JobThumb job={selectedJob as any} size={56} /><p className="text-sm text-gray-500">{selectedJob.project_name}</p></div>
                 <div className="flex items-center gap-2 mt-1">
                   <ProductBadge category={selectedJob.product_category} size="sm" />
                   {selectedJob.job_type && <span className="text-xs text-gray-400">{selectedJob.job_type}</span>}
