@@ -93,11 +93,18 @@ export const PRINT_FAMILIES: Record<string, string[]> = {
     'Commercial print': ['letterhead', 'pamphlet', 'brochure', 'poster', 'menu', 'visiting card', 'i card', 'flyer', 'post', 'banner', 'envelope'],
 };
 
+/** lower-cased product type → family name ('' = no family, matches only itself). */
+export type PrintFamilyMap = Record<string, string>;
+
 /** Family name for a product type, or null when the job has NO product type. */
-export function printFamily(raw?: string | null): string | null {
+export function printFamily(raw?: string | null, overrides?: PrintFamilyMap | null): string | null {
     const v = normalizeProductCategory(raw);
     if (!v) return null;
     const key = v.toLowerCase();
+    // Settings > Product Categories wins. A type that is listed there with no
+    // family is its own family; a type not listed there falls back to the
+    // built-in groups below.
+    if (overrides && key in overrides) return overrides[key] || v;
     for (const [family, types] of Object.entries(PRINT_FAMILIES)) {
         if (types.includes(key)) return family;
     }
@@ -109,8 +116,8 @@ export function printFamily(raw?: string | null): string | null {
  * product type may sit together (as before), but a blank never mixes with a
  * real type — blank types are how mistakes get in.
  */
-export function canShareSheet(a?: string | null, b?: string | null): boolean {
-    const fa = printFamily(a), fb = printFamily(b);
+export function canShareSheet(a?: string | null, b?: string | null, overrides?: PrintFamilyMap | null): boolean {
+    const fa = printFamily(a, overrides), fb = printFamily(b, overrides);
     if (!fa && !fb) return true;
     if (!fa || !fb) return false;
     return fa.toLowerCase() === fb.toLowerCase();

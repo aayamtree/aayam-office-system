@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import { canShareSheet, printFamily, runProductCategory } from '@/lib/product-category';
+import { usePrintFamilies } from '@/lib/use-print-families';
 import { PrintJobQueue } from '@/components/print-planner/PrintJobQueue';
 import { CreatePrintRunForm } from '@/components/print-planner/CreatePrintRunForm';
 import { ArrowLeft, ArrowRight, CheckCircle, Layers, Package, Settings2, Users, AlertTriangle, Ruler } from 'lucide-react';
@@ -54,6 +55,7 @@ const STEPS = [
 ];
 
 export default function PrintPlannerPage() {
+    const families = usePrintFamilies();
     const [step, setStep] = useState(1);
     const [selectedJobs, setSelectedJobs] = useState<PendingJob[]>([]);
     const [configuredJobs, setConfiguredJobs] = useState<ConfiguredJob[]>([]);
@@ -67,11 +69,11 @@ export default function PrintPlannerPage() {
     const handleAddJob = (job: PendingJob) => {
         if (selectedJobs.length > 0) {
             const existingCategory = selectedJobs[0].product_category;
-            if (!canShareSheet(job.product_category, existingCategory)) {
+            if (!canShareSheet(job.product_category, existingCategory, families)) {
                 if (!job.product_category || !existingCategory) {
                     toast.error(`This job has no product type, so it cannot share a sheet.\n\nSet its product type first, then add it.`);
                 } else {
-                    toast.error(`Cannot mix these in one print run.\n\nOn this sheet: ${printFamily(existingCategory)} (${existingCategory}). Adding: ${printFamily(job.product_category)} (${job.product_category}).\n\nOnly jobs of the same print family can share a sheet (e.g. Letterhead + Pamphlet, or Label + Sticker).`);
+                    toast.error(`Cannot mix these in one print run.\n\nOn this sheet: ${printFamily(existingCategory, families)} (${existingCategory}). Adding: ${printFamily(job.product_category, families)} (${job.product_category}).\n\nOnly jobs of the same print family can share a sheet (e.g. Letterhead + Pamphlet, or Label + Sticker).`);
                 }
                 return;
             }

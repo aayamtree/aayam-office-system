@@ -10,6 +10,8 @@ interface ProductCategory {
     id: string;
     name: string;
     is_active: boolean;
+    type?: string | null;
+    print_family?: string | null;
 }
 
 export default function ProductCategoriesManager() {
@@ -67,6 +69,18 @@ export default function ProductCategoriesManager() {
         setSaving(false);
     };
 
+    // Print family: product types with the same family may share one printing
+    // sheet in the Print Planner. Empty = its own family.
+    const saveFamily = async (cat: ProductCategory, value: string) => {
+        const next = value.trim() || null;
+        if ((cat.print_family || null) === next) return;
+        const { error } = await supabase.from('product_categories').update({ print_family: next }).eq('id', cat.id);
+        if (error) { toast.error('Could not save print family: ' + error.message); return; }
+        setCategories(prev => prev.map(c => (c.id === cat.id ? { ...c, print_family: next } : c)));
+        toast.success(next ? `${cat.name} → ${next}` : `${cat.name} now has no family (prints alone)`);
+    };
+    const familyNames = Array.from(new Set(categories.map(c => (c.print_family || '').trim()).filter(Boolean))).sort();
+
     const handleToggle = async (cat: ProductCategory) => {
         const { error } = await supabase
             .from('product_categories')
@@ -90,6 +104,13 @@ export default function ProductCategoriesManager() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                     Manage categories used in Jobs, Purchase Bills, and Quotations (e.g. Banner, Brochure, Poster).
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    <b>Print family</b> decides which product types may share one printing sheet in the Print Planner
+                    (e.g. Letterhead + Pamphlet). Pick an existing family or type a new name. Leave empty to print alone.
+                </p>
+                <datalist id="print-family-list">
+                    {familyNames.map(f => <option key={f} value={f} />)}
+                </datalist>
             </div>
 
             {/* Add new category */}
@@ -129,6 +150,18 @@ export default function ProductCategoriesManager() {
                             <span className="text-xs text-gray-400 italic">(hidden)</span>
                         )}
                         <div className="flex-1" />
+                        {cat.type !== 'service' && (
+                            <input
+                                key={`${cat.id}-${cat.print_family || ''}`}
+                                list="print-family-list"
+                                defaultValue={cat.print_family || ''}
+                                placeholder="Print family"
+                                title="Print family — types with the same family can share one sheet"
+                                onBlur={e => saveFamily(cat, e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                className="w-36 border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                            />
+                        )}
                         <button
                             onClick={() => handleToggle(cat)}
                             className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${cat.is_active
