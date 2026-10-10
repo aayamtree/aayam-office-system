@@ -17,6 +17,7 @@ import {
     ClipboardCheck, MapPin, FileText, AlertTriangle, Building2, Camera,
     PackageCheck, History, Undo2, Pencil, Scissors
 } from 'lucide-react';
+import CutSheetModal from '@/components/print-runs/CutSheetModal';
 
 // ─── Interfaces ────────────────────────────────────────────
 interface PrintRunJob {
@@ -177,6 +178,8 @@ export default function PrintRunsPage() {
     // only ever one physical job sheet per run. Uploaded immediately on file
     // select (no separate file-picker state needed).
     const [uploadingJobSheet, setUploadingJobSheet] = useState(false);
+    // "Cut product pictures" — one picture per job, cropped from the job sheet.
+    const [cutRun, setCutRun] = useState<PrintRun | null>(null);
 
     // Dispatch modal state
     const [ewayBill, setEwayBill] = useState('');
@@ -217,7 +220,7 @@ export default function PrintRunsPage() {
             if (runIds.length > 0) {
                 const { data: jd, error: jdErr } = await supabase
                     .from('print_run_jobs')
-                    .select('*, jobs(job_number, product_category)')
+                    .select('*, jobs(job_number, product_category, thumbnail_url)')
                     .in('print_run_id', runIds);
                 // Without this, a failure here silently produced print runs with
                 // no jobs on them — a sheet that looks empty rather than broken.
@@ -1137,6 +1140,16 @@ export default function PrintRunsPage() {
                                         />
                                     </label>
                                 )}
+                                {viewRun.job_sheet_url && viewRun.jobs.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCutRun(viewRun)}
+                                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50"
+                                        title="Make a small picture of each job's product from this sheet, so Dispatch can tell same-name jobs apart"
+                                    >
+                                        <Camera size={12} /> Cut product pictures
+                                    </button>
+                                )}
                             </div>
 
                             {/* Notes */}
@@ -1330,6 +1343,23 @@ export default function PrintRunsPage() {
                     runId={editRunId}
                     onClose={() => setEditRunId(null)}
                     onSaved={fetchRuns}
+                />
+            )}
+
+            {cutRun && cutRun.job_sheet_url && (
+                <CutSheetModal
+                    runId={cutRun.id}
+                    sheetUrl={cutRun.job_sheet_url}
+                    jobs={cutRun.jobs.map((j: any) => ({
+                        job_id: j.job_id,
+                        job_number: j.job_number,
+                        client_name: j.client_name,
+                        item_name: j.item_name,
+                        qty: j.qty_on_sheet ?? j.quantity_needed,
+                        has_thumb: !!j.jobs?.thumbnail_url,
+                    }))}
+                    onClose={() => setCutRun(null)}
+                    onSaved={() => { fetchRuns(); }}
                 />
             )}
         </div>

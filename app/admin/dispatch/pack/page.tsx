@@ -12,6 +12,7 @@ import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPa
 import { getVerifiedQty } from '@/lib/packing-display';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
+import JobThumb from '@/components/shared/JobThumb';
 import PageSearch from '@/components/shared/PageSearch';
 import { jobMatches } from '@/lib/page-search';
 import { useConfirm } from '@/components/ConfirmModal';
@@ -24,7 +25,7 @@ export default function PackPage() {
   const { profile } = useAuth();
   const confirm = useConfirm();
   const { jobs, loading, error: jobsError, refetch: refetchJobs } = useJobs({
-    select: 'id, job_number, project_name, client_id, priority, current_stage, product_category, client_deadline, quantity, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes, created_at), client:clients(id, name, company)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, product_category, client_deadline, quantity, thumbnail_url, files, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes, created_at), client:clients(id, name, company)',
     filter: [{ column: 'current_stage', value: ['ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true },
     limit: 500,
@@ -443,9 +444,12 @@ export default function PackPage() {
                     {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
                   </div>
                   <div className="px-3 pt-2 pb-3 space-y-2">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
-                      <h3 className="text-sm font-semibold text-foreground line-clamp-2 mt-0.5">{job.project_name}</h3>
+                    <div className="flex items-start gap-2.5">
+                      <JobThumb job={job as any} size={64} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{job.project_name}</h3>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       <ProductBadge category={(job as any).product_category} />
@@ -483,9 +487,12 @@ export default function PackPage() {
                     </p>
                     <div className="space-y-1 pt-0.5">
                       {groupJobs.map(j => (
-                        <div key={j.id} className="border-l-2 border-gray-300 pl-2">
-                          <p className="text-[10px] font-mono font-semibold text-gray-500">#{j.job_number}</p>
-                          <p className="text-xs font-semibold text-gray-900 leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</p>
+                        <div key={j.id} className="border-l-2 border-gray-300 pl-2 flex items-start gap-2">
+                          <JobThumb job={j as any} size={44} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-mono font-semibold text-gray-500">#{j.job_number}</p>
+                            <p className="text-xs font-semibold text-gray-900 leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
