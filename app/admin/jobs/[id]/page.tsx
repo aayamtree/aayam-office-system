@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { normalizeJobType, getStageName, getStageColor } from '@/lib/job-workflow';
 import { hasInvoiceAttached } from '@/lib/invoice-status';
 import { getPackagingDisplay } from '@/lib/packing-display';
@@ -181,7 +182,7 @@ export default function JobDetailPage() {
                 .order('created_at', { ascending: false })
                 .limit(50),
             supabase.from('job_stage_history')
-                .select('id, from_stage, to_stage, notes, changed_by, changed_by_name, changed_by_role, created_at')
+                .select('id, from_stage, to_stage, notes, changed_by, changed_by_name, changed_by_role, created_at, is_rollback, reason')
                 .eq('job_id', jobId)
                 .order('created_at', { ascending: false })
                 .limit(50),
@@ -189,10 +190,12 @@ export default function JobDetailPage() {
 
         const stageEntries: ActivityLog[] = (stageRes.data || []).map((h: any) => ({
             id: `stage-${h.id}`,
-            action: 'stage_change',
-            description: h.from_stage
-                ? `Moved from ${getStageName(h.from_stage)} to ${getStageName(h.to_stage)}`
-                : `Started at ${getStageName(h.to_stage)}`,
+            action: h.is_rollback ? 'rollback' : 'stage_change',
+            description: h.is_rollback
+                ? `↶ Rolled back from ${getStageName(h.from_stage)} to ${getStageName(h.to_stage)} — Reason: ${h.reason || h.notes || 'not recorded'}`
+                : h.from_stage
+                    ? `Moved from ${getStageName(h.from_stage)} to ${getStageName(h.to_stage)}`
+                    : `Started at ${getStageName(h.to_stage)}`,
             metadata: h.notes ? { notes: h.notes } : undefined,
             created_at: h.created_at,
             user_id: h.changed_by,
@@ -341,6 +344,7 @@ export default function JobDetailPage() {
                         {job.priority && job.priority !== 'normal' && (
                             <span className="px-2 py-0.5 text-xs rounded-md bg-red-100 text-red-700 font-medium">{job.priority}</span>
                         )}
+                        <RollbackJobButton jobId={job.id} compact={false} onDone={() => window.location.reload()} />
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{job.client?.company || job.client?.name}</p>
                     <p className="text-sm text-gray-900 font-medium">{job.project_name}</p>
@@ -698,7 +702,8 @@ export default function JobDetailPage() {
                                     <div className="absolute left-[11px] top-8 bottom-0 w-px bg-gray-200" />
                                 )}
                                 <div className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center shrink-0 mt-0.5 z-10">
-                                    {log.action === 'create' ? <Package className="w-3 h-3 text-blue-600" /> :
+                                    {log.action === 'rollback' ? <Clock className="w-3 h-3 text-amber-600" /> :
+                                        log.action === 'create' ? <Package className="w-3 h-3 text-blue-600" /> :
                                         log.action === 'update' ? <Clock className="w-3 h-3 text-amber-600" /> :
                                             log.action === 'upload' ? <Upload className="w-3 h-3 text-violet-600" /> :
                                                 log.action === 'approve' ? <CheckCircle className="w-3 h-3 text-green-600" /> :
@@ -706,7 +711,7 @@ export default function JobDetailPage() {
                                     }
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-900">{log.description}</p>
+                                    <p className={log.action === 'rollback' ? 'text-sm text-amber-700 font-medium' : 'text-sm text-gray-900'}>{log.description}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className="text-xs text-gray-500">{new Date(log.created_at).toLocaleString()}</span>
                                         {(log.profiles as any)?.full_name && (

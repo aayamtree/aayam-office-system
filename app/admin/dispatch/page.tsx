@@ -20,6 +20,7 @@ import ProductBadge from '@/components/shared/ProductBadge';
 import { createPackage } from '@/lib/packages';
 import PageSearch from '@/components/shared/PageSearch';
 import JobThumb from '@/components/shared/JobThumb';
+import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { jobMatches, matchesQuery } from '@/lib/page-search';
 
 export default function DispatchPage() {
@@ -800,6 +801,7 @@ export default function DispatchPage() {
                     className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-900 text-white rounded text-xs font-medium hover:bg-gray-800 transition-colors">
                     <Truck className="w-3 h-3" /> Printer → Client
                   </button>
+                  <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />
                 </div>
               </div>
             </div>
@@ -835,6 +837,7 @@ export default function DispatchPage() {
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-card border border-border text-muted-foreground rounded text-xs font-medium hover:text-foreground hover:border-foreground/30 transition-colors">
                   <ClipboardCheck className="w-3 h-3" /> Start QC
                 </Link>
+                <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />
               </div>
             </div>
           );
@@ -913,6 +916,7 @@ export default function DispatchPage() {
                       >
                         {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
                       </button>
+                      <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />
                     </div>
                   </div>
                 </div>
@@ -953,6 +957,7 @@ export default function DispatchPage() {
                           <div className="min-w-0 flex-1">
                           <p className="text-[10px] font-mono font-semibold text-muted-foreground">#{j.job_number}</p>
                           <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-3" title={j.project_name}>{j.project_name}</h3>
+                          <div className="mt-1"><RollbackJobButton jobId={j.id} onDone={() => { refetchJobs?.(); refetchDispatches?.(); }} /></div>
                           {(j.client?.company || j.client?.name) && (j.client?.company || j.client?.name) !== clientName && (
                             <p className="text-[10px] text-muted-foreground truncate">{j.client?.company || j.client?.name}</p>
                           )}
@@ -1031,6 +1036,16 @@ export default function DispatchPage() {
                       <span>{d.dispatch_date ? new Date(d.dispatch_date).toLocaleDateString() : '-'}</span>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">Packages: {d.packages}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {rows.filter(r => r.job_id).map(r => (
+                        <RollbackJobButton
+                          key={r.id}
+                          jobId={r.job_id as string}
+                          label={rows.length > 1 ? `Roll back #${r.job?.job_number ?? ''}` : 'Roll back'}
+                          onDone={() => { refetchJobs?.(); refetchDispatches?.(); }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               );

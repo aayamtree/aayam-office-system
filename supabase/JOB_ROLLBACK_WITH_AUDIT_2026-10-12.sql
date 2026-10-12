@@ -1,0 +1,12 @@
+-- Job rollback with audit trail (who, when, why). Admin only.
+-- ALREADY APPLIED to the live database on 2026-10-12 (run in the Supabase SQL editor). Kept here as a record only.
+-- Adds to job_stage_history: is_rollback, reason, rollback_snapshot (copy of what the rollback undid).
+-- Adds function fn_rollback_job(p_job_id uuid, p_to_stage text, p_reason text):
+--   * admin only (fn_is_admin), reason required
+--   * only to an EARLIER stage of the job's own flow (design_print / design_only / print_only)
+--   * going back before 'dispatched': removes the job's dispatch rows (copied into rollback_snapshot) and clears dispatched_at / delivered_at / dispatch_mode
+--   * going back before 'ready': takes the job out of its package (deletes the package if now empty)
+--   * going back to 'designing' adds one to revision_count
+--   * refuses to go back before 'printing' while the job is inside a print run
+--   * writes job_stage_history (is_rollback = true) and activity_logs (action = 'rollback')
+-- To read the full function body: select pg_get_functiondef('public.fn_rollback_job(uuid,text,text)'::regprocedure);

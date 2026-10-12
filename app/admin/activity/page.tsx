@@ -9,11 +9,12 @@ import useSWR from 'swr';
 const supabase = createAuditedBrowserClient();
 
 // ─── Event type detection ─────────────────────────────────────────────────────
-type EventType = 'file_upload' | 'print_file' | 'stage_change' | 'checklist' | 'qc' | 'payment' | 'note' | 'job_created' | 'login' | 'notification' | 'other';
+type EventType = 'file_upload' | 'print_file' | 'stage_change' | 'checklist' | 'qc' | 'payment' | 'note' | 'job_created' | 'login' | 'notification' | 'rollback' | 'other';
 
 function detectEventType(action: string, description: string): EventType {
   const a = (action || '').toLowerCase();
   const d = (description || '').toLowerCase();
+  if (a === 'rollback') return 'rollback';
   if (a === 'print_file_upload' || a.includes('print_file') || d.includes('print file submitted')) return 'print_file';
   if (a === 'upload' || a === 'logfileupload' || d.includes('upload')) return 'file_upload';
   if (a === 'checklist' || d.includes('checklist')) return 'checklist';
@@ -37,6 +38,7 @@ const EVENT_CONFIG: Record<EventType, { label: string; icon: React.ElementType; 
   note: { label: 'Note / Mention', icon: MessageSquare, bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-400' },
   job_created: { label: 'New Job', icon: PlusCircle, bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
   login: { label: 'Login', icon: LogIn, bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-300' },
+  rollback: { label: 'Rollback', icon: RotateCcw, bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
   notification: { label: 'Alert', icon: Bell, bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-400' },
   other: { label: 'Activity', icon: FileText, bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-300' },
 };
@@ -106,6 +108,7 @@ const EVENT_FILTERS = [
   { key: 'file_upload', label: '📤 Uploads' },
   { key: 'job_created', label: '🆕 New Jobs' },
   { key: 'stage_change', label: '🔄 Stage Changes' },
+  { key: 'rollback', label: '↶ Rollbacks' },
   { key: 'checklist', label: '✅ Checklists' },
   { key: 'qc', label: '📦 QC Checks' },
   { key: 'note', label: '💬 Notes' },
