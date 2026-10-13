@@ -12,7 +12,11 @@ import MoneyInClient from './MoneyInClient';
 // to show up on the next load.
 export const revalidate = 0;
 
-export default async function MoneyInPage() {
+export default async function MoneyInPage({
+    searchParams,
+}: {
+    searchParams?: { customer?: string };
+}) {
     const supabase = createServerSupabase();
 
     let receivables: Receivables | null = null;
@@ -40,6 +44,7 @@ export default async function MoneyInPage() {
             receivables={receivables}
             error={error}
             awaitingCount={awaitingCount ?? null}
+            focusCustomer={searchParams?.customer?.trim() || null}
         />
     );
 }

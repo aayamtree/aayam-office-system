@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Receivables, CustomerDebt } from '@/lib/receivables';
 import {
     DoorHeader, DoorNav, DoorSection, DoorError, Figure, CashCaveat, rupees, compact,
@@ -10,6 +10,8 @@ interface Props {
     receivables: Receivables | null;
     error: string | null;
     awaitingCount: number | null;
+    /** From the dashboard's Overdue Items: scroll to and highlight this customer. */
+    focusCustomer?: string | null;
 }
 
 /** Age, shown as colour so a long list is not one undifferentiated wall of red. */
@@ -23,11 +25,20 @@ function AgeDot({ c }: { c: CustomerDebt }) {
 
 const SHOWN = 15;
 
-export default function MoneyInClient({ receivables, error, awaitingCount }: Props) {
+export default function MoneyInClient({ receivables, error, awaitingCount, focusCustomer = null }: Props) {
     const [showAll, setShowAll] = useState(false);
 
     const customers = receivables?.byCustomer ?? [];
-    const visible = showAll ? customers : customers.slice(0, SHOWN);
+    const focusIndex = focusCustomer ? customers.findIndex((c) => c.customer === focusCustomer) : -1;
+    // A customer beyond the top 15 must still be on screen when someone links to them.
+    const expanded = showAll || focusIndex >= SHOWN;
+    const visible = expanded ? customers : customers.slice(0, SHOWN);
+    const rowId = (name: string) => `customer-${encodeURIComponent(name)}`;
+
+    useEffect(() => {
+        if (focusIndex < 0 || !focusCustomer) return;
+        document.getElementById(rowId(focusCustomer))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, [focusIndex, focusCustomer]);
 
     return (
         <div className="space-y-4">
@@ -47,6 +58,12 @@ export default function MoneyInClient({ receivables, error, awaitingCount }: Pro
             />
 
             {error && <DoorError what="what customers owe us" detail={error} />}
+
+            {receivables && focusCustomer && focusIndex < 0 && (
+                <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <b>{focusCustomer}</b> no longer has an outstanding balance in Zoho.
+                </div>
+            )}
 
             {receivables && (
                 <>
@@ -94,10 +111,10 @@ export default function MoneyInClient({ receivables, error, awaitingCount }: Pro
                             customers.length > SHOWN ? (
                                 <button
                                     type="button"
-                                    onClick={() => setShowAll((v) => !v)}
+                                    onClick={() => setShowAll(!expanded)}
                                     className="text-xs font-medium text-primary hover:underline"
                                 >
-                                    {showAll ? 'Show top 15' : `Show all ${customers.length}`}
+                                    {expanded ? 'Show top 15' : `Show all ${customers.length}`}
                                 </button>
                             ) : undefined
                         }
@@ -119,7 +136,11 @@ export default function MoneyInClient({ receivables, error, awaitingCount }: Pro
                                     </thead>
                                     <tbody>
                                         {visible.map((c) => (
-                                            <tr key={c.customer} className="border-t border-border">
+                                            <tr
+                                                key={c.customer}
+                                                id={rowId(c.customer)}
+                                                className={`border-t border-border ${c.customer === focusCustomer ? 'bg-amber-100/70 dark:bg-amber-900/30' : ''}`}
+                                            >
                                                 <td className="px-3.5 py-2">
                                                     <span className="flex items-center gap-2">
                                                         <AgeDot c={c} />

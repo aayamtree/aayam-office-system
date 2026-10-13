@@ -49,6 +49,21 @@ export default function MarketingFollowUpsPage() {
 
   const today = new Date().toLocaleDateString('en-CA');
 
+  // Deep link from the dashboard's Overdue Items: /follow-ups?highlight=<id>.
+  // Show every status so the card cannot be filtered out, then scroll to it.
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('highlight');
+    if (id) { setHighlightId(id); setStatusFilter('all'); }
+  }, []);
+  useEffect(() => {
+    if (!highlightId || leadsLoading || followUpsLoading) return;
+    const t = setTimeout(() => {
+      document.getElementById(`followup-${highlightId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [highlightId, leadsLoading, followUpsLoading, followUps]);
+
   // Transform DB data to UI format
   const formattedFollowUps = (followUps || []).map((f: any) => ({
     id: f.id,
@@ -161,7 +176,10 @@ export default function MarketingFollowUpsPage() {
     const tintBg = isOverdue ? 'bg-red-50/60' : isToday ? 'bg-amber-50/60' : 'bg-stone-50/60';
 
     return (
-      <div className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow ${isOverdue ? 'ring-1 ring-red-100' : ''}`}>
+      <div
+        id={`followup-${followUp.id}`}
+        className={`bg-card rounded-md border border-border border-l-4 ${borderColor} hover:shadow-sm transition-shadow ${highlightId === followUp.id ? 'ring-2 ring-primary shadow-md' : isOverdue ? 'ring-1 ring-red-100' : ''}`}
+      >
         {/* Tinted strip */}
         <div className={`${tintBg} px-3 py-2 flex items-center justify-between border-b border-border/50 rounded-tr-md`}>
           <div className="flex items-center gap-1.5 min-w-0">
