@@ -90,7 +90,10 @@ export default function OverdueAlertsWidget() {
                 const { data: jobs, count } = await supabase
                     .from('jobs')
                     .select('id, job_number, project_name, current_stage, client_deadline', { count: 'exact' })
-                    .in('current_stage', ['new', 'designing', 'approval', 'printing', 'finishing', 'quality_check', 'ready'])
+                    // Same rule as the Overdue Jobs page (/admin/jobs/overdue), so the number
+                    // here and the number there are always the same. The old hand-typed list of
+                    // stages matched none of this app's real stages, so jobs never showed up.
+                    .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
                     .lt('client_deadline', today)
                     .not('client_deadline', 'is', null)
                     .order('client_deadline', { ascending: true })
