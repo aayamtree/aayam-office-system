@@ -31,14 +31,43 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useDashboardNotes } from '@/lib/hooks';
 import { supabase } from '@/lib/supabase';
 import { useConfirm } from '@/components/ConfirmModal';
-import { StickyNote, Plus, X, Check, Users, Loader2 } from 'lucide-react';
+import { StickyNote, Plus, X, Check, Users, Loader2, Clock } from 'lucide-react';
 
 interface TeamMember { id: string; full_name: string; role: string }
+
+type ReplyStatus = 'done' | 'not_done' | 'working';
+interface NoteReply {
+    id: string; note_id: string; user_id: string;
+    status: ReplyStatus; reason: string | null; updated_at: string;
+}
+
+const STATUS_LABEL: Record<ReplyStatus, string> = {
+    done: 'Done', not_done: 'Not done', working: 'Working on it',
+};
+
+/** Telegram a few people through the app's one server route (token stays server-side). */
+async function tellOnTelegram(targetIds: string[], text: string, mode: 'mention' | 'direct') {
+    if (!targetIds.length) return;
+    try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) return;
+        await fetch('/api/telegram/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ mode, targetProfileIds: targetIds, text, url: '/admin/dashboard' }),
+        });
+    } catch {
+        // A failed Telegram message must never block saving a note or a reply.
+    }
+}
+
+const snippet = (t: string, n = 90) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
 /** A note is stale at a fortnight. Before that the badge is quiet. */
 const STALE_DAYS = 14;
@@ -63,7 +92,7 @@ function ageLabel(d: number | null): string {
 
 export default function NotesBoard() {
     const { profile } = useAuth();
-    const { notes, loading, createNote, deleteNote } = useDashboardNotes();
+    const { notes, loading, createNote, deleteNote, refetch } = useDashboardNotes();
     const confirm = useConfirm();
 
     const [adding, setAdding] = useState(false);
@@ -72,6 +101,13 @@ export default function NotesBoard() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [clearingId, setClearingId] = useState<string | null>(null);
+
+    // Replies from tagged people (Done / Not done / Working on it)
+    const [replies, setReplies] = useState<NoteReply[]>([]);
+    const [replyError, setReplyError] = useState('');
+    const [savingReplyId, setSavingReplyId] = useState<string | null>(null);
+    const [reasonFor, setReasonFor] = useState<string | null>(null);
+    const [reasonText, setReasonText] = useState('');
 
     const [team, setTeam] = useState<TeamMember[]>([]);
     const [showTags, setShowTags] = useState(false);
@@ -94,17 +130,47 @@ export default function NotesBoard() {
     }, [profile?.id]);
 
     const nameOf = (id: string) => team.find(m => m.id === id)?.full_name || 'someone';
+    const personName = (id: string) => (id === profile?.id ? (profile?.full_name || 'you') : nameOf(id));
+
+    const noteIdsKey = notes.map((n: any) => n.id).join(',');
+    const reloadReplies = useCallback(async () => {
+        if (!noteIdsKey) { setReplies([]); return; }
+        const { data } = await supabase.from('note_replies').select('*').in('note_id', noteIdsKey.split(','));
+        if (data) setReplies(data as NoteReply[]);
+    }, [noteIdsKey]);
+
+    useEffect(() => { reloadReplies(); }, [reloadReplies]);
+
+    // A reply from Meet should show up without a page refresh.
+    useEffect(() => {
+        const t = setInterval(() => { refetch(); reloadReplies(); }, 60_000);
+        return () => clearInterval(t);
+    }, [refetch, reloadReplies]);
+
+    /** "@meet" typed inside the note counts as tagging him — no button needed. */
+    const typedTagIds = (text: string): string[] => {
+        const typed = Array.from(text.matchAll(/@([A-Za-z0-9_\u00C0-\u024F]+)/g)).map(m => m[1].toLowerCase());
+        if (!typed.length) return [];
+        return team.filter(m => {
+            const n = m.full_name.toLowerCase();
+            return typed.includes(n.split(/\s+/)[0]) || typed.includes(n.replace(/\s+/g, ''));
+        }).map(m => m.id);
+    };
+    const effectiveTagIds = (text: string) => Array.from(new Set([...taggedIds, ...typedTagIds(text)]));
 
     const handleAdd = async () => {
         if (!content.trim()) return;
         setSaving(true); setError('');
         try {
+            const allTagged = effectiveTagIds(content);
             const res = await createNote({
                 content: content.trim(),
                 color: 'yellow',
-                tagged_users: taggedIds.length ? taggedIds : undefined,
+                tagged_users: allTagged.length ? allTagged : undefined,
             });
             if (res?.error) { setError(res.error); setSaving(false); return; }
+            // Tell them straight away — a note nobody knows about is a verbal note again.
+            tellOnTelegram(allTagged, `New note for you — please reply Done or Not done on the dashboard:\n“${snippet(content.trim(), 300)}”`, 'mention');
             setContent(''); setTaggedIds([]); setAdding(false);
         } catch (e: any) {
             setError(e?.message || 'Could not save the note');
@@ -115,14 +181,64 @@ export default function NotesBoard() {
     const handleClear = async (note: any) => {
         const { confirmed } = await confirm({
             title: 'Clear this note',
-            message: 'This removes it from the board for everyone. It cannot be undone.',
+            message: 'This removes it from the board. A copy, with every reply, is kept in the note history.',
             variant: 'danger',
             confirmLabel: 'Clear it',
         });
         if (!confirmed) return;
         setClearingId(note.id);
+        setReplyError('');
+        const noteReplies = replies.filter(r => r.note_id === note.id);
+        const { error: archiveError } = await supabase.from('note_history').insert({
+            note_id: note.id,
+            content: note.content,
+            created_by: note.user_id,
+            note_created_at: note.created_at,
+            tagged_users: Array.isArray(note.tagged_users) ? note.tagged_users : [],
+            replies: noteReplies.map(r => ({
+                user_id: r.user_id, name: personName(r.user_id),
+                status: r.status, reason: r.reason, at: r.updated_at,
+            })),
+            cleared_by: profile?.id,
+        });
+        if (archiveError) {
+            // Never delete a note we could not keep a copy of.
+            setReplyError('Could not clear the note: ' + archiveError.message);
+            setClearingId(null);
+            return;
+        }
         await deleteNote(note.id);
         setClearingId(null);
+    };
+
+    const saveReply = async (note: any, status: ReplyStatus, reason?: string) => {
+        if (!profile?.id) return;
+        setSavingReplyId(note.id);
+        setReplyError('');
+        const { error: saveError } = await supabase.from('note_replies').upsert({
+            note_id: note.id,
+            user_id: profile.id,
+            status,
+            reason: reason?.trim() || null,
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'note_id,user_id' });
+        if (saveError) {
+            setReplyError('Could not save your reply: ' + saveError.message);
+            setSavingReplyId(null);
+            return;
+        }
+        setReasonFor(null); setReasonText('');
+        await reloadReplies();
+        setSavingReplyId(null);
+        // Tell the person who wrote the note.
+        if (note.user_id && note.user_id !== profile.id) {
+            const icon = status === 'done' ? '✅' : status === 'not_done' ? '❌' : '⏳';
+            tellOnTelegram(
+                [note.user_id],
+                `${icon} ${STATUS_LABEL[status]}${reason?.trim() ? ` — ${reason.trim()}` : ''}\nabout: “${snippet(note.content)}”`,
+                'direct',
+            );
+        }
     };
 
     // Oldest-first: the point of the board is that the thing nobody has dealt
@@ -164,6 +280,11 @@ export default function NotesBoard() {
                 const stale = d !== null && d >= STALE_DAYS;
                 const tagged = Array.isArray(note.tagged_users) ? note.tagged_users : [];
                 const mine = note.user_id === profile?.id;
+                const noteReplies = replies.filter(r => r.note_id === note.id);
+                const replyOf = (uid: string) => noteReplies.find(r => r.user_id === uid);
+                const iAmTagged = !!profile?.id && tagged.includes(profile.id);
+                const myReply = profile?.id ? replyOf(profile.id) : undefined;
+                const allDone = tagged.length > 0 && tagged.every((uid: string) => replyOf(uid)?.status === 'done');
                 return (
                     <div
                         key={note.id}
@@ -173,12 +294,6 @@ export default function NotesBoard() {
                             {note.content}
                         </p>
 
-                        {tagged.length > 0 && (
-                            <span className="shrink-0 text-[11px] font-medium text-board-ink/75">
-                                {mine ? 'you' : 'someone'} →{' '}
-                                {tagged.length === 1 ? nameOf(tagged[0]) : `${tagged.length} tagged`}
-                            </span>
-                        )}
 
                         <span
                             className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${stale
@@ -189,19 +304,128 @@ export default function NotesBoard() {
                             {ageLabel(d)}
                         </span>
 
-                        <button
-                            onClick={() => handleClear(note)}
-                            disabled={clearingId === note.id}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-foreground px-3.5 py-1.5 text-[11px] font-semibold text-background transition-opacity hover:opacity-85 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                            {clearingId === note.id
-                                ? <Loader2 className="h-3 w-3 animate-spin" />
-                                : <Check className="h-3 w-3" />}
-                            Clear
-                        </button>
+                        {mine && (
+                            <button
+                                onClick={() => handleClear(note)}
+                                disabled={clearingId === note.id}
+                                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-opacity hover:opacity-85 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${allDone
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-foreground text-background'
+                                    }`}
+                            >
+                                {clearingId === note.id
+                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <Check className="h-3 w-3" />}
+                                {allDone ? 'All done · Clear' : 'Clear'}
+                            </button>
+                        )}
+
+                        {/* ── who was asked, and what they said ── */}
+                        {tagged.length > 0 && (
+                            <div className="flex basis-full flex-wrap items-center gap-x-2 gap-y-1.5">
+                                <span className="text-[11px] font-medium text-board-ink/70">
+                                    {mine ? 'you' : personName(note.user_id || '')} →
+                                </span>
+                                {tagged.map((uid: string) => {
+                                    const r = replyOf(uid);
+                                    const tone = !r
+                                        ? 'bg-background text-board-ink/70'
+                                        : r.status === 'done'
+                                            ? 'bg-green-100 text-green-800'
+                                            : r.status === 'not_done'
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-amber-100 text-amber-800';
+                                    return (
+                                        <span
+                                            key={uid}
+                                            title={r?.reason || undefined}
+                                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${tone}`}
+                                        >
+                                            {r?.status === 'done' && <Check className="h-3 w-3" />}
+                                            {r?.status === 'not_done' && <X className="h-3 w-3" />}
+                                            {r?.status === 'working' && <Clock className="h-3 w-3" />}
+                                            {personName(uid)}
+                                            {' · '}
+                                            {r ? STATUS_LABEL[r.status] : 'no reply yet'}
+                                        </span>
+                                    );
+                                })}
+                                {tagged.map((uid: string) => {
+                                    const r = replyOf(uid);
+                                    return r?.status === 'not_done' && r.reason ? (
+                                        <span key={uid + 'reason'} className="text-[11.5px] italic text-board-ink/75">
+                                            {personName(uid)}: “{r.reason}”
+                                        </span>
+                                    ) : null;
+                                })}
+                            </div>
+                        )}
+
+                        {/* ── reply buttons, only for the person who was tagged ── */}
+                        {iAmTagged && !mine && (
+                            <div className="flex basis-full flex-wrap items-center gap-2">
+                                {reasonFor === note.id ? (
+                                    <>
+                                        <input
+                                            autoFocus
+                                            value={reasonText}
+                                            onChange={e => setReasonText(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && reasonText.trim()) saveReply(note, 'not_done', reasonText);
+                                                if (e.key === 'Escape') { setReasonFor(null); setReasonText(''); }
+                                            }}
+                                            placeholder="Why not done? One line…"
+                                            className="min-w-[14rem] flex-1 rounded-lg border border-oms-orange/30 bg-background px-3 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-oms-orange/40"
+                                        />
+                                        <button
+                                            onClick={() => saveReply(note, 'not_done', reasonText)}
+                                            disabled={!reasonText.trim() || savingReplyId === note.id}
+                                            className="rounded-full bg-foreground px-3.5 py-1.5 text-[11px] font-semibold text-background disabled:opacity-40"
+                                        >
+                                            Send
+                                        </button>
+                                        <button
+                                            onClick={() => { setReasonFor(null); setReasonText(''); }}
+                                            className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => saveReply(note, 'done')}
+                                            disabled={savingReplyId === note.id}
+                                            className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[11px] font-semibold disabled:opacity-50 ${myReply?.status === 'done' ? 'bg-green-600 text-white' : 'bg-background text-green-800 hover:bg-green-100'}`}
+                                        >
+                                            <Check className="h-3 w-3" /> Done
+                                        </button>
+                                        <button
+                                            onClick={() => { setReasonFor(note.id); setReasonText(myReply?.status === 'not_done' ? (myReply.reason || '') : ''); }}
+                                            disabled={savingReplyId === note.id}
+                                            className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[11px] font-semibold disabled:opacity-50 ${myReply?.status === 'not_done' ? 'bg-red-600 text-white' : 'bg-background text-red-800 hover:bg-red-100'}`}
+                                        >
+                                            <X className="h-3 w-3" /> Not done
+                                        </button>
+                                        <button
+                                            onClick={() => saveReply(note, 'working')}
+                                            disabled={savingReplyId === note.id}
+                                            className={`inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[11px] font-semibold disabled:opacity-50 ${myReply?.status === 'working' ? 'bg-amber-500 text-white' : 'bg-background text-amber-800 hover:bg-amber-100'}`}
+                                        >
+                                            <Clock className="h-3 w-3" /> Working on it
+                                        </button>
+                                        {savingReplyId === note.id && <Loader2 className="h-3 w-3 animate-spin" />}
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 );
             })}
+
+            {replyError && (
+                <p className="border-t border-oms-orange/25 py-2 text-[11px] font-medium text-destructive">{replyError}</p>
+            )}
 
             {/* ── add a note ── */}
             <div className="border-t border-oms-orange/25 pt-3">
@@ -234,7 +458,7 @@ export default function NotesBoard() {
                                     className="inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1.5 text-[11px] font-semibold text-board-ink"
                                 >
                                     <Users className="h-3 w-3" />
-                                    {taggedIds.length ? `${taggedIds.length} tagged` : 'Tag a person'}
+                                    {effectiveTagIds(content).length ? `${effectiveTagIds(content).length} tagged` : 'Tag a person'}
                                 </button>
                                 {showTags && (
                                     <div className="absolute bottom-full left-0 z-20 mb-1 max-h-56 w-56 overflow-y-auto rounded-lg border bg-popover py-1 shadow-md">
