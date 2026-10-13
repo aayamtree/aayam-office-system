@@ -152,7 +152,8 @@ export default function NotesBoard() {
         const typed = Array.from(text.matchAll(/@([A-Za-z0-9_\u00C0-\u024F]+)/g)).map(m => m[1].toLowerCase());
         if (!typed.length) return [];
         return team.filter(m => {
-            const n = m.full_name.toLowerCase();
+            const n = (m.full_name || '').toLowerCase();
+            if (!n) return false; // a profile with no name saved cannot be @-tagged
             return typed.includes(n.split(/\s+/)[0]) || typed.includes(n.replace(/\s+/g, ''));
         }).map(m => m.id);
     };
