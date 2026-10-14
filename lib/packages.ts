@@ -35,7 +35,13 @@ export interface CreatePackageResult {
  */
 export async function createPackage(
   input: CreatePackageInput,
-  jobIds: string[]
+  jobIds: string[],
+  opts?: {
+    /** Stages a job may be in to be boxed. Default: only 'ready' (QC passed).
+     *  Printer → Client jobs ship straight from the printer, so they are still
+     *  at 'material_received' — warehouse QC is skipped by design. */
+    allowedStages?: string[];
+  }
 ): Promise<CreatePackageResult> {
   if (jobIds.length === 0) return { package: null, packed: [], error: 'No jobs selected' };
 
@@ -55,11 +61,16 @@ export async function createPackage(
     .update({ package_id: pkg.id })
     .in('id', jobIds)
     .is('package_id', null)
-    .eq('current_stage', 'ready')
+    .in('current_stage', opts?.allowedStages?.length ? opts.allowedStages : ['ready'])
     .select('id');
   if (updErr) return { package: pkg, packed: [], error: updErr.message };
 
   const packed = (updated || []).map((j: any) => j.id as string);
+  // Nothing got boxed: don't leave an empty package (and a used consignment
+  // number) lying around. Best-effort — the Pack page also sweeps empties.
+  if (packed.length === 0) {
+    await supabase.from('packages').delete().eq('id', pkg.id);
+  }
   logActivity(
     'Created Package',
     'Package',

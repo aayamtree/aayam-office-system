@@ -532,7 +532,10 @@ export default function DispatchPage() {
           package_type: 'box',
           package_count: dispatchForm.packages || 1,
           created_by: profile?.id,
-        }, selectedJobs.map(j => j.id));
+        }, selectedJobs.map(j => j.id),
+        // Printer → Client jobs have not been through warehouse QC, so they are
+        // not at 'ready' — allow boxing them from where they actually are.
+        fromPrinter ? { allowedStages: ['material_received', 'ready'] } : undefined);
         // A package row can come back even when NOT every job actually got
         // packed into it (the .is('package_id', null) guard in createPackage
         // silently drops a job someone else already packed) — proceeding
