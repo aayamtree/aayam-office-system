@@ -1193,7 +1193,7 @@ export default function DispatchPage() {
                           </div>
                           {rem != null && Number.isFinite(typed) && typed > rem && (
                             <div className="mt-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800">
-                              This job's quantity is saved as <strong>{job.quantity}</strong>, so only {rem} can go out.
+                              The job quantity is saved as <strong>{job.quantity}</strong>, so only {rem} can go out.
                               If the real order is bigger, correct it here:
                               <button
                                 type="button"
