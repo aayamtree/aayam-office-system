@@ -358,6 +358,62 @@ export default function DispatchPage() {
     setShowDispatchModal(true);
   };
 
+  // Attach the invoice / e-way bill right here, so the dispatcher never has to
+  // leave the dispatch screen. Same storage + "Label: filename" convention as
+  // the job page, so the file shows up for accounts and everyone else too.
+  const [attachingDoc, setAttachingDoc] = useState(false);
+  const attachPaperwork = async (job: Job, file: File, label: 'Invoice' | 'E-Way Bill') => {
+    setAttachingDoc(true);
+    try {
+      const ext = file.name.split('.').pop() || 'pdf';
+      const path = `jobs/${job.id}/${job.job_number}_${label.replace(/\s+/g, '_')}_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file);
+      if (upErr) throw new Error(upErr.message);
+      const url = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl;
+      const newFile = { name: `${label}: ${file.name}`, url, type: file.type, size: file.size, uploaded_at: new Date().toISOString() };
+      const updatedFiles = [...((job as any).files || []), newFile];
+      const { error: updErr } = await supabase.from('jobs').update({ files: updatedFiles }).eq('id', job.id);
+      if (updErr) throw new Error(updErr.message);
+      // Keep the invoice reference / e-way number already saved on the job.
+      if (label === 'Invoice') {
+        fetch(`/api/jobs/${job.id}/invoice-details`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoice_reference: (job as any).invoice_reference || '', eway_bill_number: (job as any).eway_bill_number || '' }),
+        }).catch(() => {});
+      }
+      setSelectedJobs(prev => prev.map(j => (j.id === job.id ? ({ ...j, files: updatedFiles } as any) : j)));
+      // A new document means the tick must be given again, against what is now attached.
+      setDocsVerifiedByJob(prev => ({ ...prev, [job.id]: false }));
+      refetchJobs?.();
+      toast.success(`${label} attached ✓`);
+    } catch (err: any) {
+      toast.error(`Could not attach ${label}: ${err.message || 'Unknown error'}`);
+    } finally {
+      setAttachingDoc(false);
+    }
+  };
+
+  // The job's own quantity can be wrong (e.g. saved as 1 when the order is
+  // 4000). Let the dispatcher correct it from the quantity box instead of
+  // being stuck with a number they cannot get past.
+  const [fixingQty, setFixingQty] = useState(false);
+  const fixJobQuantity = async (job: Job, newQty: number) => {
+    if (!Number.isFinite(newQty) || newQty < 1) return;
+    setFixingQty(true);
+    try {
+      const { error } = await supabase.from('jobs').update({ quantity: newQty }).eq('id', job.id);
+      if (error) throw new Error(error.message);
+      setSelectedJobs(prev => prev.map(j => (j.id === job.id ? ({ ...j, quantity: newQty } as any) : j)));
+      refetchJobs?.();
+      toast.success(`Job quantity for #${job.job_number} is now ${newQty}.`);
+    } catch (err: any) {
+      toast.error('Could not change the job quantity: ' + (err.message || 'Unknown error'));
+    } finally {
+      setFixingQty(false);
+    }
+  };
+
   const handleDispatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedJobs.length === 0) return;
@@ -1111,6 +1167,8 @@ export default function DispatchPage() {
                       <DispatchPaperwork
                         job={job as any}
                         verified={!!docsVerifiedByJob[job.id]}
+                        attaching={attachingDoc}
+                        onAttach={(file, label) => attachPaperwork(job, file, label)}
                         onVerifiedChange={v => setDocsVerifiedByJob(prev => {
                           // One box, one set of paperwork: ticking it once covers every job in the same package.
                           const next = { ...prev, [job.id]: v };
@@ -1124,7 +1182,7 @@ export default function DispatchPage() {
                           <div className="flex items-center gap-2">
                             <label className="text-sm font-medium shrink-0">Qty to dispatch</label>
                             <input
-                              type="number" min={1} max={rem}
+                              type="number" min={1}
                               value={qtyByJob[job.id] ?? ''}
                               onChange={e => setQtyByJob(prev => ({ ...prev, [job.id]: e.target.value }))}
                               className="w-28 px-3 py-1.5 border rounded-md text-sm"
@@ -1133,6 +1191,20 @@ export default function DispatchPage() {
                               of {rem} remaining{shipped > 0 ? ` (${shipped} already sent)` : ''}
                             </span>
                           </div>
+                          {rem != null && Number.isFinite(typed) && typed > rem && (
+                            <div className="mt-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800">
+                              This job's quantity is saved as <strong>{job.quantity}</strong>, so only {rem} can go out.
+                              If the real order is bigger, correct it here:
+                              <button
+                                type="button"
+                                disabled={fixingQty}
+                                onClick={() => fixJobQuantity(job, typed + shipped)}
+                                className="ml-1 font-semibold underline disabled:opacity-50"
+                              >
+                                {fixingQty ? 'Saving…' : `Set job quantity to ${typed + shipped}`}
+                              </button>
+                            </div>
+                          )}
                           {isPartial && (
                             <p className="text-[11px] text-amber-700 mt-1">
                               Partial — the job stays on the board with {rem - typed} remaining.

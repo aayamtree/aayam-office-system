@@ -17,6 +17,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Clock, ChevronDown } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 export type ContactKind = 'courier' | 'transport' | 'local_driver';
 
@@ -106,6 +107,7 @@ export default function DispatchContactInput({ kind, value, onChange, onPick, pl
   const matches = query
     ? contacts.filter(c => c.name.toLowerCase().includes(query))
     : contacts;
+  const [adding, setAdding] = useState(false);
   const exact = contacts.some(c => c.name.trim().toLowerCase() === query);
 
   const pick = useCallback((c: DispatchContact) => {
@@ -113,6 +115,28 @@ export default function DispatchContactInput({ kind, value, onChange, onPick, pl
     onPick?.(c);
     setOpen(false);
   }, [onChange, onPick]);
+
+  // Add the typed name to the saved list right now. (It is also saved
+  // automatically when the dispatch goes out; this just doesn't make you wait.)
+  const addNow = async () => {
+    const name = value.trim();
+    if (!name) return;
+    setAdding(true);
+    const { error } = await supabase
+      .from('dispatch_contacts')
+      .insert({ kind, name, times_used: 0, is_active: true });
+    setAdding(false);
+    if (error) {
+      toast.error(error.code === '42501'
+        ? 'Only an admin can add names to the list now — but it will be saved automatically when you dispatch.'
+        : 'Could not add: ' + error.message);
+      return;
+    }
+    invalidateContactCache(kind);
+    setContacts(await loadContacts(kind));
+    toast.success(`${name} added to the list ✓`);
+    setOpen(false);
+  };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!open || !matches.length) return;
@@ -185,9 +209,17 @@ export default function DispatchContactInput({ kind, value, onChange, onPick, pl
           {/* Say plainly that a new name is kept, so nobody wonders whether
               they were meant to add it somewhere else first. */}
           {!!value.trim() && !exact && (
-            <p className={`px-3 py-2 text-[11px] text-gray-500 ${matches.length ? 'border-t border-gray-100' : ''}`}>
-              <strong className="text-gray-700">{value.trim()}</strong> is new — it will be saved for next time.
-            </p>
+            <div className={`px-3 py-2 text-[11px] text-gray-500 ${matches.length ? 'border-t border-gray-100' : ''}`}>
+              <strong className="text-gray-700">{value.trim()}</strong> is new. It is saved automatically when you dispatch.
+              <button
+                type="button"
+                disabled={adding}
+                onMouseDown={e => { e.preventDefault(); addNow(); }}
+                className="mt-1.5 block w-full rounded-md bg-gray-900 px-2 py-1.5 text-center text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {adding ? 'Adding…' : `Add "${value.trim()}" to the list now`}
+              </button>
+            </div>
           )}
         </div>
       )}

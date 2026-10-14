@@ -10,13 +10,16 @@
 // explicit tick before goods can leave.
 // ─────────────────────────────────────────────────────────────
 
-import { FileText, ScrollText, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { FileText, ScrollText, ExternalLink, AlertTriangle, CheckCircle2, Paperclip, Loader2 } from 'lucide-react';
 import { getDispatchPaperwork, formatFileSize, type DispatchDocsJob, type JobDoc } from '@/lib/job-documents';
 
 interface Props {
   job: DispatchDocsJob | null | undefined;
   verified: boolean;
   onVerifiedChange: (v: boolean) => void;
+  /** When given, the dispatcher can attach the documents right here. */
+  onAttach?: (file: File, label: 'Invoice' | 'E-Way Bill') => void | Promise<void>;
+  attaching?: boolean;
 }
 
 function DocRow({ doc }: { doc: JobDoc }) {
@@ -41,7 +44,26 @@ function DocRow({ doc }: { doc: JobDoc }) {
   );
 }
 
-export default function DispatchPaperwork({ job, verified, onVerifiedChange }: Props) {
+function AttachButton({ label, onAttach, attaching }: { label: 'Invoice' | 'E-Way Bill'; onAttach: (file: File, label: 'Invoice' | 'E-Way Bill') => void | Promise<void>; attaching?: boolean }) {
+  return (
+    <label className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border bg-card cursor-pointer hover:border-foreground/40 ${attaching ? 'opacity-50 pointer-events-none' : ''}`}>
+      {attaching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+      Attach {label}
+      <input
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) onAttach(f, label);
+          e.target.value = '';
+        }}
+      />
+    </label>
+  );
+}
+
+export default function DispatchPaperwork({ job, verified, onVerifiedChange, onAttach, attaching }: Props) {
   const paper = getDispatchPaperwork(job);
 
   return (
@@ -61,10 +83,17 @@ export default function DispatchPaperwork({ job, verified, onVerifiedChange }: P
           <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
           <span>
             Nothing attached yet. Ask accounts for the invoice and e-way bill before dispatching —
-            use <strong>Request Invoice</strong> on the job card.
+            attach them below or use <strong>Request Invoice</strong> on the job card.
           </span>
         </div>
       ) : null}
+
+      {onAttach && (
+        <div className="flex flex-wrap gap-2">
+          <AttachButton label="Invoice" onAttach={onAttach} attaching={attaching} />
+          <AttachButton label="E-Way Bill" onAttach={onAttach} attaching={attaching} />
+        </div>
+      )}
 
       {/* Nothing attached: the dispatcher can still go ahead (client collect,
           paperwork to follow, etc.) but must say so explicitly. Without this
