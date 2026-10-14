@@ -414,26 +414,6 @@ export default function DispatchPage() {
     }
   };
 
-  // The job's own quantity can be wrong (e.g. saved as 1 when the order is
-  // 4000). Let the dispatcher correct it from the quantity box instead of
-  // being stuck with a number they cannot get past.
-  const [fixingQty, setFixingQty] = useState(false);
-  const fixJobQuantity = async (job: Job, newQty: number) => {
-    if (!Number.isFinite(newQty) || newQty < 1) return;
-    setFixingQty(true);
-    try {
-      const { error } = await supabase.from('jobs').update({ quantity: newQty }).eq('id', job.id);
-      if (error) throw new Error(error.message);
-      setSelectedJobs(prev => prev.map(j => (j.id === job.id ? ({ ...j, quantity: newQty } as any) : j)));
-      refetchJobs?.();
-      toast.success(`Job quantity for #${job.job_number} is now ${newQty}.`);
-    } catch (err: any) {
-      toast.error('Could not change the job quantity: ' + (err.message || 'Unknown error'));
-    } finally {
-      setFixingQty(false);
-    }
-  };
-
   const handleDispatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedJobs.length === 0) return;
@@ -460,7 +440,9 @@ export default function DispatchPage() {
       setShowDispatchModal(false);
       return;
     }
-    // Quantities: 1 … remaining, per job. (Jobs without a usable quantity
+    // Quantities: at least 1 per job. There is NO upper limit — printers send a
+    // little more or less than ordered, so the ordered quantity is only a guide.
+    // (Jobs without a usable quantity
     // ship whole — their dispatched_qty stays NULL.)
     for (const j of selectedJobs) {
       const rem = remainingFor(j);
@@ -468,10 +450,6 @@ export default function DispatchPage() {
       const n = parseInt(qtyByJob[j.id] || '', 10);
       if (!Number.isFinite(n) || n < 1) {
         toast.error(`Enter the quantity to dispatch for #${j.job_number}.`);
-        return;
-      }
-      if (n > rem) {
-        toast.error(`#${j.job_number}: only ${rem} of ${j.quantity} left to dispatch.`);
         return;
       }
     }
@@ -482,9 +460,8 @@ export default function DispatchPage() {
       // tab or dispatcher), silently capped (PostgREST max-rows), or missing
       // entirely (a failed fetch falls back to an empty list). Physical-goods
       // accounting must not rest on that — re-read the shipped sums for
-      // exactly these jobs and validate again before anything is written.
-      // The DB trigger (check_dispatch_qty) enforces the same rule
-      // transactionally as the last line of defence.
+      // exactly these jobs (used to decide full vs part shipment below).
+      // There is no upper limit on quantity — see check_dispatch_qty.
       const { data: priorRows, error: priorErr } = await supabase
         .from('dispatches')
         .select('job_id, dispatched_qty')
@@ -500,16 +477,6 @@ export default function DispatchPage() {
         if (q <= 0) return null;
         return Math.max(q - (priorByJob[j.id] || 0), 0);
       };
-      for (const j of selectedJobs) {
-        const rem = freshRemFor(j);
-        if (rem == null) continue;
-        const n = parseInt(qtyByJob[j.id] || '', 10);
-        if (n > rem) {
-          refetchDispatches?.();
-          throw new Error(`#${j.job_number}: only ${rem} of ${j.quantity} left to dispatch — the board was out of date and has been refreshed.`);
-        }
-      }
-
       // Upload receipt (courier / transport only) — ONCE for the whole box.
       let receiptUrl: string | null = null;
       if (receiptFile) {
@@ -1213,18 +1180,9 @@ export default function DispatchPage() {
                             </span>
                           </div>
                           {rem != null && Number.isFinite(typed) && typed > rem && (
-                            <div className="mt-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800">
-                              The job quantity is saved as <strong>{job.quantity}</strong>, so only {rem} can go out.
-                              If the real order is bigger, correct it here:
-                              <button
-                                type="button"
-                                disabled={fixingQty}
-                                onClick={() => fixJobQuantity(job, typed + shipped)}
-                                className="ml-1 font-semibold underline disabled:opacity-50"
-                              >
-                                {fixingQty ? 'Saving…' : `Set job quantity to ${typed + shipped}`}
-                              </button>
-                            </div>
+                            <p className="text-[11px] text-gray-500 mt-1">
+                              Ordered {job.quantity}{shipped > 0 ? `, ${shipped} already sent` : ''} — this sends {typed - rem} more than ordered. That is fine; the ordered quantity is only a guide.
+                            </p>
                           )}
                           {isPartial && (
                             <p className="text-[11px] text-amber-700 mt-1">
@@ -1438,7 +1396,8 @@ export default function DispatchPage() {
 
               {!allDocsVerified && selectedJobs.length > 0 && (
                 <p className="text-xs text-red-600 font-medium">
-                  Create Dispatch is locked: tick the paperwork box for {selectedJobs.filter(j => !docsVerifiedByJob[j.id]).length} more job(s) — scroll up and check every job.
+                  Create Dispatch is locked until you tick &quot;I have opened and checked the paperwork&quot; at the top of this window
+                  {selectedJobs.length > 1 ? ` — for each job (${selectedJobs.filter(j => !docsVerifiedByJob[j.id]).length} still to tick).` : '.'}
                 </p>
               )}
               <div className="flex gap-3 pt-2">
