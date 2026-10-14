@@ -10,7 +10,8 @@
 // explicit tick before goods can leave.
 // ─────────────────────────────────────────────────────────────
 
-import { FileText, ScrollText, ExternalLink, AlertTriangle, CheckCircle2, Paperclip, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, ScrollText, ExternalLink, AlertTriangle, CheckCircle2, Paperclip, Loader2, Trash2 } from 'lucide-react';
 import { getDispatchPaperwork, formatFileSize, type DispatchDocsJob, type JobDoc } from '@/lib/job-documents';
 
 interface Props {
@@ -20,27 +21,64 @@ interface Props {
   /** When given, the dispatcher can attach the documents right here. */
   onAttach?: (file: File, label: 'Invoice' | 'E-Way Bill') => void | Promise<void>;
   attaching?: boolean;
+  /** When given, a wrong document can be taken off the job from here. */
+  onRemove?: (doc: JobDoc) => void | Promise<void>;
 }
 
-function DocRow({ doc }: { doc: JobDoc }) {
+function DocRow({ doc, onRemove }: { doc: JobDoc; onRemove?: (doc: JobDoc) => void | Promise<void> }) {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const meta = [formatFileSize(doc.size), doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '']
     .filter(Boolean)
     .join(' · ');
 
   return (
-    <a
-      href={doc.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 px-2.5 py-2 rounded-md border border-border bg-card hover:border-foreground/30 hover:bg-muted/40 transition-colors group"
-    >
-      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-      <span className="flex-1 min-w-0">
-        <span className="block text-xs font-medium text-foreground truncate">{doc.name}</span>
-        {meta && <span className="block text-[10px] text-muted-foreground">{meta}</span>}
-      </span>
-      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
-    </a>
+    <div className="rounded-md border border-border bg-card">
+      <div className="flex items-center">
+        <a
+          href={doc.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-1 min-w-0 items-center gap-2 px-2.5 py-2 hover:bg-muted/40 transition-colors group rounded-md"
+        >
+          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-xs font-medium text-foreground truncate">{doc.name}</span>
+            {meta && <span className="block text-[10px] text-muted-foreground">{meta}</span>}
+          </span>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+        </a>
+        {onRemove && !confirming && (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label="Remove this document"
+            title="Remove this document"
+            className="px-2.5 py-2 text-muted-foreground hover:text-red-600"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      {onRemove && confirming && (
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-red-50 px-2.5 py-1.5 text-[11px] text-red-800 rounded-b-md">
+          <span>Remove this file from the job?</span>
+          <span className="flex gap-1.5">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => { setBusy(true); try { await onRemove(doc); } finally { setBusy(false); setConfirming(false); } }}
+              className="font-semibold rounded bg-red-600 px-2 py-0.5 text-white disabled:opacity-50"
+            >
+              {busy ? 'Removing…' : 'Yes, remove'}
+            </button>
+            <button type="button" disabled={busy} onClick={() => setConfirming(false)} className="font-semibold rounded border border-red-300 px-2 py-0.5">
+              Keep
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -63,7 +101,7 @@ function AttachButton({ label, onAttach, attaching }: { label: 'Invoice' | 'E-Wa
   );
 }
 
-export default function DispatchPaperwork({ job, verified, onVerifiedChange, onAttach, attaching }: Props) {
+export default function DispatchPaperwork({ job, verified, onVerifiedChange, onAttach, attaching, onRemove }: Props) {
   const paper = getDispatchPaperwork(job);
 
   return (
@@ -126,7 +164,7 @@ export default function DispatchPaperwork({ job, verified, onVerifiedChange, onA
               )}
             </div>
             {paper.invoices.length > 0 ? (
-              paper.invoices.map((d) => <DocRow key={d.url} doc={d} />)
+              paper.invoices.map((d) => <DocRow key={d.url} doc={d} onRemove={onRemove} />)
             ) : (
               <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
                 No invoice PDF attached.
@@ -145,7 +183,7 @@ export default function DispatchPaperwork({ job, verified, onVerifiedChange, onA
               )}
             </div>
             {paper.ewayBills.length > 0 ? (
-              paper.ewayBills.map((d) => <DocRow key={d.url} doc={d} />)
+              paper.ewayBills.map((d) => <DocRow key={d.url} doc={d} onRemove={onRemove} />)
             ) : (
               <p className="text-[11px] text-muted-foreground bg-card border border-border rounded px-2 py-1.5">
                 No e-way bill attached. Not every consignment needs one.

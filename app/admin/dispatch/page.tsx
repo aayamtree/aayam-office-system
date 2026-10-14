@@ -394,6 +394,26 @@ export default function DispatchPage() {
     }
   };
 
+  // Take a wrong document off the job. The file stays in storage (nothing is
+  // destroyed); it just stops being listed as this job's invoice / e-way bill.
+  // Same file uploaded twice shows once on screen, so every copy goes.
+  const removePaperwork = async (job: Job, doc: { kind: 'invoice' | 'eway'; name: string; url: string; size?: number }) => {
+    try {
+      const kindRe = doc.kind === 'invoice' ? /^\s*invoice\b/i : /^\s*e[\s_-]*way[\s_-]*bill\b/i;
+      const current: any[] = (job as any).files || [];
+      const updatedFiles = current.filter(f =>
+        !(f.url === doc.url || (kindRe.test(f.name || '') && f.size === doc.size && String(f.name || '').endsWith(doc.name))));
+      const { error } = await supabase.from('jobs').update({ files: updatedFiles }).eq('id', job.id);
+      if (error) throw new Error(error.message);
+      setSelectedJobs(prev => prev.map(j => (j.id === job.id ? ({ ...j, files: updatedFiles } as any) : j)));
+      setDocsVerifiedByJob(prev => ({ ...prev, [job.id]: false }));
+      refetchJobs?.();
+      toast.success('Document removed ✓');
+    } catch (err: any) {
+      toast.error('Could not remove the document: ' + (err.message || 'Unknown error'));
+    }
+  };
+
   // The job's own quantity can be wrong (e.g. saved as 1 when the order is
   // 4000). Let the dispatcher correct it from the quantity box instead of
   // being stuck with a number they cannot get past.
@@ -1169,6 +1189,7 @@ export default function DispatchPage() {
                         verified={!!docsVerifiedByJob[job.id]}
                         attaching={attachingDoc}
                         onAttach={(file, label) => attachPaperwork(job, file, label)}
+                        onRemove={doc => removePaperwork(job, doc)}
                         onVerifiedChange={v => setDocsVerifiedByJob(prev => {
                           // One box, one set of paperwork: ticking it once covers every job in the same package.
                           const next = { ...prev, [job.id]: v };
