@@ -877,13 +877,20 @@ export default function PrintRunsPage() {
                                                 <p className="text-[10px] font-semibold text-foreground truncate">
                                                     👤 {uniqueClients.join(', ') || 'No client'}
                                                 </p>
-                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                {/* One picture per job, same as Dispatch — so two jobs with
+                                                    the same name from different clients can be told apart. */}
+                                                <div className="space-y-1 mt-1">
                                                     {run.jobs.map(job => (
-                                                        <span key={job.id} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
-                                                            <span className="font-bold">{job.job_number}</span>
-                                                            <span className="opacity-50">·</span>
-                                                            <span className="truncate max-w-[80px]">{job.item_name || 'Unnamed'}</span>
-                                                        </span>
+                                                        <div key={job.id} className="flex items-center gap-2">
+                                                            <JobThumb
+                                                                size={44}
+                                                                job={{ ...(job.jobs || {}), job_number: job.job_number, project_name: job.item_name, quantity: job.quantity_needed, client: { name: job.client_name } }}
+                                                            />
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[10px] font-bold font-mono text-foreground">{job.job_number}</p>
+                                                                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug">{job.item_name || 'Unnamed'}</p>
+                                                            </div>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
