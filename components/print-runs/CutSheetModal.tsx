@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Loader2, Scissors } from 'lucide-react';
+import { X, Loader2, Scissors, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 
@@ -56,6 +56,10 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
   const [active, setActive] = useState<string | null>(null);
   const [apply, setApply] = useState<Record<string, boolean>>({});
   const wrapRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // 1 = whole sheet fits the window; bigger = zoomed in (scroll to move around).
+  const [zoom, setZoom] = useState(1);
+  const focusAfterZoom = useRef<string | null>(null);
   const drag = useRef<null | { jobId: string; mode: 'move' | 'draw'; sx: number; sy: number; start: Box }>(null);
 
   useEffect(() => {
@@ -137,6 +141,35 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
     }
   };
 
+  const MAX_ZOOM = 8;
+  const changeZoom = (f: number) => setZoom(z => Math.min(MAX_ZOOM, Math.max(1, +(z * f).toFixed(3))));
+
+  // Zoom so the chosen job's box fills most of the window, and scroll it to the middle.
+  const zoomToBox = (jobId: string) => {
+    const b = boxes[jobId]; const sc = scrollRef.current;
+    if (!b || !sc || !img) return;
+    const contW = sc.clientWidth - 24, contH = sc.clientHeight - 24;
+    const aspect = img.naturalHeight / img.naturalWidth;
+    const z = Math.min(0.75 / Math.max(b.w, 0.01), (0.8 * contH) / (Math.max(b.h, 0.01) * contW * aspect));
+    focusAfterZoom.current = jobId;
+    setZoom(Math.min(MAX_ZOOM, Math.max(1, z)));
+  };
+  useEffect(() => {
+    const id = focusAfterZoom.current;
+    if (!id) return;
+    focusAfterZoom.current = null;
+    const b = boxes[id]; const sc = scrollRef.current; const wrap = wrapRef.current;
+    if (!b || !sc || !wrap) return;
+    requestAnimationFrame(() => {
+      sc.scrollTo({
+        left: wrap.offsetLeft + (b.x + b.w / 2) * wrap.offsetWidth - sc.clientWidth / 2,
+        top: wrap.offsetTop + (b.y + b.h / 2) * wrap.offsetHeight - sc.clientHeight / 2,
+        behavior: 'smooth',
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom]);
+
   const save = async () => {
     if (!img) return;
     const todo = jobs.filter(j => apply[j.job_id] && boxes[j.job_id]);
@@ -178,11 +211,22 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
 
         {(phase === 'review' || phase === 'saving') && img && (
           <div className="flex flex-col md:flex-row flex-1 min-h-0">
-            <div className="flex-1 overflow-auto p-3 bg-gray-50">
-              <div ref={wrapRef} className="relative inline-block select-none touch-none cursor-crosshair max-w-full"
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-gray-50">
+              <div className="flex items-center gap-1.5 px-3 py-2 border-b bg-white text-xs">
+                <button type="button" onClick={() => changeZoom(1 / 1.5)} disabled={zoom <= 1} className="p-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-40" aria-label="Zoom out"><ZoomOut className="w-4 h-4" /></button>
+                <span className="w-12 text-center font-semibold tabular-nums">{Math.round(zoom * 100)}%</span>
+                <button type="button" onClick={() => changeZoom(1.5)} disabled={zoom >= MAX_ZOOM} className="p-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-40" aria-label="Zoom in"><ZoomIn className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setZoom(1)} disabled={zoom === 1} className="px-2 py-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-40 flex items-center gap-1"><Maximize2 className="w-3.5 h-3.5" /> Whole sheet</button>
+                <button type="button" onClick={() => active && zoomToBox(active)} disabled={!active || !boxes[active || '']} className="px-2 py-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-40">Zoom to selected box</button>
+                <span className="ml-auto text-gray-500 hidden lg:inline">Tip: click a job on the right to zoom to it</span>
+              </div>
+              <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3">
+              <div ref={wrapRef}
+                style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}
+                className={`relative select-none touch-none cursor-crosshair ${zoom > 1 ? 'block' : 'inline-block max-w-full'}`}
                 onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={sheetUrl} alt="Sheet" draggable={false} className="block max-w-full max-h-[70vh] w-auto" />
+                <img src={sheetUrl} alt="Sheet" draggable={false} className={zoom > 1 ? 'block w-full h-auto' : 'block max-w-full max-h-[70vh] w-auto'} />
                 {jobs.map((j, i) => {
                   const b = boxes[j.job_id]; if (!b) return null;
                   const col = COLORS[i % COLORS.length];
@@ -195,13 +239,14 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
                 })}
               </div>
               <p className="text-[11px] text-gray-500 mt-2">Pick a job on the right, then drag on the sheet to draw its box, or drag an existing box to move it.</p>
+              </div>
             </div>
 
             <div className="md:w-72 border-t md:border-t-0 md:border-l overflow-auto p-3 space-y-2">
               {jobs.map((j, i) => {
                 const has = !!boxes[j.job_id];
                 return (
-                  <div key={j.job_id} onClick={() => setActive(j.job_id)}
+                  <div key={j.job_id} onClick={() => { setActive(j.job_id); if (boxes[j.job_id]) zoomToBox(j.job_id); }}
                     className={`rounded-md border p-2 cursor-pointer ${active === j.job_id ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
                     <div className="flex items-start gap-2">
                       <input type="checkbox" className="mt-0.5 accent-gray-900" checked={!!apply[j.job_id]} disabled={!has}
