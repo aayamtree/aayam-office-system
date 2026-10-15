@@ -1397,11 +1397,20 @@ export default function DispatchPage() {
                 </span>
               </div>
 
-              {!allDocsVerified && selectedJobs.length > 0 && (
-                <p className="text-xs text-red-600 font-medium">
-                  Create Dispatch is locked until you tick &quot;I have opened and checked the paperwork&quot; at the top of this window
-                  {selectedJobs.length > 1 ? ` — for each job (${selectedJobs.filter(j => !docsVerifiedByJob[j.id]).length} still to tick).` : '.'}
-                </p>
+              {selectedJobs.length > 0 && (
+                <label className={`flex items-start gap-2.5 rounded-md border px-3 py-2.5 cursor-pointer text-sm ${allDocsVerified ? 'border-green-300 bg-green-50 text-green-900' : 'border-amber-300 bg-amber-50 text-amber-900'}`}>
+                  <input
+                    type="checkbox"
+                    checked={allDocsVerified}
+                    onChange={e => setDocsVerifiedByJob(Object.fromEntries(selectedJobs.map(j => [j.id, e.target.checked])))}
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  <span className="font-medium">
+                    I have opened and checked the paperwork (invoice and e-way bill)
+                    {selectedJobs.length > 1 ? ` for all ${selectedJobs.length} jobs` : ''}
+                    {!allDocsVerified && <span className="block text-xs font-normal mt-0.5">Tick this box to unlock Create Dispatch.</span>}
+                  </span>
+                </label>
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowDispatchModal(false)} className="flex-1 px-4 py-2 border rounded-md text-sm">Cancel</button>
