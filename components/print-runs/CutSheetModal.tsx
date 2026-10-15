@@ -60,6 +60,20 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
   // 1 = whole sheet fits the window; bigger = zoomed in (scroll to move around).
   const [zoom, setZoom] = useState(1);
   const focusAfterZoom = useRef<string | null>(null);
+  // Work in progress is kept on this computer, so an accidental close never loses it.
+  const draftKey = `cutsheet-draft:${runId}`;
+  const [dirty, setDirty] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  const readDraft = () => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      return d && d.sheetUrl === sheetUrl && d.boxes ? d : null;
+    } catch { return null; }
+  };
+  const clearDraft = () => { try { localStorage.removeItem(draftKey); } catch { /* ignore */ } };
   const drag = useRef<null | { jobId: string; mode: 'move' | 'draw'; sx: number; sy: number; start: Box }>(null);
 
   useEffect(() => {
@@ -69,6 +83,16 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
         const full = await loadImage(sheetUrl);
         if (dead) return;
         setImg(full);
+        const draft = readDraft();
+        if (draft) {
+          const b: Record<string, Box | null> = {}; const a: Record<string, boolean> = {};
+          jobs.forEach(j => { b[j.job_id] = draft.boxes[j.job_id] || null; a[j.job_id] = !!(draft.apply || {})[j.job_id] && !!b[j.job_id]; });
+          setBoxes(b); setApply(a); setConfidence(draft.confidence || {});
+          setActive(jobs.find(j => !b[j.job_id])?.job_id || jobs[0]?.job_id || null);
+          setRestored(true); setDirty(true);
+          setPhase('review');
+          return;
+        }
         const res = await fetch('/api/print-runs/detect-products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -142,7 +166,17 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
       });
       setApply(prev => ({ ...prev, [d.jobId]: true }));
     }
+    if (d) setDirty(true);
   };
+
+  useEffect(() => {
+    if (phase !== 'review' || !dirty) return;
+    try { localStorage.setItem(draftKey, JSON.stringify({ sheetUrl, boxes, apply, confidence, at: Date.now() })); } catch { /* storage full or blocked */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boxes, apply, phase, dirty]);
+
+  const requestClose = () => { if (dirty && phase === 'review') setConfirmClose(true); else onClose(); };
+  const startOver = () => { clearDraft(); onClose(); toast.info('Draft cleared — open the window again to scan the sheet fresh'); };
 
   const MAX_ZOOM = 8;
   const changeZoom = (f: number) => setZoom(z => Math.min(MAX_ZOOM, Math.max(1, +(z * f).toFixed(3))));
@@ -189,6 +223,7 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
         if (error) throw error;
       }
       toast.success(`Saved ${todo.length} product picture${todo.length > 1 ? 's' : ''}`);
+      clearDraft();
       onSaved?.();
       onClose();
     } catch (e: any) {
@@ -202,9 +237,24 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
       <div className="bg-white rounded-lg w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <p className="font-semibold text-sm flex items-center gap-2"><Scissors className="w-4 h-4" /> Cut product pictures from this sheet</p>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-900" aria-label="Close"><X className="w-5 h-5" /></button>
+          <button onClick={requestClose} className="p-1 text-gray-400 hover:text-gray-900" aria-label="Close"><X className="w-5 h-5" /></button>
         </div>
 
+        {restored && phase === 'review' && (
+          <div className="flex items-center justify-between gap-2 px-4 py-2 text-xs bg-blue-50 text-blue-900 border-b">
+            <span>Your earlier work on this sheet was restored. Nothing was lost.</span>
+            <button type="button" onClick={startOver} className="underline font-semibold shrink-0">Start over with a fresh scan</button>
+          </div>
+        )}
+        {confirmClose && (
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs bg-amber-50 text-amber-900 border-b">
+            <span className="font-medium">Close without saving? Your boxes are kept on this computer, so you can reopen and carry on.</span>
+            <span className="flex gap-2">
+              <button type="button" onClick={() => setConfirmClose(false)} className="px-2.5 py-1 rounded-md bg-gray-900 text-white font-semibold">Keep working</button>
+              <button type="button" onClick={onClose} className="px-2.5 py-1 rounded-md border bg-white font-semibold">Close</button>
+            </span>
+          </div>
+        )}
         {phase === 'loading' && (
           <div className="p-10 text-center text-sm text-gray-500"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Reading the sheet and finding each product…</div>
         )}
@@ -265,7 +315,7 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
                     className={`rounded-md border p-2 cursor-pointer ${active === j.job_id ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}>
                     <div className="flex items-start gap-2">
                       <input type="checkbox" className="mt-0.5 accent-gray-900" checked={!!apply[j.job_id]} disabled={!has}
-                        onChange={e => setApply(prev => ({ ...prev, [j.job_id]: e.target.checked }))} onClick={e => e.stopPropagation()} />
+                        onChange={e => { setApply(prev => ({ ...prev, [j.job_id]: e.target.checked })); setDirty(true); }} onClick={e => e.stopPropagation()} />
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-mono text-gray-500 flex items-center gap-1">
                           <span style={{ background: COLORS[i % COLORS.length] }} className="inline-block w-2 h-2 rounded-sm" />#{j.job_number}
@@ -287,7 +337,7 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
 
         {(phase === 'review' || phase === 'saving') && (
           <div className="flex items-center justify-end gap-2 px-4 py-3 border-t">
-            <button onClick={onClose} disabled={phase === 'saving'} className="px-3 py-1.5 text-sm border rounded-md">Cancel</button>
+            <button onClick={requestClose} disabled={phase === 'saving'} className="px-3 py-1.5 text-sm border rounded-md">Cancel</button>
             <button onClick={save} disabled={phase === 'saving'} className="px-4 py-1.5 text-sm bg-gray-900 text-white rounded-md font-semibold disabled:opacity-50 flex items-center gap-2">
               {phase === 'saving' && <Loader2 className="w-4 h-4 animate-spin" />} Save ticked pictures
             </button>
