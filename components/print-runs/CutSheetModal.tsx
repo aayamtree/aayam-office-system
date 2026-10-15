@@ -134,7 +134,10 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
     if (d?.mode === 'draw') {
       setBoxes(prev => {
         const b = prev[d.jobId];
-        if (b && (b.w < 0.02 || b.h < 0.02)) return { ...prev, [d.jobId]: d.start.w ? d.start : null };
+        if (b && (b.w < 0.01 || b.h < 0.01)) {
+          toast.error('That box is too small — drag a rectangle around the whole label');
+          return { ...prev, [d.jobId]: d.start.w ? d.start : null };
+        }
         return prev;
       });
       setApply(prev => ({ ...prev, [d.jobId]: true }));
@@ -220,6 +223,18 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
                 <button type="button" onClick={() => active && zoomToBox(active)} disabled={!active || !boxes[active || '']} className="px-2 py-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-40">Zoom to selected box</button>
                 <span className="ml-auto text-gray-500 hidden lg:inline">Tip: click a job on the right to zoom to it</span>
               </div>
+              {active && (() => {
+                const aj = jobs.find(j => j.job_id === active);
+                if (!aj) return null;
+                const has = !!boxes[active];
+                return (
+                  <div className={`px-3 py-2 text-xs border-b ${has ? 'bg-white text-gray-700' : 'bg-amber-50 text-amber-900 font-medium'}`}>
+                    {has
+                      ? <>Selected: <b>#{aj.job_number}</b>. Drag inside its box to move it, or drag on an empty spot to draw it again.</>
+                      : <>Selected: <b>#{aj.job_number}</b> was not found. <b>Drag a rectangle on the sheet around its label</b> (zoom in first if it is small). It ticks itself when the box is drawn.</>}
+                  </div>
+                );
+              })()}
               <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3">
               <div ref={wrapRef}
                 style={zoom > 1 ? { width: `${zoom * 100}%` } : undefined}
@@ -258,7 +273,7 @@ export default function CutSheetModal({ runId, sheetUrl, jobs, onClose, onSaved 
                         <p className="text-xs font-semibold text-gray-900 leading-snug">{j.item_name || '—'}</p>
                         <p className="text-[10px] text-gray-500 truncate">{j.client_name}</p>
                         <p className={`text-[10px] mt-0.5 ${has ? (confidence[j.job_id] === 'high' ? 'text-green-700' : 'text-amber-700') : 'text-red-600'}`}>
-                          {has ? (confidence[j.job_id] ? `Found (${confidence[j.job_id]} confidence) — check it` : 'Box drawn by hand') : 'Not found — draw its box'}
+                          {has ? (confidence[j.job_id] ? `Found (${confidence[j.job_id]} confidence) — check it` : 'Box drawn by hand') : 'Not found — click here, then drag a box on the sheet'}
                           {j.has_thumb && ' · already has a picture'}
                         </p>
                       </div>
