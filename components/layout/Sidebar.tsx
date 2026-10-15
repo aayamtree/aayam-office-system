@@ -65,7 +65,9 @@ const menuItems: MenuItem[] = [
     name: 'My Work',
     icon: Star,
     href: '/admin/my-work',
-    // Visible to everyone
+    // Personal home page for staff. Admins use Overview (company view) and
+    // Pending (personal list) instead — My Work was only a copy of Overview for them.
+    allowedRoles: ['designer', 'marketing', 'dispatch', 'cmyk', 'finance'],
   },
   {
     name: 'Overview',

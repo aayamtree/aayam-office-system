@@ -827,9 +827,11 @@ export default function MyWorkPage() {
 
   useEffect(() => {
     if (!authLoading && !profile) router.push('/login');
+    // Admins use Overview (company view) and Pending (personal list) instead.
+    if (!authLoading && (profile?.role as string | undefined) === 'admin') router.replace('/admin/dashboard');
   }, [profile, authLoading, router]);
 
-  if (authLoading || !profile) {
+  if (authLoading || !profile || (profile.role as string) === 'admin') {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="animate-spin text-gray-400" />
