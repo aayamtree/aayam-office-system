@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft, Building2, Users, Briefcase, Calendar,
@@ -8,6 +8,7 @@ import {
     ChevronDown, Printer
 } from 'lucide-react';
 import { useJobs, useVendors, useClients } from '@/lib/hooks';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getProjectTypeLabel } from '@/lib/job-workflow';
@@ -26,19 +27,51 @@ export default function VendorReportsPage() {
     const { vendors, loading: vendorsLoading } = useVendors();
     const { clients, loading: clientsLoading } = useClients();
 
+    // Only 2 of 754 jobs have jobs.vendor_id filled in, but 426 jobs sit on a print
+    // run, and every print run has a vendor. No job is on runs with two different
+    // vendors, so a job's vendor can be read from its print run without double
+    // counting. jobs.vendor_id still wins when it is set.
+    const [printVendorByJob, setPrintVendorByJob] = useState<Record<string, string>>({});
+    const [printLoading, setPrintLoading] = useState(true);
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            const { data, error } = await supabase
+                .from('print_run_jobs')
+                .select('job_id, print_run:print_runs(vendor_id)')
+                .limit(5000);
+            if (cancelled) return;
+            if (!error && data) {
+                const map: Record<string, string> = {};
+                (data as any[]).forEach(r => {
+                    const run = Array.isArray(r.print_run) ? r.print_run[0] : r.print_run;
+                    if (r.job_id && run?.vendor_id) map[r.job_id] = run.vendor_id;
+                });
+                setPrintVendorByJob(map);
+            }
+            setPrintLoading(false);
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const jobsWithVendor = useMemo(
+        () => jobs.map(j => ({ ...j, vendor_id: j.vendor_id || printVendorByJob[j.id] || null })),
+        [jobs, printVendorByJob]
+    );
+
     const [viewMode, setViewMode] = useState<ViewMode>('vendor');
     const [dateRange, setDateRange] = useState<DateRange>('all');
     const [vendorFilter, setVendorFilter] = useState('all');
     const [clientFilter, setClientFilter] = useState('all');
 
-    const loading = jobsLoading || vendorsLoading || clientsLoading;
+    const loading = jobsLoading || vendorsLoading || clientsLoading || printLoading;
 
     const formatCurrency = (n: number) =>
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
     // Filter jobs by date range
     const filteredJobs = useMemo(() => {
-        let filtered = [...jobs];
+        let filtered = [...jobsWithVendor];
         const now = new Date();
 
         if (dateRange === 'month') {
@@ -60,7 +93,7 @@ export default function VendorReportsPage() {
         }
 
         return filtered;
-    }, [jobs, dateRange, vendorFilter, clientFilter]);
+    }, [jobsWithVendor, dateRange, vendorFilter, clientFilter]);
 
     // Summary Stats
     const totalJobs = filteredJobs.length;
