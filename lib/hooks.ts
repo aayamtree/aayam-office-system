@@ -1904,6 +1904,34 @@ export function useCMYKExpenses() {
 }
 
 // =============================================
+// CMYK EXPENSE CATEGORIES HOOK — admin-managed list of expense categories
+// =============================================
+export function useCMYKExpenseCategories() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('cmyk_expense_categories', {
+    orderBy: { column: 'sort_order', ascending: true },
+  });
+
+  const createCategory = async (label: string, color: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const value = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (!value) return { error: 'Enter a category name' };
+    const sort_order = ((data || []).filter((c: any) => !c.is_system).length || 0) + 6;
+    const { error } = await supabase.from('cmyk_expense_categories').insert([{ value, label: label.trim(), color, sort_order }]);
+    if (!error) refetch();
+    return { error: error?.code === '23505' ? 'That category already exists' : error?.message };
+  };
+
+  const deleteCategory = async (id: string) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('cmyk_expense_categories').delete().eq('id', id);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { categories: data, loading, error, refetch, createCategory, deleteCategory };
+}
+
+// =============================================
 // CMYK MONTHLY OVERVIEW HOOK
 // =============================================
 export function useCMYKMonthlyOverview(year: number, month: number) {

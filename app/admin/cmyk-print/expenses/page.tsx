@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit, X, Loader2, Zap, Truck, Wrench, Package, Users, MoreHorizontal, Banknote, Smartphone, Building2 } from 'lucide-react';
-import { useCMYKExpenses, useCMYKAccounts } from '@/lib/hooks';
+import { ArrowLeft, Plus, Trash2, Edit, X, Loader2, Zap, Truck, Wrench, Package, Users, MoreHorizontal, Banknote, Smartphone, Building2, Tag, Settings2 } from 'lucide-react';
+import { useCMYKExpenses, useCMYKAccounts, useCMYKExpenseCategories } from '@/lib/hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-const EXPENSE_CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { value: 'transportation', label: 'Transportation', icon: Truck, color: 'bg-blue-100 text-blue-700' },
   { value: 'electricity', label: 'Electricity', icon: Zap, color: 'bg-yellow-100 text-yellow-700' },
   { value: 'maintenance', label: 'Maintenance', icon: Wrench, color: 'bg-orange-100 text-orange-700' },
@@ -19,7 +19,13 @@ const EXPENSE_CATEGORIES = [
   { value: 'other', label: 'Other', icon: MoreHorizontal, color: 'bg-muted text-muted-foreground' },
 ];
 
-const getCategoryMeta = (value: string) => EXPENSE_CATEGORIES.find(c => c.value === value) || EXPENSE_CATEGORIES[5];
+const CATEGORY_ICONS: Record<string, any> = { transportation: Truck, electricity: Zap, maintenance: Wrench, consumables: Package, labor: Users, other: MoreHorizontal };
+const COLOR_CLASSES: Record<string, string> = {
+  blue: 'bg-blue-100 text-blue-700', yellow: 'bg-yellow-100 text-yellow-700', orange: 'bg-orange-100 text-orange-700',
+  purple: 'bg-purple-100 text-purple-700', green: 'bg-green-100 text-green-700', red: 'bg-red-100 text-red-700',
+  pink: 'bg-pink-100 text-pink-700', teal: 'bg-teal-100 text-teal-700', slate: 'bg-muted text-muted-foreground',
+};
+const NEW_CATEGORY_COLORS = ['blue', 'yellow', 'orange', 'purple', 'green', 'red', 'pink', 'teal'];
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -27,6 +33,55 @@ export default function CMYKExpensesPage() {
   const { expenses, loading, createExpense, updateExpense, deleteExpense } = useCMYKExpenses();
   const { cmykAccounts } = useCMYKAccounts();
   const confirm = useConfirm();
+  const { categories: dbCategories, createCategory, deleteCategory } = useCMYKExpenseCategories();
+
+  // Categories come from the database; the built-in list is only a fallback until it loads.
+  const EXPENSE_CATEGORIES = useMemo(() => {
+    const rows = (dbCategories || []) as any[];
+    if (rows.length === 0) return DEFAULT_CATEGORIES;
+    return rows.map(r => ({
+      id: r.id, value: r.value, label: r.label, is_system: r.is_system,
+      icon: CATEGORY_ICONS[r.value] || Tag,
+      color: COLOR_CLASSES[r.color] || COLOR_CLASSES.slate,
+    }));
+  }, [dbCategories]);
+  const getCategoryMeta = (value: string) =>
+    EXPENSE_CATEGORIES.find((c: any) => c.value === value) ||
+    { value, label: value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' '), icon: Tag, color: COLOR_CLASSES.slate };
+
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('blue');
+  const [catBusy, setCatBusy] = useState(false);
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCatName.trim()) return;
+    setCatBusy(true);
+    const res = await createCategory(newCatName, newCatColor);
+    setCatBusy(false);
+    if (res?.error) { toast.error(res.error); return; }
+    toast.success('Category added');
+    setNewCatName('');
+  };
+
+  const handleRemoveCategory = async (cat: any) => {
+    const used = (expenses || []).filter(e => e.category === cat.value).length;
+    if (used > 0) {
+      toast.error(`"${cat.label}" is used by ${used} expense${used > 1 ? 's' : ''}. Change or delete those first.`);
+      return;
+    }
+    const { confirmed } = await confirm({
+      title: `Remove "${cat.label}"?`,
+      message: 'No expenses use this category, so nothing else changes.',
+      variant: 'danger',
+      confirmLabel: 'Remove category',
+    });
+    if (!confirmed) return;
+    const res = await deleteCategory(cat.id);
+    if (res?.error) toast.error('Could not remove: ' + res.error);
+    else { toast.success('Category removed'); if (filterCategory === cat.value) setFilterCategory('all'); }
+  };
 
   // Which CMYK account the money left. Untagged expenses are still recorded, they just
   // can't be deducted from any one account's balance.
@@ -159,9 +214,14 @@ export default function CMYKExpensesPage() {
             <p className="text-sm text-muted-foreground">Track daily operational costs</p>
           </div>
         </div>
-        <Button onClick={openAdd} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> Add Expense
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setShowCatModal(true)} size="sm" variant="outline">
+            <Settings2 className="w-4 h-4 mr-1" /> Categories
+          </Button>
+          <Button onClick={openAdd} size="sm">
+            <Plus className="w-4 h-4 mr-1" /> Add Expense
+          </Button>
+        </div>
       </div>
 
       {/* Category Summary */}
@@ -283,9 +343,12 @@ export default function CMYKExpensesPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">Category *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-muted-foreground">Category *</label>
+                  <button type="button" onClick={() => setShowCatModal(true)} className="text-[11px] text-muted-foreground hover:text-foreground underline">+ Add category</button>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {EXPENSE_CATEGORIES.map(cat => {
+                  {EXPENSE_CATEGORIES.map((cat: any) => {
                     const Icon = cat.icon;
                     return (
                       <button key={cat.value} type="button"
@@ -340,6 +403,56 @@ export default function CMYKExpensesPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Manage Categories Modal */}
+      {showCatModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-background rounded-md w-full max-w-md border border-border shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-sm font-semibold">Manage Categories</h2>
+              <button onClick={() => setShowCatModal(false)} className="p-1.5 hover:bg-muted rounded-md"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <form onSubmit={handleAddCategory} className="space-y-2">
+                <label className="block text-xs font-medium text-muted-foreground">New category</label>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="e.g. Packaging" value={newCatName} maxLength={30}
+                    onChange={e => setNewCatName(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <Button type="submit" size="sm" disabled={catBusy || !newCatName.trim()}>
+                    {catBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />Add</>}
+                  </Button>
+                </div>
+                <div className="flex gap-1.5">
+                  {NEW_CATEGORY_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => setNewCatColor(c)} title={c}
+                      className={`w-6 h-6 rounded-full border-2 ${COLOR_CLASSES[c].split(' ')[0]} ${newCatColor === c ? 'border-foreground' : 'border-transparent'}`} />
+                  ))}
+                </div>
+              </form>
+              <div className="divide-y divide-border border border-border rounded-md max-h-72 overflow-y-auto">
+                {EXPENSE_CATEGORIES.map((cat: any) => {
+                  const Icon = cat.icon;
+                  return (
+                    <div key={cat.value} className="flex items-center gap-2 p-2.5">
+                      <div className={`w-7 h-7 rounded-md flex items-center justify-center ${cat.color}`}><Icon className="w-3.5 h-3.5" /></div>
+                      <span className="flex-1 text-sm">{cat.label}</span>
+                      {cat.is_system || !cat.id ? (
+                        <span className="text-[10px] text-muted-foreground">Default</span>
+                      ) : (
+                        <button onClick={() => handleRemoveCategory(cat)} className="p-1.5 hover:bg-red-50 rounded-md text-muted-foreground hover:text-destructive" title="Remove category">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">A category that is already used by an expense can't be removed. "Other" always stays.</p>
+              <Button type="button" variant="outline" className="w-full" onClick={() => setShowCatModal(false)}>Done</Button>
+            </div>
           </div>
         </div>
       )}
