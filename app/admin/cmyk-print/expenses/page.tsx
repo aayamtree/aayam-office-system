@@ -450,7 +450,7 @@ export default function CMYKExpensesPage() {
                   );
                 })}
               </div>
-              <p className="text-[11px] text-muted-foreground">A category that is already used by an expense can't be removed. "Other" always stays.</p>
+              <p className="text-[11px] text-muted-foreground">A category already used by an expense cannot be removed. The Other category always stays.</p>
               <Button type="button" variant="outline" className="w-full" onClick={() => setShowCatModal(false)}>Done</Button>
             </div>
           </div>
