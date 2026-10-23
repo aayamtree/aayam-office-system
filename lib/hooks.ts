@@ -1904,6 +1904,42 @@ export function useCMYKExpenses() {
 }
 
 // =============================================
+// CMYK ACCOUNT TRANSFERS HOOK — money moved between CMYK accounts (petty cash top-ups)
+// =============================================
+export function useCMYKTransfers() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('cmyk_account_transfers', {
+    orderBy: { column: 'transfer_date', ascending: false },
+  });
+
+  const createTransfer = async (t: { transfer_date: string; from_account_id: string; to_account_id: string; amount: number; note?: string }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('cmyk_account_transfers').insert([t]);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { transfers: data, loading, error, refetch, createTransfer };
+}
+
+// =============================================
+// CMYK PETTY CASH COUNTS HOOK — physical cash counts of the petty cash box
+// =============================================
+export function useCMYKPettyCashCounts() {
+  const { data, loading, error, refetch } = useSupabaseQuery<any>('cmyk_petty_cash_counts', {
+    orderBy: { column: 'created_at', ascending: false },
+  });
+
+  const createCount = async (c: { count_date: string; book_amount: number; counted_amount: number; difference: number; note?: string }) => {
+    if (!isSupabaseConfigured()) return { error: 'Database not configured' };
+    const { error } = await supabase.from('cmyk_petty_cash_counts').insert([c]);
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { counts: data, loading, error, refetch, createCount };
+}
+
+// =============================================
 // CMYK EXPENSE CATEGORIES HOOK — admin-managed list of expense categories
 // =============================================
 export function useCMYKExpenseCategories() {

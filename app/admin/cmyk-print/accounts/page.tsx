@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Wallet, Banknote, Smartphone, Building2, Plus, Pencil, Trash2, Loader2, X } from 'lucide-react';
-import { useCMYKAccounts, usePOSSales, useCMYKClientPayments, useCMYKExpenses } from '@/lib/hooks';
+import { useCMYKAccounts, usePOSSales, useCMYKClientPayments, useCMYKExpenses, useCMYKTransfers } from '@/lib/hooks';
 import { useConfirm } from '@/components/ConfirmModal';
 import { toast } from '@/lib/toast';
 
@@ -23,6 +23,7 @@ export default function CMYKAccountsPage() {
   const { sales } = usePOSSales();
   const { payments } = useCMYKClientPayments();
   const { expenses } = useCMYKExpenses();
+  const { transfers } = useCMYKTransfers();
   const confirm = useConfirm();
 
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +52,17 @@ export default function CMYKAccountsPage() {
     return map;
   }, [expenses]);
 
+  // Money moved between CMYK accounts (e.g. petty cash top-ups): + into the account, − out of it.
+  const movedByAccount = useMemo(() => {
+    const map: Record<string, number> = {};
+    (transfers || []).forEach((t: any) => {
+      const amt = Number(t.amount) || 0;
+      map[t.to_account_id] = (map[t.to_account_id] || 0) + amt;
+      map[t.from_account_id] = (map[t.from_account_id] || 0) - amt;
+    });
+    return map;
+  }, [transfers]);
+
   const untaggedExpenses = useMemo(
     () => (expenses || []).reduce((sum: number, e: any) => sum + (e.cmyk_account_id ? 0 : (Number(e.amount) || 0)), 0),
     [expenses]
@@ -67,7 +79,7 @@ export default function CMYKAccountsPage() {
 
   const accounts = (cmykAccounts || []) as any[];
   const balanceOf = (a: any) =>
-    (Number(a.opening_balance) || 0) + (receivedByAccount[a.id] || 0) - (paidByAccount[a.id] || 0);
+    (Number(a.opening_balance) || 0) + (receivedByAccount[a.id] || 0) - (paidByAccount[a.id] || 0) + (movedByAccount[a.id] || 0);
   const totalInHand = accounts.reduce((sum, a) => sum + balanceOf(a), 0);
   const totalReceived = accounts.reduce((sum, a) => sum + (receivedByAccount[a.id] || 0), 0);
   const totalPaid = accounts.reduce((sum, a) => sum + (paidByAccount[a.id] || 0), 0);
@@ -97,7 +109,7 @@ export default function CMYKAccountsPage() {
   const handleDelete = async (a: any) => {
     const received = receivedByAccount[a.id] || 0;
     const paidOut = paidByAccount[a.id] || 0;
-    if (received > 0 || paidOut > 0) {
+    if (received > 0 || paidOut > 0 || (movedByAccount[a.id] || 0) !== 0 || a.is_petty_cash) {
       toast.error('This account already has receipts or expenses against it. Deactivate it instead of deleting.');
       return;
     }
@@ -133,7 +145,7 @@ export default function CMYKAccountsPage() {
       <div className="bg-white border rounded-md p-4">
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-xs text-gray-500">Money in CMYK accounts (opening + received − paid out)</p>
+            <p className="text-xs text-gray-500">Money in CMYK accounts (opening + received − paid out; transfers between accounts net to zero)</p>
             <p className="text-2xl font-bold">{fmt(totalInHand)}</p>
           </div>
           <div className="text-xs text-right space-y-0.5">
@@ -193,13 +205,21 @@ export default function CMYKAccountsPage() {
                   <tr key={a.id} className={`hover:bg-gray-50 ${a.is_active === false ? 'opacity-50' : ''}`}>
                     <td className="px-4 py-3 font-medium flex items-center gap-2">
                       <Icon className="w-4 h-4 text-gray-400" /> {a.name}
+                      {a.is_petty_cash && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Petty cash</span>}
                       {a.is_active === false && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactive</span>}
                     </td>
                     <td className="px-4 py-3 text-gray-500">{(TYPE_META[a.type] || TYPE_META.cash).label}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{fmt(Number(a.opening_balance) || 0)}</td>
                     <td className="px-4 py-3 text-right text-green-700">{fmt(received)}</td>
                     <td className="px-4 py-3 text-right text-red-600">{paidOut > 0 ? `− ${fmt(paidOut)}` : '—'}</td>
-                    <td className={`px-4 py-3 text-right font-semibold ${balance < 0 ? 'text-red-600' : ''}`}>{fmt(balance)}</td>
+                    <td className={`px-4 py-3 text-right font-semibold ${balance < 0 ? 'text-red-600' : ''}`}>
+                      {fmt(balance)}
+                      {(movedByAccount[a.id] || 0) !== 0 && (
+                        <span className="block text-[10px] font-normal text-gray-400">
+                          incl. {(movedByAccount[a.id] || 0) > 0 ? '+' : '−'}{fmt(Math.abs(movedByAccount[a.id] || 0))} transfers
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
                         <button onClick={() => openEdit(a)} title="Edit" className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"><Pencil className="w-4 h-4" /></button>
