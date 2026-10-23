@@ -31,6 +31,16 @@ const TYPE_CONFIG = {
     print_run: { icon: Printer,         label: 'Print Runs',  color: 'text-indigo-600 bg-indigo-50' },
 };
 
+const PRINT_RUN_STATUS_LABEL: Record<string, string> = {
+    planned: 'Planned',
+    at_printer: 'At Printer',
+    printing_done: 'Printing Done',
+    after_print: 'After Print Process',
+    qc: 'In QC',
+    handed_over: 'Closed',
+    dispatched: 'Closed',
+};
+
 // All navigable pages — searched client-side (instant, case-insensitive)
 const NAV_ITEMS: { title: string; subtitle: string; href: string }[] = [
     { title: 'My Work',               subtitle: 'Your tasks & assignments',         href: '/admin/my-work' },
@@ -381,7 +391,10 @@ export default function CommandPalette() {
             if (printRunsRes.data) printRunsRes.data.forEach((r: any) => dbResults.push({
                 id: r.id, type: 'print_run',
                 title: `${r.print_run_number}${r.title ? ` — ${r.title}` : ''}`,
-                subtitle: String(r.status || 'planned').replace(/_/g, ' '),
+                // Same names as the tiles on the Print Runs page. Finished runs
+                // (handed_over / dispatched) live under "Closed" there; there is
+                // no "Handed Over" section, so don't show that word here.
+                subtitle: PRINT_RUN_STATUS_LABEL[r.status as string] || 'Planned',
                 href: `/admin/print-planner/${r.id}`,
             }));
 
