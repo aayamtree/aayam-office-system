@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import {
     Search, Package, Users, FileText, IndianRupee,
-    UserPlus, ArrowRight, LayoutDashboard, Navigation, CornerDownRight, Loader2
+    UserPlus, Printer, ArrowRight, LayoutDashboard, Navigation, CornerDownRight, Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { leadStatusLabel } from '@/lib/lead-status';
 
 interface SearchResult {
     id: string;
-    type: 'nav' | 'job' | 'client' | 'lead' | 'invoice' | 'quotation';
+    type: 'nav' | 'job' | 'client' | 'lead' | 'invoice' | 'quotation' | 'print_run';
     title: string;
     subtitle: string;
     href: string;
@@ -28,6 +28,7 @@ const TYPE_CONFIG = {
     lead:      { icon: UserPlus,        label: 'Leads',       color: 'text-purple-600 bg-purple-50' },
     invoice:   { icon: FileText,        label: 'Invoices',    color: 'text-amber-600 bg-amber-50' },
     quotation: { icon: IndianRupee,     label: 'Quotations',  color: 'text-cyan-600 bg-cyan-50' },
+    print_run: { icon: Printer,         label: 'Print Runs',  color: 'text-indigo-600 bg-indigo-50' },
 };
 
 // All navigable pages — searched client-side (instant, case-insensitive)
@@ -233,7 +234,7 @@ export default function CommandPalette() {
         const dbQ = `%${safeQuery}%`;
 
         try {
-            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes, dispatchRes] = await Promise.all([
+            const [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes, dispatchRes, printRunsRes] = await Promise.all([
                 // A job carries FOUR numbers people quote back at us: ours, the
                 // client's own PO, the invoice, and the e-way bill. Searching
                 // only our own job number meant that a client ringing up with
@@ -267,6 +268,18 @@ export default function CommandPalette() {
                 supabase.from('dispatches')
                     .select('id, tracking_number, dispatch_number, consignment_no, job_id, job:jobs(id, job_number, project_name, current_stage)')
                     .or(`tracking_number.ilike.${dbQ},dispatch_number.ilike.${dbQ},consignment_no.ilike.${dbQ}`).limit(5),
+                // Print runs (PP-xxxxx) were not searched at all, so a run number
+                // typed here always said "No results". ilike = case-insensitive.
+                supabase.from('print_runs')
+                    .select('id, print_run_number, title, status, invoice_reference, eway_bill_number')
+                    .or([
+                        `print_run_number.ilike.${dbQ}`,
+                        `title.ilike.${dbQ}`,
+                        `invoice_reference.ilike.${dbQ}`,
+                        `eway_bill_number.ilike.${dbQ}`,
+                    ].join(','))
+                    .order('created_at', { ascending: false })
+                    .limit(6),
             ]);
 
             const dbResults: SearchResult[] = [];
@@ -365,6 +378,13 @@ export default function CommandPalette() {
                 href: `/admin/sales/quotations?highlight=${encodeURIComponent(q.quote_number || '')}`,
             }));
 
+            if (printRunsRes.data) printRunsRes.data.forEach((r: any) => dbResults.push({
+                id: r.id, type: 'print_run',
+                title: `${r.print_run_number}${r.title ? ` — ${r.title}` : ''}`,
+                subtitle: String(r.status || 'planned').replace(/_/g, ' '),
+                href: `/admin/print-planner/${r.id}`,
+            }));
+
             setResults([...navResults, ...dbResults]);
             setSelectedIndex(0);
         } catch (err) {
@@ -427,7 +447,7 @@ export default function CommandPalette() {
     }, {} as Record<string, SearchResult[]>);
 
     // Show nav group first, then db groups
-    const groupOrder = ['nav', 'job', 'client', 'lead', 'invoice', 'quotation'];
+    const groupOrder = ['nav', 'job', 'print_run', 'client', 'lead', 'invoice', 'quotation'];
     const sortedGroups = groupOrder.filter(t => grouped[t]?.length > 0);
 
     let flatIndex = 0;
