@@ -137,6 +137,10 @@ export default function CommandPalette() {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    // Each search gets a number; only the newest one may update the screen, so a
+    // slow answer for "glan" can never overwrite the answer for "glanbia".
+    const searchSeq = useRef(0);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     // Cmd+K / Ctrl+K shortcut + custom event from sidebar button
     useEffect(() => {
@@ -206,6 +210,8 @@ export default function CommandPalette() {
 
     // Search function — nav items are instant & case-insensitive; DB uses ilike
     const performSearch = useCallback(async (searchQuery: string) => {
+        const mySeq = ++searchSeq.current;
+        setSearchError(null);
         if (!searchQuery.trim() || searchQuery.length < 2) {
             setResults([]);
             setLoading(false);
@@ -258,7 +264,7 @@ export default function CommandPalette() {
                         `eway_bill_number.ilike.${dbQ}`,
                         `client_ref_no.ilike.${dbQ}`,
                     ].join(','))
-                    .limit(6),
+                    .limit(10),
                 supabase.from('clients').select('id, name, company, phone')
                     .or(`name.ilike.${dbQ},company.ilike.${dbQ},phone.ilike.${dbQ}`).limit(5),
                 supabase.from('leads').select('id, lead_number, name, company, status')
@@ -291,6 +297,17 @@ export default function CommandPalette() {
                     .order('created_at', { ascending: false })
                     .limit(6),
             ]);
+
+            if (mySeq !== searchSeq.current) return;   // a newer search is already running
+
+            // A failed lookup used to look exactly like "nothing found" (most often
+            // a lapsed login: the database then returns empty lists, not errors).
+            const failed = [jobsRes, clientsRes, leadsRes, invoicesRes, quotationsRes, dispatchRes, printRunsRes]
+                .find((r: any) => r?.error);
+            if (failed) {
+                console.error('Search lookup failed:', (failed as any).error);
+                setSearchError('Some results could not be loaded. Refresh the page or sign in again, then search once more.');
+            }
 
             const dbResults: SearchResult[] = [];
             // A job can match on more than one identifier, and can also be
@@ -403,7 +420,7 @@ export default function CommandPalette() {
         } catch (err) {
             console.error('Search error:', err);
         } finally {
-            setLoading(false);
+            if (mySeq === searchSeq.current) setLoading(false);
         }
     }, []);
 
@@ -486,6 +503,12 @@ export default function CommandPalette() {
 
                 {/* Results */}
                 <div className="max-h-[360px] overflow-y-auto">
+                    {searchError && (
+                        <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-b border-amber-200">
+                            {searchError}
+                        </div>
+                    )}
+
                     {query.length >= 2 && !loading && results.length === 0 && (
                         <div className="py-8 text-center text-sm text-muted-foreground">
                             No results found for &quot;{query}&quot;
