@@ -412,7 +412,9 @@ function DesignerWork({ userId, onJobClick }: { userId: string; onJobClick: (id:
             .from('jobs')
             .select('id, job_number, project_name, client_deadline, priority, current_stage, job_type, designer_status, client:clients!client_id(name,company)')
             .eq('designer_id', userId)
-            .not('current_stage', 'in', '("delivered","cancelled")')
+            // file_sent_client is a TERMINAL stage (lib/job-workflow.ts): the design is finished
+            // once the file reaches the client. Leaving it in made finished jobs show as overdue.
+            .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
             .order('client_deadline', { ascending: true, nullsFirst: false }),
           fetch('/api/jobs/my-subtasks').then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
         ]);
