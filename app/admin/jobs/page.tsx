@@ -28,7 +28,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import {
   getNextStage, getAdvanceLabel, getStageName, getStageColor, getStagesForJobType, normalizeJobType,
   isJobClosed, isAwaitingPayment, isOnActiveBoard, isWorkFinished, finishedAt, RECENTLY_FINISHED_DAYS,
-  getPaymentWatchLabel, isMoneySettled, isManuallyClosed, outstandingBalance,
+  getPaymentWatchLabel, isMoneySettled, isManuallyClosed, outstandingBalance, isJobOverdue,
 } from '@/lib/job-workflow';
 
 import PriorityQuickAdd from '@/components/shared/PriorityQuickAdd';
@@ -56,7 +56,7 @@ const getPaymentBadge = (status: string) => status === 'paid' ? 'bg-gray-100 tex
 /** Which columns the user has shut or opened by hand. Per browser, per person. */
 const COLLAPSED_STAGES_KEY = 'aayam.jobs.collapsedStages';
 
-const isOverdue = (deadline: string | undefined, stage: string) => deadline && stage !== 'delivered' && new Date(deadline) < new Date();
+const isOverdue = (deadline: string | undefined, stage: string) => isJobOverdue(deadline, stage);
 // UI: strip leading emoji/symbols from advance-stage labels (keeps full wording, e.g. "Move to Brief & Assets")
 const stripEmoji = (label: string) => label.replace(/^[^A-Za-z0-9]+/, '');
 

@@ -22,7 +22,7 @@ import { useConfirm } from '@/components/ConfirmModal';
 import { DesignerStatusPills, DesignerStatusBadge } from '@/components/shared/DesignerStatusPills';
 import DesignBillingBadge from '@/components/jobs/DesignBillingBadge';
 import ProductBadge from '@/components/shared/ProductBadge';
-import { normalizeJobType, type WorkflowJobType } from '@/lib/job-workflow';
+import { normalizeJobType, isJobOverdue, isFinishedStage, type WorkflowJobType } from '@/lib/job-workflow';
 
 // Stages after the design is done — job has moved to print/production.
 // The design-billing tag is a designer effort signal, so we hide it here.
@@ -91,7 +91,7 @@ const priorities = [
 function DailyBriefingModal({ tasks, onClose, userName }: { tasks: any[], onClose: () => void, userName: string }) {
   const today = new Date().toISOString().split('T')[0];
   const dueToday = tasks.filter(t => t.deadline && (t.deadline === today || (t.rawDeadline && t.rawDeadline.startsWith(today))) && t.status !== 'completed' && t.status !== 'delivered');
-  const overdue = tasks.filter(t => t.rawDeadline && t.rawDeadline < today && t.status !== 'completed' && t.status !== 'delivered');
+  const overdue = tasks.filter(t => t.rawDeadline && t.rawDeadline < today && t.status !== 'completed' && t.status !== 'delivered' && !isFinishedStage(t.current_stage));
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -532,7 +532,7 @@ export default function DesignerWorkspace() {
       }
       _totalRevisions += (t.revision_count || 0);
       if ((t.revision_count || 0) > 0) _withRevisions++;
-      if (t.deadline && new Date(t.deadline).getTime() < nowMs && !printStages.includes(t.current_stage || '')) _overdue.push(t);
+      if (t.deadline && new Date(t.deadline).getTime() < nowMs && !printStages.includes(t.current_stage || '') && !isFinishedStage(t.current_stage)) _overdue.push(t);
       if (t.status === 'in_progress') _inProgress.push(t);
       if (t.status === 'review') _review.push(t);
       if (printStages.includes(t.current_stage || '')) _done.push(t);
@@ -806,7 +806,7 @@ export default function DesignerWorkspace() {
                         if (descLower.includes('box') || descLower.includes('package')) { TypeIcon = Folder; typeLabel = "Pkg"; }
 
                         // Header color: overdue = red, otherwise use col accent
-                        const isOverdueCard = task.rawDeadline && new Date(task.rawDeadline) < new Date();
+                        const isOverdueCard = isJobOverdue(task.rawDeadline, task.current_stage);
                         const cardHeaderBg = isOverdueCard ? 'bg-red-600' : col.id === 'completed' ? 'bg-gray-700' : col.id === 'in_progress' ? 'bg-gray-900' : col.id === 'review' ? 'bg-gray-800' : 'bg-gray-600';
 
                         return (
@@ -936,7 +936,7 @@ export default function DesignerWorkspace() {
                   </p>
                 ) : searchMatchedTasks.map(task => {
                   // Calculate simplified progress bar width
-                  const isOverdue = task.rawDeadline && new Date(task.rawDeadline) < new Date();
+                  const isOverdue = isJobOverdue(task.rawDeadline, task.current_stage);
 
                   return (
                     <div key={task.id} className="grid grid-cols-12 border-b h-16 items-center px-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => { setSelectedTaskId(task.id); setView('my_tasks'); }}>
@@ -1126,7 +1126,7 @@ export default function DesignerWorkspace() {
                       )}
                       {/* Deadline / Overdue inline */}
                       <span className="ml-auto flex-shrink-0">
-                        {task.rawDeadline && new Date(task.rawDeadline) < new Date() && task.current_stage !== 'delivered' ? (
+                        {isJobOverdue(task.rawDeadline, task.current_stage) ? (
                           <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                             <Clock size={10} /> Overdue
                           </span>

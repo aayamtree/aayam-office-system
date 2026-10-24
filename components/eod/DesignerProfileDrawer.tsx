@@ -68,7 +68,7 @@ export default function DesignerProfileDrawer({ designer, onClose, getMyReports 
                 .from('jobs')
                 .select('*, client:clients(name, company)')
                 .eq('designer_id', designer.id)
-                .not('current_stage', 'in', '(delivered,cancelled)')
+                .not('current_stage', 'in', '(delivered,cancelled,completed,file_sent_client)')
                 .order('client_deadline', { ascending: true });
 
             if (!error) setJobs(data || []);

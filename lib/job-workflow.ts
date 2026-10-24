@@ -98,6 +98,26 @@ export const MASTER_STAGE_ORDER: string[] = [
 /** Stages that legitimately end a pipeline (no further advance). */
 export const TERMINAL_STAGES = ['file_sent_client', 'delivered', 'cancelled'];
 
+/**
+ * ONE RULE FOR "IS THIS JOB LATE?" — use these, never hand-type a stage list.
+ * A job whose file has gone to the client (file_sent_client) is FINISHED work;
+ * its old deadline must not make it show up as overdue. (Money still owed on it
+ * is tracked separately under Finance → Awaiting Payment.)
+ */
+export const FINISHED_STAGES = [...TERMINAL_STAGES, 'completed'];
+
+/** PostgREST `in` list for  .not('current_stage', 'in', NOT_FINISHED_FILTER). */
+export const FINISHED_STAGES_FILTER = `(${FINISHED_STAGES.map(s => `"${s}"`).join(',')})`;
+
+export function isFinishedStage(stage?: string | null): boolean {
+  return FINISHED_STAGES.includes(stage || '');
+}
+
+/** True only for live work whose deadline has passed. */
+export function isJobOverdue(deadline?: string | null, stage?: string | null): boolean {
+  return !!deadline && !isFinishedStage(stage) && new Date(deadline) < new Date();
+}
+
 /** Get the next stage in the workflow for this job type */
 export function getNextStage(
     jobType: string | undefined,

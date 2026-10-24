@@ -13,7 +13,7 @@ import {
 } from '@/types/database';
 import { logActivity } from './logger';
 import { autoProgressJob } from './job-auto-progress';
-import { getProjectTypeCode } from './job-workflow';
+import { getProjectTypeCode, FINISHED_STAGES_FILTER } from './job-workflow';
 import { upsertAutoCalendarEvent } from './calendar-auto-events';
 import { refuseLegacyWriteAsError } from '@/lib/legacy-ledger';
 import { CLOSED_STATUS_FILTER } from './lead-status';
@@ -1443,10 +1443,10 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
       // Pipeline grouped counts
       safe(() => supabase.from('jobs').select('current_stage').not('current_stage', 'in', '("delivered","cancelled")').then(r => r), { data: [] } as any),
       // Pipeline overdue
-      safe(() => supabase.from('jobs').select('current_stage').not('current_stage', 'in', '("delivered","cancelled")').not('client_deadline', 'is', null).lt('client_deadline', today).then(r => r), { data: [] } as any),
+      safe(() => supabase.from('jobs').select('current_stage').not('current_stage', 'in', FINISHED_STAGES_FILTER).not('client_deadline', 'is', null).lt('client_deadline', today).then(r => r), { data: [] } as any),
       // Today's focus
-      safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', '("delivered","cancelled")').eq('client_deadline', today).then(r => r), { count: 0 } as any),
-      safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', '("delivered","cancelled")').lt('client_deadline', today).not('client_deadline', 'is', null).then(r => r), { count: 0 } as any),
+      safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', FINISHED_STAGES_FILTER).eq('client_deadline', today).then(r => r), { count: 0 } as any),
+      safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).not('current_stage', 'in', FINISHED_STAGES_FILTER).lt('client_deadline', today).not('client_deadline', 'is', null).then(r => r), { count: 0 } as any),
       safe(() => supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('current_stage', 'delivered').gte('updated_at', today).then(r => r), { count: 0 } as any),
       // Alerts
       safe(() => supabase.from('invoices').select('id', { count: 'exact', head: true }).neq('payment_status', 'paid').not('due_date', 'is', null).lt('due_date', today).then(r => r), { count: 0 } as any),

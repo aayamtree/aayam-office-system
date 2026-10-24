@@ -96,7 +96,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
             .from('jobs')
             .select('id, job_number, project_name, current_stage, priority, client_deadline')
             .eq('designer_id', designerDbId)
-            .not('current_stage', 'in', '("delivered","cancelled","dispatched")')
+            .not('current_stage', 'in', '("delivered","cancelled","dispatched","completed","file_sent_client")')
             .order('client_deadline', { ascending: true })
             .limit(10);
 
@@ -426,7 +426,7 @@ export default function DailyBriefingModal({ onClose }: DailyBriefingModalProps)
             supabase
                 .from('jobs')
                 .select('id, job_number, project_name, current_stage, priority, client_deadline, payment_status, total_amount, amount_received, client:clients(name, company)')
-                .not('current_stage', 'in', '("delivered","cancelled")')
+                .not('current_stage', 'in', '("delivered","cancelled","completed","file_sent_client")')
                 .order('client_deadline', { ascending: true })
                 .limit(30),
             supabase
