@@ -16,6 +16,7 @@
 // UPI never touch that account, so the app records those — and for the two to
 // report together they must use the SAME category names.
 
+import { ZOHO_SYNC_ENABLED, ZOHO_SYNC_OFF_REASON } from '@/lib/legacy-ledger';
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import {
@@ -40,6 +41,7 @@ function str(value: unknown): string | null {
 }
 
 export async function GET() {
+    if (!ZOHO_SYNC_ENABLED) return NextResponse.json({ skipped: true, reason: ZOHO_SYNC_OFF_REASON });
     const gate = await requireAdmin();
     if (!gate.ok) return gate.response;
 

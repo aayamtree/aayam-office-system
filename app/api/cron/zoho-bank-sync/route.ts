@@ -18,6 +18,7 @@
 //  - Every run is written to zoho_sync_runs, including failures. A sync that
 //    quietly stopped six weeks ago looks exactly like a quiet month otherwise.
 
+import { ZOHO_SYNC_ENABLED, ZOHO_SYNC_OFF_REASON } from '@/lib/legacy-ledger';
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeCron } from '@/lib/api-auth';
 import {
@@ -46,6 +47,7 @@ function str(value: unknown): string | null {
 }
 
 export async function GET(request: NextRequest) {
+    if (!ZOHO_SYNC_ENABLED) return NextResponse.json({ skipped: true, reason: ZOHO_SYNC_OFF_REASON });
     const gate = await authorizeCron(request);
     if (!gate.ok) return gate.response;
 

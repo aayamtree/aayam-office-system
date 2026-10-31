@@ -24,7 +24,16 @@
 import { toast } from '@/lib/toast';
 
 /** Flip to false to reopen every legacy write path at once. */
-export const LEGACY_LEDGER_CLOSED = true;
+export const LEGACY_LEDGER_CLOSED = false;
+
+// ── 31 Oct 2026: CUT-OVER BACK TO THIS APP ─────────────────────────────────
+// Zoho's bank feed is broken, so from 2026-10-31 every entry (bank, expense,
+// payment, invoice) is made manually in this app, which is the book of record
+// again. LEGACY_LEDGER_CLOSED is therefore false, and ALL Zoho pulls are off so
+// nothing can be counted twice. Do not set ZOHO_SYNC_ENABLED back to true
+// without first closing the manual paths above.
+export const ZOHO_SYNC_ENABLED = false;
+export const ZOHO_SYNC_OFF_REASON = 'Zoho sync was switched off on 31 Oct 2026; entries are made manually in this app.';
 
 export const LEGACY_LEDGER_STOPPED = 'August 2026';
 

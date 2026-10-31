@@ -18,6 +18,7 @@
 // enriches a bounded number and reports whether more remain. Call it again
 // until `remaining` reaches zero rather than risking a function timeout.
 
+import { ZOHO_SYNC_ENABLED, ZOHO_SYNC_OFF_REASON } from '@/lib/legacy-ledger';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-auth';
 import {
@@ -93,6 +94,7 @@ async function fetchAll(
 }
 
 export async function GET(request: NextRequest) {
+    if (!ZOHO_SYNC_ENABLED) return NextResponse.json({ skipped: true, reason: ZOHO_SYNC_OFF_REASON });
     const gate = await requireAdmin();
     if (!gate.ok) return gate.response;
 

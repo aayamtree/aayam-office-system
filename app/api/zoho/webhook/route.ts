@@ -19,6 +19,7 @@
 //  - Never throws HTML errors back at Zoho — always JSON, correct status
 //    codes, and details in the server log.
 
+import { ZOHO_SYNC_ENABLED, ZOHO_SYNC_OFF_REASON } from '@/lib/legacy-ledger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -114,6 +115,7 @@ function extract(payload: Record<string, unknown>): Extracted | null {
 }
 
 export async function POST(request: NextRequest) {
+    if (!ZOHO_SYNC_ENABLED) return NextResponse.json({ skipped: true, reason: ZOHO_SYNC_OFF_REASON });
     const supabase = serviceClient();
     if (!supabase) {
         console.error('[zoho/webhook] SUPABASE_SERVICE_ROLE_KEY missing');

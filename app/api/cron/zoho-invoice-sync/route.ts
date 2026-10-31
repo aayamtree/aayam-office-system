@@ -28,6 +28,7 @@
 //  - Every run is written to zoho_sync_runs, failures included. A sync that
 //    quietly stopped is exactly what this route exists to prevent.
 
+import { ZOHO_SYNC_ENABLED, ZOHO_SYNC_OFF_REASON } from '@/lib/legacy-ledger';
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeCron } from '@/lib/api-auth';
 import {
@@ -196,5 +197,6 @@ async function runJob(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    if (!ZOHO_SYNC_ENABLED) return NextResponse.json({ skipped: true, reason: ZOHO_SYNC_OFF_REASON });
     return runJob(request);
 }
