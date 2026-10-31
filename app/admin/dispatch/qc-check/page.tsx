@@ -17,6 +17,7 @@ import LoadError from '@/components/LoadError';
 import { toast } from '@/lib/toast';
 import JobThumb from '@/components/shared/JobThumb';
 import ProductBadge from '@/components/shared/ProductBadge';
+import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { normalizeProductCategory } from '@/lib/product-category';
 
 // Fallback checkpoints if no DB checklists found
@@ -827,6 +828,13 @@ export default function QCCheckPage() {
                 </button>
               </div>
             )}
+            {/* Admin-only: send the job back a stage (e.g. to Material Received for Printer → Client). */}
+            <div className="px-4 pb-4 -mt-1">
+              <RollbackJobButton
+                jobId={selectedJob.id}
+                onDone={() => { setShowQCModal(false); setSelectedJob(null); refetchJobs?.(); }}
+              />
+            </div>
           </div>
         </div>
       )}
