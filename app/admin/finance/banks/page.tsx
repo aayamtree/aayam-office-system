@@ -17,7 +17,19 @@ import { TransferMenu, RecentTransfers } from '@/components/finance/TransferMenu
 import RecordMoneyModal from '@/components/finance/RecordMoneyModal';
 import { useAuth } from '@/lib/auth-context';
 
-const accountTypes = ['Current', 'Savings', 'OD', 'CC', 'UPI'];
+// Not every account is a bank. `bank: false` kinds (cash, wallets, other) need
+// only a name and a balance — no account number / IFSC / branch.
+const accountKinds = [
+  { value: 'current', label: 'Bank – Current', bank: true },
+  { value: 'savings', label: 'Bank – Savings', bank: true },
+  { value: 'od', label: 'Bank – OD', bank: true },
+  { value: 'cc', label: 'Credit card', bank: true },
+  { value: 'cash', label: 'Cash / Petty cash', bank: false },
+  { value: 'upi', label: 'UPI / Wallet', bank: false },
+  { value: 'other', label: 'Other', bank: false },
+];
+const kindLabel = (t: string) => accountKinds.find(k => k.value === (t || '').toLowerCase())?.label || t;
+const isBankKind = (t: string) => accountKinds.find(k => k.value === (t || '').toLowerCase())?.bank ?? true;
 
 export default function BankAccountsPage() {
   const {
@@ -53,7 +65,7 @@ export default function BankAccountsPage() {
     account_number: '',
     ifsc_code: '',
     branch: '',
-    account_type: 'Current',
+    account_type: 'current',
     opening_balance: 0,
     opening_balance_date: new Date().toISOString().split('T')[0]
   });
@@ -97,7 +109,8 @@ export default function BankAccountsPage() {
           opening_balance: formData.opening_balance,
           opening_balance_date: formData.opening_balance_date,
           is_default: banks?.length === 0, // First account is default
-          is_active: true
+          is_active: true,
+          fed_by_zoho: false // entered manually in this system, never mirrored from Zoho
         } as any);
       }
       resetForm();
@@ -110,7 +123,7 @@ export default function BankAccountsPage() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', account_number: '', ifsc_code: '', branch: '', account_type: 'Current', opening_balance: 0, opening_balance_date: new Date().toISOString().split('T')[0] });
+    setFormData({ name: '', account_number: '', ifsc_code: '', branch: '', account_type: 'current', opening_balance: 0, opening_balance_date: new Date().toISOString().split('T')[0] });
     setEditingBank(null);
     setShowModal(false);
   };
@@ -121,7 +134,7 @@ export default function BankAccountsPage() {
       account_number: bank.account_number,
       ifsc_code: bank.ifsc_code || '',
       branch: bank.branch || '',
-      account_type: bank.account_type,
+      account_type: (bank.account_type || 'current').toLowerCase(),
       opening_balance: bank.opening_balance,
       opening_balance_date: (bank as any).opening_balance_date || '2025-04-01'
     });
@@ -174,7 +187,7 @@ export default function BankAccountsPage() {
           </Link>
           <div>
             <h1 className="text-page-title text-gray-900">Bank Accounts</h1>
-            <p className="text-gray-500">Manage multiple bank accounts</p>
+            <p className="text-gray-500">Bank, cash and other accounts</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -195,7 +208,7 @@ export default function BankAccountsPage() {
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2.5 rounded-md hover:bg-gray-900 font-medium">
             <Plus className="w-4 h-4 md:w-4.5 md:h-4.5" />
-            <span>Add Bank</span>
+            <span>Add Account</span>
           </button>
         </div>
       </div>
@@ -227,7 +240,7 @@ export default function BankAccountsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             type="text"
-            placeholder="Search by bank name or account number..."
+            placeholder="Search by account name or number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -251,7 +264,7 @@ export default function BankAccountsPage() {
                       <span className="text-xs px-2 py-0.5 rounded-md bg-gray-900 text-white">Default</span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500">{bank.account_type} • {bank.account_number}</p>
+                  <p className="text-sm text-gray-500">{kindLabel(bank.account_type)}{bank.account_number ? ` • ${bank.account_number}` : ''}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -313,8 +326,8 @@ export default function BankAccountsPage() {
       {filteredBanks.length === 0 && !loading && (
         <div className="text-center py-12 bg-white rounded-md border">
           <Building className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-3 text-lg font-medium text-gray-900">No bank accounts found</h3>
-          <p className="mt-1 text-gray-500">Add your first bank account to enable reconciliation</p>
+          <h3 className="mt-3 text-lg font-medium text-gray-900">No accounts found</h3>
+          <p className="mt-1 text-gray-500">Add your first account — bank, cash or any other</p>
           <button onClick={() => setShowModal(true)} className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-md">
             Add Account
           </button>
@@ -326,45 +339,48 @@ export default function BankAccountsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-md w-full max-w-md animate-scale-in">
             <div className="p-5 border-b flex items-center justify-between">
-              <h2 className="text-page-title">{editingBank ? 'Edit Bank Account' : 'Add Bank Account'}</h2>
+              <h2 className="text-page-title">{editingBank ? 'Edit Account' : 'Add Account'}</h2>
               <button onClick={resetForm} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5">Bank Name *</label>
+                <label className="block text-sm font-medium mb-1.5">Account Type</label>
+                <select value={formData.account_type} onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+                  className="w-full px-3 py-2.5 border rounded-md">
+                  {accountKinds.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Account Name *</label>
                 <input type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-md" placeholder="HDFC Bank Current Account" />
+                  className="w-full px-3 py-2.5 border rounded-md"
+                  placeholder={isBankKind(formData.account_type) ? 'HDFC Bank Current Account' : 'Office Cash, PhonePe, Petty Cash…'} />
               </div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Account Number *</label>
-                  <input type="text" required value={formData.account_number}
-                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-md" placeholder="50100012345678" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">IFSC Code *</label>
-                  <input type="text" required value={formData.ifsc_code}
-                    onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2.5 border rounded-md" placeholder="HDFC0001234" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 md:gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Branch *</label>
-                  <input type="text" required value={formData.branch}
-                    onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-md" placeholder="Rajkot Main" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5">Account Type</label>
-                  <select value={formData.account_type} onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
-                    className="w-full px-3 py-2.5 border rounded-md">
-                    {accountTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
+              {isBankKind(formData.account_type) && (
+                <>
+                  <div className="grid grid-cols-2 gap-2 md:gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">Account Number *</label>
+                      <input type="text" required value={formData.account_number}
+                        onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                        className="w-full px-3 py-2.5 border rounded-md" placeholder="50100012345678" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5">IFSC Code *</label>
+                      <input type="text" required value={formData.ifsc_code}
+                        onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value.toUpperCase() })}
+                        className="w-full px-3 py-2.5 border rounded-md" placeholder="HDFC0001234" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Branch *</label>
+                    <input type="text" required value={formData.branch}
+                      onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                      className="w-full px-3 py-2.5 border rounded-md" placeholder="Rajkot Main" />
+                  </div>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">

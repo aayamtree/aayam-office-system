@@ -530,7 +530,7 @@ export interface BankAccount extends BaseEntity {
   account_number: string;
   ifsc_code?: string;
   branch?: string;
-  account_type: 'current' | 'savings' | 'od' | 'cc' | 'cash';
+  account_type: 'current' | 'savings' | 'od' | 'cc' | 'cash' | 'upi' | 'other';
 
   opening_balance: number;
   opening_balance_date?: string;
