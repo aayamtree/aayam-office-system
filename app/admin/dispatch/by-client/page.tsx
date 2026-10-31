@@ -21,7 +21,7 @@ import ProductBadge from '@/components/shared/ProductBadge';
 
 const PACK_TYPES: { value: PackageType; label: string }[] = [
   { value: 'box', label: 'Box' },
-  { value: 'sack', label: 'Sack' },
+  { value: 'sack', label: 'Katta' },
   { value: 'bundle', label: 'Bundle' },
   { value: 'pallet', label: 'Pallet' },
   { value: 'other', label: 'Other' },
@@ -131,7 +131,7 @@ export default function DispatchByClientPage() {
   const pack = async (alsoRequestInvoice: boolean) => {
     if (selectedJobs.length === 0 || !clientId) return;
     if (!Number.isFinite(count) || count < 1) {
-      toast.error('Enter how many boxes / sacks this is (at least 1).');
+      toast.error('Enter how many boxes / katta this is (at least 1).');
       return;
     }
     setSubmitting(true);

@@ -17,7 +17,7 @@ import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
 import { shareDocsAcrossPackages, getDispatchPaperwork } from '@/lib/job-documents';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
-import { createPackage } from '@/lib/packages';
+import { createPackage, packageTypeLabel, type PackageType } from '@/lib/packages';
 import PageSearch from '@/components/shared/PageSearch';
 import JobThumb from '@/components/shared/JobThumb';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
@@ -141,6 +141,10 @@ export default function DispatchPage() {
   // transport slip) are the only evidence, so they are captured in the dispatch
   // form and saved with a "QC skipped" record against THIS job.
   const [fromPrinter, setFromPrinter] = useState(false);
+  // Printer → Client jobs ticked to travel together (one client, one consignment).
+  const [printerPicked, setPrinterPicked] = useState<string[]>([]);
+  // How the consignment is packed when there is no Pack step (Printer → Client).
+  const [adhocPackType, setAdhocPackType] = useState<PackageType>('box');
   const [printerPhotos, setPrinterPhotos] = useState<string[]>([]);
   const [uploadingPrinterPhotos, setUploadingPrinterPhotos] = useState(false);
 
@@ -336,6 +340,7 @@ export default function DispatchPage() {
   } | null, opts?: { fromPrinter?: boolean }) => {
     if (jobsToDispatch.length === 0) return;
     setFromPrinter(!!opts?.fromPrinter);
+    setAdhocPackType(opts?.fromPrinter ? 'sack' : 'box');
     setPrinterPhotos([]);
     setSelectedJobs(jobsToDispatch);
     setActivePackage(pkg || null);
@@ -529,7 +534,7 @@ export default function DispatchPage() {
       if (!consignmentNo) {
         const pkgResult = await createPackage({
           client_id: selectedJobs[0].client_id!,
-          package_type: 'box',
+          package_type: adhocPackType,
           package_count: dispatchForm.packages || 1,
           created_by: profile?.id,
         }, selectedJobs.map(j => j.id),
@@ -650,6 +655,7 @@ export default function DispatchPage() {
       invalidateContactCache();
       setShowDispatchModal(false);
       setActivePackage(null);
+      setPrinterPicked([]);
       if (selectedJobs.length === 1 && partials > 0) {
         toast.info('Partial dispatch recorded — the job stays on the board with the remaining quantity.');
       } else if (selectedJobs.length === 1) {
@@ -820,6 +826,12 @@ export default function DispatchPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">#{job.job_number}</span>
                 <div className="flex items-center gap-1">
                   {job.priority === 'urgent' && <span className="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-bold uppercase">Urgent</span>}
+                  <label className="flex items-center gap-1 text-[9px] text-teal-700 font-semibold uppercase cursor-pointer" title="Tick jobs of the same client that go in one consignment">
+                    <input type="checkbox" className="w-3.5 h-3.5 accent-teal-600"
+                      checked={printerPicked.includes(job.id)}
+                      onChange={() => setPrinterPicked(prev => prev.includes(job.id) ? prev.filter(x => x !== job.id) : [...prev, job.id])} />
+                    Together
+                  </label>
                   <span className="text-[9px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded font-semibold uppercase">From Printer</span>
                 </div>
               </div>
@@ -890,6 +902,25 @@ export default function DispatchPage() {
         })}
       </div>
       )}
+
+      {/* ── Printer → Client together: one client, one consignment, several jobs ── */}
+      {(() => {
+        const picked = materialReceived.filter(j => printerPicked.includes(j.id));
+        if (picked.length === 0) return null;
+        const oneClient = new Set(picked.map(j => j.client_id || '')).size === 1;
+        return (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-3 text-sm">
+            <span>{picked.length} job{picked.length > 1 ? 's' : ''} ticked{oneClient ? ` · ${picked[0].client?.company || picked[0].client?.name || ''}` : ''}</span>
+            {!oneClient && <span className="text-amber-300 text-xs">Different clients — tick one client only</span>}
+            <button type="button" disabled={!oneClient}
+              onClick={() => handleOpenDispatch(picked, null, { fromPrinter: true })}
+              className="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed rounded font-medium">
+              Dispatch together · Printer → Client
+            </button>
+            <button type="button" onClick={() => setPrinterPicked([])} className="text-gray-300 hover:text-white text-xs underline">Clear</button>
+          </div>
+        );
+      })()}
 
       {/* ── Awaiting Packing ──
           QC-passed, not yet boxed. Dispatch one job as-is (mints a
@@ -1013,7 +1044,7 @@ export default function DispatchPage() {
                     </div>
                     {pkg && (
                       <p className="text-[10px] text-blue-700 font-medium">
-                        📦 {pkg.package_count} {pkg.package_type}(s){pkg.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
+                        📦 {pkg.package_count} {packageTypeLabel(pkg.package_type)}(s){pkg.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
                       </p>
                     )}
                     {anyOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
@@ -1111,7 +1142,7 @@ export default function DispatchPage() {
                 <h2 className="text-section">{fromPrinter ? 'Printer → Client Dispatch' : 'Create Dispatch'}</h2>
                 <p className="text-sm text-gray-500">
                   {activePackage
-                    ? `${activePackage.consignment_no} · ${activePackage.package_count} ${activePackage.package_type}(s) · ${selectedJobs.length} job${selectedJobs.length > 1 ? 's' : ''}`
+                    ? `${activePackage.consignment_no} · ${activePackage.package_count} ${packageTypeLabel(activePackage.package_type)}(s) · ${selectedJobs.length} job${selectedJobs.length > 1 ? 's' : ''}`
                     : selectedJobs.length === 1
                       ? `Order #${selectedJobs[0].job_number}`
                       : `${selectedJobs.length} orders · ${selectedJobs[0].client?.company || selectedJobs[0].client?.name} — one box/bag, one consignment`}
@@ -1298,10 +1329,21 @@ export default function DispatchPage() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Packages Count</label>
+                  <label className="block text-sm font-medium mb-1">{!activePackage ? 'Packed as' : 'Packages Count'}</label>
+                  {!activePackage && (
+                    <select value={adhocPackType} onChange={e => setAdhocPackType(e.target.value as PackageType)}
+                      className="w-full px-3 py-2 border rounded-md text-sm mb-2">
+                      <option value="sack">Katta</option>
+                      <option value="box">Box</option>
+                      <option value="bundle">Bundle</option>
+                      <option value="pallet">Pallet</option>
+                      <option value="other">Other</option>
+                    </select>
+                  )}
+                  {!activePackage && <label className="block text-xs text-gray-500 mb-1">How many {packageTypeLabel(adhocPackType).toLowerCase()} in total</label>}
                   {activePackage ? (
                     <div className="w-full px-3 py-2 border rounded-md text-sm bg-gray-50 text-gray-500">
-                      {activePackage.package_count} {activePackage.package_type}(s) — set at Pack
+                      {activePackage.package_count} {packageTypeLabel(activePackage.package_type)}(s) — set at Pack
                     </div>
                   ) : (
                     <input type="number" min="1"
@@ -1309,7 +1351,7 @@ export default function DispatchPage() {
                       className="w-full px-3 py-2 border rounded-md text-sm" />
                   )}
                   {selectedJobs.length > 1 && !activePackage && (
-                    <p className="text-[11px] text-gray-400 mt-1">Total boxes/bags for the whole consignment — usually 1.</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Total for the whole consignment, all jobs together.</p>
                   )}
                 </div>
               </div>

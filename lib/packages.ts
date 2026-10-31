@@ -9,6 +9,13 @@ import { logActivity } from './logger';
 
 export type PackageType = 'box' | 'sack' | 'bundle' | 'pallet' | 'other';
 
+/** What the office calls each package type. The stored value stays 'sack';
+ *  on screen it is a "Katta". */
+export const PACKAGE_TYPE_LABEL: Record<string, string> = {
+    box: 'Box', sack: 'Katta', bundle: 'Bundle', pallet: 'Pallet', other: 'Other',
+};
+export const packageTypeLabel = (t?: string | null) => (t && PACKAGE_TYPE_LABEL[t]) || t || 'Package';
+
 export interface CreatePackageInput {
   client_id: string;
   package_type: PackageType;

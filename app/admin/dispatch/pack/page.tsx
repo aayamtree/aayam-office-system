@@ -8,7 +8,7 @@ import { useJobs } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job } from '@/types/database';
 import { supabase } from '@/lib/supabase';
-import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPackage, unpackPackage, moveJobsBetweenPackages, type PackageType } from '@/lib/packages';
+import { createPackage, updatePackageDetails, addJobsToPackage, removeJobsFromPackage, unpackPackage, moveJobsBetweenPackages, packageTypeLabel, type PackageType } from '@/lib/packages';
 import { getVerifiedQty } from '@/lib/packing-display';
 import LoadError from '@/components/LoadError';
 import ProductBadge from '@/components/shared/ProductBadge';
@@ -155,7 +155,7 @@ export default function PackPage() {
     }
     const count = parseInt(form.package_count, 10);
     if (!Number.isFinite(count) || count < 1) {
-      toast.error('Enter how many boxes/sacks this is (at least 1).');
+      toast.error('Enter how many boxes/katta this is (at least 1).');
       return;
     }
     setSubmitting(true);
@@ -278,7 +278,7 @@ export default function PackPage() {
     }
     const count = parseInt(editForm.package_count, 10);
     if (!Number.isFinite(count) || count < 1) {
-      toast.error('Enter how many boxes/sacks this is (at least 1).');
+      toast.error('Enter how many boxes/katta this is (at least 1).');
       return;
     }
 
@@ -483,7 +483,7 @@ export default function PackPage() {
                   <div className="p-3 space-y-1">
                     <p className="text-gray-500 text-xs">{groupJobs[0].client?.company || groupJobs[0].client?.name}</p>
                     <p className="text-xs text-gray-700">
-                      📦 {pkg?.package_count} {pkg?.package_type}(s){pkg?.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
+                      📦 {pkg?.package_count} {packageTypeLabel(pkg?.package_type)}(s){pkg?.approx_weight_kg ? ` · ~${pkg.approx_weight_kg}kg` : ''}
                     </p>
                     <div className="space-y-1 pt-0.5">
                       {groupJobs.map(j => (
@@ -542,7 +542,7 @@ export default function PackPage() {
                     className="w-full px-3 py-2 border rounded-md text-sm"
                   >
                     <option value="box">Box</option>
-                    <option value="sack">Sack</option>
+                    <option value="sack">Katta</option>
                     <option value="bundle">Bundle</option>
                     <option value="pallet">Pallet</option>
                     <option value="other">Other</option>
@@ -611,7 +611,7 @@ export default function PackPage() {
                     className="w-full px-3 py-2 border rounded-md text-sm"
                   >
                     <option value="box">Box</option>
-                    <option value="sack">Sack</option>
+                    <option value="sack">Katta</option>
                     <option value="bundle">Bundle</option>
                     <option value="pallet">Pallet</option>
                     <option value="other">Other</option>
