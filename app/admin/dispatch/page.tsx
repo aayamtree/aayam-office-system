@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText, ShieldCheck } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, AlertTriangle, ClipboardCheck, Loader2, X, Camera, MapPin, Building2, Search, FileText, ShieldCheck, Paperclip } from 'lucide-react';
 import { useJobs, useDispatches } from '@/lib/hooks';
 import { useAuth } from '@/lib/auth-context';
 import { Job, Dispatch } from '@/types/database';
@@ -367,6 +367,52 @@ export default function DispatchPage() {
   // leave the dispatch screen. Same storage + "Label: filename" convention as
   // the job page, so the file shows up for accounts and everyone else too.
   const [attachingDoc, setAttachingDoc] = useState(false);
+
+  // ── Draft of the open dispatch window ──────────────────────────────────
+  // If the browser reloads or discards this tab while the dispatcher is away
+  // fetching an invoice file, everything typed used to vanish. Keep a copy on
+  // this computer and reopen the window with it. (Paperwork ticks are NOT kept —
+  // they must be given again against what is attached.)
+  const DRAFT_KEY = 'aayam:dispatch-draft';
+  const [draftReady, setDraftReady] = useState(false);
+  useEffect(() => {
+    if (draftReady || jobsLoading) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const fresh = d && Date.now() - (d.at || 0) < 6 * 60 * 60 * 1000;
+        const found = fresh ? (d.ids as string[]).map(id => jobs.find(j => j.id === id)).filter(Boolean) as Job[] : [];
+        if (fresh && found.length > 0 && found.length === d.ids.length) {
+          setFromPrinter(!!d.fromPrinter);
+          setAdhocPackType(d.adhocPackType || 'box');
+          setSelectedJobs(found);
+          setActivePackage(d.activePackage || null);
+          setQtyByJob(d.qtyByJob || {});
+          setDispatchForm(d.dispatchForm);
+          setShowDispatchModal(true);
+          toast.info('Your dispatch window was restored — check the paperwork tick again.');
+        } else {
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      }
+    } catch { /* storage blocked or bad draft — start clean */ }
+    setDraftReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobsLoading, jobs, draftReady]);
+  useEffect(() => {
+    if (!draftReady) return;
+    try {
+      if (showDispatchModal && selectedJobs.length > 0) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          at: Date.now(), ids: selectedJobs.map(j => j.id), fromPrinter, adhocPackType,
+          activePackage, qtyByJob, dispatchForm,
+        }));
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch { /* ignore */ }
+  }, [draftReady, showDispatchModal, selectedJobs, fromPrinter, adhocPackType, activePackage, qtyByJob, dispatchForm]);
   const attachPaperwork = async (job: Job, file: File, label: 'Invoice' | 'E-Way Bill') => {
     setAttachingDoc(true);
     try {
@@ -392,6 +438,45 @@ export default function DispatchPage() {
       setDocsVerifiedByJob(prev => ({ ...prev, [job.id]: false }));
       refetchJobs?.();
       toast.success(`${label} attached ✓`);
+    } catch (err: any) {
+      toast.error(`Could not attach ${label}: ${err.message || 'Unknown error'}`);
+    } finally {
+      setAttachingDoc(false);
+    }
+  };
+
+  // One consignment = ONE invoice + ONE e-way bill. Upload the file once and
+  // put the same file on every job in the consignment, so the dispatcher does
+  // not repeat the same upload job by job.
+  const attachPaperworkToAll = async (file: File, label: 'Invoice' | 'E-Way Bill') => {
+    if (selectedJobs.length === 0) return;
+    setAttachingDoc(true);
+    try {
+      const first = selectedJobs[0];
+      const ext = file.name.split('.').pop() || 'pdf';
+      const path = `jobs/${first.id}/${first.job_number}_${label.replace(/\s+/g, '_')}_${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('attachments').upload(path, file);
+      if (upErr) throw new Error(upErr.message);
+      const url = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl;
+      const newFile = { name: `${label}: ${file.name}`, url, type: file.type, size: file.size, uploaded_at: new Date().toISOString() };
+      const updatedById: Record<string, any[]> = {};
+      const failed: string[] = [];
+      for (const j of selectedJobs) {
+        const updatedFiles = [...((j as any).files || []), newFile];
+        const { error: updErr } = await supabase.from('jobs').update({ files: updatedFiles }).eq('id', j.id);
+        if (updErr) { failed.push(j.job_number); continue; }
+        updatedById[j.id] = updatedFiles;
+      }
+      setSelectedJobs(prev => prev.map(j => (updatedById[j.id] ? ({ ...j, files: updatedById[j.id] } as any) : j)));
+      // New document → the tick has to be given again against what is attached now.
+      setDocsVerifiedByJob(prev => {
+        const next = { ...prev };
+        for (const id of Object.keys(updatedById)) next[id] = false;
+        return next;
+      });
+      refetchJobs?.();
+      if (failed.length > 0) toast.error(`${label} attached, but not saved on: ${failed.map(n => '#' + n).join(', ')}`);
+      else toast.success(`${label} attached to all ${selectedJobs.length} jobs ✓`);
     } catch (err: any) {
       toast.error(`Could not attach ${label}: ${err.message || 'Unknown error'}`);
     } finally {
@@ -1180,9 +1265,28 @@ export default function DispatchPage() {
                   )}
                 </div>
               )}
+              {selectedJobs.length > 1 && (
+                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Invoice &amp; e-way bill — one for all {selectedJobs.length} jobs</p>
+                  <p className="text-[11px] text-muted-foreground">Attach once here; the same file is put on every job below. Each job only needs its own quantity.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(['Invoice', 'E-Way Bill'] as const).map(label => (
+                      <label key={label} className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border bg-card cursor-pointer hover:border-foreground/40 ${attachingDoc ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <Paperclip className="w-3.5 h-3.5" />
+                        Attach {label} (all jobs)
+                        <input type="file" accept="image/*,application/pdf" className="hidden"
+                          onChange={e => { const f = e.target.files?.[0]; if (f) attachPaperworkToAll(f, label); e.target.value = ''; }} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
-                {selectedJobs.map(job => {
+                {selectedJobs.map((job, jobIdx) => {
                   const rem = remainingFor(job);
+                  // Same invoice + e-way bill files as the first job → show the panel once.
+                  const sigOf = (j: any) => { const pw = getDispatchPaperwork(j); return pw.isEmpty ? '' : [...pw.invoices, ...pw.ewayBills].map(d => d.url).sort().join('|'); };
+                  const sameAsFirst = jobIdx > 0 && sigOf(job) !== '' && sigOf(job) === sigOf(selectedJobs[0]);
                   const shipped = shippedByJob[job.id] || 0;
                   const typed = parseInt(qtyByJob[job.id] || '', 10);
                   const isPartial = rem != null && Number.isFinite(typed) && typed >= 1 && typed < rem;
@@ -1193,20 +1297,29 @@ export default function DispatchPage() {
                           #{job.job_number} <span className="font-normal text-muted-foreground">— {job.project_name}</span>
                         </p>
                       )}
+                      {sameAsFirst ? (
+                        <p className="text-[11px] text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1.5">
+                          ✓ Same invoice &amp; e-way bill as #{selectedJobs[0].job_number} (ticked together)
+                        </p>
+                      ) : (
                       <DispatchPaperwork
                         job={job as any}
                         verified={!!docsVerifiedByJob[job.id]}
                         attaching={attachingDoc}
-                        onAttach={(file, label) => attachPaperwork(job, file, label)}
+                        onAttach={selectedJobs.length > 1 ? undefined : (file, label) => attachPaperwork(job, file, label)}
                         onRemove={doc => removePaperwork(job, doc)}
                         onVerifiedChange={v => setDocsVerifiedByJob(prev => {
-                          // One box, one set of paperwork: ticking it once covers every job in the same package.
+                          // One box, one set of paperwork: ticking it once covers every job in the same package,
+                          // and every job that carries exactly the same invoice / e-way bill files.
                           const next = { ...prev, [job.id]: v };
                           const pkgId = (job as any).package_id;
                           if (pkgId) for (const j of selectedJobs) if ((j as any).package_id === pkgId) next[j.id] = v;
+                          const mySig = sigOf(job);
+                          if (mySig !== '') for (const j of selectedJobs) if (sigOf(j) === mySig) next[j.id] = v;
                           return next;
                         })}
                       />
+                      )}
                       {rem != null && (
                         <div>
                           <div className="flex items-center gap-2">
