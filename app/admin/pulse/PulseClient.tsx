@@ -39,15 +39,15 @@ function JobRow({ j, badge }: { j: JobBrief; badge?: string }) {
   return (
     <Link
       href={`/admin/jobs/${j.id}`}
-      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-200 transition"
+      className="block px-3 py-2 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-200 transition"
     >
-      <div className="min-w-0">
-        <span className="font-semibold text-slate-800">{j.job_number || '?'}</span>
-        <span className="text-slate-500 ml-2 truncate">{j.project_name}</span>
+      <div className="flex items-baseline gap-2 min-w-0">
+        <span className="font-semibold text-slate-800 whitespace-nowrap shrink-0">{j.job_number || '?'}</span>
+        <span className="text-slate-600 truncate min-w-0" title={j.project_name ?? undefined}>{j.project_name}</span>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs text-slate-500">{j.stage_name}</span>
-        {badge && <span className="text-xs font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-0.5">{badge}</span>}
+      <div className="flex items-center justify-between gap-2 mt-0.5">
+        <span className="text-xs text-slate-500 truncate min-w-0">{j.stage_name}</span>
+        {badge && <span className="text-xs font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">{badge}</span>}
       </div>
     </Link>
   );
@@ -61,14 +61,14 @@ function InvoiceRow({ inv }: { inv: InvoiceBrief }) {
     ? `due in ${inv.days_until_due}d`
     : '';
   return (
-    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-transparent hover:bg-slate-50 hover:border-slate-200 transition">
-      <div className="flex items-baseline min-w-0 flex-1 gap-2">
-        <span className="font-semibold text-slate-800 shrink-0">{inv.invoice_number}</span>
-        <span className="text-slate-500 truncate min-w-0" title={client}>{client}</span>
+    <div className="px-3 py-2 rounded-lg border border-transparent hover:bg-slate-50 hover:border-slate-200 transition">
+      <div className="flex items-baseline gap-2 min-w-0">
+        <span className="font-semibold text-slate-800 whitespace-nowrap shrink-0">{inv.invoice_number}</span>
+        <span className="text-slate-600 truncate min-w-0" title={client}>{client}</span>
       </div>
-      <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-        <span className="text-sm text-slate-700">{inr(inv.total_amount)}</span>
-        {badge && <span className="text-xs font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-0.5">{badge}</span>}
+      <div className="flex items-center justify-between gap-2 mt-0.5">
+        <span className="text-sm text-slate-700 whitespace-nowrap">{inr(inv.total_amount)}</span>
+        {badge && <span className="text-xs font-bold text-slate-700 bg-slate-100 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">{badge}</span>}
       </div>
     </div>
   );
@@ -180,17 +180,8 @@ export default function PulseClient({
         <Stat icon={<Clock size={14} />} label="Overdue" value={String(s.overdue.length)} tone={s.overdue.length ? 'red' : 'green'} />
       </div>
 
-      {/* Exception panels */}
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <Panel
-          id="stuck"
-          title="Stuck — no movement"
-          icon={<AlertTriangle size={16} />}
-          tone="amber"
-          items={s.stuck}
-          openAll={target === 'stuck'}
-          render={(j) => <JobRow key={j.id} j={j} badge={`${j.days_idle}d idle`} />}
-        />
+      {/* Exception panels — full width so rows have room */}
+      <div className="space-y-4 mb-6">
         <Panel
           id="overdue"
           title="Past deadline"
@@ -199,6 +190,15 @@ export default function PulseClient({
           items={s.overdue}
           openAll={target === 'overdue'}
           render={(j) => <JobRow key={j.id} j={j} badge={`${j.days_overdue}d over`} />}
+        />
+        <Panel
+          id="stuck"
+          title="Stuck — no movement"
+          icon={<AlertTriangle size={16} />}
+          tone="amber"
+          items={s.stuck}
+          openAll={target === 'stuck'}
+          render={(j) => <JobRow key={j.id} j={j} badge={`${j.days_idle}d idle`} />}
         />
       </div>
 
@@ -225,7 +225,7 @@ export default function PulseClient({
             Pending <b className="text-slate-800">{inr(fin.totalPending)}</b>
           </span>
         </div>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Panel
             id="inv-overdue"
             title="Overdue"
