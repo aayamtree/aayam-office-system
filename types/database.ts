@@ -4,7 +4,7 @@
 
 // Enums
 export type UserRole = 'admin' | 'manager' | 'sales' | 'designer' | 'dispatch' | 'marketing' | 'finance' | 'cmyk';
-export type JobStatus = 'new' | 'awaiting_admin' | 'file_check' | 'designing' | 'approval' | 'pre_print_qc' | 'print_file_ready' | 'file_sent_client' | 'file_received' | 'ready_to_print' | 'printing' | 'material_received' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled';
+export type JobStatus = 'new' | 'awaiting_admin' | 'file_check' | 'designing' | 'approval' | 'pre_print_qc' | 'print_file_ready' | 'file_sent_client' | 'file_received' | 'ready_to_print' | 'printing' | 'material_received' | 'finishing' | 'quality_check' | 'ready' | 'dispatched' | 'delivered' | 'cancelled' | 'in_stock';
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'overdue';
 export type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';
 export type TaskStatus = 'pending' | 'in_progress' | 'review' | 'rework' | 'completed';
@@ -235,6 +235,15 @@ export interface Job extends BaseEntity {
   // Workflow status
   current_stage: JobStatus;
   priority: PriorityLevel;
+
+  // Stock jobs: printed on spare sheet space, kept in the warehouse until the client orders
+  is_stock?: boolean;
+  stock_qty_on_hand?: number | null;
+  stock_location?: string | null;
+  stock_artwork_version?: string | null;
+  stock_stored_at?: string | null;
+  /** Set on a real order that was released from a stock job. */
+  stock_source_job_id?: string | null;
 
   // Print-specific fields (new)
   client_approval?: boolean;

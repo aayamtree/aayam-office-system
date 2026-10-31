@@ -48,6 +48,9 @@ export default function UnifiedJobForm({
     const isDesignOnly = (jt: string) => jt.toLowerCase() === 'design only';
 
     const [saving, setSaving] = useState(false);
+    // Stock job = printed on spare sheet space and kept in the warehouse until the
+    // client orders. Not an order: no price, no invoice, no dispatch.
+    const [isStock, setIsStock] = useState(false);
     const [showClientModal, setShowClientModal] = useState(false);
     const [showVendorModal, setShowVendorModal] = useState(false);
     const [showAdvance, setShowAdvance] = useState(false);
@@ -174,6 +177,7 @@ export default function UnifiedJobForm({
                 drive_link: formData.drive_link || null,
                 status: 'active',
             };
+            if (isStock && !editingJob) jobPayload.is_stock = true;
 
             if (isAdmin) {
                 jobPayload.quantity = formData.quantity;
@@ -204,6 +208,21 @@ export default function UnifiedJobForm({
                 jobPayload.advance_amount = advanceAmount;
                 jobPayload.advance_collected = advanceAmount > 0;
                 jobPayload.advance_payment_mode = advanceAmount > 0 ? advance.payment_mode : null;
+                if (isStock && !editingJob) {
+                    // Stock is not sold yet: nothing to invoice, nothing to collect.
+                    jobPayload.quote_per_piece = 0;
+                    jobPayload.design_charge = 0;
+                    jobPayload.subtotal = 0;
+                    jobPayload.gst_amount = 0;
+                    jobPayload.discount_amount = 0;
+                    jobPayload.total_amount = 0;
+                    jobPayload.payment_status = 'pending';
+                    jobPayload.amount_received = 0;
+                    jobPayload.advance_amount = 0;
+                    jobPayload.advance_collected = false;
+                    jobPayload.advance_required = false;
+                    jobPayload.advance_payment_mode = null;
+                }
             }
 
             let savedJob: any = null;
@@ -218,7 +237,7 @@ export default function UnifiedJobForm({
             }
 
             // Record advance payment
-            if (!editingJob && advanceAmount > 0 && savedJob?.id) {
+            if (!editingJob && !isStock && advanceAmount > 0 && savedJob?.id) {
                 await supabase.from('payments_received').insert([{
                     job_id: savedJob.id,
                     client_id: formData.client_id || null,
@@ -282,6 +301,24 @@ export default function UnifiedJobForm({
                                 onChange={e => set('project_name', e.target.value)}
                             />
                         </div>
+
+                        {!editingJob && (
+                            <label className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${isStock ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                                <input
+                                    type="checkbox"
+                                    className="mt-1"
+                                    checked={isStock}
+                                    onChange={e => setIsStock(e.target.checked)}
+                                />
+                                <span>
+                                    <span className="block text-sm font-semibold text-gray-900">Stock job — not a client order</span>
+                                    <span className="block text-xs text-gray-600">
+                                        Printed on spare sheet space and kept in the warehouse until the client orders.
+                                        No price, no invoice, no dispatch. Release it from Dispatch when the order comes.
+                                    </span>
+                                </span>
+                            </label>
+                        )}
 
                         <div className="grid grid-cols-2 gap-3">
                             {/* Client */}

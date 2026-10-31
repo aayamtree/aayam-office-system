@@ -96,7 +96,10 @@ export const MASTER_STAGE_ORDER: string[] = [
 ];
 
 /** Stages that legitimately end a pipeline (no further advance). */
-export const TERMINAL_STAGES = ['file_sent_client', 'delivered', 'cancelled'];
+// 'in_stock' = a stock job sitting on the warehouse shelf. It is not an order and not in
+// production, so dashboards, overdue lists and completeness checks must leave it alone.
+// (It leaves the shelf only through "Release from Stock", which creates a real order.)
+export const TERMINAL_STAGES = ['file_sent_client', 'delivered', 'cancelled', 'in_stock'];
 
 /**
  * ONE RULE FOR "IS THIS JOB LATE?" — use these, never hand-type a stage list.

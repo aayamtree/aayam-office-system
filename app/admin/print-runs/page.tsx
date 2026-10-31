@@ -234,7 +234,7 @@ export default function PrintRunsPage() {
             if (runIds.length > 0) {
                 const { data: jd, error: jdErr } = await supabase
                     .from('print_run_jobs')
-                    .select('*, jobs(job_number, product_category, thumbnail_url, files)')
+                    .select('*, jobs(job_number, product_category, thumbnail_url, files, is_stock)')
                     .in('print_run_id', runIds);
                 // Without this, a failure here silently produced print runs with
                 // no jobs on them — a sheet that looks empty rather than broken.
@@ -887,7 +887,7 @@ export default function PrintRunsPage() {
                                                                 job={{ ...(job.jobs || {}), job_number: job.job_number, project_name: job.item_name, quantity: job.quantity_needed, client: { name: job.client_name } }}
                                                             />
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="text-[10px] font-bold font-mono text-foreground">{job.job_number}</p>
+                                                                <p className="text-[10px] font-bold font-mono text-foreground">{job.job_number}{(job as any).jobs?.is_stock && <span className="ml-1 px-1 py-px rounded bg-amber-100 text-amber-800 text-[8px] font-bold uppercase align-middle">Stock · not an order</span>}</p>
                                                                 <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug">{job.item_name || 'Unnamed'}</p>
                                                             </div>
                                                         </div>
@@ -1202,6 +1202,7 @@ export default function PrintRunsPage() {
                                                     job={{ ...(job.jobs || {}), job_number: job.job_number, project_name: job.item_name, quantity: job.quantity_needed, client: { name: job.client_name } }}
                                                 />
                                                 <span className="font-mono text-xs font-bold text-gray-900">{job.job_number}</span>
+                                                {(job as any).jobs?.is_stock && <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold uppercase">Stock · not an order</span>}
                                                 <ProductBadge category={job.product_category} />
                                                 <span className="text-xs text-gray-600">{job.client_name}</span>
                                                 <span className="text-xs text-gray-400">{job.item_name}</span>

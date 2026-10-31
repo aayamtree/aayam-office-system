@@ -21,6 +21,7 @@ import { createPackage, unpackPackage, packageTypeLabel, type PackageType } from
 import PageSearch from '@/components/shared/PageSearch';
 import JobThumb from '@/components/shared/JobThumb';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
+import StockSection, { ReturnToStockButton } from '@/components/dispatch/StockSection';
 import { jobMatches, matchesQuery } from '@/lib/page-search';
 
 export default function DispatchPage() {
@@ -30,7 +31,7 @@ export default function DispatchPage() {
     // The accountant may attach an invoice two ways: by saving invoice_reference
     // on the job, or by creating a row in the invoices table (job_id FK).
     // We fetch both so "Invoice ready" reflects reality either way.
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, thumbnail_url, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes), invoice_reference, eway_bill_number, invoice_requested_at, files, client:clients(id, name, company), invoices:invoices(id)',
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, total_amount, amount_received, payment_status, quantity, thumbnail_url, packing_info, package_id, package:packages(id, consignment_no, package_type, package_count, approx_weight_kg, notes), invoice_reference, eway_bill_number, invoice_requested_at, files, is_stock, file_version, stock_source_job_id, client:clients(id, name, company), invoices:invoices(id)',
     filter: [{ column: 'current_stage', value: ['material_received', 'quality_check', 'ready'], op: 'in' }],
     orderBy: { column: 'client_deadline', ascending: true },
     // useJobs defaults to 50, but 150+ jobs can sit in these stages at once —
@@ -39,7 +40,12 @@ export default function DispatchPage() {
   });
   // One box = one invoice + one e-way bill: paperwork attached to any job in a
   // package is visible on every job in it.
-  const jobs = useMemo(() => shareDocsAcrossPackages(rawJobs as any[]) as typeof rawJobs, [rawJobs]);
+  const allJobs = useMemo(() => shareDocsAcrossPackages(rawJobs as any[]) as typeof rawJobs, [rawJobs]);
+  // Stock jobs (printed on spare sheet space, kept for the client) are NOT orders:
+  // they never count as pending QC / ready / delayed and are never dispatched.
+  // They get their own section, which shelves them in the warehouse.
+  const jobs = useMemo(() => allJobs.filter(j => !(j as any).is_stock), [allJobs]);
+  const printedStockJobs = useMemo(() => allJobs.filter(j => (j as any).is_stock), [allJobs]);
   const { dispatches, loading: dispatchesLoading, error: dispatchesError, createDispatchGroup, refetch: refetchDispatches } = useDispatches();
 
   // Jobs are not on the realtime channel (perf), so an already-open dispatch
@@ -1015,6 +1021,12 @@ export default function DispatchPage() {
         );
       })()}
 
+      {/* ── Stock jobs ──
+          Not orders: printed for the shelf, no invoice, no dispatch until released. */}
+      {focus === null && (
+        <StockSection printed={printedStockJobs as any[]} query={query} onChanged={() => refetchJobs?.()} />
+      )}
+
       {/* ── Awaiting Packing ──
           QC-passed, not yet boxed. Dispatch one job as-is (mints a
           package-of-one), or send several of the same client to Pack to
@@ -1050,6 +1062,7 @@ export default function DispatchPage() {
                     </div>
                     <div className="flex flex-wrap gap-1">
                       <ProductBadge category={(job as any).product_category} />
+                      {(job as any).stock_source_job_id && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">From stock</span>}
                       {isOverdue && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">Overdue</span>}
                     </div>
                     <p className="text-[10px] text-muted-foreground">Qty: {job.quantity} &bull; Due: {job.client_deadline ? new Date(job.client_deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
@@ -1086,7 +1099,9 @@ export default function DispatchPage() {
                       >
                         {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
                       </button>
-                      <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />
+                      {(job as any).stock_source_job_id
+                        ? <ReturnToStockButton jobId={job.id} onDone={() => refetchJobs?.()} />
+                        : <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />}
                     </div>
                   </div>
                 </div>
