@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Stock jobs on the Dispatch board.
+ * Stock jobs (used by the Stock page, /admin/dispatch/stock).
  *
- * A stock job is printed on spare sheet space and kept in the warehouse until the
- * client orders. It is NOT an order: no price, no invoice, no dispatch.
+ * A stock job is printed on spare sheet space and kept in the warehouse until the client
+ * orders. It is NOT an order: no price, no invoice, no dispatch.
  *
  *   1. "Stock Printed"        : stock jobs back from the press, waiting to be shelved
  *   2. "Stock in Warehouse"   : what is on the shelf, one card per client + product,
@@ -14,9 +14,13 @@
  *        - the shelf is short   -> the shelf part becomes an order and the balance becomes a
  *                                  linked new print job (starts at Ready to Print)
  *   4. "Adjust"               : damaged / miscounted / old artwork, always with a reason
+ *
+ * Also exports small buttons used on the Dispatch board:
+ *   ReturnToStockButton  - an order released by mistake goes back on the shelf
+ *   ConvertToStockButton - a running job that is really stock becomes a stock job
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Archive, Loader2, X, PackageCheck, Undo2 } from 'lucide-react';
+import { Archive, Loader2, X, PackageCheck, Undo2, Boxes } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import JobThumb from '@/components/shared/JobThumb';
@@ -24,21 +28,24 @@ import ProductBadge from '@/components/shared/ProductBadge';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { jobMatches } from '@/lib/page-search';
 
-const AMBER_DAYS = 60;
-const RED_DAYS = 90;
+export const STOCK_AMBER_DAYS = 60;
+export const STOCK_RED_DAYS = 90;
 
-function ageDays(from?: string | null): number {
+export function stockAgeDays(from?: string | null): number {
   if (!from) return 0;
   return Math.max(0, Math.floor((Date.now() - new Date(from).getTime()) / 86400000));
 }
 
 function ageClasses(days: number): string {
-  if (days >= RED_DAYS) return 'bg-red-100 text-red-700 border-red-200';
-  if (days >= AMBER_DAYS) return 'bg-amber-100 text-amber-800 border-amber-200';
+  if (days >= STOCK_RED_DAYS) return 'bg-red-100 text-red-700 border-red-200';
+  if (days >= STOCK_AMBER_DAYS) return 'bg-amber-100 text-amber-800 border-amber-200';
   return 'bg-gray-100 text-gray-600 border-gray-200';
 }
 
 const n = (v: number) => v.toLocaleString('en-IN');
+
+/** Stages where a printed stock job waits to be put on the shelf. */
+export const STOCK_PRINTED_STAGES = ['material_received', 'quality_check', 'ready', 'finishing'];
 
 /** "Return to stock" for an order that was released from stock (instead of Roll back). */
 export function ReturnToStockButton({ jobId, onDone }: { jobId: string; onDone: () => void }) {
@@ -77,17 +84,59 @@ export function ReturnToStockButton({ jobId, onDone }: { jobId: string; onDone: 
   );
 }
 
-interface Props {
-  /** Stock jobs that are back from print and waiting to be shelved (from the Dispatch board's own query). */
-  printed: any[];
-  /** Search box text from the Dispatch page. */
-  query: string;
-  /** Refresh the Dispatch board (a release creates new jobs there). */
-  onChanged: () => void;
+/** "Mark as stock" for a running job that is really stock (before packing, invoice and dispatch). */
+export function ConvertToStockButton({ jobId, onDone }: { jobId: string; onDone: () => void }) {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc('fn_convert_to_stock', { p_job_id: jobId });
+    setBusy(false);
+    setAsking(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Now a stock job. Open Stock to put it on the shelf ✓');
+    onDone();
+  };
+
+  if (!asking) {
+    return (
+      <button
+        onClick={() => setAsking(true)}
+        title="This is not a client order: keep it in the warehouse as stock"
+        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded border border-border bg-card text-muted-foreground hover:text-foreground"
+      >
+        <Boxes className="w-3 h-3" /> Mark as stock
+      </button>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1.5 text-xs">
+      <span className="text-gray-600">Not an order, make it stock?</span>
+      <button onClick={run} disabled={busy} className="px-2 py-1 rounded bg-gray-900 text-white font-medium disabled:opacity-50">
+        {busy ? '…' : 'Yes'}
+      </button>
+      <button onClick={() => setAsking(false)} className="px-2 py-1 text-gray-500">No</button>
+    </span>
+  );
 }
 
-export default function StockSection({ printed, query, onChanged }: Props) {
+interface Props {
+  /** Search box text from the Stock page. */
+  query: string;
+  /** Only show this client ('' = all). */
+  clientId: string;
+  /** Gives the page the full shelf list (for its tiles and client filter). */
+  onData?: (warehouse: any[], printed: any[]) => void;
+  /** Called after anything changes (so the page can refresh its own extras). */
+  onChanged?: () => void;
+  /** Bump this number to make the section reload (e.g. after converting a job). */
+  reloadKey?: number;
+}
+
+export default function StockSection({ query, clientId, onData, onChanged, reloadKey = 0 }: Props) {
   const [warehouse, setWarehouse] = useState<any[]>([]);
+  const [printed, setPrinted] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -109,20 +158,36 @@ export default function StockSection({ printed, query, onChanged }: Props) {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('id, job_number, project_name, client_id, product_id, product_category, quantity, thumbnail_url, files, file_version, stock_qty_on_hand, stock_location, stock_stored_at, stock_artwork_version, vendor:vendors(id, name), client:clients(id, name, company)')
-      .eq('is_stock', true)
-      .eq('current_stage', 'in_stock')
-      .gt('stock_qty_on_hand', 0)
-      .order('stock_stored_at', { ascending: true })
-      .limit(500);
-    if (error) setLoadError(error.message);
-    else { setLoadError(null); setWarehouse(data || []); }
+    const [wh, pr] = await Promise.all([
+      supabase
+        .from('jobs')
+        .select('id, job_number, project_name, client_id, product_id, product_category, quantity, thumbnail_url, files, file_version, stock_qty_on_hand, stock_location, stock_stored_at, stock_artwork_version, vendor:vendors(id, name), client:clients(id, name, company)')
+        .eq('is_stock', true)
+        .eq('current_stage', 'in_stock')
+        .gt('stock_qty_on_hand', 0)
+        .order('stock_stored_at', { ascending: true })
+        .limit(500),
+      supabase
+        .from('jobs')
+        .select('id, job_number, project_name, client_id, product_category, quantity, thumbnail_url, files, client:clients(id, name, company)')
+        .eq('is_stock', true)
+        .in('current_stage', STOCK_PRINTED_STAGES)
+        .order('created_at', { ascending: false })
+        .limit(200),
+    ]);
+    const err = wh.error || pr.error;
+    if (err) setLoadError(err.message);
+    else {
+      setLoadError(null);
+      setWarehouse(wh.data || []);
+      setPrinted(pr.data || []);
+      onData?.(wh.data || [], pr.data || []);
+    }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, reloadKey]);
 
   // Someone else may have released or shelved something while this tab was in the background.
   useEffect(() => {
@@ -131,10 +196,15 @@ export default function StockSection({ printed, query, onChanged }: Props) {
     return () => window.removeEventListener('focus', onFocus);
   }, [load]);
 
+  const afterChange = async () => { await load(); onChanged?.(); };
+
+  const q = query.trim();
+  const byClient = (j: any) => !clientId || j.client_id === clientId;
+
   // One card per client + product. Batches (maybe from different printers) sit inside it, oldest first.
   const groups = useMemo(() => {
     const map = new Map<string, any>();
-    for (const b of warehouse) {
+    for (const b of warehouse.filter(byClient)) {
       const key = `${b.client_id || ''}|${b.product_id || b.project_name}`;
       if (!map.has(key)) map.set(key, { key, batches: [], total: 0, first: b });
       const g = map.get(key);
@@ -142,14 +212,11 @@ export default function StockSection({ printed, query, onChanged }: Props) {
       g.total += b.stock_qty_on_hand || 0;
     }
     return Array.from(map.values());
-  }, [warehouse]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouse, clientId]);
 
-  const q = query.trim();
-  const shownPrinted = q ? printed.filter(j => jobMatches(j, q)) : printed;
+  const shownPrinted = printed.filter(byClient).filter(j => !q || jobMatches(j, q));
   const shownGroups = q ? groups.filter(g => g.batches.some((b: any) => jobMatches(b, q))) : groups;
-  const totalPcs = warehouse.reduce((s, j) => s + (j.stock_qty_on_hand || 0), 0);
-
-  if (!loading && !loadError && shownPrinted.length === 0 && shownGroups.length === 0) return null;
 
   const openShelve = (job: any) => { setShelving(job); setShelfQty(String(job.quantity || '')); setShelfLoc(''); };
   const openRelease = (g: any) => {
@@ -168,8 +235,7 @@ export default function StockSection({ printed, query, onChanged }: Props) {
     if (error) { toast.error(error.message); return; }
     toast.success(`${shelving.job_number} is now in warehouse stock ✓`);
     setShelving(null);
-    await load();
-    onChanged();
+    await afterChange();
   };
 
   const relTotalNum = parseInt(relTotal, 10) || 0;
@@ -202,8 +268,7 @@ export default function StockSection({ printed, query, onChanged }: Props) {
         : `${n(r.from_stock)} pcs released — new order ${r.order_job_number} is in Awaiting Packing ✓`
     );
     setReleasing(null);
-    await load();
-    onChanged();
+    await afterChange();
   };
 
   const submitAdjust = async (delta: number) => {
@@ -214,11 +279,11 @@ export default function StockSection({ printed, query, onChanged }: Props) {
     if (error) { toast.error(error.message); return; }
     toast.success('Stock updated ✓');
     setAdjusting(null);
-    await load();
+    await afterChange();
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {loadError && (
         <p className="text-xs text-red-600 border border-red-200 bg-red-50 rounded px-3 py-2">
           Could not load warehouse stock: {loadError}
@@ -250,7 +315,7 @@ export default function StockSection({ printed, query, onChanged }: Props) {
                     <button onClick={() => openShelve(job)} className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-white text-xs font-medium rounded hover:opacity-90">
                       <Archive className="w-3 h-3" /> Put in Stock
                     </button>
-                    <RollbackJobButton jobId={job.id} onDone={onChanged} />
+                    <RollbackJobButton jobId={job.id} onDone={afterChange} />
                   </div>
                 </div>
               </div>
@@ -260,68 +325,69 @@ export default function StockSection({ printed, query, onChanged }: Props) {
       )}
 
       {/* 2 ── On the shelf */}
-      {(loading || shownGroups.length > 0) && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-section text-gray-900 font-semibold">Stock in Warehouse ({shownGroups.length})</h2>
-            <span className="text-xs text-gray-500">{n(totalPcs)} pcs on the shelf · no invoice, no dispatch until released</span>
-          </div>
-          {loading ? (
-            <p className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Loading stock…</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
-              {shownGroups.map(g => {
-                const oldest = ageDays(g.batches[0].stock_stored_at);
-                const f = g.first;
-                return (
-                  <div key={g.key} className="bg-card rounded-md border border-border border-l-4 border-l-slate-400">
-                    <div className="bg-slate-50 px-3 py-2 flex items-center justify-between border-b border-border/50">
-                      <span className="text-[10px] text-muted-foreground">{g.batches.length} batch{g.batches.length === 1 ? '' : 'es'}</span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold ${ageClasses(oldest)}`}>
-                        oldest {oldest === 0 ? 'today' : `${oldest} day${oldest === 1 ? '' : 's'}`}
-                      </span>
-                    </div>
-                    <div className="px-3 pt-2 pb-3 space-y-2">
-                      <div className="flex items-start gap-2.5">
-                        <JobThumb job={f} size={64} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground truncate">{f.client?.company || f.client?.name}</p>
-                          <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{f.project_name}</h3>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1"><ProductBadge category={f.product_category} /></div>
-                      <p className="text-sm text-foreground font-semibold">{n(g.total)} pcs on hand</p>
-
-                      <ul className="space-y-1.5 border-t border-border/60 pt-2">
-                        {g.batches.map((b: any) => {
-                          const d = ageDays(b.stock_stored_at);
-                          const revised = b.stock_artwork_version && b.file_version && b.stock_artwork_version !== b.file_version;
-                          return (
-                            <li key={b.id} className="text-[10px] text-muted-foreground flex items-start justify-between gap-2">
-                              <span className="min-w-0">
-                                <span className="font-mono">#{b.job_number}</span> · <span className="font-medium text-foreground">{n(b.stock_qty_on_hand)}</span> pcs
-                                {b.vendor?.name ? ` · ${b.vendor.name}` : ''}
-                                {b.stock_location ? ` · 📍${b.stock_location}` : ''}
-                                {' · '}{d}d · {b.stock_artwork_version || '—'}
-                                {revised && <span className="ml-1 px-1 rounded bg-amber-50 text-amber-700 border border-amber-200">revised</span>}
-                              </span>
-                              <button onClick={() => openAdjust(b)} className="shrink-0 underline hover:text-foreground">Adjust</button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-
-                      <button onClick={() => openRelease(g)} className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-white text-xs font-medium rounded hover:opacity-90">
-                        <PackageCheck className="w-3 h-3" /> Release from Stock
-                      </button>
-                    </div>
+      <div>
+        <h2 className="text-section text-gray-900 font-semibold mb-3">Stock in Warehouse ({shownGroups.length})</h2>
+        {loading ? (
+          <p className="text-xs text-gray-500 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Loading stock…</p>
+        ) : shownGroups.length === 0 ? (
+          <p className="text-sm text-gray-500 border border-dashed border-gray-300 rounded-md px-4 py-6 text-center">
+            {q || clientId
+              ? 'Nothing on the shelf matches this search.'
+              : 'Nothing on the shelf yet. Create a job with "Stock job" ticked, or mark a running job as stock, then put it in stock when it is printed.'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
+            {shownGroups.map(g => {
+              const oldest = stockAgeDays(g.batches[0].stock_stored_at);
+              const f = g.first;
+              return (
+                <div key={g.key} className="bg-card rounded-md border border-border border-l-4 border-l-slate-400">
+                  <div className="bg-slate-50 px-3 py-2 flex items-center justify-between border-b border-border/50">
+                    <span className="text-[10px] text-muted-foreground">{g.batches.length} batch{g.batches.length === 1 ? '' : 'es'}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold ${ageClasses(oldest)}`}>
+                      oldest {oldest === 0 ? 'today' : `${oldest} day${oldest === 1 ? '' : 's'}`}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                  <div className="px-3 pt-2 pb-3 space-y-2">
+                    <div className="flex items-start gap-2.5">
+                      <JobThumb job={f} size={64} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] text-muted-foreground truncate">{f.client?.company || f.client?.name}</p>
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{f.project_name}</h3>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1"><ProductBadge category={f.product_category} /></div>
+                    <p className="text-sm text-foreground font-semibold">{n(g.total)} pcs on hand</p>
+
+                    <ul className="space-y-1.5 border-t border-border/60 pt-2">
+                      {g.batches.map((b: any) => {
+                        const d = stockAgeDays(b.stock_stored_at);
+                        const revised = b.stock_artwork_version && b.file_version && b.stock_artwork_version !== b.file_version;
+                        return (
+                          <li key={b.id} className="text-[10px] text-muted-foreground flex items-start justify-between gap-2">
+                            <span className="min-w-0">
+                              <span className="font-mono">#{b.job_number}</span> · <span className="font-medium text-foreground">{n(b.stock_qty_on_hand)}</span> pcs
+                              {b.vendor?.name ? ` · ${b.vendor.name}` : ''}
+                              {b.stock_location ? ` · 📍${b.stock_location}` : ''}
+                              {' · '}{d}d · {b.stock_artwork_version || '—'}
+                              {revised && <span className="ml-1 px-1 rounded bg-amber-50 text-amber-700 border border-amber-200">revised</span>}
+                            </span>
+                            <button onClick={() => openAdjust(b)} className="shrink-0 underline hover:text-foreground">Adjust</button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    <button onClick={() => openRelease(g)} className="flex items-center gap-1 px-2.5 py-1.5 bg-foreground text-white text-xs font-medium rounded hover:opacity-90">
+                      <PackageCheck className="w-3 h-3" /> Release from Stock
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Put in stock */}
       {shelving && (
@@ -368,9 +434,7 @@ export default function StockSection({ printed, query, onChanged }: Props) {
 
             {(revisedBatches.length > 0 || mixedArtwork) && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                ⚠️ {revisedBatches.length > 0
-                  ? 'The artwork was revised after some of this stock was printed. '
-                  : ''}
+                ⚠️ {revisedBatches.length > 0 ? 'The artwork was revised after some of this stock was printed. ' : ''}
                 {mixedArtwork ? 'The batches on the shelf have different artwork versions. ' : ''}
                 Check the pieces match the latest design before you release.
               </p>

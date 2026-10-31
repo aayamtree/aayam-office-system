@@ -21,7 +21,8 @@ import { createPackage, unpackPackage, packageTypeLabel, type PackageType } from
 import PageSearch from '@/components/shared/PageSearch';
 import JobThumb from '@/components/shared/JobThumb';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
-import StockSection, { ReturnToStockButton } from '@/components/dispatch/StockSection';
+import { ReturnToStockButton, ConvertToStockButton } from '@/components/dispatch/StockSection';
+import StockLink from '@/components/dispatch/StockLink';
 import { jobMatches, matchesQuery } from '@/lib/page-search';
 
 export default function DispatchPage() {
@@ -43,9 +44,8 @@ export default function DispatchPage() {
   const allJobs = useMemo(() => shareDocsAcrossPackages(rawJobs as any[]) as typeof rawJobs, [rawJobs]);
   // Stock jobs (printed on spare sheet space, kept for the client) are NOT orders:
   // they never count as pending QC / ready / delayed and are never dispatched.
-  // They get their own section, which shelves them in the warehouse.
+  // They live on their own page (Dispatch > Stock), which shelves them in the warehouse.
   const jobs = useMemo(() => allJobs.filter(j => !(j as any).is_stock), [allJobs]);
-  const printedStockJobs = useMemo(() => allJobs.filter(j => (j as any).is_stock), [allJobs]);
   const { dispatches, loading: dispatchesLoading, error: dispatchesError, createDispatchGroup, refetch: refetchDispatches } = useDispatches();
 
   // Jobs are not on the realtime channel (perf), so an already-open dispatch
@@ -1023,9 +1023,7 @@ export default function DispatchPage() {
 
       {/* ── Stock jobs ──
           Not orders: printed for the shelf, no invoice, no dispatch until released. */}
-      {focus === null && (
-        <StockSection printed={printedStockJobs as any[]} query={query} onChanged={() => refetchJobs?.()} />
-      )}
+      {focus === null && !searching && <StockLink />}
 
       {/* ── Awaiting Packing ──
           QC-passed, not yet boxed. Dispatch one job as-is (mints a
@@ -1099,6 +1097,9 @@ export default function DispatchPage() {
                       >
                         {hasInvoice ? 'Dispatch Now' : '⚠️ Dispatch'}
                       </button>
+                      {!(job as any).stock_source_job_id && !hasInvoice && (
+                        <ConvertToStockButton jobId={job.id} onDone={() => refetchJobs?.()} />
+                      )}
                       {(job as any).stock_source_job_id
                         ? <ReturnToStockButton jobId={job.id} onDone={() => refetchJobs?.()} />
                         : <RollbackJobButton jobId={job.id} onDone={() => refetchJobs?.()} />}
