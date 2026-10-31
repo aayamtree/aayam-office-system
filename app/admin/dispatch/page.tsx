@@ -17,7 +17,7 @@ import DispatchPaperwork from '@/components/dispatch/DispatchPaperwork';
 import { shareDocsAcrossPackages, getDispatchPaperwork } from '@/lib/job-documents';
 import DispatchContactInput, { invalidateContactCache } from '@/components/dispatch/DispatchContactInput';
 import ProductBadge from '@/components/shared/ProductBadge';
-import { createPackage, packageTypeLabel, type PackageType } from '@/lib/packages';
+import { createPackage, unpackPackage, packageTypeLabel, type PackageType } from '@/lib/packages';
 import PageSearch from '@/components/shared/PageSearch';
 import JobThumb from '@/components/shared/JobThumb';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
@@ -531,6 +531,9 @@ export default function DispatchPage() {
       // the ad-hoc single-job "Dispatch Now" shortcut has no package yet, so
       // mint one now — a package-of-one — right before dispatching.
       let consignmentNo = activePackage?.consignment_no;
+      // Set only when THIS submit minted the package, so a failure can undo it
+      // and leave the jobs free to be dispatched again.
+      let mintedPackage: { id: string; consignment_no: string } | null = null;
       if (!consignmentNo) {
         const pkgResult = await createPackage({
           client_id: selectedJobs[0].client_id!,
@@ -548,16 +551,21 @@ export default function DispatchPage() {
         // the job's real package stays out of sync. Treat that as a failure
         // and refresh so the board shows where the job actually is.
         if (!pkgResult.package || pkgResult.error) {
+          if (pkgResult.package && pkgResult.packed.length > 0) {
+            await unpackPackage(pkgResult.package.id, pkgResult.package.consignment_no, profile?.id);
+          }
           refetchJobs?.();
           throw new Error(pkgResult.error || 'Could not create a package for this job.');
         }
         consignmentNo = pkgResult.package.consignment_no;
+        mintedPackage = pkgResult.package;
       }
 
       // One dispatches row per job, all sharing one consignment number —
       // the invoice-required trigger and per-job e-way bill stay intact.
       const result = await createDispatchGroup(shared as any, items, consignmentNo);
       if (result.created.length === 0) {
+        if (mintedPackage) await unpackPackage(mintedPackage.id, mintedPackage.consignment_no, profile?.id);
         throw new Error(result.failed[0]?.error || 'No dispatch could be created');
       }
 
