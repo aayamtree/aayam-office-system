@@ -2,7 +2,7 @@
 
 /**
  * "Add existing stock": bring stock that is already on the shelf into the system, in bulk.
- * Paste rows from a spreadsheet (Client, Product, Qty, Rack, Printed on, Printer) or type them.
+ * Type each batch, add pictures if you have them, or paste rows from a spreadsheet.
  * Nothing is saved until "Add to stock" is pressed; the database adds every row or none.
  */
 import { useEffect, useMemo, useState } from 'react';
@@ -10,8 +10,9 @@ import { Loader2, X, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 
-interface Row { client_id: string; product: string; qty: string; rack: string; date: string; vendor_id: string; art: string; }
-const emptyRow = (): Row => ({ client_id: '', product: '', qty: '', rack: '', date: '', vendor_id: '', art: '' });
+interface Pic { url: string; name: string; size: number; type: string; }
+interface Row { client_id: string; product: string; qty: string; date: string; vendor_id: string; pics: Pic[]; uploading: boolean; }
+const emptyRow = (): Row => ({ client_id: '', product: '', qty: '', date: '', vendor_id: '', pics: [], uploading: false });
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
 /** 25/12/2026, 25-12-26 or 2026-12-25  ->  2026-12-25 ('' when not understood) */
@@ -28,7 +29,6 @@ function parseDate(s: string): string {
 export default function OpeningStockModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
   const [clients, setClients] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [pasteText, setPasteText] = useState('');
@@ -37,44 +37,43 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
 
   useEffect(() => {
     (async () => {
-      const [c, v, j] = await Promise.all([
+      const [c, v] = await Promise.all([
         supabase.from('clients').select('id, name, company').order('company').limit(2000),
         supabase.from('vendors').select('id, name').order('name').limit(1000),
-        supabase.from('jobs').select('id, project_name, client_id').not('client_id', 'is', null)
-          .order('created_at', { ascending: false }).limit(5000),
       ]);
-      if (c.error || v.error || j.error) toast.error((c.error || v.error || j.error)!.message);
+      if (c.error || v.error) toast.error((c.error || v.error)!.message);
       setClients(c.data || []);
       setVendors(v.data || []);
-      setJobs(j.data || []);
       setLoading(false);
     })();
   }, []);
 
   const clientLabel = (c: any) => c.company || c.name || 'Client';
 
-  // client -> (product name lower-case -> latest job id): used to copy product details from an earlier job
-  const productsByClient = useMemo(() => {
-    const m = new Map<string, Map<string, { id: string; name: string }>>();
-    for (const j of jobs) {
-      if (!j.client_id || !j.project_name) continue;
-      if (!m.has(j.client_id)) m.set(j.client_id, new Map());
-      const inner = m.get(j.client_id)!;
-      const k = norm(j.project_name);
-      if (!inner.has(k)) inner.set(k, { id: j.id, name: j.project_name });
-    }
-    return m;
-  }, [jobs]);
-
   const update = (i: number, patch: Partial<Row>) =>
     setRows(rs => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+
+  const addPics = async (i: number, list: FileList | null) => {
+    if (!list || !list.length) return;
+    update(i, { uploading: true });
+    const added: Pic[] = [];
+    for (const f of Array.from(list)) {
+      if (!f.type.startsWith('image/')) { toast.error(`${f.name} is not a picture`); continue; }
+      const path = `stock/${Date.now()}-${Math.random().toString(36).slice(2, 8)}/${f.name.replace(/[^\w.\-]+/g, '_')}`;
+      const up = await supabase.storage.from('attachments').upload(path, f, { contentType: f.type });
+      if (up.error) { toast.error(`${f.name}: ${up.error.message}`); continue; }
+      const url = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl;
+      if (url) added.push({ url, name: f.name, size: f.size, type: f.type });
+    }
+    setRows(rs => rs.map((r, idx) => (idx === i ? { ...r, uploading: false, pics: [...r.pics, ...added] } : r)));
+  };
 
   const applyPaste = () => {
     const out: Row[] = [];
     for (const line of pasteText.split(/\r?\n/)) {
       if (!line.trim()) continue;
       const cells = line.split('\t').map(s => s.trim());
-      const [cName = '', product = '', qty = '', rack = '', date = '', printer = ''] = cells;
+      const [cName = '', product = '', qty = '', date = '', printer = ''] = cells;
       if (/^client$/i.test(cName)) continue; // header row
       const want = norm(cName);
       const client = clients.find(c => norm(c.company || '') === want || norm(c.name || '') === want)
@@ -85,10 +84,10 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
         client_id: client?.id || '',
         product,
         qty: qty.replace(/[,\s]/g, ''),
-        rack,
         date: parseDate(date),
         vendor_id: vendor?.id || '',
-        art: '',
+        pics: [],
+        uploading: false,
       });
     }
     if (!out.length) { toast.error('Nothing to read. Paste rows copied from your spreadsheet.'); return; }
@@ -106,12 +105,13 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
     return null;
   };
 
-  const filled = rows.filter(r => r.client_id || r.product.trim() || r.qty);
+  const filled = rows.filter(r => r.client_id || r.product.trim() || r.qty || r.pics.length);
   const problems = filled.filter(r => rowProblem(r)).length;
   const totalPcs = filled.reduce((s, r) => s + (parseInt(r.qty, 10) || 0), 0);
 
   const submit = async () => {
     setShowErrors(true);
+    if (rows.some(r => r.uploading)) { toast.error('Wait for the pictures to finish uploading.'); return; }
     if (!filled.length) { toast.error('Add at least one row.'); return; }
     if (problems) { toast.error(`${problems} row(s) need fixing (marked in red).`); return; }
     setBusy(true);
@@ -119,11 +119,9 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
       client_id: r.client_id,
       project_name: r.product.trim(),
       qty: parseInt(r.qty, 10),
-      location: r.rack.trim() || null,
       stored_at: r.date || null,
       vendor_id: r.vendor_id || null,
-      artwork_version: r.art.trim() || null,
-      template_job_id: productsByClient.get(r.client_id)?.get(norm(r.product))?.id || null,
+      files: r.pics.map(p => ({ ...p, storage: 'supabase', uploaded_at: new Date().toISOString() })),
     }));
     const { data, error } = await supabase.rpc('fn_add_opening_stock', { p_rows: payload });
     setBusy(false);
@@ -153,13 +151,13 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
           <>
             <div className="rounded-md border border-dashed border-gray-300 p-3 space-y-2">
               <p className="text-xs text-gray-600">
-                <b>Paste from a spreadsheet</b>: columns in this order — Client, Product, Pieces, Rack, Printed on (DD/MM/YYYY), Printer. Rack, date and printer may be empty.
+                <b>Paste from a spreadsheet</b>: columns in this order — Client, Product, Pieces, Printed on (DD/MM/YYYY), Printer. Date and printer may be empty. Add pictures after.
               </p>
               <textarea
                 value={pasteText}
                 onChange={e => setPasteText(e.target.value)}
                 rows={3}
-                placeholder="Mecolor&#9;Keshari Motichur Laddu Label 500g&#9;2000&#9;R3&#9;15/09/2026&#9;Sai Print"
+                placeholder="Mecolor&#9;Keshari Motichur Laddu Label 500g&#9;2000&#9;15/09/2026&#9;Sai Print"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-xs font-mono"
               />
               <button onClick={applyPaste} disabled={!pasteText.trim()} className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md disabled:opacity-40">
@@ -168,23 +166,21 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[56rem]">
+              <table className="w-full text-sm min-w-[60rem]">
                 <thead>
                   <tr className="text-left text-xs text-gray-500">
                     <th className="pb-1 pr-2 font-medium">Client</th>
                     <th className="pb-1 pr-2 font-medium">Product</th>
                     <th className="pb-1 pr-2 font-medium w-24">Pieces</th>
-                    <th className="pb-1 pr-2 font-medium w-24">Rack</th>
                     <th className="pb-1 pr-2 font-medium w-36">Printed on</th>
                     <th className="pb-1 pr-2 font-medium w-36">Printer</th>
+                    <th className="pb-1 pr-2 font-medium w-44">Pictures</th>
                     <th className="pb-1 w-8" />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r, i) => {
                     const problem = showErrors && (r.client_id || r.product || r.qty) ? rowProblem(r) : null;
-                    const names = r.client_id ? Array.from(productsByClient.get(r.client_id)?.values() || []) : [];
-                    const known = !!productsByClient.get(r.client_id)?.get(norm(r.product));
                     const inp = 'w-full px-2 py-1.5 border rounded-md text-sm';
                     return (
                       <tr key={i} className="align-top">
@@ -196,22 +192,13 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
                           </select>
                         </td>
                         <td className="pr-2 pb-2">
-                          <input list={`prod-${i}`} value={r.product} onChange={e => update(i, { product: e.target.value })}
+                          <input value={r.product} onChange={e => update(i, { product: e.target.value })}
                             placeholder="Product / job name"
                             className={`${inp} ${problem === 'Enter the product' ? 'border-red-400' : 'border-gray-300'}`} />
-                          <datalist id={`prod-${i}`}>{names.map(p => <option key={p.id} value={p.name} />)}</datalist>
-                          {r.product.trim() && r.client_id && (
-                            <p className={`text-[10px] mt-0.5 ${known ? 'text-green-700' : 'text-gray-400'}`}>
-                              {known ? 'Matches an earlier job: details copied' : 'New name: saved as typed'}
-                            </p>
-                          )}
                         </td>
                         <td className="pr-2 pb-2">
                           <input type="number" min={1} value={r.qty} onChange={e => update(i, { qty: e.target.value })}
                             className={`${inp} ${problem === 'Enter pieces' ? 'border-red-400' : 'border-gray-300'}`} />
-                        </td>
-                        <td className="pr-2 pb-2">
-                          <input value={r.rack} onChange={e => update(i, { rack: e.target.value })} className={`${inp} border-gray-300`} />
                         </td>
                         <td className="pr-2 pb-2">
                           <input type="date" value={r.date} max={new Date().toISOString().slice(0, 10)} onChange={e => update(i, { date: e.target.value })}
@@ -222,6 +209,23 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
                             <option value="">—</option>
                             {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                           </select>
+                        </td>
+                        <td className="pr-2 pb-2">
+                          <div className="flex flex-wrap items-center gap-1">
+                            {r.pics.map((p, k) => (
+                              <span key={k} className="relative">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={p.url} alt={p.name} className="w-9 h-9 object-cover rounded border border-gray-200" />
+                                <button onClick={() => setRows(rs => rs.map((x, idx) => idx === i ? { ...x, pics: x.pics.filter((_, kk) => kk !== k) } : x))}
+                                  aria-label="Remove picture" className="absolute -top-1 -right-1 bg-white border border-gray-300 rounded-full w-4 h-4 text-[10px] leading-none text-gray-600">×</button>
+                              </span>
+                            ))}
+                            <label className="cursor-pointer text-xs px-2 py-1.5 border border-dashed border-gray-300 rounded-md text-gray-600 hover:border-gray-500">
+                              {r.uploading ? 'Uploading…' : '+ Add'}
+                              <input type="file" accept="image/*" multiple className="hidden" disabled={r.uploading}
+                                onChange={e => { addPics(i, e.target.files); e.target.value = ''; }} />
+                            </label>
+                          </div>
                         </td>
                         <td className="pb-2">
                           <button onClick={() => setRows(rs => rs.length > 1 ? rs.filter((_, idx) => idx !== i) : [emptyRow()])}
