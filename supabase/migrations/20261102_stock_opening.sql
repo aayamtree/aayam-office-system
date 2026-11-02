@@ -63,7 +63,7 @@ begin
     values (v_id, 'in', v_qty, 'Opening stock', auth.uid());
 
     insert into public.job_stage_history (job_id, from_stage, to_stage, notes, changed_by, is_rollback)
-    values (v_id, null, 'in_stock',
+    values (v_id, 'in_stock', 'in_stock',
             'Opening stock added: ' || v_qty || ' pcs',
             auth.uid(), false);
 
