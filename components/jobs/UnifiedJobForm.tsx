@@ -155,7 +155,7 @@ export default function UnifiedJobForm({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.project_name || !formData.client_id) {
-            toast.error('Project name and client are required');
+            toast.error(isStock ? 'Project name is required, and choose a client or "No client — common stock"' : 'Project name and client are required');
             return;
         }
         setSaving(true);
@@ -167,7 +167,7 @@ export default function UnifiedJobForm({
 
             const jobPayload: any = {
                 project_name: formData.project_name,
-                client_id: formData.client_id,
+                client_id: formData.client_id === '__common' ? null : formData.client_id,
                 job_type: formData.job_type,
                 product_category: formData.product_category || null,
                 priority: formData.priority,
@@ -308,7 +308,7 @@ export default function UnifiedJobForm({
                                     type="checkbox"
                                     className="mt-1"
                                     checked={isStock}
-                                    onChange={e => setIsStock(e.target.checked)}
+                                    onChange={e => { setIsStock(e.target.checked); if (!e.target.checked && formData.client_id === '__common') set('client_id', ''); }}
                                 />
                                 <span>
                                     <span className="block text-sm font-semibold text-gray-900">Stock job — not a client order</span>
@@ -343,6 +343,7 @@ export default function UnifiedJobForm({
                                     onChange={e => set('client_id', e.target.value)}
                                 >
                                     <option value="">Select Client</option>
+                                    {isStock && <option value="__common">★ No client — common stock</option>}
                                     {(clients || []).map((c: any) => (
                                         <option key={c.id} value={c.id}>
                                             {c.company || c.name}

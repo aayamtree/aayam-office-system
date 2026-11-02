@@ -44,7 +44,7 @@ export default function StockHistory({ query, clientId, reloadKey = 0 }: Props) 
 
   const q = query.trim().toLowerCase();
   const shown = rows.filter((r: any) => {
-    if (clientId && r.stock_job?.client_id !== clientId) return false;
+    if (clientId && (clientId === '__common' ? !!r.stock_job?.client_id : r.stock_job?.client_id !== clientId)) return false;
     if (!q) return true;
     const hay = [r.stock_job?.job_number, r.stock_job?.project_name, r.stock_job?.client?.company, r.stock_job?.client?.name, r.order_job?.job_number, r.reason]
       .filter(Boolean).join(' ').toLowerCase();
@@ -69,7 +69,7 @@ export default function StockHistory({ query, clientId, reloadKey = 0 }: Props) 
           </div>
           <p className="mt-0.5 break-words">
             <span className="font-mono">#{r.stock_job?.job_number}</span>{' '}
-            <span className="text-muted-foreground">{r.stock_job?.client?.company || r.stock_job?.client?.name} · {r.stock_job?.project_name}</span>
+            <span className="text-muted-foreground">{r.stock_job?.client?.company || r.stock_job?.client?.name || 'Common stock'} · {r.stock_job?.project_name}</span>
           </p>
           <p className="mt-0.5 text-muted-foreground">
             {new Date(r.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -102,7 +102,7 @@ export default function StockHistory({ query, clientId, reloadKey = 0 }: Props) 
               <td className="px-3 py-2 whitespace-nowrap">{KIND_LABEL[r.kind] || r.kind}</td>
               <td className="px-3 py-2">
                 <span className="font-mono">#{r.stock_job?.job_number}</span>{' '}
-                <span className="text-muted-foreground">{r.stock_job?.client?.company || r.stock_job?.client?.name} · {r.stock_job?.project_name}</span>
+                <span className="text-muted-foreground">{r.stock_job?.client?.company || r.stock_job?.client?.name || 'Common stock'} · {r.stock_job?.project_name}</span>
               </td>
               <td className={`px-3 py-2 text-right font-semibold whitespace-nowrap ${r.qty < 0 ? 'text-red-600' : 'text-green-700'}`}>
                 {r.qty > 0 ? '+' : ''}{r.qty.toLocaleString('en-IN')}

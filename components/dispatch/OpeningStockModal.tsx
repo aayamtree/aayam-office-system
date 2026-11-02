@@ -97,7 +97,7 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
   };
 
   const rowProblem = (r: Row): string | null => {
-    if (!r.client_id) return 'Pick the client';
+    if (!r.client_id) return 'Pick the client, or "No client — common stock"';
     if (!r.product.trim()) return 'Enter the product';
     const q = parseInt(r.qty, 10);
     if (!q || q <= 0) return 'Enter pieces';
@@ -116,7 +116,7 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
     if (problems) { toast.error(`${problems} row(s) need fixing (marked in red).`); return; }
     setBusy(true);
     const payload = filled.map(r => ({
-      client_id: r.client_id,
+      client_id: r.client_id === '__common' ? null : r.client_id,
       project_name: r.product.trim(),
       qty: parseInt(r.qty, 10),
       stored_at: r.date || null,
@@ -181,8 +181,9 @@ export default function OpeningStockModal({ onClose, onAdded }: { onClose: () =>
                       <label className="col-span-2 md:col-span-2 block">
                         <span className={lbl}>Client</span>
                         <select value={r.client_id} onChange={e => update(i, { client_id: e.target.value })}
-                          className={`${inp} ${problem === 'Pick the client' ? 'border-red-400' : 'border-gray-300'}`}>
+                          className={`${inp} ${problem?.startsWith('Pick the client') ? 'border-red-400' : 'border-gray-300'}`}>
                           <option value="">Select client…</option>
+                          <option value="__common">★ No client — common stock</option>
                           {clients.map(c => <option key={c.id} value={c.id}>{clientLabel(c)}</option>)}
                         </select>
                       </label>

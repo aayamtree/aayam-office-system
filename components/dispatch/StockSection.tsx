@@ -29,6 +29,10 @@ import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { jobMatches } from '@/lib/page-search';
 import { useAuth } from '@/lib/auth-context';
 
+/** Filter value used on the Stock page for batches that have no client. */
+export const COMMON_STOCK = '__common';
+export const clientName = (j: any) => j?.client?.company || j?.client?.name || 'Common stock (no client)';
+
 export const STOCK_AMBER_DAYS = 60;
 export const STOCK_RED_DAYS = 90;
 
@@ -154,6 +158,8 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
   const [relNewRate, setRelNewRate] = useState('');
   const [relDeadline, setRelDeadline] = useState('');
   const [relRef, setRelRef] = useState('');
+  const [relClient, setRelClient] = useState('');
+  const [allClients, setAllClients] = useState<any[]>([]);
 
   const [adjusting, setAdjusting] = useState<any | null>(null); // a batch
   const [adjDelta, setAdjDelta] = useState('');
@@ -203,7 +209,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
   const afterChange = async () => { await load(); onChanged?.(); };
 
   const q = query.trim();
-  const byClient = (j: any) => !clientId || j.client_id === clientId;
+  const byClient = (j: any) => !clientId || (clientId === COMMON_STOCK ? !j.client_id : j.client_id === clientId);
 
   // One card per client + product. Batches (maybe from different printers) sit inside it, oldest first.
   const groups = useMemo(() => {
@@ -226,7 +232,10 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
   const openRelease = (g: any) => {
     setReleasing(g);
     setRelTotal(String(g.total));
-    setRelRate(''); setRelNewRate(''); setRelDeadline(''); setRelRef('');
+    setRelRate(''); setRelNewRate(''); setRelDeadline(''); setRelRef(''); setRelClient('');
+    if (!g.first.client_id && allClients.length === 0) {
+      supabase.from('clients').select('id, name, company').order('company').limit(2000).then(({ data }) => setAllClients(data || []));
+    }
   };
   const openAdjust = (b: any) => { setAdjusting(b); setAdjDelta(''); setAdjReason(''); };
 
@@ -254,6 +263,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
 
   const submitRelease = async () => {
     if (!releasing || relTotalNum <= 0) { toast.error('Enter the total quantity the client wants.'); return; }
+    if (!releasing.first.client_id && !relClient) { toast.error('Choose the client who is taking this stock.'); return; }
     setBusy(true);
     const { data, error } = await supabase.rpc('fn_release_stock', {
       p_batch_ids: releasing.batches.map((b: any) => b.id),
@@ -262,6 +272,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
       p_new_rate: relNewRate !== '' ? parseFloat(relNewRate) || 0 : null,
       p_deadline: relDeadline ? new Date(relDeadline).toISOString() : null,
       p_client_ref: relRef.trim() || null,
+      p_client_id: releasing.first.client_id ? null : relClient || null,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -309,7 +320,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
                   <div className="flex items-start gap-2.5">
                     <JobThumb job={job} size={64} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-muted-foreground truncate">{job.client?.company || job.client?.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{clientName(job)}</p>
                       <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{job.project_name}</h3>
                     </div>
                   </div>
@@ -356,7 +367,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
                     <div className="flex items-start gap-2.5">
                       <JobThumb job={f} size={64} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] text-muted-foreground truncate">{f.client?.company || f.client?.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{clientName(f)}</p>
                         <h3 className="text-sm font-semibold text-foreground line-clamp-3 mt-0.5">{f.project_name}</h3>
                       </div>
                     </div>
@@ -435,6 +446,17 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
               </div>
               <button onClick={() => setReleasing(null)} className="p-1 hover:bg-gray-100 rounded"><X size={16} /></button>
             </div>
+
+            {!releasing.first.client_id && (
+              <label className="block text-sm">
+                <span className="font-medium text-gray-700">Which client is taking this?</span>
+                <select value={relClient} onChange={e => setRelClient(e.target.value)} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white">
+                  <option value="">Select client…</option>
+                  {allClients.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
+                </select>
+                <span className="text-xs text-gray-500">Common stock has no client. The order is made for the client you choose here.</span>
+              </label>
+            )}
 
             {(revisedBatches.length > 0 || mixedArtwork) && (
               <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">

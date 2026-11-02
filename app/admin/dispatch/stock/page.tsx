@@ -29,6 +29,7 @@ export default function StockPage() {
     const m = new Map<string, string>();
     for (const b of warehouse) {
       if (b.client_id) m.set(b.client_id, b.client?.company || b.client?.name || 'Client');
+      else m.set('__common', 'Common stock (no client)');
     }
     return Array.from(m.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [warehouse]);
