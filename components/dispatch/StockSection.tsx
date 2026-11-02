@@ -376,7 +376,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
                               {' · '}{d}d · {b.stock_artwork_version || '—'}
                               {revised && <span className="ml-1 px-1 rounded bg-amber-50 text-amber-700 border border-amber-200">revised</span>}
                             </span>
-                            <button onClick={() => openAdjust(b)} className="shrink-0 underline hover:text-foreground">Adjust</button>
+                            <button onClick={() => openAdjust(b)} className="shrink-0 underline hover:text-foreground px-2 py-1.5 -my-1 text-xs">Adjust</button>
                           </li>
                         );
                       })}
@@ -396,7 +396,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
       {/* Put in stock */}
       {shelving && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-sm p-5 space-y-4">
+          <div className="bg-white rounded-lg w-full max-w-sm p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-bold text-gray-900">Put in warehouse stock</h3>
@@ -498,7 +498,7 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
       {/* Adjust / write off */}
       {adjusting && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-sm p-5 space-y-4">
+          <div className="bg-white rounded-lg w-full max-w-sm p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-bold text-gray-900">Adjust stock</h3>

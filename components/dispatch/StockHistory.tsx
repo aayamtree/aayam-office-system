@@ -56,7 +56,31 @@ export default function StockHistory({ query, clientId, reloadKey = 0 }: Props) 
   if (shown.length === 0) return <p className="text-sm text-gray-500 border border-dashed border-gray-300 rounded-md px-4 py-6 text-center">No stock movements yet.</p>;
 
   return (
-    <div className="overflow-x-auto border border-border rounded-md bg-card">
+    <>
+    {/* Phone: one card per movement */}
+    <ul className="md:hidden space-y-2">
+      {shown.map((r: any) => (
+        <li key={r.id} className="border border-border rounded-md bg-card px-3 py-2 text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold">{KIND_LABEL[r.kind] || r.kind}</span>
+            <span className={`font-semibold ${r.qty < 0 ? 'text-red-600' : 'text-green-700'}`}>
+              {r.qty > 0 ? '+' : ''}{r.qty.toLocaleString('en-IN')} pcs
+            </span>
+          </div>
+          <p className="mt-0.5 break-words">
+            <span className="font-mono">#{r.stock_job?.job_number}</span>{' '}
+            <span className="text-muted-foreground">{r.stock_job?.client?.company || r.stock_job?.client?.name} · {r.stock_job?.project_name}</span>
+          </p>
+          <p className="mt-0.5 text-muted-foreground">
+            {new Date(r.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            {names[r.created_by] ? ` · ${names[r.created_by]}` : ''}
+            {r.order_job?.job_number ? ` · order #${r.order_job.job_number}` : ''}
+          </p>
+          {r.reason && <p className="mt-0.5 text-muted-foreground break-words">{r.reason}</p>}
+        </li>
+      ))}
+    </ul>
+    <div className="hidden md:block overflow-x-auto border border-border rounded-md bg-card">
       <table className="w-full text-xs">
         <thead className="bg-slate-50 text-muted-foreground">
           <tr className="text-left">
@@ -91,5 +115,6 @@ export default function StockHistory({ query, clientId, reloadKey = 0 }: Props) 
         </tbody>
       </table>
     </div>
+    </>
   );
 }

@@ -1008,12 +1008,12 @@ export default function DispatchPage() {
         if (picked.length === 0) return null;
         const oneClient = new Set(picked.map(j => j.client_id || '')).size === 1;
         return (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-gray-900 text-white rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-3 text-sm">
+          <div className="fixed bottom-24 md:bottom-4 left-3 right-3 md:right-auto md:left-1/2 md:-translate-x-1/2 z-40 bg-gray-900 text-white rounded-lg shadow-lg px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             <span>{picked.length} job{picked.length > 1 ? 's' : ''} ticked{oneClient ? ` · ${picked[0].client?.company || picked[0].client?.name || ''}` : ''}</span>
             {!oneClient && <span className="text-amber-300 text-xs">Different clients — tick one client only</span>}
             <button type="button" disabled={!oneClient}
               onClick={() => handleOpenDispatch(picked, null, { fromPrinter: true })}
-              className="px-3 py-1.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed rounded font-medium">
+              className="px-3 py-2 md:py-1.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed rounded font-medium">
               Dispatch together · Printer → Client
             </button>
             <button type="button" onClick={() => setPrinterPicked([])} className="text-gray-300 hover:text-white text-xs underline">Clear</button>
