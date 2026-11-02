@@ -27,6 +27,7 @@ import JobThumb from '@/components/shared/JobThumb';
 import ProductBadge from '@/components/shared/ProductBadge';
 import RollbackJobButton from '@/components/jobs/RollbackJobButton';
 import { jobMatches } from '@/lib/page-search';
+import { useAuth } from '@/lib/auth-context';
 
 export const STOCK_AMBER_DAYS = 60;
 export const STOCK_RED_DAYS = 90;
@@ -137,6 +138,9 @@ interface Props {
 export default function StockSection({ query, clientId, onData, onChanged, reloadKey = 0 }: Props) {
   const [warehouse, setWarehouse] = useState<any[]>([]);
   const [printed, setPrinted] = useState<any[]>([]);
+  const { profile } = useAuth();
+  // Prices are only for admin / finance. Dispatch staff never see or type a rate.
+  const canSeePrice = profile?.role === 'admin' || profile?.role === 'finance';
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -457,6 +461,8 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
             )}
 
             <div className="grid grid-cols-2 gap-3">
+              {canSeePrice && (
+                <>
               <label className="block text-sm">
                 <span className="font-medium text-gray-700">Rate / piece (₹)</span>
                 <input type="number" min={0} step="0.01" value={relRate} onChange={e => setRelRate(e.target.value)} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
@@ -467,12 +473,14 @@ export default function StockSection({ query, clientId, onData, onChanged, reloa
                   <input type="number" min={0} step="0.01" value={relNewRate} onChange={e => setRelNewRate(e.target.value)} placeholder="same as left" className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                 </label>
               )}
+                </>
+              )}
               <label className="block text-sm">
                 <span className="font-medium text-gray-700">Deadline</span>
                 <input type="date" value={relDeadline} onChange={e => setRelDeadline(e.target.value)} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </label>
               <label className="block text-sm">
-                <span className="font-medium text-gray-700">Client PO no.</span>
+                <span className="font-medium text-gray-700">Client invoice no.</span>
                 <input type="text" value={relRef} onChange={e => setRelRef(e.target.value)} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
               </label>
             </div>
