@@ -6,11 +6,13 @@
  */
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Boxes, ArrowLeft } from 'lucide-react';
+import { Boxes, ArrowLeft, PackagePlus } from 'lucide-react';
 import PageSearch from '@/components/shared/PageSearch';
 import StockSection, { stockAgeDays, STOCK_AMBER_DAYS, STOCK_RED_DAYS } from '@/components/dispatch/StockSection';
 import StockHistory from '@/components/dispatch/StockHistory';
 import ConvertJobModal from '@/components/dispatch/ConvertJobModal';
+import OpeningStockModal from '@/components/dispatch/OpeningStockModal';
+import { useAuth } from '@/lib/auth-context';
 
 export default function StockPage() {
   const [tab, setTab] = useState<'shelf' | 'history'>('shelf');
@@ -18,6 +20,9 @@ export default function StockPage() {
   const [clientId, setClientId] = useState('');
   const [warehouse, setWarehouse] = useState<any[]>([]);
   const [showConvert, setShowConvert] = useState(false);
+  const [showOpening, setShowOpening] = useState(false);
+  const { profile } = useAuth();
+  const canAddOpening = profile?.role === 'admin' || profile?.role === 'finance';
   const [reloadKey, setReloadKey] = useState(0);
 
   const clients = useMemo(() => {
@@ -47,12 +52,22 @@ export default function StockPage() {
             Printed on spare sheet space and kept for the client. Not orders: no invoice and no dispatch until released.
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {canAddOpening && (
+            <button
+              onClick={() => setShowOpening(true)}
+              className="flex items-center gap-2 bg-white text-gray-900 border border-gray-300 px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-50 transition-colors font-semibold text-sm"
+            >
+              <PackagePlus className="w-4 h-4" /> Add existing stock
+            </button>
+          )}
         <button
           onClick={() => setShowConvert(true)}
           className="flex items-center gap-2 bg-gray-900 text-white px-3 md:px-4 py-2 md:py-2.5 rounded-md hover:bg-gray-800 transition-colors font-semibold text-sm"
         >
           <Boxes className="w-4 h-4" /> Mark a running job as stock
         </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
@@ -102,6 +117,10 @@ export default function StockPage() {
         />
       </div>
       {tab === 'history' && <StockHistory query={query} clientId={clientId} reloadKey={reloadKey} />}
+
+      {showOpening && (
+        <OpeningStockModal onClose={() => setShowOpening(false)} onAdded={() => setReloadKey(k => k + 1)} />
+      )}
 
       {showConvert && (
         <ConvertJobModal
