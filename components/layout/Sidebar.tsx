@@ -177,6 +177,7 @@ const menuItems: MenuItem[] = [
       { name: 'To Do', href: '/admin/finance/to-do' },
       { name: '📸 Payment Captures', href: '/admin/finance/payment-captures' },
       { name: 'Reports', href: '/admin/finance/reports' },
+      { name: 'Client Ledger', href: '/admin/finance/client-ledger' },
       // Sales sits in this section too, and is not a money door.
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
