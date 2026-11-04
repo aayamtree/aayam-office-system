@@ -335,6 +335,11 @@ export interface InvoiceData {
   bankIfsc: string;
   bankBranch: string;
 
+  // Payments received (optional — only passed by the Trial invoices page)
+  payments?: { date: string; mode: string; base: number; gst: number; total: number; reference?: string }[];
+  balanceDue?: number;
+  paidOnNote?: string; // e.g. "04 Nov 2026 by UPI"
+
   // Terms
   terms?: string;
   notes?: string;
@@ -480,6 +485,23 @@ export const InvoicePDF = ({ data }: { data: InvoiceData }) => (
         <Text style={styles.amountWordsLabel}>Amount in Words</Text>
         <Text style={styles.amountWordsText}>{numberToWords(data.grandTotal)}</Text>
       </View>
+
+      {/* Payments received (optional) */}
+      {data.payments && data.payments.length > 0 && (
+        <View wrap={false} style={{ borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 4, padding: 8, marginBottom: 12 }}>
+          <Text style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 4 }}>Payments Received</Text>
+          {data.payments.map((pm, i) => (
+            <Text key={i} style={{ fontSize: 8.5, marginBottom: 2 }}>
+              {pm.date} - {pm.mode} - Base {formatCurrency(pm.base)} + GST {formatCurrency(pm.gst)} = {formatCurrency(pm.total)}{pm.reference ? ` - Ref: ${pm.reference}` : ''}
+            </Text>
+          ))}
+          <Text style={{ fontSize: 8.5, fontWeight: 'bold', marginTop: 4 }}>
+            {(data.balanceDue || 0) > 0.005
+              ? `Balance remaining: ${formatCurrency(data.balanceDue || 0)}`
+              : `Fully paid${data.paidOnNote ? ' on ' + data.paidOnNote : ''}`}
+          </Text>
+        </View>
+      )}
 
       {/* Bank Details & Terms + Footer — kept together, flows after content */}
       <View wrap={false}>

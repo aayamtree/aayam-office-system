@@ -150,10 +150,44 @@ function InvoicesTrialInner() {
   const loadInvoicePayments = async (invId: string) => {
     const { data } = await supabase
       .from('payments_received')
-      .select('id, payment_number, payment_date, amount, payment_mode, reference_number')
+      .select('id, payment_number, payment_date, amount, payment_mode, reference_number, bank_account_id, cash_account_id')
       .eq('invoice_id', invId)
       .order('payment_date', { ascending: false });
     setInvoicePayments(data || []);
+  };
+
+  // ── Trial: show each payment on the invoice with mode, date and base + GST ──
+  const payModeLabel = (pm: any): string => {
+    const m = String(pm.payment_mode || '').toLowerCase();
+    if (m === 'cash') return 'Cash';
+    if (m === 'upi') return 'UPI';
+    const bank = (bankAccounts || []).find((b: any) => b.id === pm.bank_account_id) as any;
+    if (m === 'bank_transfer' || pm.bank_account_id) return bank ? `Bank (${bank.name})` : 'Bank';
+    return m ? m.replace('_', ' ') : 'Payment';
+  };
+  // Split a payment into base + GST using this invoice's own tax share
+  const paySplit = (inv: Invoice, amount: number) => {
+    const ratio = (inv.total_amount || 0) > 0 ? (inv.total_tax || 0) / inv.total_amount : 0;
+    const gst = Math.round(amount * ratio * 100) / 100;
+    return { base: Math.round((amount - gst) * 100) / 100, gst };
+  };
+  const paymentsForPdf = async (inv: Invoice) => {
+    const { data } = await supabase
+      .from('payments_received')
+      .select('payment_date, amount, payment_mode, reference_number, bank_account_id, cash_account_id')
+      .eq('invoice_id', inv.id)
+      .order('payment_date', { ascending: true });
+    const rows = data || [];
+    if (rows.length === 0) return {};
+    const last = rows[rows.length - 1];
+    return {
+      payments: rows.map((r: any) => {
+        const sp = paySplit(inv, Number(r.amount) || 0);
+        return { date: formatDate(r.payment_date), mode: payModeLabel(r), base: sp.base, gst: sp.gst, total: Number(r.amount) || 0, reference: r.reference_number || undefined };
+      }),
+      balanceDue: Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0)),
+      paidOnNote: `${formatDate(last.payment_date)} by ${payModeLabel(last)}`,
+    };
   };
 
   // Async because the receipt module (with the PDF library) is lazy-loaded;
@@ -480,7 +514,7 @@ function InvoicesTrialInner() {
     }
     setPdfLoading(true);
     try {
-      const invoiceData = convertToInvoiceData(invoice);
+      const invoiceData = { ...convertToInvoiceData(invoice), ...(await paymentsForPdf(invoice)) };
       await downloadInvoicePDF(invoiceData);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -498,7 +532,7 @@ function InvoicesTrialInner() {
     }
     setPdfLoading(true);
     try {
-      const invoiceData = convertToInvoiceData(invoice);
+      const invoiceData = { ...convertToInvoiceData(invoice), ...(await paymentsForPdf(invoice)) };
       await printInvoicePDF(invoiceData);
     } catch (error) {
       console.error('Error printing PDF:', error);
@@ -1987,8 +2021,11 @@ function InvoicesTrialInner() {
                         <div key={p.id} className="flex items-center justify-between gap-2 p-3 bg-green-50 border border-green-100 rounded-md">
                           <div>
                             <p className="text-sm font-semibold text-green-800">{formatCurrency(p.amount)}</p>
+                            {(() => { const sp = paySplit(selectedInvoice, Number(p.amount) || 0); return (
+                              <p className="text-xs text-gray-700">Base {formatCurrency(sp.base)} + GST {formatCurrency(sp.gst)} = {formatCurrency(p.amount)}</p>
+                            ); })()}
                             <p className="text-[11px] text-gray-500">
-                              {p.payment_number} • {formatDate(p.payment_date)}{p.payment_mode ? ' • ' + String(p.payment_mode).replace('_', ' ') : ''}
+                              {formatDate(p.payment_date)} • {payModeLabel(p)}{p.reference_number ? ' • Ref ' + p.reference_number : ''} • {p.payment_number}
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -1998,6 +2035,11 @@ function InvoicesTrialInner() {
                           </div>
                         </div>
                       ))}
+                      <p className="text-sm font-semibold text-gray-800 pt-1">
+                        {(selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0) > 0.005
+                          ? `Balance remaining: ${formatCurrency((selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0))}`
+                          : `Fully paid on ${formatDate(invoicePayments[0].payment_date)} by ${payModeLabel(invoicePayments[0])}`}
+                      </p>
                     </div>
                   )}
                 </div>
