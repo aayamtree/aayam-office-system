@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
-import { LEGACY_LEDGER_STOPPED } from '@/lib/legacy-ledger';
+import { LEGACY_LEDGER_STOPPED, LEGACY_LEDGER_CLOSED } from '@/lib/legacy-ledger';
 
 export default function ReadOnlyLedgerBanner({
     what = 'This screen',
@@ -15,6 +15,10 @@ export default function ReadOnlyLedgerBanner({
     what?: string;
     doItIn?: string;
 }) {
+    // Only true while the old ledger is closed for writing. Since the 31 Oct 2026
+    // cut-over (LEGACY_LEDGER_CLOSED = false) this app is the book of record, so
+    // the "read-only / use Zoho" wording would be wrong. Flip the flag back and it returns.
+    if (!LEGACY_LEDGER_CLOSED) return null;
     return (
         <div className="rounded-md border border-border bg-muted/50 p-3 text-xs flex gap-2.5">
             <Lock size={15} className="shrink-0 mt-0.5 text-muted-foreground" />

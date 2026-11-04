@@ -181,6 +181,8 @@ const menuItems: MenuItem[] = [
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
+      { name: 'Finance Log', href: '/admin/finance/log' },
+      { name: 'Finance Settings', href: '/admin/settings/finance' },
     ]
   },
   {

@@ -4,6 +4,7 @@ import { fetchFinanceOverview } from '@/lib/finance-overview-data';
 import { createServerSupabase } from '@/lib/supabase-server';
 import { getCashToEnter } from '@/lib/finance-todo';
 import FinanceClient from './FinanceClient';
+import BalanceCheckStrip from '@/components/finance/BalanceCheckStrip';
 
 // Always render fresh: finance figures must reflect a just-logged expense/payment
 // immediately, not a cached copy up to a minute old.
@@ -19,11 +20,14 @@ export default async function FinancePage() {
     ]);
 
     return (
+        <>
+        <BalanceCheckStrip />
         <FinanceClient
             data={data}
             // A failed count must not render as a confident "0 cash to enter".
             cashToEnter={cash.error ? null : cash.data.length}
             cashTruncated={cash.truncated}
         />
+        </>
     );
 }
