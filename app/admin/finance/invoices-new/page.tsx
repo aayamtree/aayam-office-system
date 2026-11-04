@@ -34,7 +34,7 @@ import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 // ── Trial additions (checklist 2.1) ──
 import AdminOnlyGate from '@/components/finance/AdminOnlyGate';
 import { loadFiscalStartMonth, loadFinanceSettings, DEFAULT_FINANCE_SETTINGS, FinanceSettings } from '@/lib/finance-settings';
-import { Paperclip as PaperclipIcon, X as XIcon } from 'lucide-react';
+import { Paperclip as PaperclipIcon, X as XIcon, Ban } from 'lucide-react';
 import { DATE_PRESET_LABELS, DatePreset, buildCsv, formatInr, paise, presetRange } from '@/lib/invoice-list-tools';
 
 function InvoicesTrialInner() {
@@ -782,6 +782,7 @@ function InvoicesTrialInner() {
   // BUG-03: Compute effective display status — show 'overdue' if past due date and not paid
   const today = new Date().toISOString().split('T')[0];
   const getEffectiveStatus = (inv: Invoice): string => {
+    if ((inv as any).is_void || inv.payment_status === ('void' as any)) return 'void';
     const balance = (inv.total_amount || 0) - (inv.amount_paid || 0);
     // Fully settled
     if (inv.payment_status === 'paid' || balance <= 0) return 'paid';
@@ -801,6 +802,7 @@ function InvoicesTrialInner() {
   };
   const getStatusLabel = (inv: Invoice): string => {
     const eff = getEffectiveStatus(inv);
+    if (eff === 'void') return 'Voided';
     if (eff === 'paid') return 'Paid';
     if (eff === 'overdue') {
       const n = Math.abs(dayDiffFromToday(inv.due_date));
@@ -900,11 +902,28 @@ function InvoicesTrialInner() {
       'partial': 'bg-amber-100 text-amber-700 border-gray-200',
       'paid': 'bg-gray-100 text-gray-900 border-green-200',
       'overdue': 'bg-red-100 text-red-700 border-red-200',
+      'void': 'bg-gray-200 text-gray-500 border-gray-300',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  // BUG-12: Delete invoice with confirmation
+  // ── Trial 2.3: Void instead of delete ──
+  const [voidTarget, setVoidTarget] = useState<Invoice | null>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const [voiding, setVoiding] = useState(false);
+  const submitVoid = async () => {
+    if (!voidTarget) return;
+    if (!voidReason.trim()) { toast.error('Give a reason for voiding'); return; }
+    setVoiding(true);
+    const { error } = await supabase.rpc('fn_void_invoice', { p_invoice_id: voidTarget.id, p_reason: voidReason.trim() });
+    setVoiding(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Invoice ${voidTarget.invoice_number} voided. The number stays on record.`);
+    setVoidTarget(null); setVoidReason(''); setShowViewModal(false);
+    refetchInvoices();
+  };
+
+  // BUG-12: Delete invoice with confirmation (not used on the Trial page — Void replaces it)
   const handleDeleteInvoice = async (inv: Invoice) => {
     if (refuseLegacyWrite('Deleting an invoice')) return;
 
@@ -1165,6 +1184,7 @@ function InvoicesTrialInner() {
           <option value="notdue">Not due yet</option>
           <option value="paid">Paid</option>
           <option value="overdue">Overdue</option>
+          <option value="void">Voided</option>
         </select>
         <select
           value={datePreset}
@@ -1268,13 +1288,15 @@ function InvoicesTrialInner() {
                         >
                           <MessageCircle className="w-3 h-3" />
                         </button>
-                        <button
-                          onClick={() => handleEdit(inv)}
-                          className="px-2.5 py-1.5 border border-border text-muted-foreground rounded text-xs hover:text-foreground transition-colors"
-                          aria-label="Edit invoice"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
+                        {getEffectiveStatus(inv) !== 'void' && (
+                          <button
+                            onClick={() => handleEdit(inv)}
+                            className="px-2.5 py-1.5 border border-border text-muted-foreground rounded text-xs hover:text-foreground transition-colors"
+                            aria-label="Edit invoice"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1337,13 +1359,17 @@ function InvoicesTrialInner() {
                           <button onClick={() => handleDownloadPDF(inv)} className="p-2 hover:bg-gray-900 rounded-md" title="Download PDF">
                             <Download className="w-4 h-4 md:w-4.5 md:h-4.5 text-primary" />
                           </button>
-                          <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
-                            <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
-                          </button>
-                          {/* BUG-12: Delete button (admin-only via confirmation dialog) */}
-                          <button onClick={() => handleDeleteInvoice(inv)} className="p-2 hover:bg-red-50 rounded-md" title="Delete Invoice">
-                            <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5 text-red-400 hover:text-red-600" />
-                          </button>
+                          {getEffectiveStatus(inv) !== 'void' && (
+                            <>
+                              <button onClick={() => handleEdit(inv)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit">
+                                <Edit className="w-4 h-4 md:w-4.5 md:h-4.5 text-gray-500" />
+                              </button>
+                              {/* Trial 2.3: Void replaces Delete */}
+                              <button onClick={() => { setVoidReason(''); setVoidTarget(inv); }} className="p-2 hover:bg-red-50 rounded-md" title="Void invoice">
+                                <Ban className="w-4 h-4 md:w-4.5 md:h-4.5 text-red-400 hover:text-red-600" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1813,8 +1839,13 @@ function InvoicesTrialInner() {
 
               {/* Action Toolbar (Zoho-style) */}
               <div className="flex items-center gap-1 px-4 py-2 border-b border-gray-100 overflow-x-auto">
-                <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap"><Edit className="w-4 h-4" /> Edit</button>
-                {getEffectiveStatus(selectedInvoice) !== 'paid' && (
+                {getEffectiveStatus(selectedInvoice) !== 'void' && (
+                  <button onClick={() => { setShowViewModal(false); handleEdit(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap"><Edit className="w-4 h-4" /> Edit</button>
+                )}
+                {getEffectiveStatus(selectedInvoice) !== 'void' && (
+                  <button onClick={() => { setVoidReason(''); setVoidTarget(selectedInvoice); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md whitespace-nowrap"><Ban className="w-4 h-4" /> Void</button>
+                )}
+                {getEffectiveStatus(selectedInvoice) !== 'paid' && getEffectiveStatus(selectedInvoice) !== 'void' && (
                   <button onClick={() => openPaymentModal(selectedInvoice)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-md whitespace-nowrap"><CheckCircle className="w-4 h-4" /> Record Payment</button>
                 )}
                 <button onClick={() => handleDownloadPDF(selectedInvoice)} disabled={pdfLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md whitespace-nowrap disabled:opacity-50"><Download className="w-4 h-4" /> PDF</button>
@@ -2015,6 +2046,29 @@ function InvoicesTrialInner() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Trial 2.3: Void invoice modal */}
+      {voidTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm" onClick={() => setVoidTarget(null)}>
+          <div className="bg-white rounded-md shadow-xl w-full max-w-md p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-gray-900">Void invoice {voidTarget.invoice_number}?</h2>
+            <p className="text-sm text-gray-600">
+              The invoice stays on record with its number, marked Voided. Its amounts are taken out of the books and out of what the client owes.
+              A void cannot be undone — if needed, create a new invoice. If this invoice has payments, remove or move them first.
+            </p>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Reason *</label>
+              <textarea value={voidReason} onChange={(e) => setVoidReason(e.target.value)} rows={2} autoFocus
+                placeholder="e.g. Wrong client, duplicate, order cancelled"
+                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setVoidTarget(null)} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50">Cancel</button>
+              <button onClick={submitVoid} disabled={voiding || !voidReason.trim()} className="flex-1 px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 disabled:opacity-50">{voiding ? 'Voiding…' : 'Void invoice'}</button>
+            </div>
           </div>
         </div>
       )}
