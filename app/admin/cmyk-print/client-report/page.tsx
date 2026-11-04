@@ -138,8 +138,11 @@ function ReportInner() {
   const openingBalance = client?.opening_balance || 0;
   const pending = openingBalance + totals.outstanding - collectedThisMonth;
 
+  const dFmt = (d: Date) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  // Oldest unpaid bill = where the pending amount starts (monthSales is sorted oldest first)
+  const pendingSince = isPending && monthSales.length > 0 ? new Date((monthSales[0] as any).created_at) : null;
   const periodLabel = isPending
-    ? `All pending till ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+    ? `All pending ${pendingSince ? `from ${dFmt(pendingSince)} ` : ''}till ${dFmt(now)}`
     : `${MONTHS[month]} ${year}`;
   const [generating, setGenerating] = useState(false);
 
@@ -297,6 +300,14 @@ function ReportInner() {
           </select>
         </div>
       </div>
+
+      {clientId && isPending && (
+        <p className="text-sm text-gray-600">
+          {pendingSince
+            ? <>Pending from the oldest unpaid bill, <span className="font-semibold">{dFmt(pendingSince)}</span>, till today ({dFmt(now)}).{openingBalance ? ' Opening balance is added on top.' : ''}</>
+            : 'Nothing pending.'}
+        </p>
+      )}
 
       {/* Summary cards */}
       {clientId && (
