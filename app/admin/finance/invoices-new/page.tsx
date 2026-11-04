@@ -112,10 +112,26 @@ function InvoicesTrialInner() {
     notes: '',
   });
 
+  // Trial 2.2b: tax helper for payments + cash/UPI accounts
+  const [payEntry, setPayEntry] = useState<'incl' | 'excl'>('incl');
+  const [payBase, setPayBase] = useState<number>(0);
+  const [payRate, setPayRate] = useState<number>(18);
+  const [cashChoices, setCashChoices] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!showPayModal) return;
+    (async () => {
+      const { data } = await supabase.from('chart_of_accounts').select('name, linked_cash_account_id, is_active')
+        .not('linked_cash_account_id', 'is', null).eq('is_active', true);
+      setCashChoices((data || []).map((r: any) => ({ id: r.linked_cash_account_id, name: r.name })));
+    })();
+  }, [showPayModal]);
+
   const openPaymentModal = (inv: Invoice) => {
     const balance = Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0));
     const firstBank = (bankAccounts || []).find((b: any) => b.is_default) || (bankAccounts || [])[0];
     setPayInvoice(inv);
+    setPayEntry('incl'); setPayBase(0);
+    setPayRate(Number((inv.items && inv.items[0] && inv.items[0].gst_rate)) || 18);
     setPayForm({
       amount: balance,
       mode: 'bank_transfer',
@@ -208,20 +224,26 @@ function InvoicesTrialInner() {
     if (refuseLegacyWrite('Recording a payment against an invoice')) return;
 
     if (!payInvoice) return;
-    if (!payForm.amount || payForm.amount <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
+    const recv = payEntry === 'excl' ? Math.round(payBase * (1 + payRate / 100) * 100) / 100 : payForm.amount;
+    const bal = Math.max(0, (payInvoice.total_amount || 0) - (payInvoice.amount_paid || 0));
+    if (!recv || recv <= 0) { toast.error('Enter a payment amount greater than zero'); return; }
+    if (recv > bal + 0.005) { toast.error('This is more than the balance on the invoice'); return; }
     if (!payForm.accountId) { toast.error('Select a deposit account'); return; }
+    const splitNote = payEntry === 'excl'
+      ? `Base ${formatInr(paise(payBase))} + GST ${formatInr(paise(recv - payBase))} (${payRate}%)`
+      : '';
     setPaySubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.rpc('fn_record_invoice_payment', {
         p_invoice_id: payInvoice.id,
-        p_amount: payForm.amount,
+        p_amount: recv,
         p_mode: payForm.mode,
         p_date: payForm.date,
         p_bank_account_id: payForm.accountKind === 'bank' ? payForm.accountId : null,
         p_cash_account_id: payForm.accountKind === 'cash' ? payForm.accountId : null,
         p_reference: payForm.reference || null,
-        p_notes: payForm.notes || null,
+        p_notes: [splitNote, payForm.notes].filter(Boolean).join(' — ') || null,
         p_user_id: user?.id || null,
       });
       if (error) throw error;
@@ -2085,11 +2107,49 @@ function InvoicesTrialInner() {
               <button onClick={() => setShowPayModal(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-4 space-y-4">
-              <div>
-                <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Amount Received</label>
-                <input type="number" value={payForm.amount || ''} onChange={(e) => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })}
-                  className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
-              </div>
+              {(() => {
+                const bal = Math.max(0, (payInvoice.total_amount || 0) - (payInvoice.amount_paid || 0));
+                const recv = payEntry === 'excl' ? Math.round(payBase * (1 + payRate / 100) * 100) / 100 : payForm.amount;
+                const taxRatio = (payInvoice.total_amount || 0) > 0 ? (payInvoice.total_tax || 0) / payInvoice.total_amount : 0;
+                const gstPart = payEntry === 'excl' ? recv - payBase : Math.round(recv * taxRatio * 100) / 100;
+                const basePart = payEntry === 'excl' ? payBase : recv - gstPart;
+                const over = recv > bal + 0.005;
+                return (
+                  <div className="space-y-2">
+                    <div className="flex rounded-md border border-gray-200 overflow-hidden text-sm">
+                      <button type="button" onClick={() => setPayEntry('incl')} className={`flex-1 px-3 py-1.5 font-medium ${payEntry === 'incl' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'}`}>Amount received (includes tax)</button>
+                      <button type="button" onClick={() => setPayEntry('excl')} className={`flex-1 px-3 py-1.5 font-medium ${payEntry === 'excl' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'}`}>Amount before tax (add GST)</button>
+                    </div>
+                    {payEntry === 'incl' ? (
+                      <div>
+                        <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Amount Received</label>
+                        <input type="number" value={payForm.amount || ''} onChange={(e) => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })}
+                          className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-2">
+                          <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Amount before tax</label>
+                          <input type="number" value={payBase || ''} onChange={(e) => setPayBase(parseFloat(e.target.value) || 0)}
+                            className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">GST %</label>
+                          <select value={payRate} onChange={(e) => setPayRate(Number(e.target.value))} className="w-full mt-1 px-2 py-2.5 border border-gray-200 rounded-md bg-white">
+                            {[0, 5, 12, 18, 28].map(r => <option key={r} value={r}>{r}%</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                    <div className={`rounded-md border px-3 py-2 text-sm ${over ? 'border-red-300 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-50 text-gray-700'}`}>
+                      <div>Base <b>{formatInr(paise(basePart))}</b> + GST <b>{formatInr(paise(gstPart))}</b> = Total received <b>{formatInr(paise(recv))}</b></div>
+                      <div className="text-xs mt-0.5">Balance on invoice: {formatInr(paise(bal))} → after this payment: {formatInr(paise(Math.max(0, bal - recv)))}</div>
+                      {over && <div className="text-xs font-semibold mt-0.5">More than the balance — reduce the amount.</div>}
+                      {payEntry === 'incl' && <div className="text-xs text-gray-500 mt-0.5">Split uses this invoice's own tax share.</div>}
+                    </div>
+                  </div>
+                );
+              })()}
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Payment Date</label>
                 <input type="date" value={payForm.date} onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
@@ -2097,17 +2157,25 @@ function InvoicesTrialInner() {
               </div>
               <div>
                 <label className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Deposit To</label>
-                <select value={payForm.accountId} onChange={(e) => {
-                    const id = e.target.value;
-                    setPayForm({ ...payForm, accountId: id, accountKind: 'bank', mode: 'bank_transfer' });
+                <select value={payForm.accountId ? `${payForm.accountKind}:${payForm.accountId}` : ''} onChange={(e) => {
+                    const [kind, id] = e.target.value.split(':');
+                    if (!id) { setPayForm({ ...payForm, accountId: '' }); return; }
+                    const nm = (cashChoices.find(c => c.id === id)?.name || '').toLowerCase();
+                    const mode = kind === 'bank' ? 'bank_transfer' : (nm.includes('upi') ? 'upi' : 'cash');
+                    setPayForm({ ...payForm, accountId: id, accountKind: kind as 'bank' | 'cash', mode });
                   }}
                   className="w-full mt-1 px-3 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400">
                   <option value="">Select account…</option>
                   {(bankAccounts || []).length > 0 && (
                     <optgroup label="Bank">
                       {bankAccounts.map((a: any) => (
-                        <option key={a.id} value={a.id}>{a.name} (₹{(a.current_balance || 0).toLocaleString('en-IN')})</option>
+                        <option key={a.id} value={`bank:${a.id}`}>{a.name} (₹{(a.current_balance || 0).toLocaleString('en-IN')})</option>
                       ))}
+                    </optgroup>
+                  )}
+                  {cashChoices.length > 0 && (
+                    <optgroup label="Cash / UPI">
+                      {cashChoices.map(c => <option key={c.id} value={`cash:${c.id}`}>{c.name}</option>)}
                     </optgroup>
                   )}
                 </select>
