@@ -2,10 +2,11 @@
 
 // CMYK Financial Review — Monthly / Quarterly / Yearly trend
 // Sales (billed) · Collected (cash in, incl. client payments) · Costs (paper + expenses) · Profit
+// Paper cost can be counted as BOUGHT (paper purchases) or USED (job log) — see the switch on the page.
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { usePOSSales, useCMYKJobLogs, useCMYKExpenses, useCMYKClientPayments } from '@/lib/hooks';
+import { usePOSSales, useCMYKJobLogs, useCMYKExpenses, useCMYKClientPayments, useCMYKPaperPurchases, useCMYKClients } from '@/lib/hooks';
 import { Loader2 } from 'lucide-react';
 
 type Granularity = 'monthly' | 'quarterly' | 'yearly';
@@ -17,7 +18,9 @@ interface PeriodRow {
     billed: number;        // total_amount incl. GST
     billedExGst: number;   // taxable value (subtotal - discount)
     collected: number;     // cash actually in (sales + client payments)
-    paperCost: number;
+    paperCost: number;     // paper used, from the job log
+    paperBought: number;   // paper purchased in the period (excl. GST)
+    paper: number;         // whichever of the two the switch selects
     expenses: number;
     expenseByCategory: Record<string, number>;
     salesCount: number;
@@ -72,12 +75,16 @@ function DeltaBadge({ current, previous }: { current: number; previous: number |
 
 export default function CMYKReviewPage() {
     const [granularity, setGranularity] = useState<Granularity>('monthly');
+    // 'bought' = paper purchases (safe default, cannot under-count); 'used' = job log paper cost
+    const [paperBasis, setPaperBasis] = useState<'bought' | 'used'>('bought');
     const [expanded, setExpanded] = useState<string | null>(null);
 
     const { sales, loading: salesLoading } = usePOSSales();
     const { logs } = useCMYKJobLogs();
     const { expenses } = useCMYKExpenses();
     const { payments } = useCMYKClientPayments();
+    const { purchases } = useCMYKPaperPurchases();
+    const { cmykClients } = useCMYKClients();
 
     const periods = useMemo(() => {
         const map = new Map<string, PeriodRow>();
@@ -85,7 +92,7 @@ export default function CMYKReviewPage() {
             const { key, label, sortKey } = periodKeyOf(d, granularity);
             if (!map.has(key)) map.set(key, {
                 key, label, sortKey, billed: 0, billedExGst: 0, collected: 0,
-                paperCost: 0, expenses: 0, expenseByCategory: {}, salesCount: 0,
+                paperCost: 0, paperBought: 0, paper: 0, expenses: 0, expenseByCategory: {}, salesCount: 0,
             });
             const row = map.get(key)!;
             if (sortKey < row.sortKey) row.sortKey = sortKey;
@@ -112,6 +119,10 @@ export default function CMYKReviewPage() {
             if (!when) continue;
             bucket(new Date(when)).paperCost += l.paper_cost || 0;
         }
+        for (const pu of (purchases || []) as any[]) {
+            if (!pu.purchase_date) continue;
+            bucket(new Date(pu.purchase_date)).paperBought += Number(pu.total_amount) || 0;
+        }
         for (const e of expenses || []) {
             if (!e.expense_date) continue;
             const row = bucket(new Date(e.expense_date));
@@ -131,22 +142,33 @@ export default function CMYKReviewPage() {
             }
         }
 
+        Array.from(map.values()).forEach(r => { r.paper = paperBasis === 'used' ? r.paperCost : r.paperBought; });
+
         return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
-    }, [sales, logs, expenses, payments, granularity]);
+    }, [sales, logs, expenses, payments, purchases, granularity, paperBasis]);
 
     const chartPeriods = useMemo(
         () => periods.slice(granularity === 'monthly' ? -12 : granularity === 'quarterly' ? -8 : -5),
         [periods, granularity]
     );
-    const maxVal = Math.max(...chartPeriods.flatMap(p => [p.billed, p.collected, p.paperCost + p.expenses]), 1);
+    const maxVal = Math.max(...chartPeriods.flatMap(p => [p.billed, p.collected, p.paper + p.expenses]), 1);
 
     const totals = useMemo(() => ({
         billed: periods.reduce((s, p) => s + p.billed, 0),
         billedExGst: periods.reduce((s, p) => s + p.billedExGst, 0),
         collected: periods.reduce((s, p) => s + p.collected, 0),
-        costs: periods.reduce((s, p) => s + p.paperCost + p.expenses, 0),
+        costs: periods.reduce((s, p) => s + p.paper + p.expenses, 0),
     }), [periods]);
     const totalProfit = totals.billedExGst - totals.costs;
+
+    // Still to collect, all time — same rule as the client report:
+    // opening balances + unpaid bill balances − payments received.
+    const stillToCollect = useMemo(() => {
+        const opening = (cmykClients || []).reduce((sum: number, c: any) => sum + (Number(c.opening_balance) || 0), 0);
+        const unpaid = (sales || []).reduce((sum: number, s: any) => sum + (Number(s.balance_due) || 0), 0);
+        const received = (payments || []).reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+        return opening + unpaid - received;
+    }, [cmykClients, sales, payments]);
 
     const tableRows = useMemo(() => [...periods].reverse(), [periods]);
 
@@ -167,7 +189,19 @@ export default function CMYKReviewPage() {
                         <p className="text-sm text-muted-foreground">Sales, collections &amp; costs over time · profit is on billed value ex-GST</p>
                     </div>
                 </div>
-                <div className="flex bg-muted p-1 rounded-md self-start">
+                <div className="flex flex-wrap items-center gap-2 self-start">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground">Paper cost</span>
+                    <div className="flex bg-muted p-1 rounded-md">
+                        {([['bought', 'Bought'], ['used', 'Used (Job Log)']] as const).map(([v, l]) => (
+                            <button key={v} onClick={() => setPaperBasis(v)}
+                                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${paperBasis === v ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}>
+                                {l}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="flex bg-muted p-1 rounded-md">
                     {(['monthly', 'quarterly', 'yearly'] as Granularity[]).map(g => (
                         <button
                             key={g}
@@ -178,10 +212,11 @@ export default function CMYKReviewPage() {
                         </button>
                     ))}
                 </div>
+                </div>
             </div>
 
             {/* Totals strip */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                 <div className="bg-card border border-border rounded-lg p-3">
                     <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />Sales (billed)
@@ -196,7 +231,7 @@ export default function CMYKReviewPage() {
                 </div>
                 <div className="bg-card border border-border rounded-lg p-3">
                     <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block" />Costs (paper + expenses)
+                        <span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block" />Costs ({paperBasis === 'bought' ? 'paper bought' : 'paper used'} + expenses)
                     </span>
                     <p className="text-xl font-bold tabular-nums text-red-600">{formatCompact(totals.costs)}</p>
                 </div>
@@ -206,6 +241,13 @@ export default function CMYKReviewPage() {
                         {formatCompact(Math.abs(totalProfit))}
                     </p>
                 </div>
+                <Link href="/admin/cmyk-print/clients" className="bg-card border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors">
+                    <span className="text-[11px] text-muted-foreground">Still to collect (all time)</span>
+                    <p className={`text-xl font-bold tabular-nums ${stillToCollect > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                        {formatCompact(Math.abs(stillToCollect))}
+                    </p>
+                    {stillToCollect < 0 && <span className="text-[10px] text-muted-foreground">advance with you</span>}
+                </Link>
             </div>
 
             {/* Chart */}
@@ -214,7 +256,7 @@ export default function CMYKReviewPage() {
                 {chartPeriods.length > 0 ? (
                     <div className="flex items-end justify-between gap-2 h-44 border-b border-border pb-1">
                         {chartPeriods.map(p => {
-                            const costs = p.paperCost + p.expenses;
+                            const costs = p.paper + p.expenses;
                             return (
                                 <div key={p.key} className="flex-1 flex flex-col items-center justify-end h-full gap-1 min-w-0">
                                     <div className="flex items-end justify-center gap-0.5 w-full h-full">
@@ -251,7 +293,7 @@ export default function CMYKReviewPage() {
                         <tbody>
                             {tableRows.map((p, i) => {
                                 const prev = tableRows[i + 1] || null;
-                                const costs = p.paperCost + p.expenses;
+                                const costs = p.paper + p.expenses;
                                 const profit = p.billedExGst - costs;
                                 const isOpen = expanded === p.key;
                                 return (
@@ -273,7 +315,7 @@ export default function CMYKReviewPage() {
 function PeriodTableRow({ p, prev, costs, profit, isOpen, onToggle }: {
     p: PeriodRow; prev: PeriodRow | null; costs: number; profit: number; isOpen: boolean; onToggle: () => void;
 }) {
-    const prevCosts = prev ? prev.paperCost + prev.expenses : null;
+    const prevCosts = prev ? prev.paper + prev.expenses : null;
     return (
         <>
             <tr className="border-b border-border hover:bg-muted/40 cursor-pointer" onClick={onToggle}>
@@ -321,7 +363,11 @@ function PeriodTableRow({ p, prev, costs, profit, isOpen, onToggle }: {
                             <div>
                                 <p className="text-xs font-semibold text-red-700 mb-1.5">Cost breakdown</p>
                                 <div className="flex justify-between text-xs py-0.5">
-                                    <span className="text-muted-foreground">Paper (from job log)</span>
+                                    <span className="text-muted-foreground">Paper bought (purchases){p.paper === p.paperBought && p.paperBought !== p.paperCost ? ' ✓ counted' : ''}</span>
+                                    <span className="tabular-nums">{formatCurrency(p.paperBought)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs py-0.5">
+                                    <span className="text-muted-foreground">Paper used (job log){p.paper === p.paperCost && p.paperBought !== p.paperCost ? ' ✓ counted' : ''}</span>
                                     <span className="tabular-nums">{formatCurrency(p.paperCost)}</span>
                                 </div>
                                 {Object.entries(p.expenseByCategory).sort((a, b) => b[1] - a[1]).map(([cat, amt]) => (
