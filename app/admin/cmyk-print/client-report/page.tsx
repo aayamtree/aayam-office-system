@@ -1,7 +1,7 @@
 'use client';
 
 import { useConfirm } from '@/components/ConfirmModal';
-import { useState, useMemo, useEffect, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense, Fragment } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, FileText, Download, Printer, Loader2, Users, Plus, Trash2, Settings } from 'lucide-react';
@@ -90,6 +90,21 @@ function ReportInner() {
     if (s.payment_status === 'paid') return s.total_amount;
     return s.amount_received || 0;
   };
+
+  // Pending view: bills grouped month by month, each with its own subtotal.
+  const monthGroups = useMemo(() => {
+    const map = new Map<string, { label: string; sales: any[]; billed: number; balance: number }>();
+    for (const s of monthSales as any[]) {
+      const d = new Date(s.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+      if (!map.has(key)) map.set(key, { label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`, sales: [], billed: 0, balance: 0 });
+      const g = map.get(key)!;
+      g.sales.push(s);
+      g.billed += s.total_amount || 0;
+      g.balance += s.balance_due || 0;
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([key, g]) => ({ key, ...g }));
+  }, [monthSales]);
 
   const totals = useMemo(() => {
     return monthSales.reduce((acc, s: any) => {
@@ -212,6 +227,24 @@ function ReportInner() {
     setGenerating(true);
     try { await printStatement(buildStatement()); } catch { toast.error('Could not generate PDF'); } finally { setGenerating(false); }
   };
+
+
+  const renderRow = (s: any) => (
+                <tr key={s.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm">{new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{s.sale_number}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{itemsSummary(s)}</td>
+                  <td className="px-4 py-3 text-sm text-right">{fmt((s.subtotal || 0) - (s.discount_amount || 0))}</td>
+                  <td className="px-4 py-3 text-sm text-right">{fmt(s.gst_amount || 0)}</td>
+                  <td className="px-4 py-3 text-sm text-right font-semibold">{fmt(s.total_amount || 0)}</td>
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-amber-600">{(s.balance_due || 0) > 0 ? fmt(s.balance_due) : '—'}</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${s.payment_status === 'paid' ? 'bg-green-50 text-green-700' : s.payment_status === 'partial' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
+                      {s.payment_status === 'paid' ? 'Paid' : s.payment_status === 'partial' ? 'Partial' : 'Due'}
+                    </span>
+                  </td>
+                </tr>
+  );
 
   const years = Array.from({ length: 4 }, (_, i) => now.getFullYear() - i);
 
@@ -388,22 +421,17 @@ function ReportInner() {
                 <tr><td colSpan={8} className="text-center py-8 text-gray-400">Select a client to see their bills.</td></tr>
               ) : monthSales.length === 0 ? (
                 <tr><td colSpan={8} className="text-center py-8 text-gray-400">{isPending ? `No pending bills for ${client?.company || client?.name}.` : `No bills for ${client?.company || client?.name} in ${periodLabel}.`}</td></tr>
-              ) : monthSales.map((s: any) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm">{new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
-                  <td className="px-4 py-3 text-sm font-medium">{s.sale_number}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{itemsSummary(s)}</td>
-                  <td className="px-4 py-3 text-sm text-right">{fmt((s.subtotal || 0) - (s.discount_amount || 0))}</td>
-                  <td className="px-4 py-3 text-sm text-right">{fmt(s.gst_amount || 0)}</td>
-                  <td className="px-4 py-3 text-sm text-right font-semibold">{fmt(s.total_amount || 0)}</td>
-                  <td className="px-4 py-3 text-sm text-right font-semibold text-amber-600">{(s.balance_due || 0) > 0 ? fmt(s.balance_due) : '—'}</td>
-                  <td className="px-4 py-3 text-right">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${s.payment_status === 'paid' ? 'bg-green-50 text-green-700' : s.payment_status === 'partial' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
-                      {s.payment_status === 'paid' ? 'Paid' : s.payment_status === 'partial' ? 'Partial' : 'Due'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              ) : isPending ? monthGroups.map(g => (
+                <Fragment key={g.key}>
+                  <tr className="bg-gray-100">
+                    <td className="px-4 py-2 text-sm font-semibold" colSpan={5}>{g.label} — {g.sales.length} bill{g.sales.length !== 1 ? 's' : ''}</td>
+                    <td className="px-4 py-2 text-sm text-right font-semibold">{fmt(g.billed)}</td>
+                    <td className="px-4 py-2 text-sm text-right font-semibold text-amber-600">{fmt(g.balance)}</td>
+                    <td className="px-4 py-2"></td>
+                  </tr>
+                  {g.sales.map((s: any) => renderRow(s))}
+                </Fragment>
+              )) : monthSales.map((s: any) => renderRow(s))}
             </tbody>
             {clientId && monthSales.length > 0 && (
               <tfoot className="border-t-2">
