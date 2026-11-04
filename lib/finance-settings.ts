@@ -76,3 +76,9 @@ export function closedPeriodMessage(settings: FinanceSettings, dateISO: string |
     }
     return null;
 }
+
+/** Fiscal-year start month from Finance Settings (4 = April). Falls back to April. */
+export async function loadFiscalStartMonth(): Promise<number> {
+    const m = (await loadFinanceSettings()).fiscalStartMonth;
+    return m >= 1 && m <= 12 ? m : 4;
+}
