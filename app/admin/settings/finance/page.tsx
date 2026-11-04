@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Loader2, Lock, Plus, Trash2, Download } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
+import AdminOnlyGate from '@/components/finance/AdminOnlyGate';
 import {
     DEFAULT_FINANCE_SETTINGS, FinanceSettings, loadFinanceSettings, saveFinanceSettings,
 } from '@/lib/finance-settings';
@@ -28,7 +29,7 @@ const Card = ({ title, hint, children }: { title: string; hint?: string; childre
     </section>
 );
 
-export default function FinanceSettingsPage() {
+function FinanceSettingsInner() {
     const [saved, setSaved] = useState<FinanceSettings>(DEFAULT_FINANCE_SETTINGS);
     const [s, setS] = useState<FinanceSettings>(DEFAULT_FINANCE_SETTINGS);
     const [loading, setLoading] = useState(true);
@@ -102,7 +103,7 @@ export default function FinanceSettingsPage() {
                 <p className="text-xs text-muted-foreground">
                     Every change here is written to the <Link href="/admin/finance/log" className="underline">Finance log</Link>.
                 </p>
-                {lock && <p className="mt-2 text-xs rounded-md bg-amber-50 border border-amber-200 text-amber-800 p-2 flex gap-1.5"><Lock size={13} className="mt-0.5" /> Only an admin can change these settings. You can view them.</p>}
+                {lock && <p className="mt-2 text-xs rounded-md bg-amber-50 border border-amber-200 text-amber-800 p-2 flex gap-1.5"><Lock size={13} className="mt-0.5" /> Only an admin can change these settings.</p>}
             </div>
 
             <Card title="Closing date" hint="Nothing on or before this date can be added, changed or deleted. Leave empty to keep the books open.">
@@ -184,5 +185,13 @@ export default function FinanceSettingsPage() {
                 Accounting logic in the finance upgrades is adapted from Puter Accounting (MIT). See <code>THIRD_PARTY_CREDITS.md</code>.
             </p>
         </div>
+    );
+}
+
+export default function FinanceSettingsPage() {
+    return (
+        <AdminOnlyGate>
+            <FinanceSettingsInner />
+        </AdminOnlyGate>
     );
 }

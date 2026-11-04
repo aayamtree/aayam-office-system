@@ -192,7 +192,7 @@ const menuItems: MenuItem[] = [
     name: 'Trial',
     icon: FlaskConical,
     href: '/admin/finance/log',
-    allowedRoles: ['admin', 'finance'],
+    allowedRoles: ['admin'], // admin login only
     submenu: [
       { name: 'Finance Log', href: '/admin/finance/log' },
       { name: 'Finance Settings', href: '/admin/settings/finance' },

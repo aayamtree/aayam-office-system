@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Search, ArrowRight, ScrollText } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import AdminOnlyGate from '@/components/finance/AdminOnlyGate';
 
 type Row = {
     id: string; created_at: string; user_name: string | null;
@@ -37,7 +38,7 @@ const BADGE: Record<Row['action'], string> = {
 const show = (v: unknown) =>
     v === null || v === undefined || v === '' ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v);
 
-export default function FinanceLogPage() {
+function FinanceLogInner() {
     const [rows, setRows] = useState<Row[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -135,5 +136,13 @@ export default function FinanceLogPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function FinanceLogPage() {
+    return (
+        <AdminOnlyGate>
+            <FinanceLogInner />
+        </AdminOnlyGate>
     );
 }

@@ -19,7 +19,7 @@ create index if not exists finance_log_category_idx on public.finance_log (categ
 alter table public.finance_log enable row level security;
 drop policy if exists finance_log_read on public.finance_log;
 create policy finance_log_read on public.finance_log
-  for select to authenticated using ((select public.fn_is_finance_staff()));
+  for select to authenticated using ((select public.fn_is_admin())); -- admin only (changed 2026-11-04)
 drop policy if exists finance_log_insert on public.finance_log;
 create policy finance_log_insert on public.finance_log
   for insert to authenticated
