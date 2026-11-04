@@ -32,6 +32,7 @@ import {
   Search,
   Library,
   Paperclip,
+  FlaskConical,
 } from 'lucide-react';
 
 // Shadcn Components
@@ -181,6 +182,18 @@ const menuItems: MenuItem[] = [
       { name: 'Quotations', href: '/admin/sales/quotations' },
       { name: 'Orders', href: '/admin/sales/orders' },
       { name: '📖 My Guide', href: '/admin/finance/guide' },
+    ]
+  },
+  {
+    // TRIAL: new accounting-port screens live here, apart from the live menu, so
+    // they are easy to find and never mixed up with what the team uses daily.
+    // Pages keep their own addresses; when one is approved it can move to its
+    // real place in the menu. Nothing here replaces or changes a live screen.
+    name: 'Trial',
+    icon: FlaskConical,
+    href: '/admin/finance/log',
+    allowedRoles: ['admin', 'finance'],
+    submenu: [
       { name: 'Finance Log', href: '/admin/finance/log' },
       { name: 'Finance Settings', href: '/admin/settings/finance' },
     ]
