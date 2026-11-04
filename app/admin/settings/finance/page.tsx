@@ -117,7 +117,7 @@ function FinanceSettingsInner() {
                     )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                    {saved.closingDate ? `Books are closed up to ${saved.closingDate}.` : 'Books are open. Nothing is blocked.'} Screens start obeying this date as each build step reaches them.
+                    {saved.closingDate ? `Books are closed up to ${saved.closingDate}.` : 'Books are open. Nothing is blocked.'} The database enforces it on invoices, payments, bills, vendor payments, journal, bank lines and expenses: adding, deleting, or changing the date, amount or party is refused. Notes and paid-status updates still work.
                 </p>
             </Card>
 
