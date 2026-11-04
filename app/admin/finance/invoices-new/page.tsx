@@ -2145,7 +2145,7 @@ function InvoicesTrialInner() {
                       <div>Base <b>{formatInr(paise(basePart))}</b> + GST <b>{formatInr(paise(gstPart))}</b> = Total received <b>{formatInr(paise(recv))}</b></div>
                       <div className="text-xs mt-0.5">Balance on invoice: {formatInr(paise(bal))} → after this payment: {formatInr(paise(Math.max(0, bal - recv)))}</div>
                       {over && <div className="text-xs font-semibold mt-0.5">More than the balance — reduce the amount.</div>}
-                      {payEntry === 'incl' && <div className="text-xs text-gray-500 mt-0.5">Split uses this invoice's own tax share.</div>}
+                      {payEntry === 'incl' && <div className="text-xs text-gray-500 mt-0.5">Split uses the tax share of this invoice.</div>}
                     </div>
                   </div>
                 );
