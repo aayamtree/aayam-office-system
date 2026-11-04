@@ -31,7 +31,7 @@ function ReportInner() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11
   // 'month' = one month's statement; 'pending' = every unpaid bill till date
-  const [view, setView] = useState<'month' | 'pending'>('month');
+  const [view, setView] = useState<'month' | 'pending'>(() => (params.get('client') ? 'month' : 'pending'));
   const isPending = view === 'pending';
 
   // CMYK's own accounts (separate from master banking) for the money-received picker.
@@ -232,6 +232,64 @@ function ReportInner() {
   };
 
 
+  // ---------- Overall matrix (no client selected) ----------
+  // One row per client. In 'pending' mode payments are applied oldest-first
+  // (opening balance, then oldest bills), so the age columns add up to Pending.
+  const overall = useMemo(() => {
+    const DAY = 86400000;
+    const nowMs = Date.now();
+    const rows = (cmykClients || []).map((c: any) => {
+      const opening = Number(c.opening_balance) || 0;
+      const mySales = (sales || []).filter((s: any) => s.cmyk_client_id === c.id);
+      const myPays = (payments || []).filter((p: any) => p.cmyk_client_id === c.id);
+      const r = { id: c.id as string, name: (c.company || c.name || 'Client') as string, bills: 0, oldest: null as Date | null,
+        opening, b0: 0, b30: 0, b60: 0, b90: 0, openingLeft: 0, billed: 0, taxable: 0, gst: 0, received: 0, pending: 0 };
+      if (isPending) {
+        let credit = myPays.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+        if (opening > 0) { const take = Math.min(opening, credit); credit -= take; r.openingLeft = opening - take; }
+        else credit += -opening;
+        const unpaid = mySales.filter((s: any) => (s.balance_due || 0) > 0)
+          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        for (const s of unpaid as any[]) {
+          const take = Math.min(s.balance_due, credit); credit -= take;
+          const rem = s.balance_due - take;
+          r.billed += s.total_amount || 0;
+          r.bills += 1;
+          if (rem <= 0) continue;
+          const created = new Date(s.created_at);
+          if (!r.oldest) r.oldest = created;
+          const age = Math.floor((nowMs - created.getTime()) / DAY);
+          if (age <= 30) r.b0 += rem; else if (age <= 60) r.b30 += rem; else if (age <= 90) r.b60 += rem; else r.b90 += rem;
+        }
+        r.received = myPays.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+        r.pending = r.openingLeft + r.b0 + r.b30 + r.b60 + r.b90 - credit;
+      } else {
+        const inMonth = (d: Date) => d.getFullYear() === year && d.getMonth() === month;
+        const ms = mySales.filter((s: any) => inMonth(new Date(s.created_at)));
+        const mp = myPays.filter((p: any) => inMonth(new Date(p.paid_on + 'T00:00:00')));
+        const collected = mp.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0);
+        r.bills = ms.length;
+        for (const s of ms as any[]) {
+          r.billed += s.total_amount || 0;
+          r.taxable += (s.subtotal || 0) - (s.discount_amount || 0);
+          r.gst += s.gst_amount || 0;
+          r.received += paidOf(s);
+        }
+        r.received += collected;
+        r.pending = opening + ms.reduce((sum: number, s: any) => sum + (s.balance_due || 0), 0) - collected;
+      }
+      return r;
+    }).filter(r => isPending ? (r.pending !== 0 || r.bills > 0) : (r.bills > 0 || r.received > 0))
+      .sort((a, b) => b.pending - a.pending);
+    const sum = (f: (r: typeof rows[number]) => number) => rows.reduce((t, r) => t + f(r), 0);
+    return {
+      rows,
+      totals: { bills: sum(r => r.bills), openingLeft: sum(r => r.openingLeft), opening: sum(r => r.opening),
+        b0: sum(r => r.b0), b30: sum(r => r.b30), b60: sum(r => r.b60), b90: sum(r => r.b90),
+        billed: sum(r => r.billed), taxable: sum(r => r.taxable), gst: sum(r => r.gst), received: sum(r => r.received), pending: sum(r => r.pending) },
+    };
+  }, [cmykClients, sales, payments, isPending, year, month]);
+
   const renderRow = (s: any) => (
                 <tr key={s.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm">{new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
@@ -273,7 +331,7 @@ function ReportInner() {
           <label className="block text-xs font-medium text-gray-500 mb-1">Client</label>
           <select value={clientId} onChange={e => setClientId(e.target.value)}
             className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400">
-            <option value="">Select client...</option>
+            <option value="">All clients (overall)</option>
             {(cmykClients || []).map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}
           </select>
         </div>
@@ -410,6 +468,111 @@ function ReportInner() {
       )}
 
       {/* Table */}
+      {/* Overall matrix — shown until a client is picked */}
+      {!clientId ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white border rounded-md p-3">
+              <p className="text-xs text-gray-500">{isPending ? 'Total pending' : 'Total billed'}</p>
+              <p className="text-lg font-bold text-amber-600">{fmt(isPending ? overall.totals.pending : overall.totals.billed)}</p>
+            </div>
+            <div className="bg-white border rounded-md p-3">
+              <p className="text-xs text-gray-500">Clients {isPending ? 'owing' : 'billed'}</p>
+              <p className="text-lg font-bold">{isPending ? overall.rows.filter(r => r.pending > 0).length : overall.rows.length}</p>
+            </div>
+            <div className="bg-white border rounded-md p-3">
+              <p className="text-xs text-gray-500">{isPending ? 'Older than 60 days' : 'Received'}</p>
+              <p className={`text-lg font-bold ${isPending ? 'text-red-600' : 'text-green-700'}`}>{fmt(isPending ? overall.totals.b60 + overall.totals.b90 : overall.totals.received)}</p>
+            </div>
+            <div className="bg-white border rounded-md p-3">
+              <p className="text-xs text-gray-500">{isPending ? 'Opening balances' : 'Pending'}</p>
+              <p className="text-lg font-bold">{fmt(isPending ? overall.totals.openingLeft : overall.totals.pending)}</p>
+            </div>
+          </div>
+          <div className="bg-white border rounded-md overflow-hidden">
+            <div className="px-4 py-2.5 border-b bg-gray-50 text-sm font-semibold">
+              All clients — {periodLabel}
+              <span className="ml-2 text-xs font-normal text-gray-500">Click a client to open their statement</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b">
+                  <tr className="text-xs font-semibold text-gray-500 uppercase">
+                    <th className="text-left px-4 py-3">Client</th>
+                    {isPending ? (<>
+                      <th className="text-right px-4 py-3">Opening</th>
+                      <th className="text-right px-4 py-3">0–30 d</th>
+                      <th className="text-right px-4 py-3">31–60 d</th>
+                      <th className="text-right px-4 py-3">61–90 d</th>
+                      <th className="text-right px-4 py-3">90+ d</th>
+                      <th className="text-right px-4 py-3">Pending</th>
+                      <th className="text-right px-4 py-3">Oldest bill</th>
+                    </>) : (<>
+                      <th className="text-right px-4 py-3">Bills</th>
+                      <th className="text-right px-4 py-3">Taxable</th>
+                      <th className="text-right px-4 py-3">GST</th>
+                      <th className="text-right px-4 py-3">Billed</th>
+                      <th className="text-right px-4 py-3">Received</th>
+                      <th className="text-right px-4 py-3">Pending</th>
+                    </>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {(clientsLoading || salesLoading) ? (
+                    <tr><td colSpan={8} className="text-center py-8 text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading...</td></tr>
+                  ) : overall.rows.length === 0 ? (
+                    <tr><td colSpan={8} className="text-center py-8 text-gray-400">{isPending ? 'Nothing pending for any client.' : `No bills in ${periodLabel}.`}</td></tr>
+                  ) : overall.rows.map(r => (
+                    <tr key={r.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setClientId(r.id)}>
+                      <td className="px-4 py-3 text-sm font-medium">{r.name}</td>
+                      {isPending ? (<>
+                        <td className="px-4 py-3 text-sm text-right">{r.openingLeft ? fmt(r.openingLeft) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-right">{r.b0 ? fmt(r.b0) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-right">{r.b30 ? fmt(r.b30) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-right text-amber-700">{r.b60 ? fmt(r.b60) : '—'}</td>
+                        <td className="px-4 py-3 text-sm text-right text-red-600 font-medium">{r.b90 ? fmt(r.b90) : '—'}</td>
+                        <td className={`px-4 py-3 text-sm text-right font-semibold ${r.pending < 0 ? 'text-green-700' : 'text-amber-600'}`}>{r.pending < 0 ? `${fmt(-r.pending)} adv.` : fmt(r.pending)}</td>
+                        <td className="px-4 py-3 text-sm text-right text-gray-500">{r.oldest ? dFmt(r.oldest) : '—'}</td>
+                      </>) : (<>
+                        <td className="px-4 py-3 text-sm text-right">{r.bills}</td>
+                        <td className="px-4 py-3 text-sm text-right">{fmt(r.taxable)}</td>
+                        <td className="px-4 py-3 text-sm text-right">{fmt(r.gst)}</td>
+                        <td className="px-4 py-3 text-sm text-right font-semibold">{fmt(r.billed)}</td>
+                        <td className="px-4 py-3 text-sm text-right text-green-700">{fmt(r.received)}</td>
+                        <td className={`px-4 py-3 text-sm text-right font-semibold ${r.pending < 0 ? 'text-green-700' : 'text-amber-600'}`}>{r.pending < 0 ? `${fmt(-r.pending)} adv.` : fmt(r.pending)}</td>
+                      </>)}
+                    </tr>
+                  ))}
+                </tbody>
+                {overall.rows.length > 0 && (
+                  <tfoot className="border-t-2">
+                    <tr className="font-semibold bg-gray-50 text-sm">
+                      <td className="px-4 py-3">Total — {overall.rows.length} client{overall.rows.length !== 1 ? 's' : ''}</td>
+                      {isPending ? (<>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.openingLeft)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.b0)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.b30)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.b60)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.b90)}</td>
+                        <td className="px-4 py-3 text-right text-amber-600">{fmt(overall.totals.pending)}</td>
+                        <td className="px-4 py-3"></td>
+                      </>) : (<>
+                        <td className="px-4 py-3 text-right">{overall.totals.bills}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.taxable)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.gst)}</td>
+                        <td className="px-4 py-3 text-right">{fmt(overall.totals.billed)}</td>
+                        <td className="px-4 py-3 text-right text-green-700">{fmt(overall.totals.received)}</td>
+                        <td className="px-4 py-3 text-right text-amber-600">{fmt(overall.totals.pending)}</td>
+                      </>)}
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </div>
+          {isPending && <p className="text-[11px] text-gray-400">Payments received are applied to the opening balance first, then to the oldest bills. Bills without a client (walk-in) are not included.</p>}
+        </div>
+      ) : (
       <div className="bg-white border rounded-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -459,6 +622,7 @@ function ReportInner() {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 }
