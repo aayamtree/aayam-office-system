@@ -119,6 +119,18 @@ export default function CMYKReviewPage() {
             row.expenseByCategory[e.category] = (row.expenseByCategory[e.category] || 0) + (e.amount || 0);
         }
 
+        // Fill the gaps: a month (or quarter) with no activity must still show as an
+        // empty row, otherwise the list jumps (e.g. Feb → Jul) and looks like data is missing.
+        if (map.size > 0) {
+            const keys = Array.from(map.values()).map(r => r.sortKey).sort();
+            const [sy, sm] = keys[0].split('-').map(Number);
+            const [ey, em] = keys[keys.length - 1].split('-').map(Number);
+            for (let y = sy, m = sm - 1; y < ey || (y === ey && m <= em - 1); m++) {
+                if (m > 11) { m = 0; y++; }
+                bucket(new Date(y, m, 1));
+            }
+        }
+
         return Array.from(map.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
     }, [sales, logs, expenses, payments, granularity]);
 
