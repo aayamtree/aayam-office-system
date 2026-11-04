@@ -33,7 +33,8 @@ import ReadOnlyLedgerBanner from '@/components/finance/ReadOnlyLedgerBanner';
 import { refuseLegacyWrite } from '@/lib/legacy-ledger';
 // ── Trial additions (checklist 2.1) ──
 import AdminOnlyGate from '@/components/finance/AdminOnlyGate';
-import { loadFiscalStartMonth } from '@/lib/finance-settings';
+import { loadFiscalStartMonth, loadFinanceSettings, DEFAULT_FINANCE_SETTINGS, FinanceSettings } from '@/lib/finance-settings';
+import { Paperclip as PaperclipIcon, X as XIcon } from 'lucide-react';
 import { DATE_PRESET_LABELS, DatePreset, buildCsv, formatInr, paise, presetRange } from '@/lib/invoice-list-tools';
 
 function InvoicesTrialInner() {
@@ -244,6 +245,19 @@ function InvoicesTrialInner() {
   const [fiscalStartMonth, setFiscalStartMonth] = useState(4);
   const [paid30Paise, setPaid30Paise] = useState<number | null>(null);
   useEffect(() => { loadFiscalStartMonth().then(setFiscalStartMonth).catch(() => {}); }, []);
+  // ── Trial additions (checklist 2.2): terms, discount, message, attachments ──
+  const [finSettings, setFinSettings] = useState<FinanceSettings>(DEFAULT_FINANCE_SETTINGS);
+  useEffect(() => { loadFinanceSettings().then(setFinSettings).catch(() => {}); }, []);
+  const [termId, setTermId] = useState('');
+  const [discountMode, setDiscountMode] = useState<'percent' | 'amount'>('percent');
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [discountTouched, setDiscountTouched] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [savedAttachments, setSavedAttachments] = useState<any[]>([]);
+  const loadAttachments = async (invoiceId: string) => {
+    const { data } = await supabase.from('invoice_attachments').select('*').eq('invoice_id', invoiceId).order('created_at');
+    setSavedAttachments(data || []);
+  };
   useEffect(() => {
     (async () => {
       const since = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -273,6 +287,22 @@ function InvoicesTrialInner() {
     notes: '',
     jobId: '',
   });
+
+  // Discount is taken off BEFORE GST (trade discount). Subtotal stays the gross of the lines.
+  const discountAmt = (() => {
+    const sub = formData.subtotal || 0;
+    const raw = discountMode === 'percent' ? (sub * (discountValue || 0)) / 100 : (discountValue || 0);
+    return Math.min(Math.max(Math.round(raw * 100) / 100, 0), sub);
+  })();
+  useEffect(() => {
+    if (!discountTouched && !discountValue) return; // untouched: leave old behaviour exactly as is
+    setFormData(prev => {
+      const tax = Math.round((prev.subtotal - discountAmt) * (prev.gstRate / 100));
+      const total = Math.round((prev.subtotal - discountAmt + tax) * 100) / 100;
+      if (tax === prev.totalTax && total === prev.totalAmount) return prev;
+      return { ...prev, totalTax: tax, totalAmount: total };
+    });
+  }, [formData.subtotal, formData.gstRate, discountAmt, discountTouched, discountValue]);
 
   // ── Shipping address selection (per invoice) ──
   const [clientShipAddrs, setClientShipAddrs] = useState<any[]>([]);
@@ -608,9 +638,11 @@ function InvoicesTrialInner() {
       totalAmount: 0,
       paidAmount: 0,
       status: 'pending',
-      notes: '',
+      notes: finSettings.invoiceMessage || '',
       jobId: '',
     });
+    setTermId(''); setDiscountMode('percent'); setDiscountValue(0); setDiscountTouched(false);
+    setPendingFiles([]); setSavedAttachments([]);
     setClientShipAddrs([]); setSelectedShipId(''); setShowNewShip(false);
     setShipping({ ...blankShip });
     setIsEditing(false);
@@ -638,6 +670,8 @@ function InvoicesTrialInner() {
       notes: inv.notes || '',
       jobId: inv.job_id || '',
     });
+    setTermId(''); setDiscountMode('amount'); setDiscountValue(Number(inv.discount_amount) || 0); setDiscountTouched(false);
+    setPendingFiles([]); loadAttachments(inv.id);
     // Restore the shipping snapshot saved on this invoice
     loadClientShipping(inv.client_id || '', {
       label: (inv as any).shipping_label || '',
@@ -670,7 +704,7 @@ function InvoicesTrialInner() {
         sgst_amount: isInterState ? 0 : formData.totalTax / 2,
         igst_amount: isInterState ? formData.totalTax : 0,
         total_tax: formData.totalTax,
-        discount_amount: 0,
+        discount_amount: discountAmt,
         total_amount: formData.totalAmount,
         payment_status: formData.status,
         amount_paid: formData.paidAmount,
@@ -721,6 +755,17 @@ function InvoicesTrialInner() {
 
       if (invoiceId) {
         await saveInvoiceItems(invoiceId, items);
+        // Trial 2.2: upload any files picked on the form
+        for (const f of pendingFiles) {
+          const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const path = `invoices/${invoiceId}/${Date.now()}-${safe}`;
+          const { error: upErr } = await supabase.storage.from('attachments').upload(path, f);
+          if (upErr) { toast.error(`Could not upload ${f.name}`); continue; }
+          const url = supabase.storage.from('attachments').getPublicUrl(path).data?.publicUrl;
+          const { error: insErr } = await supabase.from('invoice_attachments').insert({ invoice_id: invoiceId, file_name: f.name, file_url: url, storage_path: path, file_size: f.size });
+          if (insErr) toast.error(`Could not save ${f.name}`);
+        }
+        setPendingFiles([]);
       }
 
       setShowModal(false);
@@ -1367,6 +1412,14 @@ function InvoicesTrialInner() {
                         <Plus size={16} />
                       </button>
                     </div>
+                    {formData.clientId && (() => {
+                      const ob = Number((selectedClient as any)?.outstanding_balance) || 0;
+                      return (
+                        <p className={`mt-1.5 text-xs ${ob > 0 ? 'text-amber-700' : 'text-gray-500'}`}>
+                          Open balance on record: <b>{formatInr(Math.round(ob * 100))}</b>{ob > 0 ? ' — already owed by this client' : ''}
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   {/* Ship To — pick a saved shipping address or add a new one */}
@@ -1424,6 +1477,23 @@ function InvoicesTrialInner() {
                   </div>
 
                   <div className="sm:col-span-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment terms</label>
+                    <select
+                      value={termId}
+                      onChange={(e) => {
+                        const id = e.target.value; setTermId(id);
+                        const t = finSettings.paymentTerms.find(x => x.id === id);
+                        if (t && formData.invoiceDate) {
+                          const d = new Date(formData.invoiceDate + 'T00:00:00');
+                          d.setDate(d.getDate() + (Number(t.days) || 0));
+                          setFormData(prev => ({ ...prev, dueDate: d.toLocaleDateString('en-CA') }));
+                        }
+                      }}
+                      className="w-full mb-3 px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md bg-white text-sm md:text-base"
+                    >
+                      <option value="">Choose terms (sets the due date)</option>
+                      {finSettings.paymentTerms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date *</label>
                     <input
                       type="date"
@@ -1614,6 +1684,25 @@ function InvoicesTrialInner() {
                     </div>
                   </div>
 
+                  {/* Trial 2.2: discount on the whole invoice, taken off before GST */}
+                  <div className="flex flex-wrap items-end gap-3 border-t border-gray-200 pt-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Discount</label>
+                      <div className="flex rounded-md border border-gray-200 overflow-hidden text-sm">
+                        <button type="button" onClick={() => { setDiscountMode('percent'); setDiscountTouched(true); }} className={`px-3 py-1.5 font-medium ${discountMode === 'percent' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'}`}>%</button>
+                        <button type="button" onClick={() => { setDiscountMode('amount'); setDiscountTouched(true); }} className={`px-3 py-1.5 font-medium ${discountMode === 'amount' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'}`}>₹</button>
+                      </div>
+                    </div>
+                    <input
+                      type="number" min="0" step="any"
+                      value={discountValue || ''}
+                      onChange={(e) => { setDiscountValue(parseFloat(e.target.value) || 0); setDiscountTouched(true); }}
+                      placeholder={discountMode === 'percent' ? 'e.g. 5' : 'e.g. 500'}
+                      className="w-32 px-3 py-1.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    />
+                    <p className="text-sm text-gray-600 pb-1.5">{discountAmt > 0 ? <>Discount <b>− {formatCurrency(discountAmt)}</b> before GST</> : 'No discount'}</p>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 border-t border-gray-200 pt-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">Paid Amount (₹)</label>
@@ -1640,6 +1729,47 @@ function InvoicesTrialInner() {
                   </div>
                 </div>
 
+
+                {/* Trial 2.2: standard message (printed on the PDF) */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Message on invoice</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    placeholder="Standard message from Finance Settings appears here; edit it for this invoice if needed"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+
+                {/* Trial 2.2: attachments */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Attachments</label>
+                  <div className="space-y-1.5">
+                    {savedAttachments.map(a => (
+                      <div key={a.id} className="flex items-center justify-between gap-2 text-sm border border-gray-200 rounded-md px-3 py-1.5">
+                        <a href={a.file_url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-700 hover:underline truncate"><PaperclipIcon className="w-3.5 h-3.5 shrink-0" />{a.file_name}</a>
+                        <button type="button" title="Remove file" onClick={async () => {
+                          const { error } = await supabase.from('invoice_attachments').delete().eq('id', a.id);
+                          if (error) { toast.error('Could not remove file'); return; }
+                          if (a.storage_path) await supabase.storage.from('attachments').remove([a.storage_path]);
+                          setSavedAttachments(prev => prev.filter(x => x.id !== a.id));
+                        }} className="text-gray-400 hover:text-red-600"><XIcon className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    {pendingFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 text-sm border border-dashed border-gray-300 rounded-md px-3 py-1.5 text-gray-600">
+                        <span className="truncate">{f.name} <span className="text-gray-400">(will upload on save)</span></span>
+                        <button type="button" onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-600"><XIcon className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    <input
+                      type="file" multiple
+                      onChange={(e) => { const fl = Array.from(e.target.files || []); if (fl.length) setPendingFiles(prev => [...prev, ...fl]); e.target.value = ''; }}
+                      className="block w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border file:border-gray-200 file:bg-white file:text-gray-700"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex gap-2 md:gap-4 pt-4 border-t border-gray-100">
                   <button
