@@ -30,6 +30,9 @@ function ReportInner() {
   const [clientId, setClientId] = useState('');
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0-11
+  // 'month' = one month's statement; 'pending' = every unpaid bill till date
+  const [view, setView] = useState<'month' | 'pending'>('month');
+  const isPending = view === 'pending';
 
   // CMYK's own accounts (separate from master banking) for the money-received picker.
   const accountOptions = useMemo(() =>
@@ -66,10 +69,11 @@ function ReportInner() {
     if (!clientId) return [];
     return (sales || []).filter(s => {
       if ((s as any).cmyk_client_id !== clientId) return false;
+      if (isPending) return ((s as any).balance_due || 0) > 0; // all dates, unpaid only
       const d = new Date(s.created_at);
       return d.getFullYear() === year && d.getMonth() === month;
     }).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  }, [sales, clientId, year, month]);
+  }, [sales, clientId, year, month, isPending]);
 
   const fmt = (n: number) => '₹' + (n || 0).toLocaleString('en-IN');
 
@@ -104,10 +108,11 @@ function ReportInner() {
     if (!clientId) return [] as any[];
     return (payments || []).filter((p: any) => {
       if (p.cmyk_client_id !== clientId) return false;
+      if (isPending) return true; // all payments till date
       const d = new Date(p.paid_on + 'T00:00:00');
       return d.getFullYear() === year && d.getMonth() === month;
     }).sort((a: any, b: any) => new Date(b.paid_on).getTime() - new Date(a.paid_on).getTime());
-  }, [payments, clientId, year, month]);
+  }, [payments, clientId, year, month, isPending]);
 
   const collectedThisMonth = useMemo(
     () => monthPayments.reduce((sum: number, p: any) => sum + (Number(p.amount) || 0), 0),
@@ -118,7 +123,9 @@ function ReportInner() {
   const openingBalance = client?.opening_balance || 0;
   const pending = openingBalance + totals.outstanding - collectedThisMonth;
 
-  const periodLabel = `${MONTHS[month]} ${year}`;
+  const periodLabel = isPending
+    ? `All pending till ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+    : `${MONTHS[month]} ${year}`;
   const [generating, setGenerating] = useState(false);
 
   const handleRecordPayment = async () => {
@@ -187,19 +194,21 @@ function ReportInner() {
       totalTaxable: totals.taxable,
       totalGst: totals.gst,
       totalBilled: totals.billed,
-      totalPaid: totals.paid,
-      totalOutstanding: totals.outstanding,
+      totalPaid: totals.paid + (isPending ? collectedThisMonth : 0),
+      // PDF shows Amount Due = totalOutstanding + openingBalance, so in the
+      // pending view take the collected payments off here.
+      totalOutstanding: isPending ? totals.outstanding - collectedThisMonth : totals.outstanding,
       openingBalance: client?.opening_balance || 0,
     };
   };
 
   const handleDownload = async () => {
-    if (!client || monthSales.length === 0) { toast.error('No bills for this client in the selected month'); return; }
+    if (!client || monthSales.length === 0) { toast.error(isPending ? 'No pending bills for this client' : 'No bills for this client in the selected month'); return; }
     setGenerating(true);
     try { await downloadStatement(buildStatement()); } catch { toast.error('Could not generate PDF'); } finally { setGenerating(false); }
   };
   const handlePrint = async () => {
-    if (!client || monthSales.length === 0) { toast.error('No bills for this client in the selected month'); return; }
+    if (!client || monthSales.length === 0) { toast.error(isPending ? 'No pending bills for this client' : 'No bills for this client in the selected month'); return; }
     setGenerating(true);
     try { await printStatement(buildStatement()); } catch { toast.error('Could not generate PDF'); } finally { setGenerating(false); }
   };
@@ -214,7 +223,7 @@ function ReportInner() {
           <Link href="/admin/cmyk-print/clients" className="p-2 hover:bg-gray-100 rounded-md"><ArrowLeft className="w-5 h-5" /></Link>
           <div>
             <h1 className="text-lg font-semibold flex items-center gap-2"><FileText className="w-5 h-5" /> Monthly Print Report</h1>
-            <p className="text-sm text-gray-500">Per-client statement for month-end invoicing</p>
+            <p className="text-sm text-gray-500">Per-client statement for month-end invoicing, or all pending till date</p>
           </div>
         </div>
         <Link href="/admin/cmyk-print/clients" className="flex items-center gap-2 px-3 py-2 border rounded-md text-sm hover:bg-gray-50">
@@ -223,7 +232,7 @@ function ReportInner() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border rounded-md p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-white border rounded-md p-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">Client</label>
           <select value={clientId} onChange={e => setClientId(e.target.value)}
@@ -233,15 +242,23 @@ function ReportInner() {
           </select>
         </div>
         <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Show</label>
+          <select value={view} onChange={e => setView(e.target.value as 'month' | 'pending')}
+            className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400">
+            <option value="month">One month</option>
+            <option value="pending">All pending till date</option>
+          </select>
+        </div>
+        <div className={isPending ? 'opacity-40' : ''}>
           <label className="block text-xs font-medium text-gray-500 mb-1">Month</label>
-          <select value={month} onChange={e => setMonth(parseInt(e.target.value))}
+          <select value={month} disabled={isPending} onChange={e => setMonth(parseInt(e.target.value))}
             className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400">
             {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
           </select>
         </div>
-        <div>
+        <div className={isPending ? 'opacity-40' : ''}>
           <label className="block text-xs font-medium text-gray-500 mb-1">Year</label>
-          <select value={year} onChange={e => setYear(parseInt(e.target.value))}
+          <select value={year} disabled={isPending} onChange={e => setYear(parseInt(e.target.value))}
             className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-400">
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -252,7 +269,7 @@ function ReportInner() {
       {clientId && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white border rounded-md p-3">
-            <p className="text-xs text-gray-500">Total Billed</p>
+            <p className="text-xs text-gray-500">{isPending ? 'Billed (pending bills)' : 'Total Billed'}</p>
             <p className="text-lg font-bold">{fmt(totals.billed)}</p>
           </div>
           <div className="bg-white border rounded-md p-3">
@@ -360,16 +377,17 @@ function ReportInner() {
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Taxable</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">GST</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Balance</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {(clientsLoading || salesLoading) ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading...</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading...</td></tr>
               ) : !clientId ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">Select a client to see their monthly bills.</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">Select a client to see their bills.</td></tr>
               ) : monthSales.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-gray-400">No bills for {client?.company || client?.name} in {periodLabel}.</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-gray-400">{isPending ? `No pending bills for ${client?.company || client?.name}.` : `No bills for ${client?.company || client?.name} in ${periodLabel}.`}</td></tr>
               ) : monthSales.map((s: any) => (
                 <tr key={s.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm">{new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
@@ -378,6 +396,7 @@ function ReportInner() {
                   <td className="px-4 py-3 text-sm text-right">{fmt((s.subtotal || 0) - (s.discount_amount || 0))}</td>
                   <td className="px-4 py-3 text-sm text-right">{fmt(s.gst_amount || 0)}</td>
                   <td className="px-4 py-3 text-sm text-right font-semibold">{fmt(s.total_amount || 0)}</td>
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-amber-600">{(s.balance_due || 0) > 0 ? fmt(s.balance_due) : '—'}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`px-2 py-0.5 rounded-full text-xs ${s.payment_status === 'paid' ? 'bg-green-50 text-green-700' : s.payment_status === 'partial' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>
                       {s.payment_status === 'paid' ? 'Paid' : s.payment_status === 'partial' ? 'Partial' : 'Due'}
@@ -393,6 +412,7 @@ function ReportInner() {
                   <td className="px-4 py-3 text-sm text-right">{fmt(totals.taxable)}</td>
                   <td className="px-4 py-3 text-sm text-right">{fmt(totals.gst)}</td>
                   <td className="px-4 py-3 text-sm text-right">{fmt(totals.billed)}</td>
+                  <td className="px-4 py-3 text-sm text-right text-amber-600">{fmt(totals.outstanding)}</td>
                   <td className="px-4 py-3"></td>
                 </tr>
               </tfoot>
