@@ -200,6 +200,7 @@ const menuItems: MenuItem[] = [
       { name: 'Receive money (no invoice)', href: '/admin/finance/receive-money' },
       { name: 'Sales (new)', href: '/admin/finance/sales-new' },
       { name: 'Purchases (new)', href: '/admin/finance/purchases-new' },
+      { name: 'Banking (new)', href: '/admin/finance/banking-new' },
     ]
   },
   {
