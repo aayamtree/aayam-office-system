@@ -340,6 +340,18 @@ function InvoicesTrialInner() {
     window.history.replaceState({}, '', window.location.pathname);
   }, [invoices, invoicesLoading, openedFromUrl]);
 
+  const [newForDone, setNewForDone] = useState(false);
+  useEffect(() => {
+    if (newForDone || !clients?.length) return;
+    const cid = new URLSearchParams(window.location.search).get('newFor');
+    if (!cid) return;
+    setNewForDone(true);
+    window.history.replaceState({}, '', window.location.pathname);
+    handleAddNew();
+    pickClient(cid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clients, newForDone]);
+
   const handleReceiptTelegram = async (payment: any) => {
     if (!selectedInvoice) return;
     try {
@@ -790,6 +802,23 @@ function InvoicesTrialInner() {
         totalAmount: sub + tax
       };
     });
+  };
+
+  // Pick a client: sets supply type from state, and the due date from the customer's default terms (Trial 2.7)
+  const pickClient = (cid: string) => {
+    const c: any = clients.find(cl => cl.id === cid);
+    // Auto: Gujarat (home state) => CGST+SGST (intra), any other state => IGST (inter). Still editable below.
+    const st = (c?.state || '').trim().toLowerCase();
+    setFormData(prev => {
+      const supplyType = st ? (st === 'gujarat' ? 'intra_state' : 'inter_state') : prev.supplyType;
+      let dueDate = prev.dueDate;
+      const dt = c?.default_terms_days;
+      if (dt !== null && dt !== undefined && prev.invoiceDate) {
+        const d = new Date(prev.invoiceDate + 'T00:00:00'); d.setDate(d.getDate() + Number(dt)); dueDate = d.toLocaleDateString('en-CA');
+      }
+      return { ...prev, clientId: cid, jobId: '', supplyType, dueDate };
+    });
+    loadClientShipping(cid);
   };
 
   const handleAddNew = () => {
@@ -1585,15 +1614,7 @@ function InvoicesTrialInner() {
                       <select
                         required
                         value={formData.clientId}
-                        onChange={(e) => {
-                          const cid = e.target.value;
-                          const c = clients.find(cl => cl.id === cid);
-                          // Auto: Gujarat (home state) => CGST+SGST (intra), any other state => IGST (inter). Still editable below.
-                          const st = (c?.state || '').trim().toLowerCase();
-                          const supplyType = st ? (st === 'gujarat' ? 'intra_state' : 'inter_state') : formData.supplyType;
-                          setFormData({ ...formData, clientId: cid, jobId: '', supplyType });
-                          loadClientShipping(cid);
-                        }}
+                        onChange={(e) => pickClient(e.target.value)}
                         className="flex-1 px-2 py-2 md:px-4 md:py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 bg-white text-sm md:text-base"
                       >
                         <option value="">Select Client</option>

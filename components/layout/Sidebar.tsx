@@ -198,6 +198,7 @@ const menuItems: MenuItem[] = [
       { name: 'Finance Settings', href: '/admin/settings/finance' },
       { name: 'Invoices (new)', href: '/admin/finance/invoices-new' },
       { name: 'Receive money (no invoice)', href: '/admin/finance/receive-money' },
+      { name: 'Sales (new)', href: '/admin/finance/sales-new' },
     ]
   },
   {
