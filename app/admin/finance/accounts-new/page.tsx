@@ -148,11 +148,17 @@ function Register({ accts, initial }: { accts: Acct[]; initial: string }) {
   const [from, setFrom] = useState(''); const [to, setTo] = useState('');
   const [lines, setLines] = useState<any[]>([]); const [busy, setBusy] = useState(false);
   const acct = accts.find(a => a.id === accId);
+  const [recIds, setRecIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const bank = accts.find(a => a.id === accId)?.linked_bank_account_id;
+    if (!bank) { setRecIds(new Set()); return; }
+    fetchAll((x, y) => supabase.from('bank_transactions').select('id').eq('bank_account_id', bank).not('reconciliation_id', 'is', null).range(x, y)).then(d => setRecIds(new Set(d.map((r: any) => r.id)))).catch(() => setRecIds(new Set()));
+  }, [accId, accts]);
 
   useEffect(() => {
     if (!accId) { setLines([]); return; }
     setBusy(true);
-    fetchAll((x, y) => supabase.from('journal_entry_lines').select('debit_amount, credit_amount, description, journal_entries!inner(entry_date, entry_number, description, source_type, is_posted)').eq('account_id', accId).range(x, y))
+    fetchAll((x, y) => supabase.from('journal_entry_lines').select('debit_amount, credit_amount, description, journal_entries!inner(entry_date, entry_number, description, source_type, source_id, is_posted)').eq('account_id', accId).range(x, y))
       .then(d => setLines(d.filter((l: any) => l.journal_entries?.is_posted !== false))).catch(e => toast.error(e.message)).finally(() => setBusy(false));
   }, [accId]);
 
@@ -188,15 +194,16 @@ function Register({ accts, initial }: { accts: Acct[]; initial: string }) {
       {busy ? <Loader2 className="animate-spin" /> : acct && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-gray-500 uppercase"><tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Entry</th><th className="px-3 py-2">Description</th><th className={th}>Debit</th><th className={th}>Credit</th><th className={th}>Balance</th></tr></thead>
+            <thead className="text-left text-xs text-gray-500 uppercase"><tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Entry</th><th className="px-3 py-2" title="R = reconciled with the bank statement">R</th><th className="px-3 py-2">Description</th><th className={th}>Debit</th><th className={th}>Credit</th><th className={th}>Balance</th></tr></thead>
             <tbody>
-              {from && <tr className="bg-gray-50"><td className="px-3 py-2" colSpan={5}>Opening balance on {from}</td><td className={th}>{inr(opening)}</td></tr>}
+              {from && <tr className="bg-gray-50"><td className="px-3 py-2" colSpan={6}>Opening balance on {from}</td><td className={th}>{inr(opening)}</td></tr>}
               {rows.map((r, i) => (
                 <tr key={i} className="border-t border-gray-100"><td className="px-3 py-2 whitespace-nowrap">{r.journal_entries.entry_date}</td><td className="px-3 py-2">{r.journal_entries.entry_number}</td>
+                  <td className="px-3 py-2 font-semibold text-green-700">{recIds.has(r.journal_entries.source_id) ? 'R' : ''}</td>
                   <td className="px-3 py-2">{r.description || r.journal_entries.description}<span className="block text-[11px] text-gray-400">{r.journal_entries.source_type}</span></td>
                   <td className={th}>{Number(r.debit_amount) ? inr(Number(r.debit_amount)) : ''}</td><td className={th}>{Number(r.credit_amount) ? inr(Number(r.credit_amount)) : ''}</td><td className={th}>{inr(r.run)}</td></tr>))}
-              {rows.length === 0 && <tr><td colSpan={6} className="p-4 text-center text-gray-400">No entries in this period.</td></tr>}
-              <tr className="border-t-2 border-gray-200 font-semibold"><td className="px-3 py-2" colSpan={3}>Totals</td><td className={th}>{inr(totals.d)}</td><td className={th}>{inr(totals.c)}</td><td className={th}>{inr(rows.length ? rows[rows.length - 1].run : opening)}</td></tr>
+              {rows.length === 0 && <tr><td colSpan={7} className="p-4 text-center text-gray-400">No entries in this period.</td></tr>}
+              <tr className="border-t-2 border-gray-200 font-semibold"><td className="px-3 py-2" colSpan={4}>Totals</td><td className={th}>{inr(totals.d)}</td><td className={th}>{inr(totals.c)}</td><td className={th}>{inr(rows.length ? rows[rows.length - 1].run : opening)}</td></tr>
             </tbody>
           </table>
         </div>)}
