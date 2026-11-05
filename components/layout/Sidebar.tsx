@@ -202,6 +202,7 @@ const menuItems: MenuItem[] = [
       { name: 'Purchases (new)', href: '/admin/finance/purchases-new' },
       { name: 'Banking (new)', href: '/admin/finance/banking-new' },
       { name: 'Accounts (new)', href: '/admin/finance/accounts-new' },
+      { name: 'Reports (new)', href: '/admin/finance/reports-new' },
     ]
   },
   {
