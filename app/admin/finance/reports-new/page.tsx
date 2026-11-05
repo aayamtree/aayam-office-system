@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import AdminOnlyGate from '@/components/finance/AdminOnlyGate';
 import { formatInr, paise } from '@/lib/invoice-list-tools';
 
-type Line = { account_id: string; debit_amount: number | null; credit_amount: number | null; description: string | null; journal_entries: { entry_date: string; entry_number: string; description: string | null; source_type: string | null; is_posted: boolean | null } };
+type Line = { journal_entry_id?: string; account_id: string; debit_amount: number | null; credit_amount: number | null; description: string | null; journal_entries: { entry_date: string; entry_number: string; description: string | null; source_type: string | null; is_posted: boolean | null } };
 type Acct = { id: string; code: string; name: string; account_type: string; sub_type: string | null };
 const inr = (n: number) => formatInr(paise(n));
 const sel = 'px-2 py-2 border border-gray-200 rounded-md text-sm bg-white';
@@ -36,6 +36,9 @@ function Inner() {
   const [to, setTo] = useState(iso(today));
   const [split, setSplit] = useState<'none' | 'month' | 'quarter'>('none');
   const [compare, setCompare] = useState(false);
+  const [basis, setBasis] = useState<'accrual' | 'cash'>('accrual');
+  const [useZoho, setUseZoho] = useState(true);
+  const [extra, setExtra] = useState<{ inv: any[]; pay: any[]; adv: any[]; bills: any[]; vpay: any[]; zoho: any[]; invNos: Set<string>; billNos: Set<string> }>({ inv: [], pay: [], adv: [], bills: [], vpay: [], zoho: [], invNos: new Set(), billNos: new Set() });
 
   useEffect(() => {
     (async () => {
@@ -44,12 +47,26 @@ function Inner() {
         setAccts((a.data || []) as Acct[]);
         const out: Line[] = [];
         for (let f = 0; f < 100000; f += 1000) {
-          const { data, error } = await supabase.from('journal_entry_lines').select('account_id, debit_amount, credit_amount, description, journal_entries!inner(entry_date, entry_number, description, source_type, is_posted)').range(f, f + 999);
+          const { data, error } = await supabase.from('journal_entry_lines').select('journal_entry_id, account_id, debit_amount, credit_amount, description, journal_entries!inner(entry_date, entry_number, description, source_type, is_posted)').range(f, f + 999);
           if (error) throw new Error(error.message);
           out.push(...((data || []) as any[]));
           if (!data || data.length < 1000) break;
         }
         setLines(out.filter(l => l.journal_entries.is_posted !== false));
+        const all = async (table: string, cols: string, filter?: (q: any) => any) => {
+          const o: any[] = [];
+          for (let f = 0; f < 50000; f += 1000) { let q: any = supabase.from(table).select(cols); if (filter) q = filter(q); const { data, error } = await q.range(f, f + 999); if (error) throw new Error(error.message); o.push(...(data || [])); if (!data || data.length < 1000) break; }
+          return o;
+        };
+        const [inv, pay, adv, bills, vpay, zoho] = await Promise.all([
+          all('invoices', 'id, invoice_number, total_amount, journal_entry_id, is_void'),
+          all('payments_received', 'invoice_id, amount, payment_date'),
+          all('advance_applications', 'invoice_id, amount, applied_on'),
+          all('purchase_bills', 'id, bill_number, vendor_bill_number, total_amount, journal_entry_id, is_void'),
+          all('vendor_payments', 'purchase_bill_id, amount, payment_date'),
+          all('zoho_documents', 'doc_type, doc_number, doc_date, status, sub_total, tax_total, total', q => q.in('doc_type', ['invoice', 'bill'])),
+        ]);
+        setExtra({ inv, pay, adv, bills, vpay, zoho, invNos: new Set(inv.map((x: any) => String(x.invoice_number).trim().toLowerCase())), billNos: new Set(bills.flatMap((x: any) => [x.vendor_bill_number, x.bill_number]).filter(Boolean).map((x: any) => String(x).trim().toLowerCase())) });
       } catch (e: any) { toast.error(e.message || 'Could not load the ledger'); }
       setLoading(false);
     })();
@@ -106,16 +123,41 @@ function Inner() {
     }
     return out;
   }, [from, to, split]);
+  // journal lines of each invoice / bill, for the cash basis
+  const jl = useMemo(() => { const m = new Map<string, Line[]>(); lines.forEach(l => { if (!l.journal_entry_id) return; const a = m.get(l.journal_entry_id) || []; a.push(l); m.set(l.journal_entry_id, a); }); return m; }, [lines]);
+  // Cash basis: income counts when the customer pays and expense when we pay, in proportion to the amount paid.
+  const periodMap = (a: string, b: string) => {
+    if (basis === 'accrual') return sumBy(l => inRange(l, a, b));
+    const m = sumBy(l => inRange(l, a, b) && l.journal_entries.source_type !== 'invoice_accrual' && l.journal_entries.source_type !== 'bill_accrual');
+    const add = (jid: string | null, frac: number, type: string) => { if (!jid || !frac) return; (jl.get(jid) || []).forEach(l => { if (byId.get(l.account_id)?.account_type !== type) return; const x = m.get(l.account_id) || { d: 0, c: 0 }; x.d += frac * Number(l.debit_amount || 0); x.c += frac * Number(l.credit_amount || 0); m.set(l.account_id, x); }); };
+    const invById = new Map(extra.inv.map((x: any) => [x.id, x])); const billById = new Map(extra.bills.map((x: any) => [x.id, x]));
+    [...extra.pay.map((p: any) => ({ id: p.invoice_id, amt: p.amount, d: p.payment_date })), ...extra.adv.map((p: any) => ({ id: p.invoice_id, amt: p.amount, d: p.applied_on }))].forEach(p => {
+      const i: any = p.id && invById.get(p.id); if (!i || i.is_void || !p.d || p.d < a || p.d > b || !Number(i.total_amount)) return; add(i.journal_entry_id, Number(p.amt) / Number(i.total_amount), 'income'); });
+    extra.vpay.forEach((p: any) => { const bl: any = p.purchase_bill_id && billById.get(p.purchase_bill_id); if (!bl || bl.is_void || !p.payment_date || p.payment_date < a || p.payment_date > b || !Number(bl.total_amount)) return; add(bl.journal_entry_id, Number(p.amount) / Number(bl.total_amount), 'expense'); });
+    return m;
+  };
+  // Old Zoho invoices and bills (ex-GST), not already entered in this app. Accrual only: Zoho gives no payment dates.
+  const zohoNet = (type: 'invoice' | 'bill', a: string, b: string) => {
+    if (!useZoho || basis === 'cash') return 0;
+    const known = type === 'invoice' ? extra.invNos : extra.billNos;
+    return extra.zoho.filter((z: any) => z.doc_type === type && z.doc_date >= a && z.doc_date <= b && !['void', 'draft'].includes(String(z.status || '').toLowerCase()) && !known.has(String(z.doc_number).trim().toLowerCase()))
+      .reduce((s: number, z: any) => s + (z.sub_total != null ? Number(z.sub_total) : z.total != null ? Number(z.total) - Number(z.tax_total || 0) : 0), 0);
+  };
   const plRows = useMemo(() => {
-    const cols = periods.map(p => sumBy(l => inRange(l, p.a, p.b)));
-    const prev = compare ? periods.map(p => sumBy(l => inRange(l, shiftYear(p.a), shiftYear(p.b)))) : [];
+    const cols = periods.map(p => periodMap(p.a, p.b));
+    const prev = compare ? periods.map(p => periodMap(shiftYear(p.a), shiftYear(p.b))) : [];
     const val = (m: Map<string, { d: number; c: number }>, a: Acct) => { const x = m.get(a.id) || { d: 0, c: 0 }; return a.account_type === 'income' ? x.c - x.d : x.d - x.c; };
     const mk = (type: string) => accts.filter(a => a.account_type === type).map(a => ({ a, v: cols.map(c => val(c, a)), p: prev.map(c => val(c, a)) })).filter(r => r.v.some(x => x) || r.p.some(x => x));
-    const inc = mk('income'), exp = mk('expense');
-    const tot = (rows: typeof inc, k: 'v' | 'p') => periods.map((_, i) => rows.reduce((s, r) => s + (r[k][i] || 0), 0));
+    type PlRow = { a: { id: string; name: string }; v: number[]; p: number[] };
+    const inc: PlRow[] = mk('income'), exp: PlRow[] = mk('expense');
+    const zi = periods.map(p => zohoNet('invoice', p.a, p.b)), zip = compare ? periods.map(p => zohoNet('invoice', shiftYear(p.a), shiftYear(p.b))) : [];
+    const ze = periods.map(p => zohoNet('bill', p.a, p.b)), zep = compare ? periods.map(p => zohoNet('bill', shiftYear(p.a), shiftYear(p.b))) : [];
+    if (zi.some(x => x) || zip.some(x => x)) inc.push({ a: { id: 'zoho-inv', name: 'Sales (old Zoho history, ex-GST)' }, v: zi, p: zip });
+    if (ze.some(x => x) || zep.some(x => x)) exp.push({ a: { id: 'zoho-bill', name: 'Purchases (old Zoho history, ex-GST)' }, v: ze, p: zep });
+    const tot = (rows: PlRow[], k: 'v' | 'p') => periods.map((_, i) => rows.reduce((s, r) => s + (r[k][i] || 0), 0));
     return { inc, exp, incT: tot(inc, 'v'), expT: tot(exp, 'v'), incP: tot(inc, 'p'), expP: tot(exp, 'p') };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, accts, periods, compare]);
+  }, [lines, accts, periods, compare, basis, useZoho, extra]);
 
   // ── Cash flow: movement on bank / cash accounts by month
   const cf = useMemo(() => {
@@ -146,7 +188,7 @@ function Inner() {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <div><h1 className="text-xl font-bold">Reports (new)</h1>
-        <p className="text-sm text-gray-500">Built from your ledger of journal entries. Old Zoho history lives on the Sales (new) and Purchases (new) screens and is not in these ledger reports. Who owes us and vendor balances are on those screens too.</p></div>
+        <p className="text-sm text-gray-500">Built from your ledger of journal entries. The profit and loss can also add old Zoho history (as separate rows). The other reports are the app’s own books only. Customer and vendor balances are on the Open items tab.</p></div>
       <div className="flex gap-2 flex-wrap">
         {([['tb', 'Trial balance'], ['pl', 'Profit & loss'], ['cf', 'Cash flow'], ['gl', 'General ledger'], ['journal', 'Journal'], ['txns', 'Transaction list'], ['open', 'Open items'], ['check', 'Cross-check']] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-3 py-1.5 rounded-md text-sm font-semibold border ${tab === k ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}>{l}</button>))}
@@ -197,11 +239,13 @@ function Inner() {
         {tab === 'pl' && (<div className="space-y-2">
           <div className="flex gap-2 items-center flex-wrap">
             <select value={split} onChange={e => setSplit(e.target.value as any)} className={sel}><option value="none">Total for the period</option><option value="month">By month</option><option value="quarter">By quarter</option></select>
+            <select value={basis} onChange={e => setBasis(e.target.value as any)} className={sel}><option value="accrual">Accrual (when invoiced / billed)</option><option value="cash">Cash (when paid)</option></select>
+            <label className="text-sm"><input type="checkbox" checked={useZoho} onChange={e => setUseZoho(e.target.checked)} disabled={basis === 'cash'} /> Include old Zoho history</label>
             <label className="text-sm"><input type="checkbox" checked={compare} onChange={e => setCompare(e.target.checked)} /> Compare with the same period last year</label>
             <button onClick={() => downloadCsv('profit-and-loss.csv', [['Account', ...periods.map(p => p.label)], ...plRows.inc.map(r => [r.a.name, ...r.v.map(x => x.toFixed(2))]), ['Total income', ...plRows.incT.map(x => x.toFixed(2))], ...plRows.exp.map(r => [r.a.name, ...r.v.map(x => x.toFixed(2))]), ['Total expenses', ...plRows.expT.map(x => x.toFixed(2))], ['Net profit', ...plRows.incT.map((x, i) => (x - plRows.expT[i]).toFixed(2))]])} className={sel}>CSV</button>
             <button onClick={() => window.print()} className={sel}>Print</button>
           </div>
-          <p className="text-xs text-gray-500">Accrual basis: income counts when invoiced, expenses when billed or paid out.</p>
+          <p className="text-xs text-gray-500">{basis === 'accrual' ? 'Accrual: income counts when invoiced, expenses when billed. Old Zoho invoices and bills are added as separate rows (GST left out), and none already entered here are counted twice.' : 'Cash: income counts when the customer pays, in proportion to the amount paid; expenses when we pay the bill. Old Zoho history is left out because Zoho gives no payment dates.'}</p>
           <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto"><table className="w-full text-sm">
             <thead className="text-left text-xs text-gray-500 uppercase"><tr><th className="px-3 py-2">Account</th>{periods.map(p => <th key={p.label} className={th}>{p.label}</th>)}{compare && <th className={th}>Last year</th>}</tr></thead>
             <tbody>
