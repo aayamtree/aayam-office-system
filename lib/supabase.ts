@@ -22,11 +22,32 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * built by hand skips the net, and the page it powers goes back to failing
  * quietly. scripts/audit-error-handling.js fails the build on direct use.
  */
+/**
+ * Trial screens work on a TEST COPY of the live data (schema "trial", same project).
+ * PostgREST picks the schema from these two headers, so ONE client serves both: on the Trial
+ * routes below every database call goes to the copy, everywhere else it goes to the live tables.
+ */
+const TRIAL_ROUTES = /^\/admin\/finance\/(receive-money|invoices-new|sales-new|purchases-new|banking-new|accounts-new|reports-new)(\/|$)/;
+export const isTrialRoute = (path: string) => TRIAL_ROUTES.test(path);
+
+const trialAwareFetch: typeof fetch = (input, init) => {
+  if (typeof window !== 'undefined' && isTrialRoute(window.location.pathname)) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : '';
+    if (url.includes('/rest/v1/')) {
+      const headers = new Headers(init?.headers);
+      headers.set('Accept-Profile', 'trial');
+      headers.set('Content-Profile', 'trial');
+      return auditedFetch(input, { ...init, headers });
+    }
+  }
+  return auditedFetch(input, init);
+};
+
 function buildClient() {
   return createBrowserClient(
     supabaseUrl || 'https://placeholder.supabase.co',
     supabaseAnonKey || 'placeholder-key',
-    { global: { fetch: auditedFetch } },
+    { global: { fetch: trialAwareFetch } },
   );
 }
 

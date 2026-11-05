@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminOnlyGate({ children }: { children: React.ReactNode }) {
+export default function AdminOnlyGate({ children, noBanner = false }: { children: React.ReactNode; noBanner?: boolean }) {
     const [state, setState] = useState<'checking' | 'admin' | 'denied'>('checking');
 
     useEffect(() => {
@@ -28,5 +28,14 @@ export default function AdminOnlyGate({ children }: { children: React.ReactNode 
             </div>
         );
     }
-    return <>{children}</>;
+    return (
+        <>
+            {!noBanner && (
+                <div className="bg-red-600 text-white text-xs font-semibold text-center px-3 py-1.5">
+                    TEST COPY of your live data. Nothing you do on this screen touches your real books. Refresh the copy from the Test copy page.
+                </div>
+            )}
+            {children}
+        </>
+    );
 }
