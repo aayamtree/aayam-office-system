@@ -1791,16 +1791,19 @@ function InvoicesTrialInner() {
                       <input
                         type="number"
                         value={formData.paidAmount || ''}
-                        onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        readOnly
+                        disabled
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Locked. Money received is added only with <b>Record Payment</b>, so each payment keeps its date, mode and account.</p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">Status</label>
                       <select
                         value={formData.status}
+                        disabled
                         onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
                       >
                         <option value="pending">Pending</option>
                         <option value="partial">Partial</option>
