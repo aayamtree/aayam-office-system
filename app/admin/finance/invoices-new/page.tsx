@@ -202,6 +202,7 @@ function InvoicesTrialInner() {
   useEffect(() => {
     if (showViewModal && selectedInvoice) {
       loadInvoicePayments(selectedInvoice.id);
+      loadAttachments(selectedInvoice.id);
     } else {
       setInvoicePayments([]);
     }
@@ -309,6 +310,7 @@ function InvoicesTrialInner() {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [discountTouched, setDiscountTouched] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [internalNote, setInternalNote] = useState('');
   const [savedAttachments, setSavedAttachments] = useState<any[]>([]);
   const loadAttachments = async (invoiceId: string) => {
     const { data } = await supabase.from('invoice_attachments').select('*').eq('invoice_id', invoiceId).order('created_at');
@@ -698,7 +700,7 @@ function InvoicesTrialInner() {
       jobId: '',
     });
     setTermId(''); setDiscountMode('percent'); setDiscountValue(0); setDiscountTouched(false);
-    setPendingFiles([]); setSavedAttachments([]);
+    setPendingFiles([]); setSavedAttachments([]); setInternalNote('');
     setClientShipAddrs([]); setSelectedShipId(''); setShowNewShip(false);
     setShipping({ ...blankShip });
     setIsEditing(false);
@@ -727,7 +729,7 @@ function InvoicesTrialInner() {
       jobId: inv.job_id || '',
     });
     setTermId(''); setDiscountMode('amount'); setDiscountValue(Number(inv.discount_amount) || 0); setDiscountTouched(false);
-    setPendingFiles([]); loadAttachments(inv.id);
+    setPendingFiles([]); loadAttachments(inv.id); setInternalNote((inv as any).internal_note || '');
     // Restore the shipping snapshot saved on this invoice
     loadClientShipping(inv.client_id || '', {
       label: (inv as any).shipping_label || '',
@@ -766,6 +768,7 @@ function InvoicesTrialInner() {
         amount_paid: formData.paidAmount,
         balance_due: formData.totalAmount - formData.paidAmount,
         notes: formData.notes,
+        internal_note: internalNote.trim() || null,
         // Keep invoices.job_id pointing at the first job-linked line (backward compat
         // with profitability/tracking). Full per-line linkage lives on invoice_items.job_id.
         job_id: (formData.items.find(it => (it as any).job_id)?.job_id) || undefined,
@@ -1827,6 +1830,18 @@ function InvoicesTrialInner() {
                   />
                 </div>
 
+                {/* Trial: internal note — never printed on the PDF */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Internal note <span className="font-normal text-gray-500">(not printed on the PDF)</span></label>
+                  <textarea
+                    value={internalNote}
+                    onChange={(e) => setInternalNote(e.target.value)}
+                    rows={2}
+                    placeholder="For your team only, e.g. Rest ₹15,000 will come by UPI — screenshot attached"
+                    className="w-full px-3 py-2 border border-amber-200 bg-amber-50/40 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+
                 {/* Trial 2.2: attachments */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Attachments</label>
@@ -2012,6 +2027,28 @@ function InvoicesTrialInner() {
                     </span>
                   </div>
                 </div>
+
+                {/* Internal note + attachments (not on the PDF) */}
+                {((selectedInvoice as any).internal_note || savedAttachments.length > 0) && (
+                  <div className="p-3 border border-amber-200 bg-amber-50/50 rounded-md space-y-2">
+                    {(selectedInvoice as any).internal_note && (
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Internal note (not printed)</p>
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap">{(selectedInvoice as any).internal_note}</p>
+                      </div>
+                    )}
+                    {savedAttachments.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Attachments</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {savedAttachments.map(a => (
+                            <a key={a.id} href={a.file_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-blue-700 hover:underline border border-gray-200 bg-white rounded-md px-2 py-1"><PaperclipIcon className="w-3.5 h-3.5" />{a.file_name}</a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payments Received + per-payment receipts */}
                 <div>
