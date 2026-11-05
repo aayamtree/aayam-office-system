@@ -445,7 +445,7 @@ export default function VendorPurchasesPage() {
                     <select required value={form.vendorId} onChange={e => setForm(p => ({ ...p, vendorId: e.target.value }))}
                       className="w-full px-3 py-2 border rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20">
                       <option value="">Select a Vendor</option>
-                      {(vendors || []).map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      {(vendors || []).map(v => <option key={v.id} value={v.id}>{v.company ? `${v.company} (${v.name})` : v.name}</option>)}
                     </select>
                   </div>
                 </div>

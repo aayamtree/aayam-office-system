@@ -26,7 +26,8 @@ const downloadCsv = (name: string, rows: (string | number)[][]) => {
 const fyStart = (d: Date) => `${d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1}-04-01`;
 
 function Inner() {
-  const [tab, setTab] = useState<'tb' | 'pl' | 'cf' | 'journal' | 'check'>('tb');
+  const [tab, setTab] = useState<'tb' | 'pl' | 'cf' | 'journal' | 'gl' | 'txns' | 'open' | 'check'>('tb');
+  const [glAcc, setGlAcc] = useState(''); const [find, setFind] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
   const [accts, setAccts] = useState<Acct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,11 +148,42 @@ function Inner() {
       <div><h1 className="text-xl font-bold">Reports (new)</h1>
         <p className="text-sm text-gray-500">Built from your ledger of journal entries. Old Zoho history lives on the Sales (new) and Purchases (new) screens and is not in these ledger reports. Who owes us and vendor balances are on those screens too.</p></div>
       <div className="flex gap-2 flex-wrap">
-        {([['tb', 'Trial balance'], ['pl', 'Profit & loss'], ['cf', 'Cash flow'], ['journal', 'Journal'], ['check', 'Cross-check']] as const).map(([k, l]) => (
+        {([['tb', 'Trial balance'], ['pl', 'Profit & loss'], ['cf', 'Cash flow'], ['gl', 'General ledger'], ['journal', 'Journal'], ['txns', 'Transaction list'], ['open', 'Open items'], ['check', 'Cross-check']] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-3 py-1.5 rounded-md text-sm font-semibold border ${tab === k ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}>{l}</button>))}
       </div>
       {loading ? <div className="flex justify-center py-16"><Loader2 className="animate-spin" /></div> : <>
-        {tab !== 'check' && Filters}
+        {tab !== 'check' && tab !== 'open' && Filters}
+
+        {tab === 'gl' && (() => {
+          const a = byId.get(glAcc); const sign = a && (a.account_type === 'asset' || a.account_type === 'expense') ? 1 : -1;
+          const mine = lines.filter(l => l.account_id === glAcc).sort((x, y) => (x.journal_entries.entry_date + x.journal_entries.entry_number).localeCompare(y.journal_entries.entry_date + y.journal_entries.entry_number));
+          let run = 0, open = 0; const rows: any[] = [];
+          mine.forEach(l => { const n = sign * (Number(l.debit_amount || 0) - Number(l.credit_amount || 0)); const d = l.journal_entries.entry_date; if (d < from) { open += n; run += n; return; } if (d > to) return; run += n; rows.push({ l, run }); });
+          return (<div className="space-y-2">
+            <div className="flex gap-2"><select value={glAcc} onChange={e => setGlAcc(e.target.value)} className={sel + ' min-w-[240px]'}><option value="">Choose an account…</option>{accts.map(x => <option key={x.id} value={x.id}>{x.code} — {x.name}</option>)}</select>
+              {a && <button onClick={() => downloadCsv(`ledger-${a.code}.csv`, [['Date', 'Entry', 'Description', 'Debit', 'Credit', 'Balance'], ...rows.map(r => [r.l.journal_entries.entry_date, r.l.journal_entries.entry_number, r.l.description || r.l.journal_entries.description || '', Number(r.l.debit_amount || 0).toFixed(2), Number(r.l.credit_amount || 0).toFixed(2), r.run.toFixed(2)])])} className={sel}>CSV</button>}<button onClick={() => window.print()} className={sel}>Print</button></div>
+            {a && <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto"><table className="w-full text-sm">
+              <thead className="text-left text-xs text-gray-500 uppercase"><tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Entry</th><th className="px-3 py-2">Description</th><th className={th}>Debit</th><th className={th}>Credit</th><th className={th}>Balance</th></tr></thead>
+              <tbody><tr className="bg-gray-50"><td className="px-3 py-2" colSpan={5}>Opening balance on {from}</td><td className={th}>{inr(open)}</td></tr>
+                {rows.map((r, i) => <tr key={i} className="border-t border-gray-100"><td className="px-3 py-2 whitespace-nowrap">{r.l.journal_entries.entry_date}</td><td className="px-3 py-2">{r.l.journal_entries.entry_number}</td><td className="px-3 py-2">{r.l.description || r.l.journal_entries.description}</td><td className={th}>{Number(r.l.debit_amount) ? inr(Number(r.l.debit_amount)) : ''}</td><td className={th}>{Number(r.l.credit_amount) ? inr(Number(r.l.credit_amount)) : ''}</td><td className={th}>{inr(r.run)}</td></tr>)}
+                <tr className="border-t-2 border-gray-200 font-semibold"><td className="px-3 py-2" colSpan={5}>Closing balance on {to}</td><td className={th}>{inr(rows.length ? rows[rows.length - 1].run : open)}</td></tr></tbody></table></div>}
+          </div>);
+        })()}
+
+        {tab === 'txns' && (() => {
+          const rows = lines.filter(l => inRange(l, from, to) && (!find || ((l.description || '') + ' ' + (l.journal_entries.description || '') + ' ' + (byId.get(l.account_id)?.name || '') + ' ' + l.journal_entries.entry_number).toLowerCase().includes(find.toLowerCase())))
+            .sort((x, y) => (y.journal_entries.entry_date + y.journal_entries.entry_number).localeCompare(x.journal_entries.entry_date + x.journal_entries.entry_number));
+          return (<div className="space-y-2">
+            <div className="flex gap-2"><input placeholder="Search" value={find} onChange={e => setFind(e.target.value)} className={sel} />
+              <button onClick={() => downloadCsv('transaction-list.csv', [['Date', 'Entry', 'Source', 'Account', 'Description', 'Debit', 'Credit'], ...rows.map(l => [l.journal_entries.entry_date, l.journal_entries.entry_number, l.journal_entries.source_type || '', byId.get(l.account_id)?.name || '', l.description || l.journal_entries.description || '', Number(l.debit_amount || 0).toFixed(2), Number(l.credit_amount || 0).toFixed(2)])])} className={sel}>CSV</button></div>
+            <p className="text-xs text-gray-500">{rows.length} lines</p>
+            <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto max-h-[600px]"><table className="w-full text-sm">
+              <thead className="text-left text-xs text-gray-500 uppercase sticky top-0 bg-white"><tr><th className="px-3 py-2">Date</th><th className="px-3 py-2">Entry</th><th className="px-3 py-2">Account</th><th className="px-3 py-2">Description</th><th className={th}>Debit</th><th className={th}>Credit</th></tr></thead>
+              <tbody>{rows.slice(0, 500).map((l, i) => <tr key={i} className="border-t border-gray-100"><td className="px-3 py-1.5 whitespace-nowrap">{l.journal_entries.entry_date}</td><td className="px-3 py-1.5">{l.journal_entries.entry_number}</td><td className="px-3 py-1.5">{byId.get(l.account_id)?.name}</td><td className="px-3 py-1.5">{l.description || l.journal_entries.description}</td><td className={th}>{Number(l.debit_amount) ? inr(Number(l.debit_amount)) : ''}</td><td className={th}>{Number(l.credit_amount) ? inr(Number(l.credit_amount)) : ''}</td></tr>)}</tbody></table></div>
+            {rows.length > 500 && <p className="text-xs text-gray-400">First 500 shown. Use the CSV for all.</p>}</div>);
+        })()}
+
+        {tab === 'open' && <OpenItems />}
 
         {tab === 'tb' && (<div className="space-y-2">
           <div className="flex gap-2"><button onClick={() => downloadCsv('trial-balance.csv', [['Code', 'Account', 'Debit', 'Credit'], ...tb.map(r => [r.a.code, r.a.name, r.dr.toFixed(2), r.cr.toFixed(2)]), ['', 'Total', tbT.dr.toFixed(2), tbT.cr.toFixed(2)]])} className={sel}>CSV</button><button onClick={() => window.print()} className={sel}>Print</button></div>
@@ -205,6 +237,42 @@ function Inner() {
       </>}
     </div>
   );
+}
+
+// ───────── 6.5 open items: customer balances, open invoices, vendor balances, unpaid bills (with days past due) ─────────
+function OpenItems() {
+  const [view, setView] = useState<'cust' | 'inv' | 'vend' | 'bills'>('inv');
+  const [inv, setInv] = useState<any[]>([]); const [bills, setBills] = useState<any[]>([]); const [adv, setAdv] = useState<Record<string, number>>({});
+  const [busy, setBusy] = useState(true);
+  useEffect(() => {
+    (async () => {
+      const [i, b, a] = await Promise.all([
+        supabase.from('invoices').select('id, invoice_number, invoice_date, due_date, total_amount, balance_due, client_id, clients(company, name)').eq('is_void', false).gt('balance_due', 0.005),
+        supabase.from('purchase_bills').select('id, bill_number, vendor_bill_number, bill_date, due_date, total_amount, amount_paid, vendor_id, vendors(company, name)').eq('is_void', false).neq('payment_status', 'paid'),
+        supabase.from('payments_received').select('client_id, amount').eq('source', 'advance'),
+      ]);
+      setInv(i.data || []); setBills((b.data || []).filter((x: any) => Number(x.total_amount) - Number(x.amount_paid || 0) > 0.005));
+      const m: Record<string, number> = {}; (a.data || []).forEach((x: any) => { m[x.client_id] = (m[x.client_id] || 0) + Number(x.amount); }); setAdv(m);
+      setBusy(false);
+    })();
+  }, []);
+  const today = iso(new Date());
+  const late = (due: string | null) => due && due < today ? Math.floor((new Date(today).getTime() - new Date(due).getTime()) / 86400000) : 0;
+  const cName = (x: any) => x.clients?.company || x.clients?.name || '—'; const vName = (x: any) => x.vendors?.company || x.vendors?.name || '—';
+  const custRows = useMemo(() => { const m = new Map<string, { name: string; open: number; n: number }>(); inv.forEach(x => { const e = m.get(x.client_id) || { name: cName(x), open: 0, n: 0 }; e.open += Number(x.balance_due); e.n++; m.set(x.client_id, e); }); return Array.from(m.entries()).map(([id, e]) => ({ id, ...e, adv: adv[id] || 0 })).sort((a, b) => b.open - a.open); }, [inv, adv]);
+  const vendRows = useMemo(() => { const m = new Map<string, { name: string; open: number; n: number }>(); bills.forEach(x => { const e = m.get(x.vendor_id) || { name: vName(x), open: 0, n: 0 }; e.open += Number(x.total_amount) - Number(x.amount_paid || 0); e.n++; m.set(x.vendor_id, e); }); return Array.from(m.entries()).map(([id, e]) => ({ id, ...e })).sort((a, b) => b.open - a.open); }, [bills]);
+  if (busy) return <Loader2 className="animate-spin" />;
+  const T = ({ heads, rows, csv }: { heads: string[]; rows: (string | number)[][]; csv: string }) => (<div className="space-y-2"><button onClick={() => downloadCsv(csv, [heads, ...rows])} className={sel}>CSV</button>
+    <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto"><table className="w-full text-sm"><thead className="text-left text-xs text-gray-500 uppercase"><tr>{heads.map((h, i) => <th key={h} className={i >= 3 || h === 'Open' ? th : 'px-3 py-2'}>{h}</th>)}</tr></thead>
+      <tbody>{rows.map((r, i) => <tr key={i} className="border-t border-gray-100">{r.map((c, j) => <td key={j} className={j >= 3 ? th : 'px-3 py-2'}>{typeof c === 'number' ? (heads[j].startsWith('Days') ? c : inr(c)) : c}</td>)}</tr>)}{rows.length === 0 && <tr><td colSpan={heads.length} className="p-4 text-center text-gray-400">Nothing open.</td></tr>}</tbody></table></div></div>);
+  return (<div className="space-y-3">
+    <div className="flex gap-2 flex-wrap">{([['inv', 'Open invoices'], ['cust', 'Customer balances'], ['bills', 'Unpaid bills'], ['vend', 'Vendor balances']] as const).map(([k, l]) => <button key={k} onClick={() => setView(k)} className={`px-3 py-1.5 rounded-md text-sm border ${view === k ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-200'}`}>{l}</button>)}</div>
+    <p className="text-xs text-gray-500">Today’s position from invoices and bills made in this app. Days past due counts from the due date. Advances received are shown beside each customer and are not yet netted off the invoices here.</p>
+    {view === 'inv' && <T csv="open-invoices.csv" heads={['Invoice', 'Customer', 'Due date', 'Open', 'Days past due']} rows={inv.sort((a, b) => late(b.due_date) - late(a.due_date)).map(x => [x.invoice_number, cName(x), x.due_date || '', Number(x.balance_due), late(x.due_date)])} />}
+    {view === 'cust' && <T csv="customer-balances.csv" heads={['Customer', 'Open invoices', '', 'Open', 'Advance held']} rows={custRows.map(r => [r.name, r.n, '', r.open, r.adv])} />}
+    {view === 'bills' && <T csv="unpaid-bills.csv" heads={['Bill', 'Vendor', 'Due date', 'Open', 'Days past due']} rows={bills.sort((a, b) => late(b.due_date) - late(a.due_date)).map(x => [x.vendor_bill_number || x.bill_number, vName(x), x.due_date || '', Number(x.total_amount) - Number(x.amount_paid || 0), late(x.due_date)])} />}
+    {view === 'vend' && <T csv="vendor-balances.csv" heads={['Vendor', 'Open bills', '', 'Open']} rows={vendRows.map(r => [r.name, r.n, '', r.open])} />}
+  </div>);
 }
 
 export default function ReportsNewPage() { return (<AdminOnlyGate><Inner /></AdminOnlyGate>); }

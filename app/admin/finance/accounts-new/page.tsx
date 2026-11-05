@@ -145,7 +145,7 @@ function Chart({ accts, bals, reload, openRegister }: { accts: Acct[]; bals: Rec
 // ───────── 5.3 register ─────────
 function Register({ accts, initial }: { accts: Acct[]; initial: string }) {
   const [accId, setAccId] = useState(initial || '');
-  const [from, setFrom] = useState(''); const [to, setTo] = useState('');
+  const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [find, setFind] = useState('');
   const [lines, setLines] = useState<any[]>([]); const [busy, setBusy] = useState(false);
   const acct = accts.find(a => a.id === accId);
   const [recIds, setRecIds] = useState<Set<string>>(new Set());
@@ -177,10 +177,10 @@ function Register({ accts, initial }: { accts: Acct[]; initial: string }) {
       const net = sign * (Number(l.debit_amount || 0) - Number(l.credit_amount || 0)); const d = l.journal_entries.entry_date;
       if (from && d < from) { open += net; run += net; return; }
       if (to && d > to) return;
-      run += net; out.push({ ...l, run });
+      run += net; if (!find || ((l.description || '') + ' ' + (l.journal_entries.description || '') + ' ' + l.journal_entries.entry_number).toLowerCase().includes(find.toLowerCase())) out.push({ ...l, run });
     });
     return { opening: open, rows: out };
-  }, [sorted, from, to, sign]);
+  }, [sorted, from, to, sign, find]);
   const totals = rows.reduce((t, r) => ({ d: t.d + Number(r.debit_amount || 0), c: t.c + Number(r.credit_amount || 0) }), { d: 0, c: 0 });
 
   return (
@@ -189,8 +189,10 @@ function Register({ accts, initial }: { accts: Acct[]; initial: string }) {
         <select value={accId} onChange={e => setAccId(e.target.value)} className={sel + ' min-w-[220px]'}><option value="">Choose an account…</option>{accts.map(a => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}</select>
         {[['month', 'This month'], ['last', 'Last month'], ['fy', 'This financial year'], ['all', 'All time']].map(([k, l]) => <button key={k} onClick={() => preset(k)} className={sel}>{l}</button>)}
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} className={sel} /><input type="date" value={to} onChange={e => setTo(e.target.value)} className={sel} />
+        <input placeholder="Search description or entry" value={find} onChange={e => setFind(e.target.value)} className={sel} />
         {acct && <button onClick={() => downloadCsv(`register-${acct.code}.csv`, [['Date', 'Entry', 'Description', 'Debit', 'Credit', 'Balance'], ...rows.map(r => [r.journal_entries.entry_date, r.journal_entries.entry_number, r.description || r.journal_entries.description || '', r.debit_amount || 0, r.credit_amount || 0, r.run.toFixed(2)])])} className={sel}>CSV</button>}
       </div>
+      {acct && !busy && <p className="text-sm">Ending balance of {acct.name}: <b>{inr(sorted.reduce((s, l) => s + sign * (Number(l.debit_amount || 0) - Number(l.credit_amount || 0)), 0))}</b> (all time)</p>}
       {busy ? <Loader2 className="animate-spin" /> : acct && (
         <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
