@@ -51,10 +51,71 @@ function InvoicesTrialInner() {
   const [pickedQuote, setPickedQuote] = useState<any>(null);
   const [quoteItemSel, setQuoteItemSel] = useState<{ checked: boolean; quantity: number }[]>([]);
 
-  const openQuotePicker = () => { setPickedQuote(null); setQuoteItemSel([]); setShowQuotePicker(true); };
+  // Trial 2.4: what is already invoiced per quote item / per order (job)
+  const [pickerTab, setPickerTab] = useState<'quote' | 'order'>('quote');
+  const [quoteItemInv, setQuoteItemInv] = useState<Record<string, number>>({});
+  const [quoteStatus, setQuoteStatus] = useState<Record<string, string>>({});
+  const [sourceQuotationId, setSourceQuotationId] = useState<string>('');
+  const [jobSearch, setJobSearch] = useState('');
+  const [jobRows, setJobRows] = useState<any[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  const openQuotePicker = async () => {
+    setPickedQuote(null); setQuoteItemSel([]); setPickerTab('quote'); setShowQuotePicker(true);
+    const [a, b] = await Promise.all([
+      supabase.from('v_quotation_item_invoicing').select('quotation_item_id, invoiced_qty'),
+      supabase.from('v_quotation_invoicing').select('quotation_id, invoicing_status'),
+    ]);
+    const m1: Record<string, number> = {}; (a.data || []).forEach((r: any) => { m1[r.quotation_item_id] = r.invoiced_qty; });
+    const m2: Record<string, string> = {}; (b.data || []).forEach((r: any) => { m2[r.quotation_id] = r.invoicing_status; });
+    setQuoteItemInv(m1); setQuoteStatus(m2);
+  };
   const selectQuote = (q: any) => {
     setPickedQuote(q);
-    setQuoteItemSel((q.items || []).map((it: any) => ({ checked: true, quantity: Number(it.quantity) || 1 })));
+    setQuoteItemSel((q.items || []).map((it: any) => {
+      const left = Math.max(0, (Number(it.quantity) || 0) - (quoteItemInv[it.id] || 0));
+      return { checked: left > 0, quantity: left };
+    }));
+  };
+  const invStatusLabel = (s?: string) => s === 'fully_invoiced' ? 'Fully invoiced' : s === 'partly_invoiced' ? 'Partly invoiced' : 'Not invoiced';
+  const invStatusCls = (s?: string) => s === 'fully_invoiced' ? 'bg-green-100 text-green-800' : s === 'partly_invoiced' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600';
+
+  const searchJobs = async (term: string) => {
+    setJobsLoading(true);
+    let q = supabase.from('jobs')
+      .select('id, job_number, project_name, client_id, total_amount, gst_percentage, quantity, client:clients(id, name, company, state)')
+      .gt('total_amount', 0).order('created_at', { ascending: false }).limit(40);
+    const t = term.trim().replace(/[%,]/g, '');
+    if (t) q = q.or(`job_number.ilike.%${t}%,project_name.ilike.%${t}%`);
+    const { data } = await q;
+    const ids = (data || []).map((j: any) => j.id);
+    const { data: inv } = ids.length ? await supabase.from('v_job_invoicing').select('*').in('job_id', ids) : { data: [] as any[] };
+    const byId: Record<string, any> = {}; (inv || []).forEach((r: any) => { byId[r.job_id] = r; });
+    setJobRows((data || []).map((j: any) => ({ ...j, inv: byId[j.id] })));
+    setJobsLoading(false);
+  };
+  useEffect(() => { if (showQuotePicker && pickerTab === 'order') searchJobs(jobSearch); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showQuotePicker, pickerTab]);
+
+  const createInvoiceFromJob = (j: any) => {
+    const remaining = Number(j.inv?.remaining ?? j.total_amount) || 0;
+    if (remaining <= 0) { toast.error('This order is already fully invoiced'); return; }
+    const gst = Number(j.gst_percentage) || 18;
+    const base = Math.round((remaining / (1 + gst / 100)) * 100) / 100;
+    const tax = Math.round((remaining - base) * 100) / 100;
+    const isGujarat = (j.client?.state || '').toLowerCase() === 'gujarat';
+    setSourceQuotationId('');
+    setFormData({
+      clientId: j.client_id || '',
+      invoiceNumber: '',
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      items: [{ description: `${j.job_number}${j.project_name ? ' - ' + j.project_name : ''}`, item_specs: '', item_notes: '', hsn_code: '4911', quantity: 1, rate: base, amount: base, gst_rate: gst, job_id: j.id, source_job_id: j.id } as any],
+      subtotal: base, gstRate: gst,
+      supplyType: (isGujarat ? 'intra_state' : 'inter_state') as 'inter_state' | 'intra_state',
+      totalTax: tax, totalAmount: base + tax, paidAmount: 0, status: 'pending',
+      notes: `Order ${j.job_number}`, jobId: j.id,
+    });
+    setIsEditing(false); setShowQuotePicker(false); setShowModal(true);
   };
 
   const createInvoiceFromQuote = () => {
@@ -67,13 +128,14 @@ function InvoicesTrialInner() {
         const qty = Number(x.sel.quantity) || 0;
         const rate = Number(x.it.rate) || 0;
         const gst_rate = Number(x.it.gst_rate) || 18;
-        return { description: x.it.description || '', item_specs: x.it.item_specs || '', item_notes: x.it.item_notes || '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate };
+        return { description: x.it.description || '', item_specs: x.it.item_specs || '', item_notes: x.it.item_notes || '', hsn_code: '4911', quantity: qty, rate, amount: qty * rate, gst_rate, quotation_item_id: x.it.id || null };
       });
     if (chosen.length === 0) { toast.error('Tick at least one item to invoice'); return; }
 
     const subtotal = chosen.reduce((s: number, i: any) => s + i.amount, 0);
     const totalTax = chosen.reduce((s: number, i: any) => s + Math.round(i.amount * (i.gst_rate / 100)), 0);
     const isGujarat = (pickedQuote.client?.state || '').toLowerCase() === 'gujarat';
+    setSourceQuotationId(pickedQuote.id || '');
 
     setFormData({
       clientId: pickedQuote.client_id || '',
@@ -171,22 +233,68 @@ function InvoicesTrialInner() {
     const gst = Math.round(amount * ratio * 100) / 100;
     return { base: Math.round((amount - gst) * 100) / 100, gst };
   };
+  // ── Trial 2.4: customer advances (money taken with no invoice) that can be applied to this invoice ──
+  const [advAvailable, setAdvAvailable] = useState<any[]>([]);
+  const [advApplied, setAdvApplied] = useState<any[]>([]);
+  const [advBusy, setAdvBusy] = useState(false);
+  const loadAdvances = async (inv: Invoice) => {
+    const [{ data: mine }, { data: ads }] = await Promise.all([
+      supabase.from('advance_applications').select('id, amount, applied_on, payment_id').eq('invoice_id', inv.id).order('applied_on'),
+      inv.client_id ? supabase.from('payments_received').select('id, payment_number, payment_date, payment_mode, amount')
+        .eq('source', 'advance').eq('client_id', inv.client_id) : Promise.resolve({ data: [] as any[] }),
+    ]);
+    setAdvApplied(mine || []);
+    const ids = (ads || []).map((a: any) => a.id);
+    const { data: used } = ids.length ? await supabase.from('advance_applications').select('payment_id, amount').in('payment_id', ids) : { data: [] as any[] };
+    const usedBy: Record<string, number> = {};
+    (used || []).forEach((u: any) => { usedBy[u.payment_id] = (usedBy[u.payment_id] || 0) + Number(u.amount); });
+    setAdvAvailable((ads || []).map((a: any) => ({ ...a, left: Math.round((Number(a.amount) - (usedBy[a.id] || 0)) * 100) / 100 })).filter((a: any) => a.left > 0.005));
+  };
+  const applyAdvance = async (adv: any) => {
+    if (!selectedInvoice) return;
+    const bal = Math.max(0, (selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0));
+    const amt = Math.min(adv.left, bal);
+    if (amt <= 0) { toast.error('This invoice has nothing left to pay'); return; }
+    setAdvBusy(true);
+    const { error } = await supabase.rpc('fn_apply_advance', { p_payment_id: adv.id, p_invoice_id: selectedInvoice.id, p_amount: amt, p_date: new Date().toISOString().slice(0, 10) });
+    setAdvBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Applied ${formatInr(paise(amt))} from advance`);
+    await refetchInvoices();
+    const { data: fresh } = await supabase.from('invoices').select('*').eq('id', selectedInvoice.id).single();
+    if (fresh) setSelectedInvoice({ ...selectedInvoice, ...fresh } as any);
+    loadAdvances({ ...selectedInvoice, ...(fresh || {}) } as any);
+  };
+
   const paymentsForPdf = async (inv: Invoice) => {
     const { data } = await supabase
       .from('payments_received')
       .select('payment_date, amount, payment_mode, reference_number, bank_account_id, cash_account_id')
       .eq('invoice_id', inv.id)
       .order('payment_date', { ascending: true });
+    const { data: adj } = await supabase.from('advance_applications').select('amount, applied_on').eq('invoice_id', inv.id).order('applied_on');
     const rows = data || [];
-    if (rows.length === 0) return {};
-    const last = rows[rows.length - 1];
-    return {
-      payments: rows.map((r: any) => {
+    const adjRows = adj || [];
+    if (rows.length === 0 && adjRows.length === 0) return {};
+    const payments = [
+      ...rows.map((r: any) => {
         const sp = paySplit(inv, Number(r.amount) || 0);
         return { date: formatDate(r.payment_date), mode: payModeLabel(r), base: sp.base, gst: sp.gst, total: Number(r.amount) || 0, reference: r.reference_number || undefined };
       }),
+      ...adjRows.map((r: any) => {
+        const sp = paySplit(inv, Number(r.amount) || 0);
+        return { date: formatDate(r.applied_on), mode: 'Advance adjusted', base: sp.base, gst: sp.gst, total: Number(r.amount) || 0, reference: undefined };
+      }),
+    ];
+    const lastRow: any = rows.length ? rows[rows.length - 1] : null;
+    const lastAdj: any = adjRows.length ? adjRows[adjRows.length - 1] : null;
+    const paidOnNote = (lastAdj && (!lastRow || String(lastAdj.applied_on) >= String(lastRow.payment_date)))
+      ? `${formatDate(lastAdj.applied_on)} by Advance adjusted`
+      : `${formatDate(lastRow.payment_date)} by ${payModeLabel(lastRow)}`;
+    return {
+      payments,
       balanceDue: Math.max(0, (inv.total_amount || 0) - (inv.amount_paid || 0)),
-      paidOnNote: `${formatDate(last.payment_date)} by ${payModeLabel(last)}`,
+      paidOnNote,
     };
   };
 
@@ -203,8 +311,10 @@ function InvoicesTrialInner() {
     if (showViewModal && selectedInvoice) {
       loadInvoicePayments(selectedInvoice.id);
       loadAttachments(selectedInvoice.id);
+      loadAdvances(selectedInvoice);
     } else {
       setInvoicePayments([]);
+      setAdvAvailable([]); setAdvApplied([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showViewModal, selectedInvoice]);
@@ -683,6 +793,7 @@ function InvoicesTrialInner() {
   };
 
   const handleAddNew = () => {
+    setSourceQuotationId('');
     setFormData({
       clientId: '',
       invoiceNumber: '', // Will be auto-generated
@@ -708,6 +819,7 @@ function InvoicesTrialInner() {
   };
 
   const handleEdit = (inv: Invoice) => {
+    setSourceQuotationId((inv as any).quotation_id || '');
     const items = inv.items || [];
     // Assuming uniform GST rate for simplicity in this form version
     const gstRate = items.length > 0 ? items[0].gst_rate : 18;
@@ -769,6 +881,7 @@ function InvoicesTrialInner() {
         balance_due: formData.totalAmount - formData.paidAmount,
         notes: formData.notes,
         internal_note: internalNote.trim() || null,
+        quotation_id: sourceQuotationId || null,
         // Keep invoices.job_id pointing at the first job-linked line (backward compat
         // with profitability/tracking). Full per-line linkage lives on invoice_items.job_id.
         job_id: (formData.items.find(it => (it as any).job_id)?.job_id) || undefined,
@@ -1139,7 +1252,7 @@ function InvoicesTrialInner() {
             className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-md hover:bg-gray-50 shadow-sm font-semibold"
           >
             <Plus className="w-4 h-4" />
-            <span>From Quote</span>
+            <span>From Quote / Order</span>
           </button>
           <button
             onClick={handleAddNew}
@@ -2084,6 +2197,30 @@ function InvoicesTrialInner() {
                   )}
                 </div>
 
+                {/* Trial 2.4: advances applied / available */}
+                {(advApplied.length > 0 || (advAvailable.length > 0 && (selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0) > 0.005)) && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Customer advances</h4>
+                    <div className="space-y-2">
+                      {advApplied.map((a: any) => (
+                        <div key={a.id} className="p-3 bg-blue-50 border border-blue-100 rounded-md text-sm">
+                          <span className="font-semibold text-blue-800">{formatCurrency(Number(a.amount))}</span>
+                          <span className="text-xs text-gray-600"> adjusted from advance on {formatDate(a.applied_on)}</span>
+                        </div>
+                      ))}
+                      {(selectedInvoice.total_amount || 0) - (selectedInvoice.amount_paid || 0) > 0.005 && advAvailable.map((a: any) => (
+                        <div key={a.id} className="flex items-center justify-between gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                          <div className="text-sm">
+                            <p className="font-semibold text-gray-800">{formatCurrency(a.left)} available</p>
+                            <p className="text-[11px] text-gray-500">{formatDate(a.payment_date)} • {String(a.payment_mode).toUpperCase()} • {a.payment_number}</p>
+                          </div>
+                          <button onClick={() => applyAdvance(a)} disabled={advBusy} className="px-3 py-1.5 bg-gray-900 text-white rounded-md text-xs font-semibold disabled:opacity-50">Apply to this invoice</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Payment Reminder Button - Only show if balance due */}
                 {selectedInvoice.amount_paid < selectedInvoice.total_amount && (
                   <button
@@ -2099,19 +2236,30 @@ function InvoicesTrialInner() {
           </div>
         )
       }
-      {/* Create from Quote picker */}
+      {/* Create from Quote / Order picker (Trial 2.4) */}
       {showQuotePicker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm" onClick={() => setShowQuotePicker(false)}>
           <div className="bg-white rounded-md w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <div>
-                <h2 className="text-page-title text-gray-900">{pickedQuote ? 'Choose items to invoice' : 'Create Invoice from Quote'}</h2>
-                <p className="text-sm text-gray-500">{pickedQuote ? `${pickedQuote.quote_number} • ${pickedQuote.client?.company || pickedQuote.client?.name || ''}` : 'Pick a quotation, then tick the items the client actually ordered'}</p>
+                <h2 className="text-page-title text-gray-900">{pickedQuote ? 'Choose items to invoice' : 'Create Invoice from Quote or Order'}</h2>
+                <p className="text-sm text-gray-500">{pickedQuote ? `${pickedQuote.quote_number} • ${pickedQuote.client?.company || pickedQuote.client?.name || ''}` : 'Invoice a quote or an order in full or in parts'}</p>
               </div>
               <button onClick={() => setShowQuotePicker(false)} className="p-2 hover:bg-gray-100 rounded-md"><X className="w-5 h-5" /></button>
             </div>
 
-            {!pickedQuote ? (
+            {!pickedQuote && (
+              <div className="flex gap-2 px-4 pt-3">
+                {(['quote', 'order'] as const).map(t => (
+                  <button key={t} onClick={() => setPickerTab(t)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-semibold border ${pickerTab === t ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}>
+                    {t === 'quote' ? 'From Quote' : 'From Order'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!pickedQuote && pickerTab === 'quote' && (
               <div className="p-4 space-y-2">
                 {(quotations || []).length === 0 ? (
                   <p className="text-sm text-gray-400 p-4 text-center">No quotations found.</p>
@@ -2121,29 +2269,74 @@ function InvoicesTrialInner() {
                       <p className="font-semibold text-gray-900">{q.quote_number}</p>
                       <p className="text-xs text-gray-500">{q.client?.company || q.client?.name || '—'} • {(q.items || []).length} item(s)</p>
                     </div>
-                    <span className="font-semibold text-gray-900">{formatCurrency(q.total_amount || 0)}</span>
+                    <div className="text-right">
+                      <span className="font-semibold text-gray-900">{formatCurrency(q.total_amount || 0)}</span>
+                      <span className={`block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${invStatusCls(quoteStatus[q.id])}`}>{invStatusLabel(quoteStatus[q.id])}</span>
+                    </div>
                   </button>
                 ))}
               </div>
-            ) : (
+            )}
+
+            {!pickedQuote && pickerTab === 'order' && (
+              <div className="p-4 space-y-2">
+                <div className="flex gap-2">
+                  <input value={jobSearch} onChange={(e) => setJobSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') searchJobs(jobSearch); }}
+                    placeholder="Search order number or project" className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm" />
+                  <button onClick={() => searchJobs(jobSearch)} className="px-3 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold">Search</button>
+                </div>
+                {jobsLoading ? <p className="text-sm text-gray-400 p-4 text-center">Loading…</p>
+                  : jobRows.length === 0 ? <p className="text-sm text-gray-400 p-4 text-center">No orders with an amount found.</p>
+                  : jobRows.map((j: any) => (
+                    <div key={j.id} className="p-3 border border-gray-200 rounded-md">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-gray-900">{j.job_number}{j.project_name ? ` • ${j.project_name}` : ''}</p>
+                          <p className="text-xs text-gray-500">{j.client?.company || j.client?.name || '—'}</p>
+                        </div>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${invStatusCls(j.inv?.invoicing_status)}`}>{invStatusLabel(j.inv?.invoicing_status)}</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2 text-xs">
+                        <div><p className="text-gray-400">Total</p><p className="font-semibold">{formatCurrency(Number(j.total_amount) || 0)}</p></div>
+                        <div><p className="text-gray-400">Invoiced</p><p className="font-semibold">{formatCurrency(Number(j.inv?.invoiced_total) || 0)}</p></div>
+                        <div><p className="text-gray-400">Received (bank)</p><p className="font-semibold">{formatCurrency(Number(j.inv?.received_bank) || 0)}</p></div>
+                        <div><p className="text-gray-400">Settled cash/UPI</p><p className="font-semibold">{formatCurrency(Number(j.inv?.settled_cash_upi) || 0)}</p></div>
+                        <div><p className="text-gray-400">Remaining</p><p className="font-semibold">{formatCurrency(Number(j.inv?.remaining ?? j.total_amount) || 0)}</p></div>
+                      </div>
+                      <div className="mt-2 flex justify-end">
+                        <button onClick={() => createInvoiceFromJob(j)} disabled={(Number(j.inv?.remaining ?? j.total_amount) || 0) <= 0}
+                          className="px-3 py-1.5 bg-gray-900 text-white rounded-md text-sm font-semibold disabled:opacity-40">Invoice the remaining</button>
+                      </div>
+                    </div>
+                  ))}
+                <p className="text-xs text-gray-400">The invoice opens with the remaining amount filled in. Change the amount to invoice only part of the order.</p>
+              </div>
+            )}
+
+            {pickedQuote && (
               <div className="p-4 space-y-3">
-                {(pickedQuote.items || []).map((it: any, idx: number) => (
-                  <div key={it.id || idx} className="flex items-center gap-3 p-3 border border-gray-200 rounded-md">
-                    <input type="checkbox" checked={quoteItemSel[idx]?.checked ?? false}
-                      onChange={(e) => setQuoteItemSel(prev => prev.map((s, i) => i === idx ? { ...s, checked: e.target.checked } : s))}
-                      className="w-4 h-4" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{it.description}</p>
-                      <p className="text-xs text-gray-500">Rate {formatCurrency(it.rate || 0)} • GST {it.gst_rate || 18}%</p>
+                {(pickedQuote.items || []).map((it: any, idx: number) => {
+                  const done = quoteItemInv[it.id] || 0;
+                  const ordered = Number(it.quantity) || 0;
+                  const left = Math.max(0, ordered - done);
+                  return (
+                    <div key={it.id || idx} className={`flex items-center gap-3 p-3 border border-gray-200 rounded-md ${left === 0 ? 'opacity-50' : ''}`}>
+                      <input type="checkbox" disabled={left === 0} checked={quoteItemSel[idx]?.checked ?? false}
+                        onChange={(e) => setQuoteItemSel(prev => prev.map((s2, i) => i === idx ? { ...s2, checked: e.target.checked } : s2))}
+                        className="w-4 h-4" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{it.description}</p>
+                        <p className="text-xs text-gray-500">Rate {formatCurrency(it.rate || 0)} • GST {it.gst_rate || 18}% • Invoiced {done} of {ordered}{left === 0 ? ' (done)' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400">Qty</span>
+                        <input type="number" min={0} max={left} disabled={left === 0} value={quoteItemSel[idx]?.quantity ?? ''}
+                          onChange={(e) => setQuoteItemSel(prev => prev.map((s2, i) => i === idx ? { ...s2, quantity: Math.min(left, parseFloat(e.target.value) || 0) } : s2))}
+                          className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-sm" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">Qty</span>
-                      <input type="number" value={quoteItemSel[idx]?.quantity ?? ''}
-                        onChange={(e) => setQuoteItemSel(prev => prev.map((s, i) => i === idx ? { ...s, quantity: parseFloat(e.target.value) || 0 } : s))}
-                        className="w-20 px-2 py-1.5 border border-gray-200 rounded-md text-sm" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="flex gap-3 pt-2 border-t border-gray-100">
                   <button onClick={() => setPickedQuote(null)} className="px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-50">Back</button>
                   <button onClick={createInvoiceFromQuote} className="flex-1 px-4 py-2.5 bg-gray-900 text-white font-semibold rounded-md hover:bg-gray-800">Create Invoice from selected</button>

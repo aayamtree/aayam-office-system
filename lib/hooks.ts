@@ -816,7 +816,9 @@ export function useInvoices() {
           rate: item.rate,
           amount: item.amount,
           gst_rate: item.gst_rate,
-          job_id: item.job_id || null
+          job_id: item.job_id || null,
+          quotation_item_id: item.quotation_item_id || null,
+          source_job_id: item.source_job_id || null
         })));
 
       if (error) return { error: error.message };
