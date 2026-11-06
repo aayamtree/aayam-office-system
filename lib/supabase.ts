@@ -27,7 +27,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * PostgREST picks the schema from these two headers, so ONE client serves both: on the Trial
  * routes below every database call goes to the copy, everywhere else it goes to the live tables.
  */
-const TRIAL_ROUTES = /^\/admin\/finance\/(receive-money|invoices-new|sales-new|purchases-new|banking-new|accounts-new|reports-new)(\/|$)/;
+const TRIAL_ROUTES = /^\/admin\/finance\/(home-new|receive-money|invoices-new|sales-new|purchases-new|banking-new|accounts-new|reports-new)(\/|$)/;
 export const isTrialRoute = (path: string) => TRIAL_ROUTES.test(path);
 
 const trialAwareFetch: typeof fetch = (input, init) => {
