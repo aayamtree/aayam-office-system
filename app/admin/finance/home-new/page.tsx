@@ -114,7 +114,7 @@ function Inner() {
       <section className={card}>
         <h2 className="font-semibold mb-2">Create actions</h2>
         <div className="flex flex-wrap gap-2">
-          {[['Create invoice', '/admin/finance/invoices-new'], ['Record payment', '/admin/finance/invoices-new'], ['Receive money (no invoice)', '/admin/finance/receive-money'], ['Pay bills', '/admin/finance/purchases-new'], ['Upload bank statement', '/admin/finance/banking-new']].map(([l, h]) => (
+          {[['Create invoice', '/admin/finance/invoices-new'], ['Record payment', '/admin/finance/invoices-new'], ['Receive money (no invoice)', '/admin/finance/receive-money'], ['Record expense', '/admin/finance/expense-new'], ['Enter bill', '/admin/finance/bill-new'], ['Payments (money in / out)', '/admin/finance/payments-new'], ['Pay bills', '/admin/finance/purchases-new'], ['Upload bank statement', '/admin/finance/banking-new']].map(([l, h]) => (
             <Link key={l} href={h} className="px-3 py-2 border border-gray-200 rounded-md text-sm font-semibold hover:bg-gray-50">{l}</Link>))}
         </div>
       </section>
