@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { getStageName } from '@/lib/job-workflow';
@@ -9,7 +9,7 @@ import {
   Search, Plus, Eye, Edit, Trash2, X, ArrowLeft,
   Calendar, Package, IndianRupee, Truck, CheckCircle,
   AlertCircle, ChevronRight, Briefcase, ExternalLink,
-  Upload, CreditCard, Banknote, Smartphone, ChevronDown, Tag
+  Upload, CreditCard, Banknote, Smartphone, ChevronDown, Tag, FileText
 } from 'lucide-react';
 import { useJobs, useClients, useProductCategories } from '@/lib/hooks';
 import { Job, Client } from '@/types/database';
@@ -21,6 +21,11 @@ import { supabase } from '@/lib/supabase';
 import { useConfirm } from '@/components/ConfirmModal';
 import UnifiedJobForm from '@/components/jobs/UnifiedJobForm';
 import { ShareToChat } from '@/components/ShareToChat';
+import dynamic from 'next/dynamic';
+import { useOrderReceivables } from '@/components/finance/useOrderReceivables';
+import { ReceivablesStrip, OrderPaymentCell, OrderPaymentHistory, MoneyInModal, PaymentLogModal } from '@/components/finance/OrderPayments';
+
+const BlueInvoiceModal = dynamic(() => import('@/components/finance/BlueInvoiceModal'), { ssr: false });
 
 export default function OrdersPage() {
   const { user, profile } = useAuth();
@@ -30,7 +35,7 @@ export default function OrdersPage() {
   const { jobs: allJobs, loading: jobsLoading, createJob, updateJob, deleteJob } = useJobs({
     // description + notes are read by the edit form (handleEdit). Without them the
     // form loaded blank and saving wiped whatever was there.
-    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, subtotal, gst_rate, gst_amount, total_amount, amount_received, payment_status, sales_person_id, created_by, description, notes, client:clients(id, name, company, source, created_by)'
+    select: 'id, job_number, project_name, client_id, priority, current_stage, job_type, product_category, parent_job_id, client_deadline, quantity, quote_per_piece, subtotal, gst_rate, gst_amount, total_amount, invoice_amount, invoice_gst_amount, pending_amount, created_at, amount_received, payment_status, sales_person_id, created_by, description, notes, client:clients(id, name, company, source, created_by)'
   });
   const { categories, createCategory } = useProductCategories();
   const router = useRouter();
@@ -74,6 +79,18 @@ export default function OrdersPage() {
   }, [allJobs, profile, isMarketingView, allProfiles]);
 
   const { clients: allClients } = useClients();
+
+  // Order-level payment tracking: Blue/Red per order, cleared FIFO by party payments.
+  const rec = useOrderReceivables();
+  const canRecord = rec.allowed;   // admin + finance only; marketing sees no payment figures at all
+  const [moneyIn, setMoneyIn] = useState<{ clientId?: string } | null>(null);
+  const [openHistory, setOpenHistory] = useState<string | null>(null);
+  const [showLog, setShowLog] = useState(false);
+  const [invoiceJobId, setInvoiceJobId] = useState<string | null>(null);
+  const invoiceJob = invoiceJobId ? rec.jobById.get(invoiceJobId) : null;
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('moneyIn')) setMoneyIn({});
+  }, []);
 
   // Clients already on this marketing user's orders stay selectable
   // even if created/owned by someone else.
@@ -523,6 +540,8 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {canRecord && <ReceivablesStrip rec={rec} canRecord={canRecord} onMoneyIn={() => setMoneyIn({})} onLog={() => setShowLog(true)} />}
+
       <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 sm:p-4 rounded-md border border-gray-100">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -632,6 +651,19 @@ export default function OrdersPage() {
                         </span>
                       </div>
 
+                      {(() => {
+                        const o = rec.fifo.byJob.get(job.id);
+                        return o && o.status !== 'none' ? (
+                          <div className="mb-4 pb-4 border-b border-gray-100">
+                            <OrderPaymentCell o={o} open={openHistory === job.id} canRecord={canRecord}
+                              onToggle={() => setOpenHistory(openHistory === job.id ? null : job.id)}
+                              onMoneyIn={() => setMoneyIn({ clientId: job.client_id })}
+                          onInvoice={() => setInvoiceJobId(job.id)} />
+                            {openHistory === job.id && <OrderPaymentHistory o={o} methodName={rec.methodName} />}
+                          </div>
+                        ) : null;
+                      })()}
+
                       {/* Deadline */}
                       {job.client_deadline && (
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
@@ -642,6 +674,14 @@ export default function OrdersPage() {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
+{canRecord && (
+                        <button
+                          onClick={() => setInvoiceJobId(job.id)}
+                          className="px-4 py-2.5 border-2 border-blue-600 text-blue-700 rounded-md font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" /><span className="hidden sm:inline">Invoice</span>
+                        </button>
+)}
                         <button
                           onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }}
                           className="flex-1 px-4 py-2.5 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
@@ -671,20 +711,22 @@ export default function OrdersPage() {
                   unbreakable project-name string over half the table and
                   squeezes the rest until the status wraps to three lines and
                   the Actions column falls off the right edge. */}
-              <table className="w-full table-fixed min-w-[68rem]">
+              <table className="w-full table-fixed min-w-[84rem]">
                 <colgroup>
                   <col />
                   <col className="w-48" />
                   <col className="w-36" />
+                  <col className="w-72" />
                   <col className="w-32" />
                   <col className="w-52" />
-                  <col className="w-32" />
+                  <col className="w-40" />
                 </colgroup>
                 <thead className="bg-muted/40 border-b border-border">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payments (Blue / Red)</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Delivery</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
@@ -692,7 +734,8 @@ export default function OrdersPage() {
                 </thead>
                 <tbody className="divide-y divide-border/60">
                   {filteredJobs.map((job) => (
-                    <tr key={job.id} className="hover:bg-muted/40 transition-colors group">
+                    <Fragment key={job.id}>
+                    <tr className="hover:bg-muted/40 transition-colors group">
                       {/* align-middle everywhere: with align-top each column started
                           its own stack at the top and nothing shared a line. */}
                       <td className="px-4 py-3 align-middle">
@@ -734,7 +777,9 @@ export default function OrdersPage() {
                         {(() => {
                           const total = Number(job.total_amount || 0);
                           const paid = Number(job.amount_received || 0);
-                          const due = total - paid;
+                          const fo = rec.fifo.byJob.get(job.id);
+                          const tracked = !!fo && fo.status !== 'none';
+                          const due = tracked ? fo!.blueDue + fo!.redDue : total - paid;
                           return (
                             <>
                               <div className={`tabular-nums font-semibold whitespace-nowrap ${total > 0 ? 'text-foreground' : 'text-muted-foreground font-medium'}`}>
@@ -743,7 +788,8 @@ export default function OrdersPage() {
                               {/* Unpaid still SAYS unpaid even when nobody priced the
                                   job — but only a real balance gets alarm colour, or
                                   a red "Due 0" on every row teaches people to ignore red. */}
-                              {job.payment_status !== 'paid' && (
+                              {tracked && due <= 0 && <div className="text-xs text-emerald-600 mt-0.5">Fully paid</div>}
+                              {(!tracked ? job.payment_status !== 'paid' : due > 0) && (
                                 <div className={`text-xs tabular-nums whitespace-nowrap mt-0.5 ${due > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                                   {due > 0 ? `Due ${formatCurrency(due)}` : due < 0 ? `Advance ${formatCurrency(-due)}` : 'Unpaid'}
                                 </div>
@@ -751,6 +797,16 @@ export default function OrdersPage() {
                             </>
                           );
                         })()}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        <OrderPaymentCell
+                          o={rec.fifo.byJob.get(job.id)}
+                          open={openHistory === job.id}
+                          canRecord={canRecord}
+                          onToggle={() => setOpenHistory(openHistory === job.id ? null : job.id)}
+                          onMoneyIn={() => setMoneyIn({ clientId: job.client_id })}
+                          onInvoice={() => setInvoiceJobId(job.id)}
+                        />
                       </td>
                       <td className="px-4 py-3 align-middle">
                         {job.client_deadline ? (
@@ -769,6 +825,11 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-4 py-3 align-middle text-right">
                         <div className="flex items-center justify-end gap-1 text-muted-foreground">
+{canRecord && (
+                          <button title="Blue invoice" aria-label="Blue invoice" onClick={() => setInvoiceJobId(job.id)} className="p-1.5 hover:bg-blue-50 rounded-md text-blue-600 hover:text-blue-700 transition-colors">
+                            <FileText className="w-4 h-4" />
+                          </button>
+)}
                           <button title="View" aria-label="View order" onClick={() => { setSelectedJob(job); setOpenedViaLink(false); setShowViewModal(true); }} className="p-1.5 hover:bg-muted rounded-md hover:text-foreground transition-colors">
                             <Eye className="w-4 h-4" />
                           </button>
@@ -785,6 +846,10 @@ export default function OrdersPage() {
                         </div>
                       </td>
                     </tr>
+                    {openHistory === job.id && (
+                      <tr><td colSpan={7} className="p-0"><OrderPaymentHistory o={rec.fifo.byJob.get(job.id)} methodName={rec.methodName} /></td></tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -795,13 +860,26 @@ export default function OrdersPage() {
       </div>
 
 
+      {invoiceJob && (
+        <BlueInvoiceModal
+          job={invoiceJob}
+          client={rec.clientById.get(invoiceJob.client_id)}
+          rec={rec.fifo.byJob.get(invoiceJob.id)}
+          methodName={rec.methodName}
+          onClose={() => setInvoiceJobId(null)}
+        />
+      )}
+
+      {showLog && <PaymentLogModal rec={rec} onClose={() => setShowLog(false)} />}
+      {moneyIn && <MoneyInModal rec={rec} initialClientId={moneyIn.clientId} onClose={() => setMoneyIn(null)} />}
+
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-md w-full max-w-2xl shadow-xl">
             <UnifiedJobForm
               mode="modal"
               editingJob={isEditing ? selectedJob : null}
-              onSuccess={() => { setShowModal(false); }}
+              onSuccess={() => { setShowModal(false); rec.reload(); }}
               onCancel={() => setShowModal(false)}
             />
           </div>

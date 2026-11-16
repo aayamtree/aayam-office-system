@@ -110,6 +110,11 @@ export default function UnifiedJobForm({
         received_by: '',
     });
 
+    // Blue / red split of the final amount (pre-GST subtotal).
+    // Blue = invoiced now, with GST. Red = pending, NOT invoiced.
+    // null = not touched yet -> everything is blue (previous behaviour).
+    const [blueInput, setBlueInput] = useState<number | null>(null);
+
     // Load editing job
     useEffect(() => {
         if (!editingJob) return;
@@ -134,6 +139,9 @@ export default function UnifiedJobForm({
             sales_person_id: (editingJob as any).sales_person_id || '',
             current_stage: editingJob.current_stage || 'new',
         });
+        if ((editingJob as any).invoice_amount != null && (editingJob as any).pending_amount > 0) {
+            setBlueInput(Number((editingJob as any).invoice_amount) || 0);
+        }
         if ((editingJob as any).advance_amount > 0) {
             setShowAdvance(true);
             setAdvance(prev => ({ ...prev, amount: (editingJob as any).advance_amount || 0 }));
@@ -148,7 +156,14 @@ export default function UnifiedJobForm({
     const designSubtotal = isDesign ? (formData.design_charge || 0) : 0;
     const rawSubtotal = printSubtotal + designSubtotal - (formData.discount_amount || 0);
     const subtotal = Math.max(0, rawSubtotal);
-    const gstAmount = subtotal * (formData.gst_rate / 100);
+    // Blue / red split — GST applies only to the blue (invoiced) portion.
+    const INVOICE_GST_RATE = 18;
+    const blueAmount = Math.min(subtotal, Math.max(0, blueInput ?? subtotal));
+    const redAmount = Math.max(0, subtotal - blueAmount);
+    const blueGst = blueAmount * (INVOICE_GST_RATE / 100);
+    const blueInvoiceTotal = blueAmount + blueGst;
+
+    const gstAmount = blueGst;
     const total = subtotal + gstAmount;
 
     // ── Submit ──────────────────────────────────────────────────────────────
@@ -199,6 +214,12 @@ export default function UnifiedJobForm({
                 jobPayload.gst_amount = gstAmount;
                 jobPayload.discount_amount = formData.discount_amount || 0;
                 jobPayload.total_amount = total;
+                // Blue = invoiced with 18% GST; red = pending, not invoiced.
+                jobPayload.invoice_amount = blueAmount;
+                jobPayload.invoice_gst_rate = INVOICE_GST_RATE;
+                jobPayload.invoice_gst_amount = blueGst;
+                jobPayload.invoice_total = blueInvoiceTotal;
+                jobPayload.pending_amount = redAmount;
                 jobPayload.vendor_id = formData.vendor_id || null;
                 jobPayload.designer_id = formData.designer_id || null;
                 jobPayload.sales_person_id = formData.sales_person_id || profile?.id || null;
@@ -216,6 +237,10 @@ export default function UnifiedJobForm({
                     jobPayload.gst_amount = 0;
                     jobPayload.discount_amount = 0;
                     jobPayload.total_amount = 0;
+                    jobPayload.invoice_amount = 0;
+                    jobPayload.invoice_gst_amount = 0;
+                    jobPayload.invoice_total = 0;
+                    jobPayload.pending_amount = 0;
                     jobPayload.payment_status = 'pending';
                     jobPayload.amount_received = 0;
                     jobPayload.advance_amount = 0;
@@ -579,6 +604,36 @@ export default function UnifiedJobForm({
                                 <div>
                                     <p className="text-xs text-gray-500">Total</p>
                                     <p className="font-bold text-gray-900 text-base">₹{total.toFixed(2)}</p>
+                                </div>
+                            </div>
+
+                            {/* Final amount split: blue (invoiced, 18% GST) / red (pending) */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-md border border-blue-300 bg-blue-50 p-3 space-y-2">
+                                    <label className="block text-xs font-semibold text-blue-800">Blue — Invoice now (₹, before GST)</label>
+                                    <input
+                                        type="number" min="0" step="0.01"
+                                        className="w-full px-3 py-2.5 border border-blue-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-blue-400 outline-none"
+                                        value={blueInput === null ? (subtotal || '') : (blueInput || '')}
+                                        onChange={e => setBlueInput(parseFloat(e.target.value) || 0)}
+                                    />
+                                    <p className="text-xs text-blue-800">
+                                        + GST {INVOICE_GST_RATE}% ₹{blueGst.toFixed(2)} = <span className="font-bold">₹{blueInvoiceTotal.toFixed(2)}</span> invoice
+                                    </p>
+                                </div>
+                                <div className="rounded-md border border-red-300 bg-red-50 p-3 space-y-2">
+                                    <label className="block text-xs font-semibold text-red-800">Red — Pending (not invoiced)</label>
+                                    <input
+                                        type="number" min="0" step="0.01"
+                                        className="w-full px-3 py-2.5 border border-red-300 rounded-md text-sm bg-white focus:ring-2 focus:ring-red-400 outline-none"
+                                        value={redAmount || ''}
+                                        placeholder="0"
+                                        onChange={e => {
+                                            const red = Math.min(subtotal, Math.max(0, parseFloat(e.target.value) || 0));
+                                            setBlueInput(subtotal - red);
+                                        }}
+                                    />
+                                    <p className="text-xs text-red-800">No invoice raised for this amount yet</p>
                                 </div>
                             </div>
                         </div>
