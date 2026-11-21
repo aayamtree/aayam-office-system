@@ -176,8 +176,10 @@ export default function JobDetailPage() {
         // yet". The stage moves live in job_stage_history and are the part of
         // the story that always exists. Read both and interleave them.
         const [logRes, stageRes] = await Promise.all([
+            // No "profiles:user_id" join here: activity_logs.user_id points at the login
+            // table, not profiles, so the join always failed. Names are added below.
             supabase.from('activity_logs')
-                .select('*, profiles:user_id(full_name, role)')
+                .select('*')
                 .eq('entity_id', jobId)
                 .order('created_at', { ascending: false })
                 .limit(50),
@@ -208,8 +210,16 @@ export default function JobDetailPage() {
         supabase.rpc('fn_job_order_trail', { p_job_id: jobId })
             .then(({ data, error }) => { if (!error) setTrail(data); });
 
+        const logRows = ((logRes.data as ActivityLog[]) || []);
+        const userIds = Array.from(new Set(logRows.map(l => l.user_id).filter(Boolean))) as string[];
+        if (userIds.length > 0) {
+            const { data: people } = await supabase.from('profiles').select('id, full_name, role').in('id', userIds);
+            const byId = new Map((people || []).map((p: any) => [p.id, p]));
+            logRows.forEach(l => { const p: any = byId.get(l.user_id as string); if (p) (l as any).profiles = { full_name: p.full_name, role: p.role }; });
+        }
+
         setActivityLogs(
-            [...((logRes.data as ActivityLog[]) || []), ...stageEntries]
+            [...logRows, ...stageEntries]
                 .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         );
 
