@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
 import { getStageName } from '@/lib/job-workflow';
-import { getRollbackTargets, describeRollbackEffects, rollbackJob, type RollbackTarget } from '@/lib/job-rollback';
+import { getRollbackTargets, defaultRollbackTarget, describeRollbackEffects, rollbackJob, type RollbackTarget } from '@/lib/job-rollback';
 
 interface Props {
     jobId: string;
@@ -50,8 +50,8 @@ export default function RollbackJobButton({ jobId, onDone, compact = true, label
         const t = getRollbackTargets(data.job_type, data.current_stage);
         setJob(data);
         setTargets(t);
-        // Default: one step back.
-        setToStage(t.length ? t[t.length - 1].stage : '');
+        // Default: the stage just before the current one (list is in flow order).
+        setToStage(defaultRollbackTarget(data.job_type, data.current_stage, t));
     };
 
     const close = () => { if (!saving) setOpen(false); };
