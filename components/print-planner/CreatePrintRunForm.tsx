@@ -58,8 +58,6 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
     const [paperRate, setPaperRate] = useState('');
     const [paperUnit, setPaperUnit] = useState<'sheets' | 'kg'>('sheets');
     const [paperGst, setPaperGst] = useState(18);
-    const [paperPaymentStatus, setPaperPaymentStatus] = useState<'paid' | 'pending'>('pending');
-    const [paperPaymentMode, setPaperPaymentMode] = useState<string>('cash');
 
     // Dropdowns data
     const [machines, setMachines] = useState<any[]>([]);
@@ -143,10 +141,8 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 insertData.paper_rate = paperRate ? parseFloat(paperRate) : null;
                 insertData.paper_gst_percent = paperGst;
                 insertData.paper_total = paperTotalWithGst || null;
-                insertData.paper_payment_status = paperPaymentStatus;
-                if (paperPaymentStatus === 'paid') {
-                    insertData.paper_payment_mode = paperPaymentMode;
-                }
+                // Checklist 0.2: paper is always saved as a bill to pay. Admin pays it from Finance > Vendors, with its account.
+                insertData.paper_payment_status = 'pending';
             }
 
             // Create print run
@@ -170,30 +166,11 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                 const refText = `Paper for ${printRun.print_run_number} - ${selectedJobs.map(j => j.job_number).join(', ')}`;
                 const noteText = `Paper supply: ${paperQty} ${unitLabel} × ₹${paperRate}${rateLabel} + ${paperGst}% GST = ₹${paperTotalWithGst.toFixed(2)}`;
 
-                if (paperPaymentStatus === 'paid') {
-                    // Record as paid vendor payment
-                    try {
-                        await supabase.rpc('record_vendor_payment', {
-                            p_vendor_id: paperVendorId,
-                            p_amount: paperTotalWithGst,
-                            p_payment_mode: paperPaymentMode,
-                            p_payment_date: new Date().toISOString().split('T')[0],
-                            p_bank_account_id: null,
-                            p_reference: refText,
-                            p_notes: noteText,
-                            p_purchase_bill_id: null,
-                            p_attachment_url: null
-                        });
-                    } catch (err) {
-                        console.warn('Could not record vendor payment:', err);
-                    }
-                } else {
-                    // Record as pending purchase bill (shows as outstanding in finance)
-                    try {
-                        await supabase.from('purchase_bills').insert({
+                // Record as a pending purchase bill (shows as outstanding in finance)
+                const { error: billErr } = await supabase.from('purchase_bills').insert({
                             vendor_id: paperVendorId,
                             product_type: 'Paper',
-                            description: refText,
+                            description: `${refText} · ${noteText}`,
                             quantity: parseFloat(paperQty) || 0,
                             rate: parseFloat(paperRate) || 0,
                             subtotal: paperAmount,
@@ -204,10 +181,7 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                             amount_paid: 0,
                             bill_date: new Date().toISOString().split('T')[0],
                         });
-                    } catch (err) {
-                        console.warn('Could not create purchase bill:', err);
-                    }
-                }
+                if (billErr) toast.error('Print run saved, but the paper bill could not be saved: ' + billErr.message);
             }
 
             // Success!
@@ -255,8 +229,6 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
         setPaperRate('');
         setPaperUnit('sheets');
         setPaperGst(18);
-        setPaperPaymentStatus('pending');
-        setPaperPaymentMode('cash');
     };
 
     return (
@@ -522,57 +494,12 @@ export function CreatePrintRunForm({ selectedJobs, onRemoveJob, onClear, onSucce
                                 </div>
                             </div>
 
-                            {/* Payment Status */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-600 mb-1.5">Payment Status</label>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaperPaymentStatus('paid')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'paid'
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                    >
-                                        ✓ Paid
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaperPaymentStatus('pending')}
-                                        className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all ${paperPaymentStatus === 'pending'
-                                            ? 'bg-amber-500 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                    >
-                                        ⏳ Pending
-                                    </button>
-                                </div>
-                                {paperPaymentStatus === 'paid' && (
-                                    <div className="mt-2">
-                                        <label className="block text-xs font-bold text-gray-600 mb-1.5">Payment Mode *</label>
-                                        <select
-                                            value={paperPaymentMode}
-                                            onChange={(e) => setPaperPaymentMode(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-gray-400 outline-none text-sm"
-                                        >
-                                            <option value="cash">💵 Cash</option>
-                                            <option value="bank_transfer">🏦 Bank Transfer</option>
-                                            <option value="upi">📱 UPI</option>
-                                            <option value="card">💳 Card</option>
-                                        </select>
-                                        {paperTotalWithGst > 0 && (
-                                            <p className="text-xs text-green-600 mt-1.5">
-                                                ✓ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be recorded as paid via {paperPaymentMode.replace('_', ' ')} in vendor payments
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                                {paperPaymentStatus === 'pending' && paperTotalWithGst > 0 && (
-                                    <p className="text-xs text-amber-600 mt-1.5">
-                                        ⏳ ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be added to vendor outstanding balance
-                                    </p>
-                                )}
-                            </div>
+                            {/* Paper is always a bill to pay; Admin pays it from Finance > Vendors (checklist 0.2) */}
+                            {paperTotalWithGst > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    ₹{paperTotalWithGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })} will be saved as a bill to pay. Admin pays it from Finance → Vendors, choosing the account.
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

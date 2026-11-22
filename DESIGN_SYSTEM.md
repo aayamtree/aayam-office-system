@@ -1,4 +1,6 @@
-# 🎨 Aayam OMS - Design System Reference
+# Aayam OMS - Design System Reference
+
+> **Read with `CLAUDE.md`.** Where the two differ, CLAUDE.md wins. Every screen change must pass `npm run audit:ui`.
 
 **Quick reference for developers** — style refresh 2026-08-31, tokens rebased on the Notion design language (via Refero Styles), applied at the token layer only (`app/globals.css` + `tailwind.config.js`). Components that use these tokens (`bg-primary`, `text-muted-foreground`, `bg-background`, `bg-oms-*`, etc.) picked it up automatically — nothing was hand-edited page by page.
 
@@ -29,29 +31,18 @@ Buttons:         text-sm font-medium        // 14px, 500
 
 ## Buttons
 
+Always the shared `Button` from `components/ui` — never a hand-made `<button>`.
+
 ```tsx
-// Primary
-<button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium">Save</button>
-
-// Secondary
-<button className="border border-primary text-primary px-4 py-2 rounded-md">Cancel</button>
-
-// Attention
-<button className="bg-destructive text-destructive-foreground px-4 py-2 rounded-md font-medium">Delete</button>
+import { Button } from '@/components/ui/Button';
+<Button>Save</Button>                        // primary
+<Button variant="outline">Cancel</Button>    // secondary
+<Button variant="destructive">Delete</Button> // attention
 ```
 
 ## Status Badges
 
-```tsx
-// Completed/Approved
-<span className="px-3 py-1 rounded-full bg-oms-blue text-white text-xs font-medium">Completed</span>
-
-// Action Needed
-<span className="px-3 py-1 rounded-full bg-oms-orange text-white text-xs font-medium">Action Needed</span>
-
-// Draft/Neutral
-<span className="px-3 py-1 rounded-full bg-oms-light text-oms-dark text-xs font-medium">Draft</span>
-```
+Always the shared `Badge` from `components/ui` (status colours come from `lib/lead-status.ts` and the stage helpers), never a hand-made `<span>` with colour classes.
 
 ## Spacing (4px grid — matches Notion)
 
@@ -85,12 +76,7 @@ text-white               // On dark surfaces
 
 ## Shadows
 
-```tsx
-shadow-sm   // 0 1px 2px rgb(0 0 0 / 0.05) — unchanged
-shadow      // 0 1px 3px + 0 1px 2px rgb(0 0 0 / 0.1) — unchanged
-shadow-md   // 0px 4px 12px rgba(0,0,0,0.1) — Notion's "product UI" shadow (was a two-layer shadow)
-shadow-lg/xl/2xl → none  // intentionally flat, Notion leans on borders over big shadows
-```
+None. Cards and panels are flat: a 1px `border`, no `shadow-*`, no hover lift or zoom.
 
 ## What did NOT change
 
